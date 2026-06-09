@@ -160,3 +160,89 @@ export interface SDRIssue {
   resolution_notes: string | null
   created_at: string
 }
+
+// ============================================
+// QUANTITY TAKEOFF SYSTEM
+// ============================================
+export type MeasurementType = 'length' | 'area' | 'rectangle' | 'count' | 'highlight' | 'text'
+export type ToolType = 'select' | 'calibrate' | 'length' | 'area' | 'rectangle' | 'count' | 'highlight' | 'text' | 'pan'
+
+export interface Point {
+  x: number
+  y: number
+}
+
+export interface DrawingFile {
+  id: string
+  project_id: string
+  name: string
+  original_filename: string
+  storage_path: string
+  file_size_bytes: number | null
+  page_count: number
+  status: 'processing' | 'ready' | 'error'
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DrawingCalibration {
+  id: string
+  drawing_id: string
+  page_number: number
+  pixels_distance: number
+  real_distance: number
+  real_unit: string
+  scale_factor: number
+  created_at: string
+  updated_at: string
+}
+
+export interface DrawingMeasurement {
+  id: string
+  drawing_id: string
+  boq_item_id: string | null
+  page_number: number
+  label: string | null
+  measurement_type: MeasurementType
+  points: Point[]
+  color: string
+  real_value: number | null
+  unit: string | null
+  notes: string | null
+  sort_order: number
+  created_at: string
+  updated_at: string
+  boq_item?: { item_code: string; description: string; unit: string }
+}
+
+export interface DrawingLayer {
+  id: string
+  drawing_id: string
+  name: string
+  discipline: string
+  color: string
+  is_visible: boolean
+  sort_order: number
+  created_at: string
+}
+
+export interface MeasurementHistory {
+  id: string
+  measurement_id: string
+  changed_by: string | null
+  change_type: 'created' | 'updated' | 'linked' | 'unlinked'
+  previous_value: Record<string, unknown> | null
+  new_value: Record<string, unknown> | null
+  changed_at: string
+}
+
+export interface MeasurementTemplate {
+  id: string
+  name: string
+  discipline: string
+  tool: MeasurementType
+  color: string
+  unit: string
+  defaultLabel: string
+}
