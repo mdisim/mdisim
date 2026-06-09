@@ -1,6 +1,7 @@
 'use client'
 
 import { NavItem } from './nav-item'
+import { useSidebar } from './sidebar-context'
 import {
   LayoutDashboard,
   FolderKanban,
@@ -9,6 +10,7 @@ import {
   HardHat,
   ChevronLeft,
   ChevronRight,
+  X,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -22,11 +24,12 @@ const navItems = [
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
+  const { mobileOpen, setMobileOpen } = useSidebar()
 
-  return (
+  const sidebarContent = (
     <aside
       className={cn(
-        'bg-slate-900 flex flex-col transition-all duration-300 relative',
+        'bg-slate-900 flex flex-col transition-all duration-300 relative h-full',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
@@ -36,22 +39,37 @@ export function Sidebar() {
           <HardHat size={20} className="text-white" />
         </div>
         {!collapsed && (
-          <div>
+          <div className="flex-1">
             <h1 className="text-white font-bold text-sm leading-tight">ANGEL D.C.</h1>
             <p className="text-slate-400 text-xs">Construction Management</p>
           </div>
+        )}
+        {/* Close button on mobile */}
+        {!collapsed && (
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="md:hidden p-1 rounded text-slate-400 hover:text-white"
+            aria-label="Close menu"
+          >
+            <X size={18} />
+          </button>
         )}
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-2 py-4 space-y-1">
         {navItems.map((item) => (
-          <NavItem key={item.href} {...item} collapsed={collapsed} />
+          <NavItem
+            key={item.href}
+            {...item}
+            collapsed={collapsed}
+            onNavigate={() => setMobileOpen(false)}
+          />
         ))}
       </nav>
 
-      {/* Collapse button */}
-      <div className="px-2 py-4 border-t border-slate-800">
+      {/* Collapse button (desktop only) */}
+      <div className="hidden md:block px-2 py-4 border-t border-slate-800">
         <button
           onClick={() => setCollapsed(!collapsed)}
           className={cn(
@@ -68,5 +86,29 @@ export function Sidebar() {
         </button>
       </div>
     </aside>
+  )
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <div className="hidden md:flex h-full">
+        {sidebarContent}
+      </div>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setMobileOpen(false)}
+          />
+          {/* Drawer */}
+          <div className="absolute left-0 top-0 h-full">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+    </>
   )
 }

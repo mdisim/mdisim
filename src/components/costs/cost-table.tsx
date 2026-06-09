@@ -31,6 +31,7 @@ export function CostTable({ costs, onEdit }: CostTableProps) {
 
   return (
     <div>
+      <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -96,6 +97,7 @@ export function CostTable({ costs, onEdit }: CostTableProps) {
           )}
         </TableBody>
       </Table>
+      </div>
 
       {costs.length > 0 && (
         <div className="flex justify-end px-4 py-3 border-t border-slate-200 bg-slate-50">

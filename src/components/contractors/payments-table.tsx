@@ -43,6 +43,7 @@ export function PaymentsTable({ payments, projectId, contractors }: PaymentsTabl
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -112,6 +113,7 @@ export function PaymentsTable({ payments, projectId, contractors }: PaymentsTabl
             )}
           </TableBody>
         </Table>
+        </div>
 
         {payments.length > 0 && (
           <div className="flex justify-end px-4 py-3 border-t border-slate-200 bg-slate-50">

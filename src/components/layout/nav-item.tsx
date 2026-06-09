@@ -10,15 +10,17 @@ interface NavItemProps {
   icon: LucideIcon
   label: string
   collapsed?: boolean
+  onNavigate?: () => void
 }
 
-export function NavItem({ href, icon: Icon, label, collapsed }: NavItemProps) {
+export function NavItem({ href, icon: Icon, label, collapsed, onNavigate }: NavItemProps) {
   const pathname = usePathname()
   const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
 
   return (
     <Link
       href={href}
+      onClick={onNavigate}
       className={cn(
         'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
         isActive

@@ -35,6 +35,7 @@ export function BOQTable({ items, onEdit, projectId }: BOQTableProps) {
 
   return (
     <div>
+      <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -96,6 +97,7 @@ export function BOQTable({ items, onEdit, projectId }: BOQTableProps) {
           )}
         </TableBody>
       </Table>
+      </div>
 
       {items.length > 0 && (
         <div className="flex justify-end px-4 py-3 border-t border-slate-200 bg-slate-50">
