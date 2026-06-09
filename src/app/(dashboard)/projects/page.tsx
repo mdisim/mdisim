@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
-import { ProjectCard } from '@/components/projects/project-card'
 import { NewProjectButton } from '@/components/projects/new-project-button'
-import { FolderKanban } from 'lucide-react'
+import { SearchableProjectsList } from '@/components/projects/searchable-projects-list'
+import { Project } from '@/lib/types'
 
 export default async function ProjectsPage() {
   const supabase = await createClient()
@@ -12,11 +12,13 @@ export default async function ProjectsPage() {
     .eq('created_by', user!.id)
     .order('created_at', { ascending: false })
 
+  const typedProjects = (projects ?? []) as Project[]
+
   const counts = {
-    all: projects?.length ?? 0,
-    active: projects?.filter(p => p.status === 'active').length ?? 0,
-    planning: projects?.filter(p => p.status === 'planning').length ?? 0,
-    completed: projects?.filter(p => p.status === 'completed').length ?? 0,
+    all: typedProjects.length,
+    active: typedProjects.filter(p => p.status === 'active').length,
+    planning: typedProjects.filter(p => p.status === 'planning').length,
+    completed: typedProjects.filter(p => p.status === 'completed').length,
   }
 
   return (
@@ -29,7 +31,7 @@ export default async function ProjectsPage() {
         <NewProjectButton />
       </div>
 
-      {/* Status filters (display only) */}
+      {/* Status summary badges */}
       <div className="flex gap-2 flex-wrap">
         {[
           { label: 'All', count: counts.all, color: 'bg-slate-100 text-slate-700' },
@@ -43,19 +45,7 @@ export default async function ProjectsPage() {
         ))}
       </div>
 
-      {projects && projects.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-          <FolderKanban size={48} className="mb-4 opacity-30" />
-          <p className="text-lg font-medium">No projects yet</p>
-          <p className="text-sm mt-1">Create your first project to get started</p>
-        </div>
-      )}
+      <SearchableProjectsList projects={typedProjects} />
     </div>
   )
 }

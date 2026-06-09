@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { StatsCard } from '@/components/dashboard/stats-card'
 import { RecentActivity } from '@/components/dashboard/recent-activity'
+import Link from 'next/link'
 import {
   FolderKanban,
   DollarSign,
@@ -8,11 +9,27 @@ import {
   TrendingUp,
   Clock,
   CheckCircle2,
+  Plus,
+  UserPlus,
+  FileText,
 } from 'lucide-react'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+
+  // Fetch company name for welcome message
+  let companyName = 'My Company'
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('companies(name)')
+      .eq('id', user.id)
+      .single()
+    if (profile && profile.companies && !Array.isArray(profile.companies)) {
+      companyName = (profile.companies as { name: string }).name
+    }
+  }
 
   const [
     { data: projects },
@@ -41,9 +58,42 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-        <p className="text-slate-500 text-sm mt-1">Overview of your construction projects</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Welcome back, {companyName}</h1>
+          <p className="text-slate-500 text-sm mt-1">Overview of your construction projects</p>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Link href="/projects" className="flex items-center gap-3 p-4 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl transition-colors group">
+          <div className="w-9 h-9 bg-amber-500 rounded-lg flex items-center justify-center shrink-0">
+            <Plus size={18} className="text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-800">New Project</p>
+            <p className="text-xs text-slate-500">Start a new construction project</p>
+          </div>
+        </Link>
+        <Link href="/contractors" className="flex items-center gap-3 p-4 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition-colors group">
+          <div className="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center shrink-0">
+            <UserPlus size={18} className="text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-800">Add Contractor</p>
+            <p className="text-xs text-slate-500">Register a new contractor</p>
+          </div>
+        </Link>
+        <Link href="/projects" className="flex items-center gap-3 p-4 bg-green-50 hover:bg-green-100 border border-green-200 rounded-xl transition-colors group">
+          <div className="w-9 h-9 bg-green-500 rounded-lg flex items-center justify-center shrink-0">
+            <FileText size={18} className="text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-800">View Reports</p>
+            <p className="text-xs text-slate-500">Daily site reports and logs</p>
+          </div>
+        </Link>
       </div>
 
       {/* Stats Grid */}

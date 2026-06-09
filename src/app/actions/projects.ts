@@ -2,14 +2,19 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { ensureUserProfile } from './profile'
 
 export async function createProject(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Unauthorized' }
 
+  const profileResult = await ensureUserProfile()
+  if ('error' in profileResult) return { error: profileResult.error }
+
   const { error } = await supabase.from('projects').insert({
     created_by: user.id,
+    company_id: profileResult.company_id,
     name: formData.get('name') as string,
     description: formData.get('description') as string || null,
     status: formData.get('status') as string || 'planning',

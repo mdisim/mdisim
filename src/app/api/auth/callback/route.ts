@@ -10,6 +10,35 @@ export async function GET(request: Request) {
     const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
+      // Auto-create company + profile on first login
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: existing } = await supabase
+          .from('profiles')
+          .select('id, company_id')
+          .eq('id', user.id)
+          .single()
+
+        if (!existing?.company_id) {
+          const domain = user.email?.split('@')[1] ?? 'company'
+          const companyName = domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1)
+
+          const { data: company } = await supabase
+            .from('companies')
+            .insert({ name: companyName + ' Construction' })
+            .select('id')
+            .single()
+
+          if (company) {
+            await supabase.from('profiles').upsert({
+              id: user.id,
+              company_id: company.id,
+              role: 'owner',
+            })
+          }
+        }
+      }
+
       const forwardedHost = request.headers.get('x-forwarded-host')
       const isLocalEnv = process.env.NODE_ENV === 'development'
       if (isLocalEnv) {

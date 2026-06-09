@@ -1,3 +1,25 @@
+export interface Company {
+  id: string
+  name: string
+  logo_url: string | null
+  address: string | null
+  phone: string | null
+  email: string | null
+  website: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface Profile {
+  id: string
+  company_id: string | null
+  full_name: string | null
+  role: string | null
+  avatar_url: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface Project {
   id: string
   name: string
@@ -11,6 +33,7 @@ export interface Project {
   created_at: string
   updated_at: string
   created_by: string
+  company_id: string
 }
 
 export interface BOQItem {

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { ensureUserProfile } from '@/app/actions/profile'
 
 interface ProjectFormProps {
   project?: Project
@@ -51,6 +52,10 @@ export function ProjectForm({ project, onSuccess, onCancel }: ProjectFormProps) 
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
+      // Get or create company profile to retrieve company_id
+      const profileResult = await ensureUserProfile()
+      if ('error' in profileResult) throw new Error(profileResult.error)
+
       const payload = {
         name: form.name,
         description: form.description || null,
@@ -61,6 +66,7 @@ export function ProjectForm({ project, onSuccess, onCancel }: ProjectFormProps) 
         location: form.location || null,
         client_name: form.client_name || null,
         created_by: user.id,
+        company_id: profileResult.company_id,
       }
 
       if (project) {
