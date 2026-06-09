@@ -1,7 +1,6 @@
 # ANGEL D.C. — Production Readiness Audit Report
 
-**Date:** 2026-06-09  
-**Auditor:** Claude Code (claude-sonnet-4-6)  
+**Date:** 2026-06-09
 **Branch:** claude/blissful-hopper-tutkyw
 
 ---
