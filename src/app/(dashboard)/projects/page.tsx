@@ -9,7 +9,7 @@ export default async function ProjectsPage() {
   const { data: projects } = await supabase
     .from('projects')
     .select('*')
-    .eq('user_id', user!.id)
+    .eq('created_by', user!.id)
     .order('created_at', { ascending: false })
 
   const counts = {

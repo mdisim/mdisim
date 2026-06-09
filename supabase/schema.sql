@@ -9,7 +9,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ============================================
 CREATE TABLE IF NOT EXISTS projects (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  created_by UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   name VARCHAR(255) NOT NULL,
   description TEXT,
   status VARCHAR(50) DEFAULT 'planning' CHECK (status IN ('planning', 'active', 'on_hold', 'completed')),
@@ -103,20 +103,20 @@ ALTER TABLE cost_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE contractor_payments ENABLE ROW LEVEL SECURITY;
 
 -- Projects
-CREATE POLICY "Users can view own projects" ON projects FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can create own projects" ON projects FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own projects" ON projects FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "Users can delete own projects" ON projects FOR DELETE USING (auth.uid() = user_id);
+CREATE POLICY "Users can view own projects" ON projects FOR SELECT USING (auth.uid() = created_by);
+CREATE POLICY "Users can create own projects" ON projects FOR INSERT WITH CHECK (auth.uid() = created_by);
+CREATE POLICY "Users can update own projects" ON projects FOR UPDATE USING (auth.uid() = created_by);
+CREATE POLICY "Users can delete own projects" ON projects FOR DELETE USING (auth.uid() = created_by);
 
 -- BOQ Items (access via project ownership)
 CREATE POLICY "Users can view BOQ items" ON boq_items FOR SELECT
-  USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = boq_items.project_id AND projects.user_id = auth.uid()));
+  USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = boq_items.project_id AND projects.created_by = auth.uid()));
 CREATE POLICY "Users can create BOQ items" ON boq_items FOR INSERT
-  WITH CHECK (EXISTS (SELECT 1 FROM projects WHERE projects.id = boq_items.project_id AND projects.user_id = auth.uid()));
+  WITH CHECK (EXISTS (SELECT 1 FROM projects WHERE projects.id = boq_items.project_id AND projects.created_by = auth.uid()));
 CREATE POLICY "Users can update BOQ items" ON boq_items FOR UPDATE
-  USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = boq_items.project_id AND projects.user_id = auth.uid()));
+  USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = boq_items.project_id AND projects.created_by = auth.uid()));
 CREATE POLICY "Users can delete BOQ items" ON boq_items FOR DELETE
-  USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = boq_items.project_id AND projects.user_id = auth.uid()));
+  USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = boq_items.project_id AND projects.created_by = auth.uid()));
 
 -- Contractors
 CREATE POLICY "Users can view own contractors" ON contractors FOR SELECT USING (auth.uid() = user_id);
@@ -126,28 +126,28 @@ CREATE POLICY "Users can delete own contractors" ON contractors FOR DELETE USING
 
 -- Cost Entries
 CREATE POLICY "Users can view cost entries" ON cost_entries FOR SELECT
-  USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = cost_entries.project_id AND projects.user_id = auth.uid()));
+  USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = cost_entries.project_id AND projects.created_by = auth.uid()));
 CREATE POLICY "Users can create cost entries" ON cost_entries FOR INSERT
-  WITH CHECK (EXISTS (SELECT 1 FROM projects WHERE projects.id = cost_entries.project_id AND projects.user_id = auth.uid()));
+  WITH CHECK (EXISTS (SELECT 1 FROM projects WHERE projects.id = cost_entries.project_id AND projects.created_by = auth.uid()));
 CREATE POLICY "Users can update cost entries" ON cost_entries FOR UPDATE
-  USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = cost_entries.project_id AND projects.user_id = auth.uid()));
+  USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = cost_entries.project_id AND projects.created_by = auth.uid()));
 CREATE POLICY "Users can delete cost entries" ON cost_entries FOR DELETE
-  USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = cost_entries.project_id AND projects.user_id = auth.uid()));
+  USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = cost_entries.project_id AND projects.created_by = auth.uid()));
 
 -- Contractor Payments
 CREATE POLICY "Users can view contractor payments" ON contractor_payments FOR SELECT
-  USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = contractor_payments.project_id AND projects.user_id = auth.uid()));
+  USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = contractor_payments.project_id AND projects.created_by = auth.uid()));
 CREATE POLICY "Users can create contractor payments" ON contractor_payments FOR INSERT
-  WITH CHECK (EXISTS (SELECT 1 FROM projects WHERE projects.id = contractor_payments.project_id AND projects.user_id = auth.uid()));
+  WITH CHECK (EXISTS (SELECT 1 FROM projects WHERE projects.id = contractor_payments.project_id AND projects.created_by = auth.uid()));
 CREATE POLICY "Users can update contractor payments" ON contractor_payments FOR UPDATE
-  USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = contractor_payments.project_id AND projects.user_id = auth.uid()));
+  USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = contractor_payments.project_id AND projects.created_by = auth.uid()));
 CREATE POLICY "Users can delete contractor payments" ON contractor_payments FOR DELETE
-  USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = contractor_payments.project_id AND projects.user_id = auth.uid()));
+  USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = contractor_payments.project_id AND projects.created_by = auth.uid()));
 
 -- ============================================
 -- INDEXES
 -- ============================================
-CREATE INDEX idx_projects_user_id ON projects(user_id);
+CREATE INDEX idx_projects_created_by ON projects(created_by);
 CREATE INDEX idx_projects_status ON projects(status);
 CREATE INDEX idx_boq_items_project_id ON boq_items(project_id);
 CREATE INDEX idx_cost_entries_project_id ON cost_entries(project_id);
@@ -253,19 +253,19 @@ ALTER TABLE sdr_activities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sdr_issues ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users manage own project reports" ON site_daily_reports
-  FOR ALL USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = site_daily_reports.project_id AND projects.user_id = auth.uid()));
+  FOR ALL USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = site_daily_reports.project_id AND projects.created_by = auth.uid()));
 
 CREATE POLICY "Users manage sdr_workforce" ON sdr_workforce
-  FOR ALL USING (EXISTS (SELECT 1 FROM site_daily_reports sdr JOIN projects p ON p.id = sdr.project_id WHERE sdr.id = sdr_workforce.report_id AND p.user_id = auth.uid()));
+  FOR ALL USING (EXISTS (SELECT 1 FROM site_daily_reports sdr JOIN projects p ON p.id = sdr.project_id WHERE sdr.id = sdr_workforce.report_id AND p.created_by = auth.uid()));
 
 CREATE POLICY "Users manage sdr_equipment" ON sdr_equipment
-  FOR ALL USING (EXISTS (SELECT 1 FROM site_daily_reports sdr JOIN projects p ON p.id = sdr.project_id WHERE sdr.id = sdr_equipment.report_id AND p.user_id = auth.uid()));
+  FOR ALL USING (EXISTS (SELECT 1 FROM site_daily_reports sdr JOIN projects p ON p.id = sdr.project_id WHERE sdr.id = sdr_equipment.report_id AND p.created_by = auth.uid()));
 
 CREATE POLICY "Users manage sdr_activities" ON sdr_activities
-  FOR ALL USING (EXISTS (SELECT 1 FROM site_daily_reports sdr JOIN projects p ON p.id = sdr.project_id WHERE sdr.id = sdr_activities.report_id AND p.user_id = auth.uid()));
+  FOR ALL USING (EXISTS (SELECT 1 FROM site_daily_reports sdr JOIN projects p ON p.id = sdr.project_id WHERE sdr.id = sdr_activities.report_id AND p.created_by = auth.uid()));
 
 CREATE POLICY "Users manage sdr_issues" ON sdr_issues
-  FOR ALL USING (EXISTS (SELECT 1 FROM site_daily_reports sdr JOIN projects p ON p.id = sdr.project_id WHERE sdr.id = sdr_issues.report_id AND p.user_id = auth.uid()));
+  FOR ALL USING (EXISTS (SELECT 1 FROM site_daily_reports sdr JOIN projects p ON p.id = sdr.project_id WHERE sdr.id = sdr_issues.report_id AND p.created_by = auth.uid()));
 
 CREATE INDEX idx_sdr_project_id ON site_daily_reports(project_id);
 CREATE INDEX idx_sdr_report_date ON site_daily_reports(report_date);
@@ -333,13 +333,13 @@ ALTER TABLE drawing_calibrations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE drawing_measurements ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users manage own drawing files" ON drawing_files
-  FOR ALL USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = drawing_files.project_id AND projects.user_id = auth.uid()));
+  FOR ALL USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = drawing_files.project_id AND projects.created_by = auth.uid()));
 
 CREATE POLICY "Users manage calibrations" ON drawing_calibrations
-  FOR ALL USING (EXISTS (SELECT 1 FROM drawing_files df JOIN projects p ON p.id = df.project_id WHERE df.id = drawing_calibrations.drawing_id AND p.user_id = auth.uid()));
+  FOR ALL USING (EXISTS (SELECT 1 FROM drawing_files df JOIN projects p ON p.id = df.project_id WHERE df.id = drawing_calibrations.drawing_id AND p.created_by = auth.uid()));
 
 CREATE POLICY "Users manage measurements" ON drawing_measurements
-  FOR ALL USING (EXISTS (SELECT 1 FROM drawing_files df JOIN projects p ON p.id = df.project_id WHERE df.id = drawing_measurements.drawing_id AND p.user_id = auth.uid()));
+  FOR ALL USING (EXISTS (SELECT 1 FROM drawing_files df JOIN projects p ON p.id = df.project_id WHERE df.id = drawing_measurements.drawing_id AND p.created_by = auth.uid()));
 
 CREATE INDEX idx_drawing_files_project ON drawing_files(project_id);
 CREATE INDEX idx_drawing_calibrations_drawing ON drawing_calibrations(drawing_id);
@@ -388,10 +388,10 @@ ALTER TABLE drawing_layers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE measurement_history ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users manage layers" ON drawing_layers
-  FOR ALL USING (EXISTS (SELECT 1 FROM drawing_files df JOIN projects p ON p.id = df.project_id WHERE df.id = drawing_layers.drawing_id AND p.user_id = auth.uid()));
+  FOR ALL USING (EXISTS (SELECT 1 FROM drawing_files df JOIN projects p ON p.id = df.project_id WHERE df.id = drawing_layers.drawing_id AND p.created_by = auth.uid()));
 
 CREATE POLICY "Users view measurement history" ON measurement_history
-  FOR ALL USING (EXISTS (SELECT 1 FROM drawing_measurements dm JOIN drawing_files df ON df.id = dm.drawing_id JOIN projects p ON p.id = df.project_id WHERE dm.id = measurement_history.measurement_id AND p.user_id = auth.uid()));
+  FOR ALL USING (EXISTS (SELECT 1 FROM drawing_measurements dm JOIN drawing_files df ON df.id = dm.drawing_id JOIN projects p ON p.id = df.project_id WHERE dm.id = measurement_history.measurement_id AND p.created_by = auth.uid()));
 
 CREATE INDEX idx_drawing_layers_drawing ON drawing_layers(drawing_id);
 CREATE INDEX idx_measurement_history_measurement ON measurement_history(measurement_id);

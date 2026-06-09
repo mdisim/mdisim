@@ -9,7 +9,7 @@ export async function createProject(formData: FormData) {
   if (!user) return { error: 'Unauthorized' }
 
   const { error } = await supabase.from('projects').insert({
-    user_id: user.id,
+    created_by: user.id,
     name: formData.get('name') as string,
     description: formData.get('description') as string || null,
     status: formData.get('status') as string || 'planning',
@@ -39,7 +39,7 @@ export async function updateProject(id: string, formData: FormData) {
     budget: parseFloat(formData.get('budget') as string) || 0,
     location: formData.get('location') as string || null,
     client_name: formData.get('client_name') as string || null,
-  }).eq('id', id).eq('user_id', user.id)
+  }).eq('id', id).eq('created_by', user.id)
 
   if (error) return { error: error.message }
   revalidatePath('/projects')
@@ -52,7 +52,7 @@ export async function deleteProject(id: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Unauthorized' }
 
-  const { error } = await supabase.from('projects').delete().eq('id', id).eq('user_id', user.id)
+  const { error } = await supabase.from('projects').delete().eq('id', id).eq('created_by', user.id)
   if (error) return { error: error.message }
   revalidatePath('/projects')
   return { success: true }

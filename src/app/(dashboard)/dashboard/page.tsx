@@ -20,15 +20,15 @@ export default async function DashboardPage() {
     { data: costEntries },
     { data: payments },
   ] = await Promise.all([
-    supabase.from('projects').select('*').eq('user_id', user!.id),
+    supabase.from('projects').select('*').eq('created_by', user!.id),
     supabase.from('contractors').select('*').eq('user_id', user!.id),
     supabase.from('cost_entries').select('amount, status, project_id').in(
       'project_id',
-      (await supabase.from('projects').select('id').eq('user_id', user!.id)).data?.map(p => p.id) ?? []
+      (await supabase.from('projects').select('id').eq('created_by', user!.id)).data?.map(p => p.id) ?? []
     ),
     supabase.from('contractor_payments').select('amount, status, project_id').in(
       'project_id',
-      (await supabase.from('projects').select('id').eq('user_id', user!.id)).data?.map(p => p.id) ?? []
+      (await supabase.from('projects').select('id').eq('created_by', user!.id)).data?.map(p => p.id) ?? []
     ),
   ])
 

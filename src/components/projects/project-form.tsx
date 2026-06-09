@@ -60,7 +60,7 @@ export function ProjectForm({ project, onSuccess, onCancel }: ProjectFormProps) 
         budget: parseFloat(form.budget) || 0,
         location: form.location || null,
         client_name: form.client_name || null,
-        user_id: user.id,
+        created_by: user.id,
       }
 
       if (project) {

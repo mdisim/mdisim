@@ -10,7 +10,7 @@ export interface Project {
   client_name: string | null
   created_at: string
   updated_at: string
-  user_id: string
+  created_by: string
 }
 
 export interface BOQItem {
