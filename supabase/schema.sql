@@ -431,8 +431,17 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS company_id UUID REFERENCES compani
 ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view own company" ON companies
-  FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.company_id = companies.id AND profiles.id = auth.uid()));
+CREATE POLICY "Authenticated users can create companies" ON companies
+  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Users can select own company" ON companies
+  FOR SELECT USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.company_id = companies.id AND profiles.id = auth.uid()));
+
+CREATE POLICY "Users can update own company" ON companies
+  FOR UPDATE USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.company_id = companies.id AND profiles.id = auth.uid()));
+
+CREATE POLICY "Users can delete own company" ON companies
+  FOR DELETE USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.company_id = companies.id AND profiles.id = auth.uid()));
 
 CREATE POLICY "Users can view own profile" ON profiles
   FOR ALL USING (id = auth.uid());
