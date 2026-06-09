@@ -172,3 +172,106 @@ CREATE TRIGGER boq_items_updated_at BEFORE UPDATE ON boq_items FOR EACH ROW EXEC
 CREATE TRIGGER contractors_updated_at BEFORE UPDATE ON contractors FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER cost_entries_updated_at BEFORE UPDATE ON cost_entries FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER contractor_payments_updated_at BEFORE UPDATE ON contractor_payments FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ============================================
+-- PHASE 2: SITE DAILY REPORTS (SDR)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS site_daily_reports (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE NOT NULL,
+  report_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  created_by UUID REFERENCES auth.users(id) NOT NULL,
+  weather VARCHAR(50) CHECK (weather IN ('sunny', 'partly_cloudy', 'cloudy', 'rainy', 'stormy', 'foggy')),
+  temperature_high DECIMAL(5,1),
+  temperature_low DECIMAL(5,1),
+  work_status VARCHAR(50) DEFAULT 'normal' CHECK (work_status IN ('normal', 'delayed', 'suspended', 'holiday')),
+  delay_reason TEXT,
+  general_notes TEXT,
+  status VARCHAR(20) DEFAULT 'draft' CHECK (status IN ('draft', 'submitted', 'approved')),
+  approved_by UUID REFERENCES auth.users(id),
+  approved_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(project_id, report_date)
+);
+
+CREATE TABLE IF NOT EXISTS sdr_workforce (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  report_id UUID REFERENCES site_daily_reports(id) ON DELETE CASCADE NOT NULL,
+  trade VARCHAR(100) NOT NULL,
+  contractor_id UUID REFERENCES contractors(id) ON DELETE SET NULL,
+  planned_count INTEGER DEFAULT 0,
+  actual_count INTEGER DEFAULT 0,
+  overtime_hours DECIMAL(5,2) DEFAULT 0,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS sdr_equipment (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  report_id UUID REFERENCES site_daily_reports(id) ON DELETE CASCADE NOT NULL,
+  equipment_name VARCHAR(100) NOT NULL,
+  equipment_type VARCHAR(100),
+  quantity INTEGER DEFAULT 1,
+  hours_used DECIMAL(6,2) DEFAULT 0,
+  idle_hours DECIMAL(6,2) DEFAULT 0,
+  operator_name VARCHAR(100),
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS sdr_activities (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  report_id UUID REFERENCES site_daily_reports(id) ON DELETE CASCADE NOT NULL,
+  boq_item_id UUID REFERENCES boq_items(id) ON DELETE SET NULL,
+  description TEXT NOT NULL,
+  location_on_site VARCHAR(255),
+  unit VARCHAR(50),
+  quantity_done DECIMAL(15,3) DEFAULT 0,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS sdr_issues (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  report_id UUID REFERENCES site_daily_reports(id) ON DELETE CASCADE NOT NULL,
+  issue_type VARCHAR(50) CHECK (issue_type IN ('safety', 'quality', 'delay', 'rfi', 'instruction', 'other')),
+  description TEXT NOT NULL,
+  severity VARCHAR(20) DEFAULT 'medium' CHECK (severity IN ('low', 'medium', 'high', 'critical')),
+  raised_by VARCHAR(100),
+  status VARCHAR(30) DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'resolved', 'closed')),
+  resolution_notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- RLS for SDR tables
+ALTER TABLE site_daily_reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sdr_workforce ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sdr_equipment ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sdr_activities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sdr_issues ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users manage own project reports" ON site_daily_reports
+  FOR ALL USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = site_daily_reports.project_id AND projects.user_id = auth.uid()));
+
+CREATE POLICY "Users manage sdr_workforce" ON sdr_workforce
+  FOR ALL USING (EXISTS (SELECT 1 FROM site_daily_reports sdr JOIN projects p ON p.id = sdr.project_id WHERE sdr.id = sdr_workforce.report_id AND p.user_id = auth.uid()));
+
+CREATE POLICY "Users manage sdr_equipment" ON sdr_equipment
+  FOR ALL USING (EXISTS (SELECT 1 FROM site_daily_reports sdr JOIN projects p ON p.id = sdr.project_id WHERE sdr.id = sdr_equipment.report_id AND p.user_id = auth.uid()));
+
+CREATE POLICY "Users manage sdr_activities" ON sdr_activities
+  FOR ALL USING (EXISTS (SELECT 1 FROM site_daily_reports sdr JOIN projects p ON p.id = sdr.project_id WHERE sdr.id = sdr_activities.report_id AND p.user_id = auth.uid()));
+
+CREATE POLICY "Users manage sdr_issues" ON sdr_issues
+  FOR ALL USING (EXISTS (SELECT 1 FROM site_daily_reports sdr JOIN projects p ON p.id = sdr.project_id WHERE sdr.id = sdr_issues.report_id AND p.user_id = auth.uid()));
+
+CREATE INDEX idx_sdr_project_id ON site_daily_reports(project_id);
+CREATE INDEX idx_sdr_report_date ON site_daily_reports(report_date);
+CREATE INDEX idx_sdr_workforce_report ON sdr_workforce(report_id);
+CREATE INDEX idx_sdr_equipment_report ON sdr_equipment(report_id);
+CREATE INDEX idx_sdr_activities_report ON sdr_activities(report_id);
+CREATE INDEX idx_sdr_issues_report ON sdr_issues(report_id);
+
+CREATE TRIGGER sdr_updated_at BEFORE UPDATE ON site_daily_reports FOR EACH ROW EXECUTE FUNCTION update_updated_at();

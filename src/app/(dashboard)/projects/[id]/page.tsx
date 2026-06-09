@@ -10,6 +10,7 @@ import {
   FileText,
   TrendingUp,
   Users,
+  ClipboardList,
 } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/badge'
 
@@ -39,10 +40,16 @@ export default async function ProjectDetailPage({
   const paidPayments = payments?.filter(p => p.status === 'completed').reduce((s, p) => s + p.amount, 0) ?? 0
   const budgetUsed = project.budget > 0 ? (costTotal / project.budget) * 100 : 0
 
+  const { data: reportsCount } = await supabase
+    .from('site_daily_reports')
+    .select('id', { count: 'exact', head: true })
+    .eq('project_id', id)
+
   const navLinks = [
     { href: `/projects/${id}/boq`, label: 'BOQ', icon: FileText, count: boqItems?.length ?? 0 },
     { href: `/projects/${id}/costs`, label: 'Cost Tracking', icon: TrendingUp, count: costEntries?.length ?? 0 },
     { href: `/projects/${id}/contractors`, label: 'Contractor Payments', icon: Users, count: payments?.length ?? 0 },
+    { href: `/projects/${id}/reports`, label: 'Site Daily Reports', icon: ClipboardList, count: (reportsCount as unknown as { count: number } | null)?.count ?? 0 },
   ]
 
   return (
