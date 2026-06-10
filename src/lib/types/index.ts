@@ -382,6 +382,20 @@ export interface ConcretePour {
   created_at: string
 }
 
+export interface ProjectDocument {
+  id: string
+  project_id: string
+  title: string
+  document_type: 'drawing' | 'specification' | 'report' | 'contract' | 'other'
+  revision: string | null
+  status: 'current' | 'superseded' | 'draft'
+  file_url: string | null
+  uploaded_by: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface ReinforcementRecord {
   id: string
   project_id: string

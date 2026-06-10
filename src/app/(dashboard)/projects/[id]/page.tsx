@@ -17,6 +17,9 @@ import {
   GitMerge,
   Package,
   Layers,
+  BarChart2,
+  TrendingDown,
+  FolderOpen,
 } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/badge'
 
@@ -62,6 +65,9 @@ export default async function ProjectDetailPage({
     { href: `/projects/${id}/variations`, label: 'Variations', icon: GitMerge, count: 0 },
     { href: `/projects/${id}/materials`, label: 'Materials', icon: Package, count: 0 },
     { href: `/projects/${id}/concrete`, label: 'Concrete & Rebar', icon: Layers, count: 0 },
+    { href: `/projects/${id}/gantt`, label: 'Gantt Chart', icon: BarChart2, count: 0 },
+    { href: `/projects/${id}/cashflow`, label: 'Cash Flow', icon: TrendingDown, count: 0 },
+    { href: `/projects/${id}/documents`, label: 'Documents', icon: FolderOpen, count: 0 },
   ]
 
   return (

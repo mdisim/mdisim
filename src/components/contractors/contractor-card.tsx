@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Contractor } from '@/lib/types'
 import { Mail, Phone, MapPin, Briefcase, Hash } from 'lucide-react'
 
@@ -18,6 +19,12 @@ export function ContractorCard({ contractor, onEdit, onDelete }: ContractorCardP
           )}
         </div>
         <div className="flex gap-1">
+          <Link
+            href={`/contractors/${contractor.id}`}
+            className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 transition-colors"
+          >
+            View
+          </Link>
           <button
             onClick={() => onEdit(contractor)}
             className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 transition-colors"
