@@ -20,6 +20,8 @@ import {
   BarChart2,
   TrendingDown,
   FolderOpen,
+  FileSignature,
+  ShoppingCart,
 } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/badge'
 
@@ -68,6 +70,8 @@ export default async function ProjectDetailPage({
     { href: `/projects/${id}/gantt`, label: 'Gantt Chart', icon: BarChart2, count: 0 },
     { href: `/projects/${id}/cashflow`, label: 'Cash Flow', icon: TrendingDown, count: 0 },
     { href: `/projects/${id}/documents`, label: 'Documents', icon: FolderOpen, count: 0 },
+    { href: `/projects/${id}/contracts`, label: 'Contracts', icon: FileSignature, count: 0 },
+    { href: `/projects/${id}/procurement`, label: 'Procurement', icon: ShoppingCart, count: 0 },
   ]
 
   return (

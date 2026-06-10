@@ -14,6 +14,8 @@ import {
   ClipboardList,
   BookOpen,
   BarChart3,
+  Gavel,
+  Calculator,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -22,6 +24,8 @@ const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/projects', icon: FolderKanban, label: 'Projects' },
   { href: '/executive', icon: BarChart3, label: 'Executive' },
+  { href: '/tenders', icon: Gavel, label: 'Tenders' },
+  { href: '/calculators', icon: Calculator, label: 'Calculators' },
   { href: '/boq-library', icon: BookOpen, label: 'BOQ Library' },
   { href: '/contractors', icon: Users, label: 'Contractors' },
   { href: '/settings', icon: Settings, label: 'Settings' },

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { SettingsForm } from '@/components/settings/settings-form'
+import { LanguageSettings } from '@/components/settings/language-settings'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -50,6 +51,9 @@ export default async function SettingsPage() {
 
       {/* Two-column settings form */}
       <SettingsForm profile={profile} company={company} />
+
+      {/* Language & Region */}
+      <LanguageSettings />
     </div>
   )
 }

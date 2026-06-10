@@ -396,6 +396,67 @@ export interface ProjectDocument {
   updated_at: string
 }
 
+// ============================================
+// SPRINT 4 TYPES
+// ============================================
+export interface Tender {
+  id: string
+  company_id: string | null
+  title: string
+  description: string | null
+  client_name: string | null
+  tender_number: string | null
+  issue_date: string | null
+  submission_deadline: string | null
+  status: string
+  estimated_value: number
+  submitted_value: number | null
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ProjectContract {
+  id: string
+  project_id: string
+  contractor_id: string | null
+  title: string
+  contract_number: string | null
+  contract_type: string
+  value: number
+  start_date: string | null
+  end_date: string | null
+  status: string
+  retention_percent: number
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+  contractor?: { name: string; company: string | null }
+}
+
+export interface PurchaseOrder {
+  id: string
+  project_id: string
+  po_number: string
+  supplier: string
+  description: string | null
+  category: string | null
+  quantity: number
+  unit: string | null
+  unit_price: number
+  total_amount: number
+  order_date: string | null
+  expected_delivery: string | null
+  actual_delivery: string | null
+  status: string
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface ReinforcementRecord {
   id: string
   project_id: string
