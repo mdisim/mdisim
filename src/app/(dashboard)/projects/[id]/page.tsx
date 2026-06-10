@@ -23,6 +23,9 @@ import {
   FileSignature,
   ShoppingCart,
   FileBarChart,
+  ShieldAlert,
+  AlertCircle,
+  Users2,
 } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/badge'
 
@@ -120,6 +123,9 @@ export default async function ProjectDetailPage({
     { href: `/projects/${id}/contracts`, label: 'Contracts', icon: FileSignature, count: 0 },
     { href: `/projects/${id}/procurement`, label: 'Procurement', icon: ShoppingCart, count: 0 },
     { href: `/projects/${id}/budget-report`, label: 'Budget Report', icon: FileBarChart, count: 0 },
+    { href: `/projects/${id}/risks`, label: 'Risk Register', icon: ShieldAlert, count: 0 },
+    { href: `/projects/${id}/issues`, label: 'Issues Register', icon: AlertCircle, count: 0 },
+    { href: `/projects/${id}/meetings`, label: 'Meeting Minutes', icon: Users2, count: 0 },
   ]
 
   return (

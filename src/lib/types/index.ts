@@ -361,6 +361,10 @@ export interface MaterialDelivery {
   notes: string | null
   created_by: string | null
   created_at: string
+  approval_status: string | null
+  approved_by: string | null
+  approved_at: string | null
+  rejection_reason: string | null
 }
 
 export interface ConcretePour {
@@ -452,6 +456,64 @@ export interface PurchaseOrder {
   actual_delivery: string | null
   status: string
   notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+// ============================================
+// SPRINT 6 TYPES
+// ============================================
+export interface ProjectRisk {
+  id: string
+  project_id: string
+  title: string
+  description: string | null
+  category: string
+  probability: string
+  impact: string
+  risk_score: number
+  mitigation: string | null
+  owner: string | null
+  status: string
+  due_date: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ProjectIssue {
+  id: string
+  project_id: string
+  issue_number: string
+  title: string
+  description: string | null
+  category: string
+  priority: string
+  status: string
+  raised_by: string | null
+  assigned_to: string | null
+  due_date: string | null
+  resolved_date: string | null
+  resolution_notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface MeetingMinutes {
+  id: string
+  project_id: string
+  meeting_date: string
+  meeting_type: string
+  location: string | null
+  attendees: string | null
+  agenda: string | null
+  minutes: string | null
+  action_items: string | null
+  next_meeting_date: string | null
+  chaired_by: string | null
+  status: string
   created_by: string | null
   created_at: string
   updated_at: string

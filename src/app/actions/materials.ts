@@ -45,3 +45,27 @@ export async function deleteMaterialDelivery(id: string, projectId: string) {
   revalidatePath(`/projects/${projectId}/materials`)
   return { success: true }
 }
+
+export async function approveMaterial(id: string, projectId: string, approvedBy: string) {
+  const supabase = await createClient()
+  const { error } = await supabase.from('material_deliveries').update({
+    approval_status: 'approved',
+    approved_by: approvedBy,
+    approved_at: new Date().toISOString(),
+    rejection_reason: null,
+  }).eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath(`/projects/${projectId}/materials`)
+  return { success: true }
+}
+
+export async function rejectMaterial(id: string, projectId: string, reason: string) {
+  const supabase = await createClient()
+  const { error } = await supabase.from('material_deliveries').update({
+    approval_status: 'rejected',
+    rejection_reason: reason,
+  }).eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath(`/projects/${projectId}/materials`)
+  return { success: true }
+}
