@@ -5,12 +5,19 @@ import { useEffect } from 'react'
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const lang = localStorage.getItem('app_language') ?? 'en'
-    if (lang === 'ar' || lang === 'he') {
-      document.documentElement.setAttribute('dir', 'rtl')
-      document.documentElement.style.fontFamily = "'Arial', sans-serif"
+    const html = document.documentElement
+
+    // Remove previous font classes
+    html.classList.remove('font-arabic', 'font-hebrew')
+
+    if (lang === 'ar') {
+      html.setAttribute('dir', 'rtl')
+      html.classList.add('font-arabic')
+    } else if (lang === 'he') {
+      html.setAttribute('dir', 'rtl')
+      html.classList.add('font-hebrew')
     } else {
-      document.documentElement.setAttribute('dir', 'ltr')
-      document.documentElement.style.fontFamily = ''
+      html.setAttribute('dir', 'ltr')
     }
   }, [])
 

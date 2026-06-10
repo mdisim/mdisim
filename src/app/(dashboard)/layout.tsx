@@ -27,7 +27,7 @@ export default async function DashboardLayout({
     <LanguageProvider>
       <SidebarProvider>
         <div className="flex h-screen bg-slate-50 overflow-hidden">
-          <Sidebar unreadNotifications={unreadCount ?? 0} />
+          <Sidebar unreadNotifications={unreadCount ?? 0} userEmail={user.email} />
           <div className="flex-1 flex flex-col overflow-hidden min-w-0">
             <Header userEmail={user.email} />
             <main className="flex-1 overflow-y-auto p-4 md:p-6">

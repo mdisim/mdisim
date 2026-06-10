@@ -23,46 +23,71 @@ import {
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 
-const navItems = [
+const projectsGroup = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/projects', icon: FolderKanban, label: 'Projects' },
   { href: '/executive', icon: BarChart3, label: 'Executive' },
+]
+
+const operationsGroup = [
   { href: '/infrastructure', icon: Map, label: 'Infrastructure' },
   { href: '/tenders', icon: Gavel, label: 'Tenders' },
+  { href: '/contractors', icon: Users, label: 'Contractors' },
+]
+
+const toolsGroup = [
   { href: '/calculators', icon: Calculator, label: 'Calculators' },
   { href: '/boq-library', icon: BookOpen, label: 'BOQ Library' },
-  { href: '/contractors', icon: Users, label: 'Contractors' },
   { href: '/learn', icon: GraduationCap, label: 'Learn' },
+]
+
+const adminGroup = [
   { href: '/settings', icon: Settings, label: 'Settings' },
 ]
 
-export function Sidebar({ unreadNotifications = 0 }: { unreadNotifications?: number }) {
+interface SidebarProps {
+  unreadNotifications?: number
+  userEmail?: string
+}
+
+export function Sidebar({ unreadNotifications = 0, userEmail }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const { mobileOpen, setMobileOpen } = useSidebar()
+
+  const sectionLabel = (label: string) =>
+    !collapsed && (
+      <p className="px-3 mb-1 mt-4 text-xs font-semibold uppercase tracking-widest text-white/30 first:mt-0">
+        {label}
+      </p>
+    )
 
   const sidebarContent = (
     <aside
       className={cn(
-        'bg-slate-900 flex flex-col transition-all duration-300 relative h-full',
+        'flex flex-col transition-all duration-300 relative h-full',
+        'bg-[#1e3a5f]',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
       {/* Logo */}
-      <div className={cn('flex items-center gap-3 px-4 py-5 border-b border-slate-800', collapsed && 'justify-center px-2')}>
+      <div className={cn(
+        'flex items-center gap-3 px-4 py-5 border-b border-white/10',
+        collapsed && 'justify-center px-2'
+      )}>
         <div className="w-9 h-9 bg-amber-500 rounded-lg flex items-center justify-center shrink-0">
           <HardHat size={20} className="text-white" />
         </div>
         {!collapsed && (
           <div className="flex-1">
-            <h1 className="text-white font-bold text-sm leading-tight">ANGEL D.C.</h1>
-            <p className="text-slate-400 text-xs">Construction Management</p>
+            <h1 className="text-white font-bold text-sm leading-tight tracking-wide">ANGEL D.C.</h1>
+            <p className="text-amber-400 text-xs mt-0.5">Construction Management</p>
           </div>
         )}
         {/* Close button on mobile */}
         {!collapsed && (
           <button
             onClick={() => setMobileOpen(false)}
-            className="md:hidden p-1 rounded text-slate-400 hover:text-white"
+            className="md:hidden p-1 rounded text-white/50 hover:text-white"
             aria-label="Close menu"
           >
             <X size={18} />
@@ -71,19 +96,58 @@ export function Sidebar({ unreadNotifications = 0 }: { unreadNotifications?: num
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-2 py-4 space-y-1">
-        {navItems.map((item) => (
-          <NavItem
-            key={item.href}
-            {...item}
-            collapsed={collapsed}
-            onNavigate={() => setMobileOpen(false)}
-          />
-        ))}
+      <nav className="flex-1 px-2 py-4 overflow-y-auto">
+        {sectionLabel('Projects')}
+        <div className="space-y-0.5">
+          {projectsGroup.map((item) => (
+            <NavItem
+              key={item.href}
+              {...item}
+              collapsed={collapsed}
+              onNavigate={() => setMobileOpen(false)}
+            />
+          ))}
+        </div>
+
+        {sectionLabel('Operations')}
+        <div className="space-y-0.5">
+          {operationsGroup.map((item) => (
+            <NavItem
+              key={item.href}
+              {...item}
+              collapsed={collapsed}
+              onNavigate={() => setMobileOpen(false)}
+            />
+          ))}
+        </div>
+
+        {sectionLabel('Tools')}
+        <div className="space-y-0.5">
+          {toolsGroup.map((item) => (
+            <NavItem
+              key={item.href}
+              {...item}
+              collapsed={collapsed}
+              onNavigate={() => setMobileOpen(false)}
+            />
+          ))}
+        </div>
+
+        {sectionLabel('Admin')}
+        <div className="space-y-0.5">
+          {adminGroup.map((item) => (
+            <NavItem
+              key={item.href}
+              {...item}
+              collapsed={collapsed}
+              onNavigate={() => setMobileOpen(false)}
+            />
+          ))}
+        </div>
       </nav>
 
       {/* Notifications */}
-      <div className="px-2 pb-2 border-t border-slate-800 pt-2">
+      <div className="px-2 pb-2 border-t border-white/10 pt-2">
         <NavItem
           href="/notifications"
           icon={Bell}
@@ -94,12 +158,19 @@ export function Sidebar({ unreadNotifications = 0 }: { unreadNotifications?: num
         />
       </div>
 
+      {/* User email */}
+      {!collapsed && userEmail && (
+        <div className="px-4 py-2 border-t border-white/10">
+          <p className="text-xs text-white/40 truncate">{userEmail}</p>
+        </div>
+      )}
+
       {/* Collapse button (desktop only) */}
-      <div className="hidden md:block px-2 py-4 border-t border-slate-800">
+      <div className="hidden md:block px-2 py-3 border-t border-white/10">
         <button
           onClick={() => setCollapsed(!collapsed)}
           className={cn(
-            'flex items-center gap-2 px-3 py-2 w-full rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all text-sm',
+            'flex items-center gap-2 px-3 py-2 w-full rounded-lg text-white/50 hover:bg-white/10 hover:text-white transition-all text-sm',
             collapsed && 'justify-center'
           )}
         >
@@ -117,13 +188,13 @@ export function Sidebar({ unreadNotifications = 0 }: { unreadNotifications?: num
   return (
     <>
       {/* Desktop sidebar */}
-      <div className="hidden md:flex h-full">
+      <div className="hidden md:flex h-full no-print">
         {sidebarContent}
       </div>
 
       {/* Mobile overlay */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
+        <div className="fixed inset-0 z-50 md:hidden no-print">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/60"
