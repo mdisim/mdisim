@@ -16,6 +16,9 @@ import {
   BarChart3,
   Gavel,
   Calculator,
+  GraduationCap,
+  Map,
+  Bell,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -24,14 +27,16 @@ const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/projects', icon: FolderKanban, label: 'Projects' },
   { href: '/executive', icon: BarChart3, label: 'Executive' },
+  { href: '/infrastructure', icon: Map, label: 'Infrastructure' },
   { href: '/tenders', icon: Gavel, label: 'Tenders' },
   { href: '/calculators', icon: Calculator, label: 'Calculators' },
   { href: '/boq-library', icon: BookOpen, label: 'BOQ Library' },
   { href: '/contractors', icon: Users, label: 'Contractors' },
+  { href: '/learn', icon: GraduationCap, label: 'Learn' },
   { href: '/settings', icon: Settings, label: 'Settings' },
 ]
 
-export function Sidebar() {
+export function Sidebar({ unreadNotifications = 0 }: { unreadNotifications?: number }) {
   const [collapsed, setCollapsed] = useState(false)
   const { mobileOpen, setMobileOpen } = useSidebar()
 
@@ -76,6 +81,18 @@ export function Sidebar() {
           />
         ))}
       </nav>
+
+      {/* Notifications */}
+      <div className="px-2 pb-2 border-t border-slate-800 pt-2">
+        <NavItem
+          href="/notifications"
+          icon={Bell}
+          label="Notifications"
+          collapsed={collapsed}
+          onNavigate={() => setMobileOpen(false)}
+          badge={unreadNotifications > 0 ? unreadNotifications : undefined}
+        />
+      </div>
 
       {/* Collapse button (desktop only) */}
       <div className="hidden md:block px-2 py-4 border-t border-slate-800">

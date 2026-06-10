@@ -11,9 +11,10 @@ interface NavItemProps {
   label: string
   collapsed?: boolean
   onNavigate?: () => void
+  badge?: number
 }
 
-export function NavItem({ href, icon: Icon, label, collapsed, onNavigate }: NavItemProps) {
+export function NavItem({ href, icon: Icon, label, collapsed, onNavigate, badge }: NavItemProps) {
   const pathname = usePathname()
   const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
 
@@ -31,7 +32,15 @@ export function NavItem({ href, icon: Icon, label, collapsed, onNavigate }: NavI
       title={collapsed ? label : undefined}
     >
       <Icon size={18} className="shrink-0" />
-      {!collapsed && <span>{label}</span>}
+      {!collapsed && <span className="flex-1">{label}</span>}
+      {badge !== undefined && badge > 0 && (
+        <span className={cn(
+          'rounded-full bg-red-500 text-white text-xs font-bold leading-none flex items-center justify-center shrink-0',
+          collapsed ? 'w-4 h-4 text-[9px]' : 'min-w-[18px] h-[18px] px-1'
+        )}>
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
     </Link>
   )
 }
