@@ -22,30 +22,33 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-2xl">
+    <div className="space-y-6 max-w-5xl">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
         <p className="text-slate-500 text-sm mt-1">Manage your company profile and account details</p>
       </div>
 
-      {/* Account Info */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
-        <h2 className="font-semibold text-slate-800 text-base">Account Information</h2>
+      {/* Account Info bar */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap items-center gap-6">
         <div>
-          <label className="block text-xs text-slate-400 uppercase tracking-wide mb-1">Email</label>
-          <p className="text-slate-800 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-sm">
-            {user?.email}
-          </p>
+          <label className="block text-xs text-slate-400 uppercase tracking-wide mb-0.5">Email</label>
+          <p className="text-slate-800 text-sm font-medium">{user?.email}</p>
         </div>
         <div>
-          <label className="block text-xs text-slate-400 uppercase tracking-wide mb-1">Member Since</label>
-          <p className="text-slate-800 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-sm">
+          <label className="block text-xs text-slate-400 uppercase tracking-wide mb-0.5">Member Since</label>
+          <p className="text-slate-800 text-sm font-medium">
             {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}
           </p>
         </div>
+        {company?.id && (
+          <div>
+            <label className="block text-xs text-slate-400 uppercase tracking-wide mb-0.5">Company ID</label>
+            <p className="text-slate-500 text-xs font-mono">{company.id}</p>
+          </div>
+        )}
       </div>
 
-      {/* Editable form */}
+      {/* Two-column settings form */}
       <SettingsForm profile={profile} company={company} />
     </div>
   )

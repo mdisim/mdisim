@@ -12,6 +12,8 @@ import {
   Users,
   ClipboardList,
   Ruler,
+  GitBranch,
+  Award,
 } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/badge'
 
@@ -52,6 +54,8 @@ export default async function ProjectDetailPage({
     { href: `/projects/${id}/contractors`, label: 'Contractor Payments', icon: Users, count: payments?.length ?? 0 },
     { href: `/projects/${id}/reports`, label: 'Site Daily Reports', icon: ClipboardList, count: (reportsCount as unknown as { count: number } | null)?.count ?? 0 },
     { href: `/projects/${id}/takeoff`, label: 'Quantity Takeoff', icon: Ruler, count: (drawingsCount as unknown as { count: number } | null)?.count ?? 0 },
+    { href: `/projects/${id}/phases`, label: 'Phases & Milestones', icon: GitBranch, count: 0 },
+    { href: `/projects/${id}/certificates`, label: 'Payment Certificates', icon: Award, count: 0 },
   ]
 
   return (

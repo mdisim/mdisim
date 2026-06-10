@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { StatsCard } from '@/components/dashboard/stats-card'
 import { RecentActivity } from '@/components/dashboard/recent-activity'
+import { BudgetChart, StatusDonut } from '@/components/dashboard/charts'
 import Link from 'next/link'
 import {
   FolderKanban,
@@ -12,6 +13,7 @@ import {
   Plus,
   UserPlus,
   FileText,
+  Wallet,
 } from 'lucide-react'
 
 export default async function DashboardPage() {
@@ -53,8 +55,22 @@ export default async function DashboardPage() {
   const totalSpent = costEntries?.reduce((sum, c) => sum + (c.amount || 0), 0) ?? 0
   const activeProjects = projects?.filter(p => p.status === 'active').length ?? 0
   const pendingPayments = payments?.filter(p => p.status === 'pending').reduce((sum, p) => sum + p.amount, 0) ?? 0
+  const budgetRemaining = totalBudget - totalSpent
 
   const recentProjects = projects?.slice(-5).reverse() ?? []
+
+  // Build costs-by-project map for chart
+  const costsByProject: Record<string, number> = {}
+  costEntries?.forEach(c => {
+    costsByProject[c.project_id] = (costsByProject[c.project_id] ?? 0) + c.amount
+  })
+
+  const statusCounts = {
+    planning: projects?.filter(p => p.status === 'planning').length ?? 0,
+    active: projects?.filter(p => p.status === 'active').length ?? 0,
+    on_hold: projects?.filter(p => p.status === 'on_hold').length ?? 0,
+    completed: projects?.filter(p => p.status === 'completed').length ?? 0,
+  }
 
   return (
     <div className="space-y-6">
@@ -117,13 +133,20 @@ export default async function DashboardPage() {
           value={`$${totalBudget.toLocaleString()}`}
           icon={DollarSign}
           color="green"
-          className="xl:col-span-2"
+          className="xl:col-span-1"
         />
         <StatsCard
           title="Total Spent"
           value={`$${totalSpent.toLocaleString()}`}
           icon={TrendingUp}
           color="red"
+          className="xl:col-span-1"
+        />
+        <StatsCard
+          title="Budget Remaining"
+          value={`$${budgetRemaining.toLocaleString()}`}
+          icon={Wallet}
+          color={budgetRemaining < 0 ? 'red' : 'green'}
           className="xl:col-span-1"
         />
         <StatsCard
@@ -158,6 +181,12 @@ export default async function DashboardPage() {
           </p>
         </div>
       )}
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <BudgetChart projects={projects ?? []} costsByProject={costsByProject} />
+        <StatusDonut counts={statusCounts} />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Projects */}

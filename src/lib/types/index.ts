@@ -269,3 +269,46 @@ export interface MeasurementTemplate {
   unit: string
   defaultLabel: string
 }
+
+export interface PaymentCertificate {
+  id: string
+  project_id: string
+  certificate_number: string
+  period_start: string
+  period_end: string
+  status: 'draft' | 'submitted' | 'certified' | 'paid'
+  total_certified: number
+  retention_percent: number
+  retention_amount: number
+  net_payment: number
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ProjectPhase {
+  id: string
+  project_id: string
+  name: string
+  description: string | null
+  start_date: string | null
+  end_date: string | null
+  progress_percent: number
+  status: 'not_started' | 'in_progress' | 'completed' | 'on_hold'
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface ProjectMilestone {
+  id: string
+  project_id: string
+  phase_id: string | null
+  name: string
+  due_date: string | null
+  completed_date: string | null
+  status: 'pending' | 'completed' | 'missed'
+  notes: string | null
+  created_at: string
+}

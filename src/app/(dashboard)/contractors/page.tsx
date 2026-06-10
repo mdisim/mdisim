@@ -30,6 +30,9 @@ export default async function ContractorsPage() {
           <Users size={48} className="mb-4 opacity-30" />
           <p className="text-lg font-medium">No contractors yet</p>
           <p className="text-sm mt-1">Add contractors to assign payments to them</p>
+          <div className="mt-4">
+            <NewContractorButton />
+          </div>
         </div>
       )}
     </div>

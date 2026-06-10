@@ -450,3 +450,70 @@ CREATE INDEX idx_profiles_company_id ON profiles(company_id);
 
 CREATE TRIGGER companies_updated_at BEFORE UPDATE ON companies FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER profiles_updated_at BEFORE UPDATE ON profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ============================================
+-- PAYMENT CERTIFICATES
+-- ============================================
+CREATE TABLE IF NOT EXISTS payment_certificates (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE NOT NULL,
+  certificate_number VARCHAR(50) NOT NULL,
+  period_start DATE NOT NULL,
+  period_end DATE NOT NULL,
+  status VARCHAR(30) DEFAULT 'draft' CHECK (status IN ('draft', 'submitted', 'certified', 'paid')),
+  total_certified DECIMAL(15,2) DEFAULT 0,
+  retention_percent DECIMAL(5,2) DEFAULT 0,
+  retention_amount DECIMAL(15,2) DEFAULT 0,
+  net_payment DECIMAL(15,2) DEFAULT 0,
+  notes TEXT,
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE payment_certificates ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users manage payment certificates" ON payment_certificates
+  FOR ALL USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = payment_certificates.project_id AND projects.created_by = auth.uid()));
+CREATE INDEX idx_payment_certs_project ON payment_certificates(project_id);
+CREATE TRIGGER payment_certs_updated_at BEFORE UPDATE ON payment_certificates FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ============================================
+-- PROJECT PHASES & MILESTONES
+-- ============================================
+CREATE TABLE IF NOT EXISTS project_phases (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  start_date DATE,
+  end_date DATE,
+  progress_percent INTEGER DEFAULT 0 CHECK (progress_percent BETWEEN 0 AND 100),
+  status VARCHAR(30) DEFAULT 'not_started' CHECK (status IN ('not_started','in_progress','completed','on_hold')),
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS project_milestones (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE NOT NULL,
+  phase_id UUID REFERENCES project_phases(id) ON DELETE SET NULL,
+  name VARCHAR(255) NOT NULL,
+  due_date DATE,
+  completed_date DATE,
+  status VARCHAR(30) DEFAULT 'pending' CHECK (status IN ('pending','completed','missed')),
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE project_phases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE project_milestones ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users manage project phases" ON project_phases
+  FOR ALL USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = project_phases.project_id AND projects.created_by = auth.uid()));
+CREATE POLICY "Users manage project milestones" ON project_milestones
+  FOR ALL USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = project_milestones.project_id AND projects.created_by = auth.uid()));
+
+CREATE INDEX idx_project_phases_project ON project_phases(project_id);
+CREATE INDEX idx_project_milestones_project ON project_milestones(project_id);
+CREATE TRIGGER project_phases_updated_at BEFORE UPDATE ON project_phases FOR EACH ROW EXECUTE FUNCTION update_updated_at();
