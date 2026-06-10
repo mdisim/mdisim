@@ -12,6 +12,7 @@ import {
   ChevronRight,
   X,
   ClipboardList,
+  BookOpen,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -19,6 +20,7 @@ import { cn } from '@/lib/utils'
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/projects', icon: FolderKanban, label: 'Projects' },
+  { href: '/boq-library', icon: BookOpen, label: 'BOQ Library' },
   { href: '/contractors', icon: Users, label: 'Contractors' },
   { href: '/settings', icon: Settings, label: 'Settings' },
 ]

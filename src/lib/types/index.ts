@@ -312,3 +312,89 @@ export interface ProjectMilestone {
   notes: string | null
   created_at: string
 }
+
+export interface BOQLibraryItem {
+  id: string
+  company_id: string | null
+  item_code: string
+  description: string
+  unit: string
+  unit_rate: number
+  category: string | null
+  trade: string | null
+  is_global: boolean
+  created_at: string
+}
+
+export interface Variation {
+  id: string
+  project_id: string
+  variation_number: string
+  title: string
+  description: string | null
+  type: 'addition' | 'omission' | 'substitution' | 'provisional'
+  status: 'pending' | 'submitted' | 'approved' | 'rejected' | 'withdrawn'
+  amount: number
+  approved_amount: number | null
+  submitted_date: string | null
+  approved_date: string | null
+  raised_by: string | null
+  approved_by: string | null
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface MaterialDelivery {
+  id: string
+  project_id: string
+  material_name: string
+  category: string | null
+  quantity: number
+  unit: string
+  delivery_date: string
+  supplier: string | null
+  delivery_note_number: string | null
+  received_by: string | null
+  location_on_site: string | null
+  notes: string | null
+  created_by: string | null
+  created_at: string
+}
+
+export interface ConcretePour {
+  id: string
+  project_id: string
+  pour_date: string
+  element_type: string
+  location: string | null
+  mix_design: string | null
+  volume_m3: number
+  strength_mpa: number | null
+  supplier: string | null
+  batch_numbers: string | null
+  slump_mm: number | null
+  temp_celsius: number | null
+  test_cubes: number
+  notes: string | null
+  created_by: string | null
+  created_at: string
+}
+
+export interface ReinforcementRecord {
+  id: string
+  project_id: string
+  record_date: string
+  element_type: string
+  location: string | null
+  bar_diameter_mm: number | null
+  steel_grade: string | null
+  quantity_kg: number | null
+  quantity_tonnes: number | null
+  supplier: string | null
+  heat_number: string | null
+  notes: string | null
+  created_by: string | null
+  created_at: string
+}

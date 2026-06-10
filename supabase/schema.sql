@@ -517,3 +517,127 @@ CREATE POLICY "Users manage project milestones" ON project_milestones
 CREATE INDEX idx_project_phases_project ON project_phases(project_id);
 CREATE INDEX idx_project_milestones_project ON project_milestones(project_id);
 CREATE TRIGGER project_phases_updated_at BEFORE UPDATE ON project_phases FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ============================================
+-- BOQ LIBRARY
+-- ============================================
+CREATE TABLE IF NOT EXISTS boq_library (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
+  item_code VARCHAR(50) NOT NULL,
+  description TEXT NOT NULL,
+  unit VARCHAR(50) NOT NULL,
+  unit_rate DECIMAL(15,2) DEFAULT 0,
+  category VARCHAR(100),
+  trade VARCHAR(100),
+  is_global BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+ALTER TABLE boq_library ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users manage own library" ON boq_library
+  FOR ALL USING (
+    company_id IS NULL OR
+    EXISTS (SELECT 1 FROM profiles WHERE profiles.company_id = boq_library.company_id AND profiles.id = auth.uid())
+  );
+CREATE INDEX idx_boq_library_company ON boq_library(company_id);
+CREATE INDEX idx_boq_library_category ON boq_library(category);
+
+-- ============================================
+-- VARIATIONS & CHANGE ORDERS
+-- ============================================
+CREATE TABLE IF NOT EXISTS variations (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE NOT NULL,
+  variation_number VARCHAR(50) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  type VARCHAR(30) DEFAULT 'addition' CHECK (type IN ('addition','omission','substitution','provisional')),
+  status VARCHAR(30) DEFAULT 'pending' CHECK (status IN ('pending','submitted','approved','rejected','withdrawn')),
+  amount DECIMAL(15,2) DEFAULT 0,
+  approved_amount DECIMAL(15,2),
+  submitted_date DATE,
+  approved_date DATE,
+  raised_by VARCHAR(100),
+  approved_by VARCHAR(100),
+  notes TEXT,
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+ALTER TABLE variations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users manage variations" ON variations
+  FOR ALL USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = variations.project_id AND projects.created_by = auth.uid()));
+CREATE INDEX idx_variations_project ON variations(project_id);
+CREATE TRIGGER variations_updated_at BEFORE UPDATE ON variations FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ============================================
+-- MATERIAL DELIVERIES
+-- ============================================
+CREATE TABLE IF NOT EXISTS material_deliveries (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE NOT NULL,
+  material_name VARCHAR(255) NOT NULL,
+  category VARCHAR(100),
+  quantity DECIMAL(15,3) NOT NULL,
+  unit VARCHAR(50) NOT NULL,
+  delivery_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  supplier VARCHAR(255),
+  delivery_note_number VARCHAR(100),
+  received_by VARCHAR(100),
+  location_on_site VARCHAR(255),
+  notes TEXT,
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+ALTER TABLE material_deliveries ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users manage material deliveries" ON material_deliveries
+  FOR ALL USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = material_deliveries.project_id AND projects.created_by = auth.uid()));
+CREATE INDEX idx_material_deliveries_project ON material_deliveries(project_id);
+
+-- ============================================
+-- CONCRETE POURS & REINFORCEMENT
+-- ============================================
+CREATE TABLE IF NOT EXISTS concrete_pours (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE NOT NULL,
+  pour_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  element_type VARCHAR(100) NOT NULL,
+  location VARCHAR(255),
+  mix_design VARCHAR(50),
+  volume_m3 DECIMAL(10,2) NOT NULL,
+  strength_mpa INTEGER,
+  supplier VARCHAR(255),
+  batch_numbers TEXT,
+  slump_mm INTEGER,
+  temp_celsius DECIMAL(5,1),
+  test_cubes INTEGER DEFAULT 0,
+  notes TEXT,
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS reinforcement_records (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE NOT NULL,
+  record_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  element_type VARCHAR(100) NOT NULL,
+  location VARCHAR(255),
+  bar_diameter_mm INTEGER,
+  steel_grade VARCHAR(20),
+  quantity_kg DECIMAL(12,2),
+  quantity_tonnes DECIMAL(10,3),
+  supplier VARCHAR(255),
+  heat_number VARCHAR(100),
+  notes TEXT,
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE concrete_pours ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reinforcement_records ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users manage concrete pours" ON concrete_pours
+  FOR ALL USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = concrete_pours.project_id AND projects.created_by = auth.uid()));
+CREATE POLICY "Users manage reinforcement records" ON reinforcement_records
+  FOR ALL USING (EXISTS (SELECT 1 FROM projects WHERE projects.id = reinforcement_records.project_id AND projects.created_by = auth.uid()));
+CREATE INDEX idx_concrete_pours_project ON concrete_pours(project_id);
+CREATE INDEX idx_reinforcement_project ON reinforcement_records(project_id);

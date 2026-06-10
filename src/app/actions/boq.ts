@@ -45,3 +45,30 @@ export async function deleteBOQItem(id: string, projectId: string) {
   revalidatePath(`/projects/${projectId}/boq`)
   return { success: true }
 }
+
+export interface BulkBOQItem {
+  item_code: string
+  description: string
+  unit: string
+  quantity: number
+  unit_rate: number
+  category: string | null
+}
+
+export async function bulkCreateBOQItems(projectId: string, items: BulkBOQItem[]) {
+  const supabase = await createClient()
+  const rows = items.map((item) => ({
+    project_id: projectId,
+    item_code: item.item_code,
+    description: item.description,
+    unit: item.unit,
+    quantity: item.quantity,
+    unit_rate: item.unit_rate,
+    category: item.category || null,
+    notes: null,
+  }))
+  const { error } = await supabase.from('boq_items').insert(rows)
+  if (error) return { error: error.message }
+  revalidatePath(`/projects/${projectId}/boq`)
+  return { success: true, count: rows.length }
+}
