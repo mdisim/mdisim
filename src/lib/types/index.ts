@@ -6,6 +6,8 @@ export interface Company {
   phone: string | null
   email: string | null
   website: string | null
+  registration_number: string | null
+  vat_number: string | null
   created_at: string
   updated_at: string
 }
@@ -517,6 +519,72 @@ export interface MeetingMinutes {
   created_by: string | null
   created_at: string
   updated_at: string
+}
+
+// ============================================
+// SPRINT 8A TYPES
+// ============================================
+export type UserRole = 'super_admin' | 'company_admin' | 'project_manager' | 'quantity_surveyor' | 'site_engineer' | 'viewer'
+
+export interface AuditLog {
+  id: string
+  user_id: string | null
+  user_email: string | null
+  action: string
+  resource_type: string
+  resource_id: string | null
+  resource_name: string | null
+  old_values: Record<string, unknown> | null
+  new_values: Record<string, unknown> | null
+  ip_address: string | null
+  created_at: string
+}
+
+export interface TeamInvitation {
+  id: string
+  company_id: string
+  email: string
+  role: string
+  invited_by: string | null
+  token: string
+  status: string | null
+  expires_at: string
+  created_at: string
+}
+
+// ============================================
+// SPRINT 8B TYPES
+// ============================================
+export interface ProjectCorrespondence {
+  id: string
+  project_id: string
+  reference_number: string
+  subject: string
+  direction: string
+  correspondent: string | null
+  letter_date: string | null
+  received_date: string | null
+  category: string
+  status: string
+  summary: string | null
+  action_required: string | null
+  due_date: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DocumentRevision {
+  id: string
+  document_id: string
+  revision: string
+  status: string
+  notes: string | null
+  reviewed_by: string | null
+  approved_by: string | null
+  approved_date: string | null
+  created_by: string | null
+  created_at: string
 }
 
 export interface ReinforcementRecord {

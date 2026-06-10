@@ -35,13 +35,13 @@ export async function ensureUserProfile(): Promise<{
     return { error: companyError?.message ?? 'Failed to create company' }
   }
 
-  // Upsert profile
+  // Upsert profile with company_admin role for the first user
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .upsert({
       id: user.id,
       company_id: company.id,
-      role: 'owner',
+      role: 'company_admin',
     })
     .select('id, company_id, full_name, role')
     .single()
@@ -49,6 +49,9 @@ export async function ensureUserProfile(): Promise<{
   if (profileError || !profile) {
     return { error: profileError?.message ?? 'Failed to create profile' }
   }
+
+  // Sync role to user_metadata so proxy.ts can read it without a DB query
+  await supabase.auth.updateUser({ data: { role: 'company_admin' } })
 
   return { company_id: company.id, profile: profile as { id: string; company_id: string; full_name: string | null; role: string | null } }
 }
@@ -86,6 +89,9 @@ export async function saveSettings(formData: FormData) {
       phone: formData.get('phone') as string || null,
       email: formData.get('company_email') as string || null,
       website: formData.get('website') as string || null,
+      registration_number: formData.get('registration_number') as string || null,
+      vat_number: formData.get('vat_number') as string || null,
+      logo_url: formData.get('logo_url') as string || null,
     })
     .eq('id', company_id)
 

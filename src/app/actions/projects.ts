@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { ensureUserProfile } from './profile'
+import { logAction } from './audit'
 
 export async function createProject(formData: FormData) {
   const supabase = await createClient()
@@ -26,6 +27,7 @@ export async function createProject(formData: FormData) {
   })
 
   if (error) return { error: error.message }
+  await logAction({ action: 'created', resource_type: 'project', resource_name: formData.get('name') as string })
   revalidatePath('/projects')
   return { success: true }
 }
@@ -59,6 +61,7 @@ export async function deleteProject(id: string) {
 
   const { error } = await supabase.from('projects').delete().eq('id', id).eq('created_by', user.id)
   if (error) return { error: error.message }
+  await logAction({ action: 'deleted', resource_type: 'project', resource_id: id })
   revalidatePath('/projects')
   return { success: true }
 }

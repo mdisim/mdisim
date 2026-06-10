@@ -744,3 +744,65 @@ CREATE POLICY "Users manage own project documents" ON project_documents
   FOR ALL USING (
     EXISTS (SELECT 1 FROM projects WHERE projects.id = project_documents.project_id AND projects.created_by = auth.uid())
   );
+
+-- ============================================
+-- SPRINT 8A: RBAC, AUDIT LOGS, TEAM INVITATIONS
+-- ============================================
+
+-- Role permissions reference table
+CREATE TABLE IF NOT EXISTS role_permissions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  role text NOT NULL,
+  resource text NOT NULL,
+  action text NOT NULL,
+  UNIQUE(role, resource, action)
+);
+
+-- Audit log table
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id),
+  user_email text,
+  action text NOT NULL,
+  resource_type text NOT NULL,
+  resource_id uuid,
+  resource_name text,
+  old_values jsonb,
+  new_values jsonb,
+  ip_address text,
+  created_at timestamptz DEFAULT now()
+);
+ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Company members can view own audit logs" ON audit_logs
+  FOR SELECT USING (
+    user_id = auth.uid() OR
+    EXISTS (
+      SELECT 1 FROM profiles p1
+      JOIN profiles p2 ON p1.company_id = p2.company_id
+      WHERE p1.id = auth.uid() AND p2.id = audit_logs.user_id
+        AND p1.role IN ('super_admin','company_admin')
+    )
+  );
+CREATE POLICY "Service role can insert audit logs" ON audit_logs
+  FOR INSERT WITH CHECK (true);
+
+-- Team invitations table
+CREATE TABLE IF NOT EXISTS team_invitations (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id uuid NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  email text NOT NULL,
+  role text NOT NULL DEFAULT 'viewer',
+  invited_by uuid REFERENCES auth.users(id),
+  token text NOT NULL DEFAULT encode(gen_random_bytes(32), 'hex'),
+  status text DEFAULT 'pending',
+  expires_at timestamptz DEFAULT now() + interval '7 days',
+  created_at timestamptz DEFAULT now()
+);
+ALTER TABLE team_invitations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Company admins manage invitations" ON team_invitations
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM profiles WHERE profiles.company_id = team_invitations.company_id
+        AND profiles.id = auth.uid() AND profiles.role IN ('super_admin','company_admin')
+    )
+  );

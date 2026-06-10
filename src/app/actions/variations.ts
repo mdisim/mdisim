@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { logAction } from './audit'
 
 export async function getVariations(projectId: string) {
   const supabase = await createClient()
@@ -32,6 +33,7 @@ export async function createVariation(projectId: string, formData: FormData) {
   })
 
   if (error) return { error: error.message }
+  await logAction({ action: 'created', resource_type: 'variation', resource_name: formData.get('title') as string })
   revalidatePath(`/projects/${projectId}/variations`)
   return { success: true }
 }
@@ -75,6 +77,7 @@ export async function advanceVariationStatus(id: string, projectId: string, newS
 
   const { error } = await supabase.from('variations').update(updates).eq('id', id)
   if (error) return { error: error.message }
+  await logAction({ action: 'status_changed', resource_type: 'variation', resource_id: id, new_values: { status: newStatus } })
   revalidatePath(`/projects/${projectId}/variations`)
   return { success: true }
 }

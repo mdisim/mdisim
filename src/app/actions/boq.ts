@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { logAction } from './audit'
 
 export async function createBOQItem(projectId: string, formData: FormData) {
   const supabase = await createClient()
@@ -17,6 +18,7 @@ export async function createBOQItem(projectId: string, formData: FormData) {
   })
 
   if (error) return { error: error.message }
+  await logAction({ action: 'created', resource_type: 'boq_item', resource_name: formData.get('description') as string })
   revalidatePath(`/projects/${projectId}/boq`)
   return { success: true }
 }
