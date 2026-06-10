@@ -26,6 +26,8 @@ import {
   ShieldAlert,
   AlertCircle,
   Users2,
+  Mail,
+  GitCompare,
 } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/badge'
 
@@ -126,6 +128,8 @@ export default async function ProjectDetailPage({
     { href: `/projects/${id}/risks`, label: 'Risk Register', icon: ShieldAlert, count: 0 },
     { href: `/projects/${id}/issues`, label: 'Issues Register', icon: AlertCircle, count: 0 },
     { href: `/projects/${id}/meetings`, label: 'Meeting Minutes', icon: Users2, count: 0 },
+    { href: `/projects/${id}/correspondence`, label: 'Correspondence', icon: Mail, count: 0 },
+    { href: `/projects/${id}/boq-comparison`, label: 'BOQ Comparison', icon: GitCompare, count: 0 },
   ]
 
   return (

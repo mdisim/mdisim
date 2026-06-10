@@ -4,6 +4,73 @@ import { useState } from 'react'
 import { saveSettings } from '@/app/actions/profile'
 import { Company, Profile } from '@/lib/types'
 
+interface DangerZoneProps {
+  companyName: string
+}
+
+function DangerZone({ companyName }: DangerZoneProps) {
+  const [showExportModal, setShowExportModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState('')
+
+  return (
+    <div className="bg-white rounded-xl border border-red-200 p-6 space-y-4 col-span-full">
+      <h2 className="font-semibold text-red-700 text-base">Danger Zone</h2>
+      <div className="flex flex-wrap gap-4">
+        <button
+          onClick={() => setShowExportModal(true)}
+          className="px-4 py-2 border border-slate-300 text-slate-700 text-sm rounded-lg hover:bg-slate-50 transition-colors"
+        >
+          Export All Company Data
+        </button>
+        <button
+          onClick={() => setShowDeleteModal(true)}
+          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors"
+        >
+          Delete Company Account
+        </button>
+      </div>
+
+      {showExportModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <h3 className="font-semibold text-slate-800 mb-3">Data Export</h3>
+            <p className="text-slate-600 text-sm mb-4">Data export will be emailed to you. This may take a few minutes to process.</p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setShowExportModal(false)} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800">Cancel</button>
+              <button onClick={() => setShowExportModal(false)} className="px-6 py-2 bg-amber-500 hover:bg-amber-400 text-white text-sm font-semibold rounded-lg">Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <h3 className="font-semibold text-red-700 mb-3">Delete Company Account</h3>
+            <p className="text-slate-600 text-sm mb-4">This action cannot be undone. Type <strong>{companyName}</strong> to confirm.</p>
+            <input
+              value={deleteConfirm}
+              onChange={e => setDeleteConfirm(e.target.value)}
+              placeholder={companyName}
+              className="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-300 mb-4 focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+            <div className="flex justify-end gap-3">
+              <button onClick={() => { setShowDeleteModal(false); setDeleteConfirm('') }} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800">Cancel</button>
+              <button
+                disabled={deleteConfirm !== companyName}
+                className="px-6 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-40 text-white text-sm font-semibold rounded-lg transition-colors"
+              >
+                Delete Forever
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 interface SettingsFormProps {
   profile: (Profile & { companies?: Company }) | null
   company: Company | null
@@ -32,9 +99,9 @@ export function SettingsForm({ profile, company }: SettingsFormProps) {
     setCompanySaving(true)
     setCompanyMessage(null)
     const formData = new FormData(e.currentTarget)
-    // Add placeholder profile fields so saveSettings doesn't break
     formData.set('full_name', profile?.full_name ?? '')
     formData.set('role', profile?.role ?? 'owner')
+    // logo_url, registration_number, vat_number are already in the form
     const result = await saveSettings(formData)
     setCompanyMessage(
       'error' in result
@@ -63,6 +130,8 @@ export function SettingsForm({ profile, company }: SettingsFormProps) {
     )
     setProfileSaving(false)
   }
+
+  const isAdmin = ['company_admin', 'super_admin'].includes(profile?.role ?? '')
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -121,6 +190,40 @@ export function SettingsForm({ profile, company }: SettingsFormProps) {
           />
         </div>
 
+        <div>
+          <label className={labelClass}>Registration Number</label>
+          <input
+            name="registration_number"
+            defaultValue={company?.registration_number ?? ''}
+            placeholder="REG-123456"
+            className={inputClass}
+          />
+        </div>
+
+        <div>
+          <label className={labelClass}>VAT Number</label>
+          <input
+            name="vat_number"
+            defaultValue={company?.vat_number ?? ''}
+            placeholder="VAT-12345678"
+            className={inputClass}
+          />
+        </div>
+
+        <div>
+          <label className={labelClass}>Company Logo URL</label>
+          <input
+            name="logo_url"
+            defaultValue={company?.logo_url ?? ''}
+            placeholder="https://example.com/logo.png"
+            className={inputClass}
+          />
+          {company?.logo_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={company.logo_url} alt="Company logo" className="mt-2 h-12 object-contain rounded border border-slate-200" />
+          )}
+        </div>
+
         {companyMessage && <InlineMessage {...companyMessage} />}
 
         <button
@@ -171,6 +274,9 @@ export function SettingsForm({ profile, company }: SettingsFormProps) {
           {profileSaving ? 'Saving...' : 'Save Profile'}
         </button>
       </form>
+
+      {/* Danger Zone (admin only) */}
+      {isAdmin && <DangerZone companyName={company?.name ?? 'My Company'} />}
     </div>
   )
 }

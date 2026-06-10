@@ -22,28 +22,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-
-const projectsGroup = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/projects', icon: FolderKanban, label: 'Projects' },
-  { href: '/executive', icon: BarChart3, label: 'Executive' },
-]
-
-const operationsGroup = [
-  { href: '/infrastructure', icon: Map, label: 'Infrastructure' },
-  { href: '/tenders', icon: Gavel, label: 'Tenders' },
-  { href: '/contractors', icon: Users, label: 'Contractors' },
-]
-
-const toolsGroup = [
-  { href: '/calculators', icon: Calculator, label: 'Calculators' },
-  { href: '/boq-library', icon: BookOpen, label: 'BOQ Library' },
-  { href: '/learn', icon: GraduationCap, label: 'Learn' },
-]
-
-const adminGroup = [
-  { href: '/settings', icon: Settings, label: 'Settings' },
-]
+import { useTranslation } from '@/lib/i18n/use-translation'
 
 interface SidebarProps {
   unreadNotifications?: number
@@ -53,6 +32,30 @@ interface SidebarProps {
 export function Sidebar({ unreadNotifications = 0, userEmail }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const { mobileOpen, setMobileOpen } = useSidebar()
+  const { t } = useTranslation()
+
+  const projectsGroup = [
+    { href: '/dashboard', icon: LayoutDashboard, label: t('dashboard') },
+    { href: '/projects', icon: FolderKanban, label: t('projects') },
+    { href: '/executive', icon: BarChart3, label: t('executive') },
+  ]
+
+  const operationsGroup = [
+    { href: '/infrastructure', icon: Map, label: t('infrastructure') },
+    { href: '/tenders', icon: Gavel, label: t('tenders') },
+    { href: '/contractors', icon: Users, label: t('contractors') },
+    { href: '/team', icon: ClipboardList, label: t('team') },
+  ]
+
+  const toolsGroup = [
+    { href: '/calculators', icon: Calculator, label: t('calculators') },
+    { href: '/boq-library', icon: BookOpen, label: t('boq_library') },
+    { href: '/learn', icon: GraduationCap, label: t('learn') },
+  ]
+
+  const adminGroup = [
+    { href: '/settings', icon: Settings, label: t('settings') },
+  ]
 
   const sectionLabel = (label: string) =>
     !collapsed && (

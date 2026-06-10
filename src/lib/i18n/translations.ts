@@ -1,0 +1,47 @@
+export const translations = {
+  en: {
+    dashboard: 'Dashboard',
+    projects: 'Projects',
+    contractors: 'Contractors',
+    settings: 'Settings',
+    team: 'Team',
+    executive: 'Executive',
+    tenders: 'Tenders',
+    calculators: 'Calculators',
+    learn: 'Learn',
+    notifications: 'Notifications',
+    infrastructure: 'Infrastructure',
+    boq_library: 'BOQ Library',
+  },
+  ar: {
+    dashboard: 'لوحة التحكم',
+    projects: 'المشاريع',
+    contractors: 'المقاولون',
+    settings: 'الإعدادات',
+    team: 'الفريق',
+    executive: 'لوحة تنفيذية',
+    tenders: 'المناقصات',
+    calculators: 'الآلات الحاسبة',
+    learn: 'تعلم',
+    notifications: 'الإشعارات',
+    infrastructure: 'البنية التحتية',
+    boq_library: 'مكتبة كميات الأعمال',
+  },
+  he: {
+    dashboard: 'לוח בקרה',
+    projects: 'פרויקטים',
+    contractors: 'קבלנים',
+    settings: 'הגדרות',
+    team: 'צוות',
+    executive: 'דשבורד מנהלים',
+    tenders: 'מכרזים',
+    calculators: 'מחשבונים',
+    learn: 'למד',
+    notifications: 'התראות',
+    infrastructure: 'תשתית',
+    boq_library: 'ספריית כמויות',
+  },
+}
+
+export type Language = 'en' | 'ar' | 'he'
+export type TranslationKey = keyof typeof translations.en
