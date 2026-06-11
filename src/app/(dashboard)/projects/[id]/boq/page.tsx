@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
-import { BOQPageClient } from '@/components/boq/boq-page-client'
+import BOQSpreadsheet from './boq-spreadsheet'
 
 export default async function BOQPage({
   params,
@@ -14,12 +14,10 @@ export default async function BOQPage({
 
   const [{ data: project }, { data: boqItems }] = await Promise.all([
     supabase.from('projects').select('id, name, budget').eq('id', id).single(),
-    supabase.from('boq_items').select('*').eq('project_id', id).order('item_code'),
+    supabase.from('boq_items').select('*').eq('project_id', id).order('sort_order', { ascending: true }),
   ])
 
   if (!project) notFound()
-
-  const total = boqItems?.reduce((s, i) => s + i.total_amount, 0) ?? 0
 
   return (
     <div className="space-y-6">
@@ -32,14 +30,14 @@ export default async function BOQPage({
             <h1 className="text-2xl font-bold text-slate-900">Bill of Quantities</h1>
             <p className="text-slate-500 text-sm mt-1">{project.name}</p>
           </div>
-          <div className="text-right">
-            <p className="text-xs text-slate-400 uppercase tracking-wide">BOQ Total</p>
-            <p className="text-2xl font-bold text-slate-900">${total.toLocaleString()}</p>
-          </div>
         </div>
       </div>
 
-      <BOQPageClient items={boqItems ?? []} projectId={id} />
+      <BOQSpreadsheet
+        initialItems={boqItems ?? []}
+        projectId={id}
+        projectName={project.name}
+      />
     </div>
   )
 }
