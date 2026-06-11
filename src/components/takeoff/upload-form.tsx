@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Upload, FileText, Loader2, X, CheckCircle } from 'lucide-react'
+import { Upload, FileText, Loader2, X, Info } from 'lucide-react'
 import { createDrawingRecord } from '@/app/actions/takeoff'
 
 interface Props { projectId: string }
@@ -17,21 +17,29 @@ export function UploadForm({ projectId }: Props) {
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
 
+  const isDxf = file?.name.toLowerCase().endsWith('.dxf') ?? false
+
+  const acceptFile = useCallback((f: File) => {
+    const lower = f.name.toLowerCase()
+    if (f.type === 'application/pdf' || lower.endsWith('.pdf') || lower.endsWith('.dxf')) {
+      setFile(f)
+      setName(f.name.replace(/\.(pdf|dxf)$/i, ''))
+      setError(null)
+    } else {
+      setError('Only PDF and DXF files are supported.')
+    }
+  }, [])
+
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setDragging(false)
     const f = e.dataTransfer.files[0]
-    if (f?.type === 'application/pdf') {
-      setFile(f)
-      setName(f.name.replace('.pdf', ''))
-    } else {
-      setError('Only PDF files are supported.')
-    }
-  }, [])
+    if (f) acceptFile(f)
+  }, [acceptFile])
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
-    if (f) { setFile(f); setName(f.name.replace('.pdf', '')) }
+    if (f) acceptFile(f)
   }
 
   const handleUpload = async () => {
@@ -50,27 +58,28 @@ export function UploadForm({ projectId }: Props) {
       const json = await res.json()
 
       if (!res.ok) throw new Error(json.error ?? 'Upload failed')
-
       setProgress(70)
 
-      // Get page count from PDF.js (lightweight check)
       let pageCount = 1
-      try {
-        const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist')
-        GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs`
-        const buf = await file.arrayBuffer()
-        const pdf = await getDocument({ data: buf }).promise
-        pageCount = pdf.numPages
-        await pdf.cleanup()
-      } catch { /* page count estimation failed, default 1 */ }
+      if (!isDxf) {
+        try {
+          const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist')
+          GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs`
+          const buf = await file.arrayBuffer()
+          const pdf = await getDocument({ data: buf }).promise
+          pageCount = pdf.numPages
+          await pdf.cleanup()
+        } catch { /* default 1 */ }
+      }
 
       setProgress(85)
       const result = await createDrawingRecord(projectId, {
-        name: name || file.name.replace('.pdf', ''),
+        name: name || file.name.replace(/\.(pdf|dxf)$/i, ''),
         original_filename: file.name,
         storage_path: json.storagePath,
         file_size_bytes: json.fileSizeBytes,
         page_count: pageCount,
+        file_type: json.fileType ?? 'pdf',
       })
 
       if (result.error) throw new Error(result.error)
@@ -96,7 +105,7 @@ export function UploadForm({ projectId }: Props) {
           file ? 'border-green-400 bg-green-50 cursor-default' : 'border-slate-300 hover:border-amber-400 hover:bg-amber-50/30'
         }`}
       >
-        <input ref={inputRef} type="file" accept=".pdf" className="hidden" onChange={onFileChange} />
+        <input ref={inputRef} type="file" accept=".pdf,.dxf" className="hidden" onChange={onFileChange} />
 
         {file ? (
           <div className="flex items-center justify-center gap-3">
@@ -113,11 +122,22 @@ export function UploadForm({ projectId }: Props) {
         ) : (
           <>
             <Upload size={36} className="mx-auto mb-3 text-slate-400" />
-            <p className="text-slate-700 font-medium">Drop a PDF here or click to browse</p>
-            <p className="text-sm text-slate-400 mt-1">Max 50 MB · PDF only</p>
+            <p className="text-slate-700 font-medium">Drop a PDF or DXF here or click to browse</p>
+            <p className="text-sm text-slate-400 mt-1">Max 50 MB · PDF or DXF</p>
           </>
         )}
       </div>
+
+      {/* DXF notice */}
+      {isDxf && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
+          <Info size={18} className="text-blue-500 shrink-0 mt-0.5" />
+          <div className="text-sm text-blue-800">
+            <p className="font-medium mb-0.5">DXF file detected</p>
+            <p className="text-blue-700">DXF files are stored for reference. Use the drawing viewer to add manual measurements. Visual DXF rendering is coming soon.</p>
+          </div>
+        </div>
+      )}
 
       {/* Drawing name */}
       {file && (
@@ -148,11 +168,6 @@ export function UploadForm({ projectId }: Props) {
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600">{error}</div>
       )}
-
-      <div className="bg-amber-50 border border-amber-100 rounded-lg p-4 text-sm text-amber-800">
-        <p className="font-medium mb-1">Before uploading</p>
-        <p>Ensure your Supabase project has a <code className="bg-amber-100 px-1 rounded text-xs">drawings</code> storage bucket created. See <code className="bg-amber-100 px-1 rounded text-xs">supabase/schema.sql</code> for the SQL command.</p>
-      </div>
 
       <button
         onClick={handleUpload}

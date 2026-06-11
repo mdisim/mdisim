@@ -49,8 +49,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing file or projectId' }, { status: 400 })
   }
 
-  if (file.type !== 'application/pdf') {
-    return NextResponse.json({ error: 'Only PDF files are supported' }, { status: 400 })
+  const isDxf = file.name.toLowerCase().endsWith('.dxf')
+  const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+
+  if (!isPdf && !isDxf) {
+    return NextResponse.json({ error: 'Only PDF and DXF files are supported' }, { status: 400 })
   }
 
   if (file.size > 50 * 1024 * 1024) {
@@ -60,10 +63,11 @@ export async function POST(request: NextRequest) {
   const storagePath = `${user.id}/${projectId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
   const buffer = await file.arrayBuffer()
 
+  const contentTypeMime = isDxf ? 'application/octet-stream' : 'application/pdf'
   const { error: uploadError } = await supabase.storage
     .from('drawings')
     .upload(storagePath, buffer, {
-      contentType: 'application/pdf',
+      contentType: contentTypeMime,
       upsert: false,
     })
 
@@ -75,5 +79,6 @@ export async function POST(request: NextRequest) {
     storagePath,
     originalFilename: file.name,
     fileSizeBytes: file.size,
+    fileType: isDxf ? 'dxf' : 'pdf',
   })
 }

@@ -9,6 +9,7 @@ export async function createDrawingRecord(projectId: string, data: {
   storage_path: string
   file_size_bytes: number
   page_count: number
+  file_type?: string
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
