@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { AuditLog } from '@/lib/types'
+// redirect is still used for unauthenticated users below
 
 const ACTION_BADGE: Record<string, string> = {
   created: 'bg-green-100 text-green-800',
@@ -28,7 +29,15 @@ export default async function AuditLogPage({
     .single()
 
   if (!profile || !['super_admin', 'company_admin'].includes(profile.role ?? '')) {
-    redirect('/dashboard?error=unauthorized')
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-slate-800">Access Restricted</h2>
+          <p className="text-slate-500 mt-2">This page requires Company Admin or Super Admin role.</p>
+          <p className="text-slate-400 text-sm mt-1">Your current role: {profile?.role ?? 'not set'}</p>
+        </div>
+      </div>
+    )
   }
 
   const params = await searchParams

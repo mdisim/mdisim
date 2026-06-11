@@ -22,7 +22,7 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   // Fetch company name for welcome message
-  let companyName = 'My Company'
+  let companyName = 'ANGEL D.C.'
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
@@ -78,17 +78,17 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Professional gradient banner */}
-      <div className="rounded-xl overflow-hidden">
-        <div className="bg-gradient-to-r from-[#1e3a5f] to-[#2d5282] px-6 py-5 flex items-center justify-between">
+      <div className="bg-gradient-to-r from-[#1e3a5f] to-[#2d5282] rounded-xl p-6 text-white">
+        <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-bold text-white tracking-wide">{companyName}</h1>
-            <p className="text-white/60 text-sm mt-1">Construction Management Dashboard</p>
+            <p className="text-amber-400 text-xs font-semibold uppercase tracking-widest mb-1">ANGEL D.C. Platform</p>
+            <h1 className="text-2xl font-bold">Welcome back, {companyName}</h1>
+            <p className="text-blue-200 text-sm mt-1">Overview of your construction projects</p>
           </div>
-          <div className="text-right hidden sm:block">
-            <p className="text-white/80 text-sm">{today}</p>
+          <div className="text-right">
+            <p className="text-blue-200 text-xs">{new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
           </div>
         </div>
-        <div className="h-1 bg-amber-400 w-full" />
       </div>
 
       {/* Quick Actions */}

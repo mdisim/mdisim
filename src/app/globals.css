@@ -25,6 +25,11 @@ body {
   box-sizing: border-box;
 }
 
+/* Prevent RTL flash on load — set by inline script */
+html[dir="rtl"] * {
+  text-align: inherit;
+}
+
 /* Font classes for RTL languages */
 .font-arabic {
   font-family: 'Noto Sans Arabic', Arial, sans-serif;

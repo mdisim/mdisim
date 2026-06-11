@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { saveSettings } from '@/app/actions/profile'
 import { Company, Profile } from '@/lib/types'
+import { useTranslation } from '@/lib/i18n/use-translation'
 
 interface DangerZoneProps {
   companyName: string
@@ -89,6 +90,7 @@ const inputClass =
 const labelClass = 'block text-xs text-slate-500 uppercase tracking-wide mb-1.5'
 
 export function SettingsForm({ profile, company }: SettingsFormProps) {
+  const { t } = useTranslation()
   const [companySaving, setCompanySaving] = useState(false)
   const [companyMessage, setCompanyMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [profileSaving, setProfileSaving] = useState(false)
@@ -137,10 +139,10 @@ export function SettingsForm({ profile, company }: SettingsFormProps) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Left: Company Profile */}
       <form onSubmit={handleCompanySubmit} className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
-        <h2 className="font-semibold text-slate-800 text-base">Company Profile</h2>
+        <h2 className="font-semibold text-slate-800 text-base">{t('company_profile') || 'Company Profile'}</h2>
 
         <div>
-          <label className={labelClass}>Company Name</label>
+          <label className={labelClass}>{t('company_name') || 'Company Name'}</label>
           <input
             name="company_name"
             defaultValue={company?.name ?? ''}
@@ -150,7 +152,7 @@ export function SettingsForm({ profile, company }: SettingsFormProps) {
         </div>
 
         <div>
-          <label className={labelClass}>Address</label>
+          <label className={labelClass}>{t('address') || 'Address'}</label>
           <input
             name="address"
             defaultValue={company?.address ?? ''}
@@ -231,16 +233,16 @@ export function SettingsForm({ profile, company }: SettingsFormProps) {
           disabled={companySaving}
           className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
         >
-          {companySaving ? 'Saving...' : 'Save Company'}
+          {companySaving ? (t('loading') || 'Saving...') : (t('save') || 'Save')}
         </button>
       </form>
 
       {/* Right: My Profile */}
       <form onSubmit={handleProfileSubmit} className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
-        <h2 className="font-semibold text-slate-800 text-base">My Profile</h2>
+        <h2 className="font-semibold text-slate-800 text-base">{t('your_profile') || 'My Profile'}</h2>
 
         <div>
-          <label className={labelClass}>Full Name</label>
+          <label className={labelClass}>{t('full_name') || 'Full Name'}</label>
           <input
             name="full_name"
             defaultValue={profile?.full_name ?? ''}
@@ -271,7 +273,7 @@ export function SettingsForm({ profile, company }: SettingsFormProps) {
           disabled={profileSaving}
           className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
         >
-          {profileSaving ? 'Saving...' : 'Save Profile'}
+          {profileSaving ? (t('loading') || 'Saving...') : (t('save') || 'Save')}
         </button>
       </form>
 

@@ -38,21 +38,20 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return response
 
-  const role: string = (user.user_metadata?.role as string) ?? 'viewer'
+  const role: string = (user.user_metadata?.role as string) ?? 'company_admin'
 
   const isAdminRoute = ADMIN_ONLY.some(r => pathname.startsWith(r))
   const isPMRoute = PM_AND_ABOVE.some(r => pathname.startsWith(r))
 
   if (isAdminRoute && !['super_admin', 'company_admin'].includes(role)) {
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    url.searchParams.set('error', 'unauthorized')
+    url.pathname = '/unauthorized'
     return NextResponse.redirect(url)
   }
 
   if (isPMRoute && ['viewer', 'site_engineer'].includes(role)) {
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    url.pathname = '/unauthorized'
     return NextResponse.redirect(url)
   }
 
