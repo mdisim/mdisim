@@ -1,0 +1,42 @@
+name: Deploy Check
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  security-scan:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+        continue-on-error: true
+      - name: Check for secrets in code
+        run: |
+          # Fail if any hardcoded Supabase keys found in source
+          if grep -r "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" src/ --include="*.ts" --include="*.tsx"; then
+            echo "WARNING: Possible hardcoded JWT found in source"
+            exit 1
+          fi
+          echo "No hardcoded secrets detected"
+
+  type-safety:
+    name: TypeScript Strict Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Strict type check
+        run: npx tsc --noEmit --strict
+        continue-on-error: true
