@@ -39,8 +39,6 @@ const nextConfig: NextConfig = {
 }
 
 export default withSentryConfig(nextConfig, {
-  // Suppress source map upload — no SENTRY_AUTH_TOKEN needed in CI
   silent: true,
-  disableServerWebpackPlugin: true,
-  disableClientWebpackPlugin: true,
+  telemetry: false,
 });
