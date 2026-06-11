@@ -23,6 +23,7 @@ import {
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/lib/i18n/use-translation'
+import { LocaleSwitcher } from '@/components/ui/locale-switcher'
 
 interface SidebarProps {
   unreadNotifications?: number
@@ -160,6 +161,13 @@ export function Sidebar({ unreadNotifications = 0, userEmail }: SidebarProps) {
           badge={unreadNotifications > 0 ? unreadNotifications : undefined}
         />
       </div>
+
+      {/* Locale switcher */}
+      {!collapsed && (
+        <div className="px-3 py-2 border-t border-white/10">
+          <LocaleSwitcher />
+        </div>
+      )}
 
       {/* User email */}
       {!collapsed && userEmail && (

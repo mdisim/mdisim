@@ -1,18 +1,13 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { translations, Language } from './translations'
+import { useLocale } from '@/components/language-provider'
+import { translations } from './translations'
 
 export function useTranslation() {
-  const [lang, setLang] = useState<Language>('en')
-
-  useEffect(() => {
-    const stored = localStorage.getItem('angel-dc-language') as Language
-    if (stored && translations[stored]) setLang(stored)
-  }, [])
-
+  const { lang } = useLocale()
   const t = (key: string): string => {
-    return (translations[lang] as Record<string, string>)[key] ?? (translations.en as Record<string, string>)[key] ?? key
+    return (translations[lang] as Record<string, string>)[key]
+      ?? (translations.en as Record<string, string>)[key]
+      ?? key
   }
-
   return { t, lang }
 }

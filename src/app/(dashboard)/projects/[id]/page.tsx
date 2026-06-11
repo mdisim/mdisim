@@ -30,6 +30,7 @@ import {
   GitCompare,
 } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/badge'
+import { ils } from '@/lib/server-currency'
 
 export default async function ProjectDetailPage({
   params,
@@ -172,7 +173,7 @@ export default async function ProjectDetailPage({
         )}
         <div className="flex items-center gap-2 text-sm text-slate-600">
           <DollarSign size={15} className="text-slate-400" />
-          <span>Budget: ${project.budget?.toLocaleString()}</span>
+          <span>Budget: {ils(project.budget ?? 0)}</span>
         </div>
       </div>
 
@@ -180,17 +181,17 @@ export default async function ProjectDetailPage({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-slate-200 rounded-xl p-4">
           <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">BOQ Total</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">${boqTotal.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-slate-900 mt-1">{ils(boqTotal)}</p>
           <p className="text-xs text-slate-400 mt-1">{boqItems?.length ?? 0} line items</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-xl p-4">
           <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Total Costs</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">${costTotal.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-slate-900 mt-1">{ils(costTotal)}</p>
           <p className="text-xs text-slate-400 mt-1">{costEntries?.length ?? 0} entries</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-xl p-4">
           <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Paid to Contractors</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">${paidPayments.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-slate-900 mt-1">{ils(paidPayments)}</p>
           <p className="text-xs text-slate-400 mt-1">{payments?.length ?? 0} payments</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-xl p-4">

@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, TrendingDown } from 'lucide-react'
+import { ils } from '@/lib/server-currency'
 
 function monthKey(dateStr: string): string {
   const d = new Date(dateStr)
@@ -86,21 +87,21 @@ export default async function CashFlowPage({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white border border-slate-200 rounded-xl p-4">
           <p className="text-xs text-slate-400 uppercase tracking-wide">Total Outflow</p>
-          <p className="text-xl font-bold text-slate-900 mt-1">${totalSpent.toLocaleString()}</p>
+          <p className="text-xl font-bold text-slate-900 mt-1">{ils(totalSpent)}</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-xl p-4">
           <p className="text-xs text-slate-400 uppercase tracking-wide">Cost Entries</p>
-          <p className="text-xl font-bold text-slate-900 mt-1">${totalCosts.toLocaleString()}</p>
+          <p className="text-xl font-bold text-slate-900 mt-1">{ils(totalCosts)}</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-xl p-4">
           <p className="text-xs text-slate-400 uppercase tracking-wide">Contractor Payments</p>
-          <p className="text-xl font-bold text-slate-900 mt-1">${totalPayments.toLocaleString()}</p>
+          <p className="text-xl font-bold text-slate-900 mt-1">{ils(totalPayments)}</p>
         </div>
         {project.budget > 0 && budgetVariance !== null && (
           <div className="bg-white border border-slate-200 rounded-xl p-4">
             <p className="text-xs text-slate-400 uppercase tracking-wide">Budget Remaining</p>
             <p className={`text-xl font-bold mt-1 ${budgetVariance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              ${Math.abs(budgetVariance).toLocaleString()}
+              {ils(Math.abs(budgetVariance))}
               <span className="text-xs ml-1 font-normal">{budgetVariance >= 0 ? 'under' : 'over'}</span>
             </p>
           </div>
@@ -121,17 +122,17 @@ export default async function CashFlowPage({
             <div className="flex items-end gap-3 h-48 overflow-x-auto">
               {monthData.map(m => (
                 <div key={m.key} className="flex flex-col items-center gap-1 min-w-[60px]">
-                  <span className="text-xs text-slate-500">${(m.total / 1000).toFixed(0)}k</span>
+                  <span className="text-xs text-slate-500">₪{(m.total / 1000).toFixed(0)}k</span>
                   <div className="w-full flex flex-col gap-0.5" style={{ height: `${(m.total / maxMonthly) * 160}px` }}>
                     <div
                       className="w-full bg-blue-400 rounded-t"
                       style={{ height: `${(m.payments / m.total) * 100}%` }}
-                      title={`Payments: $${m.payments.toLocaleString()}`}
+                      title={`Payments: ${ils(m.payments)}`}
                     />
                     <div
                       className="w-full bg-amber-400 rounded-b"
                       style={{ height: `${(m.costs / m.total) * 100}%` }}
-                      title={`Costs: $${m.costs.toLocaleString()}`}
+                      title={`Costs: ${ils(m.costs)}`}
                     />
                   </div>
                   <span className="text-xs text-slate-500">{m.label}</span>
@@ -165,10 +166,10 @@ export default async function CashFlowPage({
                   {cumulativeData.map(m => (
                     <tr key={m.key} className="border-b border-slate-50 hover:bg-slate-50">
                       <td className="py-2 font-medium text-slate-700">{m.label}</td>
-                      <td className="py-2 text-right text-slate-600">${m.costs.toLocaleString()}</td>
-                      <td className="py-2 text-right text-slate-600">${m.payments.toLocaleString()}</td>
-                      <td className="py-2 text-right font-medium text-slate-700">${m.total.toLocaleString()}</td>
-                      <td className="py-2 text-right font-semibold text-slate-900">${m.cumulative.toLocaleString()}</td>
+                      <td className="py-2 text-right text-slate-600">{ils(m.costs)}</td>
+                      <td className="py-2 text-right text-slate-600">{ils(m.payments)}</td>
+                      <td className="py-2 text-right font-medium text-slate-700">{ils(m.total)}</td>
+                      <td className="py-2 text-right font-semibold text-slate-900">{ils(m.cumulative)}</td>
                       {project.budget > 0 && (
                         <td className="py-2 text-right">
                           <span className={`text-xs font-medium ${m.cumulative / project.budget > 0.9 ? 'text-red-600' : m.cumulative / project.budget > 0.7 ? 'text-amber-600' : 'text-green-600'}`}>

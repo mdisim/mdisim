@@ -116,6 +116,23 @@ body {
   background: #94a3b8;
 }
 
+/* RTL logical property helpers */
+[dir="rtl"] { text-align: right; }
+[dir="rtl"] .sidebar-item { flex-direction: row-reverse; }
+
+/* Ensure flex rows flip in RTL */
+[dir="rtl"] .flex-row-rtl { flex-direction: row-reverse; }
+
+/* Fix arrow icons in RTL */
+[dir="rtl"] .icon-arrow { transform: scaleX(-1); }
+
+/* Currency symbol placement for RTL */
+[dir="rtl"] .currency-amount { direction: ltr; display: inline-block; }
+
+/* Form labels right-aligned in RTL */
+[dir="rtl"] label { text-align: right; display: block; }
+[dir="rtl"] .form-group { text-align: right; }
+
 /* Print styles */
 @media print {
   nav,

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { ils } from '@/lib/server-currency'
 
 function monthKey(dateStr: string): string {
   const d = new Date(dateStr)
@@ -171,8 +172,8 @@ export default async function ExecutiveDashboardPage() {
           { label: 'Total Projects', value: projectsList.length, color: 'text-slate-900' },
           { label: 'Active', value: active, color: 'text-green-600' },
           { label: 'Completed', value: completed, color: 'text-blue-600' },
-          { label: 'Total Budget', value: `$${(totalBudget / 1e6).toFixed(1)}M`, color: 'text-slate-900' },
-          { label: 'Total Spent', value: `$${(totalSpent / 1e6).toFixed(2)}M`, color: 'text-amber-600' },
+          { label: 'Total Budget', value: `₪${(totalBudget / 1e6).toFixed(1)}M`, color: 'text-slate-900' },
+          { label: 'Total Spent', value: `₪${(totalSpent / 1e6).toFixed(2)}M`, color: 'text-amber-600' },
           {
             label: 'Budget Variance',
             value: `${budgetVariance.toFixed(1)}%`,
@@ -252,7 +253,7 @@ export default async function ExecutiveDashboardPage() {
                       <span className="text-xs text-slate-400 shrink-0">{c.projects.size} proj</span>
                     </div>
                   </div>
-                  <span className="text-sm font-semibold text-slate-900 whitespace-nowrap shrink-0">${c.total.toLocaleString()}</span>
+                  <span className="text-sm font-semibold text-slate-900 whitespace-nowrap shrink-0">{ils(c.total)}</span>
                 </div>
               ))}
             </div>
@@ -269,7 +270,7 @@ export default async function ExecutiveDashboardPage() {
             const h = maxMonthly > 0 ? (val / maxMonthly) * 160 : 0
             return (
               <div key={key} className="flex-1 flex flex-col items-center gap-1">
-                <span className="text-xs text-slate-500 text-center leading-tight">{val > 0 ? `$${(val / 1000).toFixed(0)}k` : ''}</span>
+                <span className="text-xs text-slate-500 text-center leading-tight">{val > 0 ? `₪${(val / 1000).toFixed(0)}k` : ''}</span>
                 <div className="w-full bg-amber-400 rounded-t transition-all" style={{ height: `${Math.max(h, 2)}px` }} />
                 <span className="text-xs text-slate-400 whitespace-nowrap">{monthLabel(key)}</span>
               </div>

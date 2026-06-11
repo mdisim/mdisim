@@ -15,6 +15,7 @@ import {
   FileText,
   Wallet,
 } from 'lucide-react'
+import { ils } from '@/lib/server-currency'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -139,21 +140,21 @@ export default async function DashboardPage() {
         />
         <StatsCard
           title="Total Budget"
-          value={`$${totalBudget.toLocaleString()}`}
+          value={ils(totalBudget)}
           icon={DollarSign}
           color="green"
           className="xl:col-span-1"
         />
         <StatsCard
           title="Total Spent"
-          value={`$${totalSpent.toLocaleString()}`}
+          value={ils(totalSpent)}
           icon={TrendingUp}
           color="red"
           className="xl:col-span-1"
         />
         <StatsCard
           title="Budget Remaining"
-          value={`$${budgetRemaining.toLocaleString()}`}
+          value={ils(budgetRemaining)}
           icon={Wallet}
           color={budgetRemaining < 0 ? 'red' : 'green'}
           className="xl:col-span-1"
@@ -173,7 +174,7 @@ export default async function DashboardPage() {
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-slate-800">Overall Budget Usage</h3>
             <span className="text-sm text-slate-500">
-              ${totalSpent.toLocaleString()} / ${totalBudget.toLocaleString()}
+              {ils(totalSpent)} / {ils(totalBudget)}
             </span>
           </div>
           <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
@@ -249,7 +250,7 @@ export default async function DashboardPage() {
                   <p className="text-xs text-slate-500">Awaiting processing</p>
                 </div>
               </div>
-              <p className="font-bold text-amber-600">${pendingPayments.toLocaleString()}</p>
+              <p className="font-bold text-amber-600">{ils(pendingPayments)}</p>
             </div>
             <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-100">
               <div className="flex items-center gap-3">
@@ -260,7 +261,7 @@ export default async function DashboardPage() {
                 </div>
               </div>
               <p className="font-bold text-green-600">
-                ${(payments?.filter(p => p.status === 'completed').reduce((s, p) => s + p.amount, 0) ?? 0).toLocaleString()}
+                {ils(payments?.filter(p => p.status === 'completed').reduce((s, p) => s + p.amount, 0) ?? 0)}
               </p>
             </div>
           </div>
