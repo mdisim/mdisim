@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const securityHeaders = [
   { key: 'X-DNS-Prefetch-Control', value: 'on' },
@@ -14,7 +15,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: https:",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://sentry.io",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://sentry.io https://o*.ingest.sentry.io",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -37,4 +38,9 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // Suppress source map upload — no SENTRY_AUTH_TOKEN needed in CI
+  silent: true,
+  disableServerWebpackPlugin: true,
+  disableClientWebpackPlugin: true,
+});

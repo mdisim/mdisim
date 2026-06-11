@@ -2,6 +2,9 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { sendEmail } from '@/lib/email'
+import { contractorPaymentEmail } from '@/lib/email-templates'
+import { APP_URL } from '@/lib/email'
 
 export async function createContractor(formData: FormData) {
   const supabase = await createClient()
@@ -49,6 +52,32 @@ export async function createPayment(projectId: string, formData: FormData) {
   })
 
   if (error) return { error: error.message }
+
+  // Send payment notification email (non-blocking, best-effort)
+  try {
+    const contractorId = formData.get('contractor_id') as string
+    const amount = formData.get('amount') as string
+    const paymentDate = formData.get('payment_date') as string
+
+    const [{ data: contractor }, { data: project }] = await Promise.all([
+      supabase.from('contractors').select('name, email').eq('id', contractorId).single(),
+      supabase.from('projects').select('name').eq('id', projectId).single(),
+    ])
+
+    if (contractor?.email) {
+      const template = contractorPaymentEmail({
+        contractorName: contractor.name ?? 'Contractor',
+        projectName: project?.name ?? 'your project',
+        amount,
+        paymentDate,
+        dashboardUrl: `${APP_URL}/projects/${projectId}/contractors`,
+      })
+      await sendEmail({ to: contractor.email, ...template })
+    }
+  } catch {
+    // Email errors should not fail the payment action
+  }
+
   revalidatePath(`/projects/${projectId}/contractors`)
   return { success: true }
 }

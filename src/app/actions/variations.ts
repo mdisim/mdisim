@@ -3,6 +3,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { logAction } from './audit'
+import { sendEmail } from '@/lib/email'
+import { variationApprovedEmail } from '@/lib/email-templates'
+import { APP_URL } from '@/lib/email'
 
 export async function getVariations(projectId: string) {
   const supabase = await createClient()
@@ -75,9 +78,42 @@ export async function advanceVariationStatus(id: string, projectId: string, newS
   if (newStatus === 'submitted') updates.submitted_date = new Date().toISOString().split('T')[0]
   if (newStatus === 'approved' || newStatus === 'rejected') updates.approved_date = new Date().toISOString().split('T')[0]
 
-  const { error } = await supabase.from('variations').update(updates).eq('id', id)
+  const { data: variation, error } = await supabase
+    .from('variations')
+    .update(updates)
+    .eq('id', id)
+    .select('variation_number, title, amount, created_by')
+    .single()
   if (error) return { error: error.message }
   await logAction({ action: 'status_changed', resource_type: 'variation', resource_id: id, new_values: { status: newStatus } })
+
+  // Send email notification when approved or rejected
+  if ((newStatus === 'approved' || newStatus === 'rejected') && variation) {
+    try {
+      const [{ data: project }, { data: creator }] = await Promise.all([
+        supabase.from('projects').select('name').eq('id', projectId).single(),
+        variation.created_by
+          ? supabase.from('profiles').select('email').eq('id', variation.created_by).single()
+          : Promise.resolve({ data: null }),
+      ])
+
+      const recipientEmail = creator?.email
+      if (recipientEmail) {
+        const template = variationApprovedEmail({
+          variationNumber: variation.variation_number ?? id,
+          title: variation.title ?? '',
+          amount: String(variation.amount ?? 0),
+          projectName: project?.name ?? 'your project',
+          projectUrl: `${APP_URL}/projects/${projectId}/variations`,
+          status: newStatus as 'approved' | 'rejected',
+        })
+        await sendEmail({ to: recipientEmail, ...template })
+      }
+    } catch {
+      // Email errors should not fail the action
+    }
+  }
+
   revalidatePath(`/projects/${projectId}/variations`)
   return { success: true }
 }

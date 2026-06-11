@@ -2,6 +2,9 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { sendEmail } from '@/lib/email'
+import { teamInvitationEmail } from '@/lib/email-templates'
+import { APP_URL } from '@/lib/email'
 
 export async function getTeamMembers() {
   const supabase = await createClient()
@@ -87,6 +90,28 @@ export async function inviteMember(email: string, role: string) {
   })
 
   if (error) return { error: error.message }
+
+  // Send invitation email (non-blocking)
+  const { data: inviterProfile } = await supabase
+    .from('profiles')
+    .select('full_name')
+    .eq('id', user.id)
+    .single()
+
+  const { data: company } = await supabase
+    .from('companies')
+    .select('name')
+    .eq('id', profile.company_id)
+    .single()
+
+  const inviteUrl = `${APP_URL}/register?invite=${token}`
+  const template = teamInvitationEmail({
+    inviterName: inviterProfile?.full_name ?? user.email ?? 'A team member',
+    companyName: company?.name ?? 'your company',
+    role,
+    inviteUrl,
+  })
+  await sendEmail({ to: email, ...template })
 
   revalidatePath('/team')
   return { success: true }
