@@ -18,15 +18,16 @@ export default function RootLayout({
     <html lang="en" className="h-full" suppressHydrationWarning>
       <body className={`${inter.className} h-full`}>
         <script dangerouslySetInnerHTML={{__html: `
-  try {
-    var lang = localStorage.getItem('angel-dc-language');
-    if (lang === 'ar' || lang === 'he') {
-      document.documentElement.setAttribute('dir', 'rtl');
+  (function(){
+    try {
+      var lang = localStorage.getItem('angel-dc-language') || 'en';
+      var rtl = ['ar','he'].includes(lang);
+      document.documentElement.setAttribute('dir', rtl ? 'rtl' : 'ltr');
       document.documentElement.setAttribute('lang', lang);
       if (lang === 'ar') document.documentElement.classList.add('font-arabic');
       if (lang === 'he') document.documentElement.classList.add('font-hebrew');
-    }
-  } catch(e) {}
+    } catch(e) {}
+  })()
 `}} />
         {children}
       </body>
