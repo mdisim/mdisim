@@ -144,9 +144,10 @@ interface BOQSpreadsheetProps {
   initialItems: BOQItem[]
   projectId: string
   projectName: string
+  onInsertFromLibrary?: (handler: (item: Partial<BOQItem>) => Promise<void>) => void
 }
 
-export default function BOQSpreadsheet({ initialItems, projectId, projectName }: BOQSpreadsheetProps) {
+export default function BOQSpreadsheet({ initialItems, projectId, projectName, onInsertFromLibrary }: BOQSpreadsheetProps) {
   const { t } = useTranslation()
   const [items, setItems] = useState<BOQItem[]>(initialItems)
   const [editCell, setEditCell] = useState<{ id: string; field: string } | null>(null)

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Tender } from '@/lib/types'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
-import { Plus, Trash2, Gavel } from 'lucide-react'
+import { Plus, Trash2, Gavel, GitCompare } from 'lucide-react'
 import { createTender, deleteTender, advanceTenderStatus } from '@/app/actions/tenders'
 
 interface Props {
@@ -34,6 +34,21 @@ export function TendersClient({ tenders: initialTenders }: Props) {
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [isPending, startTransition] = useTransition()
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else if (next.size < 5) next.add(id)
+      return next
+    })
+  }
+
+  function handleCompare() {
+    if (selectedIds.size < 2) return
+    router.push(`/tenders/compare?ids=${Array.from(selectedIds).join(',')}`)
+  }
 
   const filtered = initialTenders.filter(t =>
     t.title.toLowerCase().includes(search.toLowerCase()) ||
