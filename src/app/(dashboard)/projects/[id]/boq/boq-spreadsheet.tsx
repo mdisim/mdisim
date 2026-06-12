@@ -3,6 +3,7 @@ import React, { useState, useRef } from 'react'
 import * as XLSX from 'xlsx'
 import { updateBOQItem, createBOQItem, deleteBOQItem, bulkCreateBOQItems } from '@/app/actions/boq-spreadsheet'
 import ExcelImportModal from '@/components/boq/excel-import-modal'
+import { useTranslation } from '@/lib/i18n/use-translation'
 
 interface BOQItem {
   id: string
@@ -81,10 +82,12 @@ interface BOQSpreadsheetProps {
 }
 
 export default function BOQSpreadsheet({ initialItems, projectId, projectName }: BOQSpreadsheetProps) {
+  const { t } = useTranslation()
   const [items, setItems] = useState<BOQItem[]>(initialItems)
   const [editCell, setEditCell] = useState<{ id: string; field: string } | null>(null)
   const [editValue, setEditValue] = useState('')
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [rowError, setRowError] = useState<string | null>(null)
   const [showImportModal, setShowImportModal] = useState(false)
   const [showPasteModal, setShowPasteModal] = useState(false)
   const [pasteText, setPasteText] = useState('')
@@ -158,14 +161,27 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName }:
   }
 
   async function addRow(isSection = false) {
+    setRowError(null)
     const maxOrder = items.reduce((m, i) => Math.max(m, i.sort_order ?? 0), 0)
-    const newItem = await createBOQItem(projectId, {
-      description: isSection ? 'New Section' : '',
-      is_section_header: isSection,
-      sort_order: maxOrder + 1,
-      vat_percent: 17,
-    })
-    setItems(prev => [...prev, newItem as BOQItem])
+    try {
+      const newItem = await createBOQItem(projectId, {
+        description: isSection ? 'New Section' : 'New Item',
+        unit: isSection ? undefined : 'm²',
+        quantity: isSection ? undefined : 0,
+        unit_rate: isSection ? undefined : 0,
+        total_amount: isSection ? undefined : 0,
+        is_section_header: isSection,
+        sort_order: maxOrder + 1,
+        vat_percent: isSection ? undefined : 17,
+        vat_amount: isSection ? undefined : 0,
+      })
+      if (!newItem) throw new Error('No item returned from server')
+      setItems(prev => [...prev, newItem as BOQItem])
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to add row'
+      setRowError(msg)
+      setTimeout(() => setRowError(null), 5000)
+    }
   }
 
   async function copyRow(item: BOQItem) {
@@ -187,7 +203,7 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName }:
   }
 
   async function removeRow(id: string) {
-    if (!confirm('Delete this item?')) return
+    if (!confirm(t('delete_confirm', 'Delete this item?'))) return
     await deleteBOQItem(id)
     setItems(prev => prev.filter(i => i.id !== id))
   }
@@ -319,24 +335,25 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName }:
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 mb-4 flex-wrap">
         <button onClick={() => addRow(false)} className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 flex items-center gap-1">
-          + Add Row
+          + {t('add_row', 'Add Row')}
         </button>
         <button onClick={() => addRow(true)} className="px-3 py-1.5 bg-amber-500 text-white text-sm rounded-lg hover:bg-amber-600 flex items-center gap-1">
-          + Add Section
+          + {t('add_section', 'Add Section')}
         </button>
         <div className="h-4 w-px bg-gray-300 mx-1" />
         <button onClick={() => exportToExcel(sortedItems.filter(i => !i.is_section_header), projectName)} className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">
-          Export Excel
+          {t('export_excel', 'Export Excel')}
         </button>
         <button onClick={() => setShowImportModal(true)} className="px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700">
-          Import Excel
+          {t('import_excel', 'Import Excel')}
         </button>
         <button onClick={() => setShowPasteModal(true)} className="px-3 py-1.5 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700">
-          Paste from Excel
+          {t('paste_excel', 'Paste from Excel')}
         </button>
-        <div className="ml-auto text-sm">
-          {saveStatus === 'saving' && <span className="text-gray-500 animate-pulse">Saving...</span>}
-          {saveStatus === 'saved' && <span className="text-green-600 font-medium">Saved</span>}
+        <div className="ml-auto flex items-center gap-3 text-sm">
+          {rowError && <span className="text-red-600 font-medium text-xs bg-red-50 border border-red-200 rounded px-2 py-1">{rowError}</span>}
+          {saveStatus === 'saving' && <span className="text-gray-500 animate-pulse">{t('saving', 'Saving...')}</span>}
+          {saveStatus === 'saved' && <span className="text-green-600 font-medium">{t('saved', 'Saved')} ✓</span>}
           {saveStatus === 'error' && <span className="text-red-600 font-medium">Error saving</span>}
         </div>
       </div>
@@ -346,16 +363,16 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName }:
           <thead className="bg-gray-100 sticky top-0 z-10">
             <tr className="border-b">
               <th className="w-10 px-2 py-2 text-center text-xs font-semibold text-gray-500">#</th>
-              <th className="w-24 px-2 py-2 text-left text-xs font-semibold text-gray-600">Item Code</th>
-              <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600">Description</th>
-              <th className="w-20 px-2 py-2 text-left text-xs font-semibold text-gray-600">Unit</th>
-              <th className="w-24 px-2 py-2 text-right text-xs font-semibold text-gray-600">Quantity</th>
-              <th className="w-28 px-2 py-2 text-right text-xs font-semibold text-gray-600">Unit Rate</th>
-              <th className="w-28 px-2 py-2 text-right text-xs font-semibold text-green-700">Total</th>
-              <th className="w-16 px-2 py-2 text-right text-xs font-semibold text-gray-600">VAT %</th>
-              <th className="w-24 px-2 py-2 text-right text-xs font-semibold text-gray-600">VAT</th>
-              <th className="w-28 px-2 py-2 text-right text-xs font-semibold text-gray-800">Net Total</th>
-              <th className="w-20 px-2 py-2 text-center text-xs font-semibold text-gray-500">Actions</th>
+              <th className="w-24 px-2 py-2 text-left text-xs font-semibold text-gray-600">{t('item_code', 'Item Code')}</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600">{t('item_description', 'Description')}</th>
+              <th className="w-20 px-2 py-2 text-left text-xs font-semibold text-gray-600">{t('unit', 'Unit')}</th>
+              <th className="w-24 px-2 py-2 text-right text-xs font-semibold text-gray-600">{t('quantity', 'Quantity')}</th>
+              <th className="w-28 px-2 py-2 text-right text-xs font-semibold text-gray-600">{t('unit_rate', 'Unit Rate')} ₪</th>
+              <th className="w-28 px-2 py-2 text-right text-xs font-semibold text-green-700">{t('total_amount', 'Total')} ₪</th>
+              <th className="w-16 px-2 py-2 text-right text-xs font-semibold text-gray-600">{t('vat_pct', 'VAT %')}</th>
+              <th className="w-24 px-2 py-2 text-right text-xs font-semibold text-gray-600">{t('vat_amount', 'VAT')} ₪</th>
+              <th className="w-28 px-2 py-2 text-right text-xs font-semibold text-gray-800">{t('net_total', 'Net Total')} ₪</th>
+              <th className="w-20 px-2 py-2 text-center text-xs font-semibold text-gray-500">{t('actions', 'Actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -434,7 +451,7 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName }:
                 {section.items.length > 0 && (
                   <tr className="bg-gray-50 border-b border-gray-200">
                     <td colSpan={6} className="px-3 py-1.5 text-right text-xs font-medium text-gray-500">
-                      Section Subtotal: {section.header?.description || 'General'}
+                      {t('section_subtotal', 'Section Subtotal')}: {section.header?.description || 'General'}
                     </td>
                     <td className="px-2 py-1.5 text-right text-sm font-semibold text-green-700">
                       {fmt(section.items.reduce((s, i) => s + (i.total_amount ?? 0), 0))}
@@ -454,11 +471,11 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName }:
           </tbody>
           <tfoot className="bg-gray-800 text-white sticky bottom-0">
             <tr className="border-t-2 border-gray-600">
-              <td colSpan={6} className="px-3 py-2 text-right text-sm font-medium text-gray-300">Subtotal (ex. VAT)</td>
-              <td className="px-2 py-2 text-right text-sm font-bold text-green-400">{fmt(grandTotal)}</td>
+              <td colSpan={6} className="px-3 py-2 text-right text-sm font-medium text-gray-300">{t('grand_total', 'Grand Total')} (ex. VAT)</td>
+              <td className="px-2 py-2 text-right text-sm font-bold text-green-400">₪{fmt(grandTotal)}</td>
               <td />
-              <td className="px-2 py-2 text-right text-sm text-gray-300">{fmt(vatTotal)}</td>
-              <td className="px-2 py-2 text-right text-sm font-bold text-white">{fmt(netTotal)}</td>
+              <td className="px-2 py-2 text-right text-sm text-gray-300">₪{fmt(vatTotal)}</td>
+              <td className="px-2 py-2 text-right text-sm font-bold text-white">₪{fmt(netTotal)}</td>
               <td />
             </tr>
           </tfoot>

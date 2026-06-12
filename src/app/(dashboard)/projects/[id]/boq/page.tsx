@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import BOQSpreadsheet from './boq-spreadsheet'
+import { T } from '@/components/ui/translated-label'
 
 export default async function BOQPage({
   params,
@@ -14,7 +15,7 @@ export default async function BOQPage({
 
   const [{ data: project }, { data: boqItems }] = await Promise.all([
     supabase.from('projects').select('id, name, budget').eq('id', id).single(),
-    supabase.from('boq_items').select('*').eq('project_id', id).order('sort_order', { ascending: true }),
+    supabase.from('boq_items').select('*').eq('project_id', id).order('sort_order', { ascending: true, nullsFirst: false }),
   ])
 
   if (!project) notFound()
@@ -23,11 +24,13 @@ export default async function BOQPage({
     <div className="space-y-6">
       <div>
         <Link href={`/projects/${id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4">
-          <ArrowLeft size={15} /> Back to {project.name}
+          <ArrowLeft size={15} /> {project.name}
         </Link>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Bill of Quantities</h1>
+            <h1 className="text-2xl font-bold text-slate-900">
+              <T k="bill_of_quantities" fallback="Bill of Quantities" />
+            </h1>
             <p className="text-slate-500 text-sm mt-1">{project.name}</p>
           </div>
         </div>

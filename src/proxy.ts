@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
-const ADMIN_ONLY = ['/settings', '/boq-library']
+const ADMIN_ONLY = ['/settings']
 const PM_AND_ABOVE = ['/tenders', '/executive', '/infrastructure']
 
 export async function proxy(request: NextRequest) {

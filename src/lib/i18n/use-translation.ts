@@ -4,9 +4,10 @@ import { translations } from './translations'
 
 export function useTranslation() {
   const { lang } = useLocale()
-  const t = (key: string): string => {
+  const t = (key: string, fallback?: string): string => {
     return (translations[lang] as Record<string, string>)[key]
       ?? (translations.en as Record<string, string>)[key]
+      ?? fallback
       ?? key
   }
   return { t, lang }
