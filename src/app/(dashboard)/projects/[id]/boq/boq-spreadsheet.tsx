@@ -286,11 +286,11 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
       await deleteBOQItem(entry.itemId)
       setItems(prev => prev.filter(i => i.id !== entry.itemId))
     } else if (entry.type === 'create') {
-      const result = await createBOQItem(projectId, entry.newData)
+      const result = await createBOQItem(projectId, toItemData(entry.newData))
       if (result.success) setItems(prev => [...prev, result.data as unknown as BOQItem])
     } else {
       setItems(prev => prev.map(i => i.id === entry.itemId ? { ...i, ...entry.newData } : i))
-      await updateBOQItem(entry.itemId, entry.newData)
+      await updateBOQItem(entry.itemId, toItemData(entry.newData))
     }
   }, [historyIndex, history, projectId])
 
