@@ -396,6 +396,9 @@ export default async function ExecutiveDashboardPage() {
           )}
         </div>
       </div>
+
+      {/* EVM Dashboard */}
+      <EVMDashboard projects={evmData} />
     </div>
   )
 }
