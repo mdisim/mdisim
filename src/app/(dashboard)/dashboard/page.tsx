@@ -16,6 +16,8 @@ import {
   Wallet,
 } from 'lucide-react'
 import { ils } from '@/lib/server-currency'
+import { T } from '@/components/ui/translated-label'
+import { TranslatedStats } from '@/components/dashboard/translated-stats'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -82,8 +84,8 @@ export default async function DashboardPage() {
         <div className="flex items-start justify-between">
           <div>
             <p className="text-amber-400 text-xs font-semibold uppercase tracking-widest mb-1">ANGEL D.C. Platform</p>
-            <h1 className="text-2xl font-bold">Welcome back, {companyName}</h1>
-            <p className="text-blue-200 text-sm mt-1">Overview of your construction projects</p>
+            <h1 className="text-2xl font-bold"><T k="welcome_back" fallback="Welcome back" />, {companyName}</h1>
+            <p className="text-blue-200 text-sm mt-1"><T k="dashboard_subtitle" fallback="Overview of your construction projects" /></p>
           </div>
           <div className="text-right">
             <p className="text-blue-200 text-xs">{new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
@@ -122,51 +124,17 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        <StatsCard
-          title="Total Projects"
-          value={projects?.length ?? 0}
-          icon={FolderKanban}
-          color="blue"
-          className="xl:col-span-1"
-        />
-        <StatsCard
-          title="Active Projects"
-          value={activeProjects}
-          icon={Clock}
-          color="amber"
-          className="xl:col-span-1"
-        />
-        <StatsCard
-          title="Total Budget"
-          value={ils(totalBudget)}
-          icon={DollarSign}
-          color="green"
-          className="xl:col-span-1"
-        />
-        <StatsCard
-          title="Total Spent"
-          value={ils(totalSpent)}
-          icon={TrendingUp}
-          color="red"
-          className="xl:col-span-1"
-        />
-        <StatsCard
-          title="Budget Remaining"
-          value={ils(budgetRemaining)}
-          icon={Wallet}
-          color={budgetRemaining < 0 ? 'red' : 'green'}
-          className="xl:col-span-1"
-        />
-        <StatsCard
-          title="Contractors"
-          value={contractors?.length ?? 0}
-          icon={Users}
-          color="purple"
-          className="xl:col-span-1"
-        />
-      </div>
+      {/* Stats Grid — client component for i18n */}
+      <TranslatedStats
+        totalProjects={projects?.length ?? 0}
+        activeProjects={activeProjects}
+        completedProjects={statusCounts.completed}
+        onHoldProjects={statusCounts.on_hold}
+        totalBudget={totalBudget}
+        totalSpent={totalSpent}
+        budgetRemaining={budgetRemaining}
+        formatCurrency={ils}
+      />
 
       {/* Budget Progress */}
       {totalBudget > 0 && (

@@ -150,43 +150,38 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName }:
     setSaveStatus('saving')
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(async () => {
-      try {
-        await updateBOQItem(id, updates)
-        setSaveStatus('saved')
-        setTimeout(() => setSaveStatus('idle'), 2000)
-      } catch {
-        setSaveStatus('error')
-      }
+      const result = await updateBOQItem(id, updates)
+      if (!result.success) { setSaveStatus('error'); return }
+      setSaveStatus('saved')
+      setTimeout(() => setSaveStatus('idle'), 2000)
     }, 800)
   }
 
   async function addRow(isSection = false) {
     setRowError(null)
     const maxOrder = items.reduce((m, i) => Math.max(m, i.sort_order ?? 0), 0)
-    try {
-      const newItem = await createBOQItem(projectId, {
-        description: isSection ? 'New Section' : 'New Item',
-        unit: isSection ? undefined : 'm²',
-        quantity: isSection ? undefined : 0,
-        unit_rate: isSection ? undefined : 0,
-        total_amount: isSection ? undefined : 0,
-        is_section_header: isSection,
-        sort_order: maxOrder + 1,
-        vat_percent: isSection ? undefined : 17,
-        vat_amount: isSection ? undefined : 0,
-      })
-      if (!newItem) throw new Error('No item returned from server')
-      setItems(prev => [...prev, newItem as BOQItem])
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to add row'
-      setRowError(msg)
-      setTimeout(() => setRowError(null), 5000)
+    const result = await createBOQItem(projectId, {
+      description: isSection ? 'New Section' : 'New Item',
+      unit: isSection ? undefined : 'm²',
+      quantity: isSection ? undefined : 0,
+      unit_rate: isSection ? undefined : 0,
+      total_amount: isSection ? undefined : 0,
+      is_section_header: isSection,
+      sort_order: maxOrder + 1,
+      vat_percent: isSection ? undefined : 17,
+      vat_amount: isSection ? undefined : 0,
+    })
+    if (!result.success) {
+      setRowError(result.error)
+      setTimeout(() => setRowError(null), 8000)
+      return
     }
+    setItems(prev => [...prev, result.data as unknown as BOQItem])
   }
 
   async function copyRow(item: BOQItem) {
     const maxOrder = items.reduce((m, i) => Math.max(m, i.sort_order ?? 0), 0)
-    const newItem = await createBOQItem(projectId, {
+    const result = await createBOQItem(projectId, {
       item_code: item.item_code,
       description: item.description ? `${item.description} (copy)` : '',
       unit: item.unit,
@@ -199,13 +194,14 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName }:
       notes: item.notes,
       sort_order: maxOrder + 1,
     })
-    setItems(prev => [...prev, newItem as BOQItem])
+    if (result.success) setItems(prev => [...prev, result.data as unknown as BOQItem])
   }
 
   async function removeRow(id: string) {
     if (!confirm(t('delete_confirm', 'Delete this item?'))) return
-    await deleteBOQItem(id)
-    setItems(prev => prev.filter(i => i.id !== id))
+    const result = await deleteBOQItem(id)
+    if (result.success) setItems(prev => prev.filter(i => i.id !== id))
+    else setRowError(result.error)
   }
 
   async function moveRow(id: string, direction: 'up' | 'down') {
@@ -221,8 +217,8 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName }:
       if (i.id === b.id) return { ...i, sort_order: aOrder }
       return i
     }))
-    await updateBOQItem(a.id, { sort_order: bOrder })
-    await updateBOQItem(b.id, { sort_order: aOrder })
+    void updateBOQItem(a.id, { sort_order: bOrder })
+    void updateBOQItem(b.id, { sort_order: aOrder })
   }
 
   function handleKeyDown(e: React.KeyboardEvent, id: string, field: string) {
@@ -238,7 +234,7 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName }:
   }
 
   async function confirmPaste() {
-    await bulkCreateBOQItems(projectId, pastePreview.map(p => ({
+    const result = await bulkCreateBOQItems(projectId, pastePreview.map(p => ({
       item_code: p.item_code ?? null,
       description: p.description ?? null,
       unit: p.unit ?? null,
@@ -248,6 +244,7 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName }:
       category: p.category ?? null,
       notes: p.notes ?? null,
     })))
+    if (!result.success) { setRowError(result.error); return }
     setShowPasteModal(false)
     setPasteText('')
     setPastePreview([])

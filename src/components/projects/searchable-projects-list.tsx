@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Project } from '@/lib/types'
 import { ProjectCard } from './project-card'
 import { FolderKanban, Search } from 'lucide-react'
+import { useTranslation } from '@/lib/i18n/use-translation'
 
 interface SearchableProjectsListProps {
   projects: Project[]
@@ -11,6 +12,7 @@ interface SearchableProjectsListProps {
 
 export function SearchableProjectsList({ projects }: SearchableProjectsListProps) {
   const [query, setQuery] = useState('')
+  const { t } = useTranslation()
 
   const filtered = query.trim()
     ? projects.filter(p =>
@@ -28,7 +30,7 @@ export function SearchableProjectsList({ projects }: SearchableProjectsListProps
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search projects by name, client, or location..."
+          placeholder={t('search', 'Search') + '...'}
           className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
         />
       </div>
@@ -44,13 +46,13 @@ export function SearchableProjectsList({ projects }: SearchableProjectsListProps
           <FolderKanban size={48} className="mb-4 opacity-30" />
           {query ? (
             <>
-              <p className="text-lg font-medium">No results found</p>
-              <p className="text-sm mt-1">Try a different search term</p>
+              <p className="text-lg font-medium">{t('no_data', 'No results found')}</p>
+              <p className="text-sm mt-1">{t('search', 'Try a different search term')}</p>
             </>
           ) : (
             <>
-              <p className="text-lg font-medium">No projects yet</p>
-              <p className="text-sm mt-1">Create your first project to get started</p>
+              <p className="text-lg font-medium">{t('no_projects', 'No projects yet')}</p>
+              <p className="text-sm mt-1">{t('add', 'Create your first project to get started')}</p>
             </>
           )}
         </div>

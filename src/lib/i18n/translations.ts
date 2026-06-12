@@ -130,6 +130,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Dashboard
     welcome_back: 'Welcome back',
     overview: 'Overview of your construction projects',
+    dashboard_subtitle: 'Overview of your construction projects',
     total_projects: 'Total Projects',
     active_projects: 'Active Projects',
     new_project: 'New Project',
@@ -297,6 +298,7 @@ export const translations: Record<Language, Record<string, string>> = {
     type: 'النوع',
     // Dashboard
     welcome_back: 'مرحباً بعودتك',
+    dashboard_subtitle: 'نظرة عامة على مشاريع البناء',
     overview: 'نظرة عامة على مشاريع البناء',
     total_projects: 'إجمالي المشاريع',
     active_projects: 'المشاريع النشطة',
@@ -465,6 +467,7 @@ export const translations: Record<Language, Record<string, string>> = {
     type: 'סוג',
     // Dashboard
     welcome_back: 'ברוך שובך',
+    dashboard_subtitle: 'סקירת פרויקטי הבנייה שלך',
     overview: 'סקירת פרויקטי הבנייה שלך',
     total_projects: 'סה"כ פרויקטים',
     active_projects: 'פרויקטים פעילים',

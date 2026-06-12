@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NewProjectButton } from '@/components/projects/new-project-button'
+import { T } from '@/components/ui/translated-label'
 import { SearchableProjectsList } from '@/components/projects/searchable-projects-list'
 import { Project } from '@/lib/types'
 
@@ -25,7 +26,7 @@ export default async function ProjectsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Projects</h1>
+          <h1 className="text-2xl font-bold text-slate-900"><T k="projects" fallback="Projects" /></h1>
           <p className="text-slate-500 text-sm mt-1">{counts.all} project{counts.all !== 1 ? 's' : ''} total</p>
         </div>
         <NewProjectButton />

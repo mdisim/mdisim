@@ -2,19 +2,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-// Base columns guaranteed to exist in all DB versions
-const BASE_COLUMNS = ['item_code', 'description', 'unit', 'quantity', 'unit_rate', 'total_amount', 'category', 'notes']
-// Sprint 011 columns (may not exist if migration hasn't run)
-const SPRINT11_COLUMNS = ['is_section_header', 'sort_order', 'vat_percent', 'vat_amount']
+// Safe column list that works even without Sprint 011 migration
+const SPRINT11_KEYS = new Set(['is_section_header', 'sort_order', 'vat_percent', 'vat_amount'])
 
-function stripUnknownColumns<T extends Record<string, unknown>>(data: T, allowedExtra: string[]): Partial<T> {
-  const allowed = new Set([...BASE_COLUMNS, ...allowedExtra])
-  return Object.fromEntries(
-    Object.entries(data).filter(([k]) => allowed.has(k))
-  ) as Partial<T>
+function safePayload(data: Record<string, unknown>, includeSprint11 = true): Record<string, unknown> {
+  if (includeSprint11) return data
+  return Object.fromEntries(Object.entries(data).filter(([k]) => !SPRINT11_KEYS.has(k)))
 }
 
-export async function updateBOQItem(id: string, data: {
+type ItemData = {
   item_code?: string | null
   description?: string | null
   unit?: string | null
@@ -27,41 +23,32 @@ export async function updateBOQItem(id: string, data: {
   sort_order?: number
   category?: string | null
   notes?: string | null
-}) {
+}
+
+type ActionResult = { success: true; data?: unknown } | { success: false; error: string }
+
+export async function updateBOQItem(id: string, data: ItemData): Promise<ActionResult> {
   const supabase = await createClient()
-  const { error } = await supabase
-    .from('boq_items')
-    .update(data)
-    .eq('id', id)
+  const { error } = await supabase.from('boq_items').update(data).eq('id', id)
   if (error) {
-    // If error mentions unknown columns, retry with base columns only
-    if (error.message.includes('column') || error.code === 'PGRST204') {
-      const safe = stripUnknownColumns(data as Record<string, unknown>, [])
+    // If Sprint 011 columns missing, retry with base columns only
+    if (error.code === 'PGRST204' || error.message.includes('does not exist') || error.message.includes('column')) {
+      const safe = safePayload(data as Record<string, unknown>, false)
       const { error: e2 } = await supabase.from('boq_items').update(safe).eq('id', id)
-      if (e2) throw new Error(e2.message)
+      if (e2) return { success: false, error: e2.message }
     } else {
-      throw new Error(error.message)
+      return { success: false, error: error.message }
     }
   }
   revalidatePath('/projects/[id]/boq', 'page')
+  return { success: true }
 }
 
-export async function createBOQItem(projectId: string, data: {
-  item_code?: string | null
-  description?: string | null
-  unit?: string | null
-  quantity?: number | null
-  unit_rate?: number | null
-  total_amount?: number | null
-  vat_percent?: number | null
-  vat_amount?: number | null
-  is_section_header?: boolean
-  sort_order?: number
-  category?: string | null
-  notes?: string | null
-}) {
+export async function createBOQItem(projectId: string, data: ItemData): Promise<{ success: false; error: string } | { success: true; data: Record<string, unknown> }> {
   const supabase = await createClient()
-  const payload = { ...data, project_id: projectId }
+
+  // First attempt: all columns
+  const payload: Record<string, unknown> = { ...data, project_id: projectId }
   const { data: item, error } = await supabase
     .from('boq_items')
     .insert(payload)
@@ -69,55 +56,42 @@ export async function createBOQItem(projectId: string, data: {
     .single()
 
   if (error) {
-    // Retry without Sprint 011 columns if they don't exist yet
-    if (error.message.includes('column') || error.code === 'PGRST204' || error.message.includes('does not exist')) {
-      const safe = stripUnknownColumns(payload as Record<string, unknown>, [])
+    // Retry without Sprint 011 columns if those columns don't exist yet
+    if (error.code === 'PGRST204' || error.message.includes('does not exist') || error.message.includes('column')) {
+      const safe = safePayload(payload, false)
       const { data: item2, error: e2 } = await supabase.from('boq_items').insert(safe).select().single()
-      if (e2) throw new Error(e2.message)
+      if (e2) return { success: false, error: `Insert failed: ${e2.message}` }
       revalidatePath('/projects/[id]/boq', 'page')
-      return item2
+      return { success: true, data: item2 as Record<string, unknown> }
     }
-    throw new Error(error.message)
+    return { success: false, error: `Insert failed: ${error.message}` }
   }
 
   revalidatePath('/projects/[id]/boq', 'page')
-  return item
+  return { success: true, data: item as Record<string, unknown> }
 }
 
-export async function deleteBOQItem(id: string) {
+export async function deleteBOQItem(id: string): Promise<ActionResult> {
   const supabase = await createClient()
-  const { error } = await supabase
-    .from('boq_items')
-    .delete()
-    .eq('id', id)
-  if (error) throw new Error(error.message)
+  const { error } = await supabase.from('boq_items').delete().eq('id', id)
+  if (error) return { success: false, error: error.message }
   revalidatePath('/projects/[id]/boq', 'page')
+  return { success: true }
 }
 
-export async function bulkCreateBOQItems(projectId: string, items: Array<{
-  item_code?: string | null
-  description?: string | null
-  unit?: string | null
-  quantity?: number | null
-  unit_rate?: number | null
-  total_amount?: number | null
-  vat_percent?: number | null
-  vat_amount?: number | null
-  category?: string | null
-  notes?: string | null
-  sort_order?: number
-}>) {
+export async function bulkCreateBOQItems(projectId: string, items: Array<ItemData>): Promise<ActionResult> {
   const supabase = await createClient()
-  const payload = items.map(item => ({ ...item, project_id: projectId }))
+  const payload = items.map(item => ({ ...item, project_id: projectId } as Record<string, unknown>))
   const { error } = await supabase.from('boq_items').insert(payload)
   if (error) {
-    if (error.message.includes('column') || error.code === 'PGRST204' || error.message.includes('does not exist')) {
-      const safe = payload.map(i => stripUnknownColumns(i as Record<string, unknown>, []))
+    if (error.code === 'PGRST204' || error.message.includes('does not exist') || error.message.includes('column')) {
+      const safe = payload.map(i => safePayload(i, false))
       const { error: e2 } = await supabase.from('boq_items').insert(safe)
-      if (e2) throw new Error(e2.message)
+      if (e2) return { success: false, error: e2.message }
     } else {
-      throw new Error(error.message)
+      return { success: false, error: error.message }
     }
   }
   revalidatePath('/projects/[id]/boq', 'page')
+  return { success: true }
 }
