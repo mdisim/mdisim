@@ -48,6 +48,38 @@ interface ContextMenuState {
 const UNIT_OPTIONS = ['m', 'm²', 'm³', 'kg', 't', 'nr', 'ls', 'hr', 'day']
 const TAB_FIELDS = ['item_code', 'description', 'unit', 'quantity', 'unit_rate', 'vat_percent']
 
+type ItemData = {
+  item_code?: string | null
+  description?: string | null
+  unit?: string | null
+  quantity?: number | null
+  unit_rate?: number | null
+  total_amount?: number | null
+  vat_percent?: number | null
+  vat_amount?: number | null
+  is_section_header?: boolean
+  sort_order?: number
+  category?: string | null
+  notes?: string | null
+}
+
+function toItemData(d: Partial<BOQItem>): ItemData {
+  return {
+    item_code: d.item_code,
+    description: d.description,
+    unit: d.unit,
+    quantity: d.quantity,
+    unit_rate: d.unit_rate,
+    total_amount: d.total_amount,
+    vat_percent: d.vat_percent,
+    vat_amount: d.vat_amount,
+    is_section_header: d.is_section_header ?? undefined,
+    sort_order: d.sort_order ?? undefined,
+    category: d.category,
+    notes: d.notes,
+  }
+}
+
 function fmt(n: number | null | undefined) {
   if (n == null) return ''
   return n.toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -238,26 +270,11 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
       await deleteBOQItem(entry.itemId)
       setItems(prev => prev.filter(i => i.id !== entry.itemId))
     } else if (entry.type === 'delete') {
-      const d = entry.previousData
-      const insertData = {
-        item_code: d.item_code,
-        description: d.description,
-        unit: d.unit,
-        quantity: d.quantity,
-        unit_rate: d.unit_rate,
-        total_amount: d.total_amount,
-        vat_percent: d.vat_percent,
-        vat_amount: d.vat_amount,
-        is_section_header: d.is_section_header ?? undefined,
-        sort_order: d.sort_order ?? undefined,
-        category: d.category,
-        notes: d.notes,
-      }
-      const result = await createBOQItem(projectId, insertData)
+      const result = await createBOQItem(projectId, toItemData(entry.previousData))
       if (result.success) setItems(prev => [...prev, result.data as unknown as BOQItem])
     } else {
       setItems(prev => prev.map(i => i.id === entry.itemId ? { ...i, ...entry.previousData } : i))
-      await updateBOQItem(entry.itemId, entry.previousData)
+      await updateBOQItem(entry.itemId, toItemData(entry.previousData))
     }
   }, [historyIndex, history, projectId])
 
