@@ -4,8 +4,9 @@ import { useState } from 'react'
 import { PaymentCertificate } from '@/lib/types'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
-import { Plus, Award, Trash2, Pencil } from 'lucide-react'
+import { Plus, Award, Trash2, Pencil, FileText } from 'lucide-react'
 import { createCertificate, updateCertificate, deleteCertificate } from '@/app/actions/certificates'
+import { CertificateDetailModal } from './certificate-detail-modal'
 import { useRouter } from 'next/navigation'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -165,6 +166,7 @@ function CertificateForm({
 export function CertificatesClient({ certificates, projectId }: CertificatesClientProps) {
   const [showAdd, setShowAdd] = useState(false)
   const [editCert, setEditCert] = useState<PaymentCertificate | null>(null)
+  const [detailCert, setDetailCert] = useState<PaymentCertificate | null>(null)
   const router = useRouter()
 
   const handleDelete = async (id: string) => {
@@ -226,6 +228,13 @@ export function CertificatesClient({ certificates, projectId }: CertificatesClie
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 justify-end">
                       <button
+                        onClick={() => setDetailCert(cert)}
+                        title="View line items"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                      >
+                        <FileText size={14} />
+                      </button>
+                      <button
                         onClick={() => setEditCert(cert)}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
                       >
@@ -264,6 +273,14 @@ export function CertificatesClient({ certificates, projectId }: CertificatesClie
           />
         )}
       </Modal>
+
+      {detailCert && (
+        <CertificateDetailModal
+          certificate={detailCert}
+          projectId={projectId}
+          onClose={() => setDetailCert(null)}
+        />
+      )}
     </>
   )
 }

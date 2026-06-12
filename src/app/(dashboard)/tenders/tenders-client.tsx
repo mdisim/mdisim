@@ -114,6 +114,15 @@ export function TendersClient({ tenders: initialTenders }: Props) {
           placeholder="Search tenders..."
           className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
         />
+        {selectedIds.size >= 2 && (
+          <button
+            onClick={handleCompare}
+            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition-colors"
+          >
+            <GitCompare size={15} />
+            Compare ({selectedIds.size})
+          </button>
+        )}
         <Button onClick={() => { setShowAdd(true); setError('') }}>
           <Plus size={16} />
           Add Tender
@@ -125,6 +134,7 @@ export function TendersClient({ tenders: initialTenders }: Props) {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
+              <th className="px-4 py-3 w-8"></th>
               <th className="px-4 py-3 text-left font-semibold text-slate-600">Title</th>
               <th className="px-4 py-3 text-left font-semibold text-slate-600">Client</th>
               <th className="px-4 py-3 text-left font-semibold text-slate-600">Number</th>
@@ -137,13 +147,21 @@ export function TendersClient({ tenders: initialTenders }: Props) {
           <tbody className="divide-y divide-slate-100">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-slate-400">
+                <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
                   {initialTenders.length === 0 ? 'No tenders yet. Click "Add Tender" to get started.' : 'No tenders match your search.'}
                 </td>
               </tr>
             ) : (
               filtered.map(t => (
                 <tr key={t.id} className="hover:bg-slate-50">
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(t.id)}
+                      onChange={() => toggleSelect(t.id)}
+                      className="rounded border-slate-300 text-amber-500 focus:ring-amber-500"
+                    />
+                  </td>
                   <td className="px-4 py-3">
                     <a href={`/tenders/${t.id}`} className="font-medium text-slate-900 hover:text-amber-600 transition-colors">
                       {t.title}

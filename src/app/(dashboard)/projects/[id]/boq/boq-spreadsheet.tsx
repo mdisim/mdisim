@@ -30,6 +30,15 @@ interface HistoryEntry {
   newData: Partial<BOQItem>
 }
 
+interface LibraryInsertItem {
+  id: string
+  item_code: string
+  description: string
+  unit: string
+  unit_rate: number
+  category?: string | null
+}
+
 interface ContextMenuState {
   x: number
   y: number
@@ -144,7 +153,7 @@ interface BOQSpreadsheetProps {
   initialItems: BOQItem[]
   projectId: string
   projectName: string
-  onInsertFromLibrary?: (handler: (item: Partial<BOQItem>) => Promise<void>) => void
+  onInsertFromLibrary?: (handler: (item: LibraryInsertItem) => Promise<void>) => void
 }
 
 export default function BOQSpreadsheet({ initialItems, projectId, projectName, onInsertFromLibrary }: BOQSpreadsheetProps) {
@@ -181,6 +190,34 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
 
   const sortedItems = [...items].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
 
+  // Register library insert handler
+  useEffect(() => {
+    if (!onInsertFromLibrary) return
+    onInsertFromLibrary(async (libItem: LibraryInsertItem) => {
+      const maxOrder = items.reduce((m, i) => Math.max(m, i.sort_order ?? 0), 0)
+      const result = await createBOQItem(projectId, {
+        item_code: libItem.item_code,
+        description: libItem.description,
+        unit: libItem.unit,
+        quantity: 1,
+        unit_rate: libItem.unit_rate,
+        total_amount: libItem.unit_rate,
+        vat_percent: 17,
+        vat_amount: libItem.unit_rate * 0.17,
+        category: libItem.category ?? null,
+        notes: null,
+        is_section_header: false,
+        sort_order: maxOrder + 1,
+      })
+      if (result.success) {
+        const newItem = result.data as unknown as BOQItem
+        setItems(prev => [...prev, newItem])
+        pushHistory({ type: 'create', itemId: newItem.id, previousData: {}, newData: newItem })
+      }
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onInsertFromLibrary])
+
   // ─── History helpers ───────────────────────────────────────────────────────
 
   const pushHistory = useCallback((entry: HistoryEntry) => {
@@ -201,7 +238,22 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
       await deleteBOQItem(entry.itemId)
       setItems(prev => prev.filter(i => i.id !== entry.itemId))
     } else if (entry.type === 'delete') {
-      const result = await createBOQItem(projectId, entry.previousData)
+      const d = entry.previousData
+      const insertData = {
+        item_code: d.item_code,
+        description: d.description,
+        unit: d.unit,
+        quantity: d.quantity,
+        unit_rate: d.unit_rate,
+        total_amount: d.total_amount,
+        vat_percent: d.vat_percent,
+        vat_amount: d.vat_amount,
+        is_section_header: d.is_section_header ?? undefined,
+        sort_order: d.sort_order ?? undefined,
+        category: d.category,
+        notes: d.notes,
+      }
+      const result = await createBOQItem(projectId, insertData)
       if (result.success) setItems(prev => [...prev, result.data as unknown as BOQItem])
     } else {
       setItems(prev => prev.map(i => i.id === entry.itemId ? { ...i, ...entry.previousData } : i))
