@@ -58,7 +58,7 @@ interface Props {
 // ────────────────────────────────────────────
 // Main component
 // ────────────────────────────────────────────
-export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations, initialMeasurements, boqItems }: Props) {
+export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations, initialMeasurements, boqItems, dxfContent }: Props) {
   const isDxf = drawing.file_type === 'dxf'
 
   // PDF state
@@ -486,13 +486,17 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
         {/* Canvas area */}
         <div className="flex-1 overflow-auto bg-slate-800">
           {isDxf ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="bg-slate-900 border border-slate-700 rounded-xl p-8 max-w-sm text-center">
-                <AlertCircle size={32} className="text-amber-400 mx-auto mb-3" />
-                <p className="text-white font-semibold mb-2">DXF File</p>
-                <p className="text-slate-400 text-sm">DXF viewing is coming soon. You can still add measurements manually using the tools on the left.</p>
+            dxfContent ? (
+              <DXFViewer content={dxfContent} drawingId={drawing.id} projectId={projectId} />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="bg-slate-900 border border-slate-700 rounded-xl p-8 max-w-sm text-center">
+                  <AlertCircle size={32} className="text-amber-400 mx-auto mb-3" />
+                  <p className="text-white font-semibold mb-2">DXF File</p>
+                  <p className="text-slate-400 text-sm">DXF content could not be loaded.</p>
+                </div>
               </div>
-            </div>
+            )
           ) : (
             <>
               {pdfLoading && (

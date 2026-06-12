@@ -30,16 +30,28 @@ export default async function TakeoffViewerPage({
 
   if (!project || !drawing) notFound()
 
-  const { url: pdfUrl } = await getSignedUrl(drawing.storage_path)
+  const { url } = await getSignedUrl(drawing.storage_path)
+  const pdfUrl = url ?? ''
+
+  let dxfContent: string | null = null
+  if (drawing.file_type === 'dxf' && url) {
+    try {
+      const res = await fetch(url)
+      if (res.ok) dxfContent = await res.text()
+    } catch {
+      // ignore
+    }
+  }
 
   return (
     <TakeoffViewer
       drawing={drawing}
       projectId={id}
-      pdfUrl={pdfUrl ?? ''}
+      pdfUrl={pdfUrl}
       initialCalibrations={calibrations ?? []}
       initialMeasurements={measurements ?? []}
       boqItems={boqItems ?? []}
+      dxfContent={dxfContent}
     />
   )
 }

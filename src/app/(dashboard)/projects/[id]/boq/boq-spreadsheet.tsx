@@ -1,10 +1,10 @@
 'use client'
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import * as XLSX from 'xlsx'
+import { GripVertical } from 'lucide-react'
 import { updateBOQItem, createBOQItem, deleteBOQItem, bulkCreateBOQItems } from '@/app/actions/boq-spreadsheet'
 import ExcelImportModal from '@/components/boq/excel-import-modal'
 import { useTranslation } from '@/lib/i18n/use-translation'
-import type { LibraryItem } from '@/components/boq/library-panel'
 
 interface BOQItem {
   id: string
@@ -23,7 +23,21 @@ interface BOQItem {
   notes: string | null
 }
 
+interface HistoryEntry {
+  type: 'update' | 'create' | 'delete' | 'move'
+  itemId: string
+  previousData: Partial<BOQItem>
+  newData: Partial<BOQItem>
+}
+
+interface ContextMenuState {
+  x: number
+  y: number
+  itemId: string
+}
+
 const UNIT_OPTIONS = ['m', 'm²', 'm³', 'kg', 't', 'nr', 'ls', 'hr', 'day']
+const TAB_FIELDS = ['item_code', 'description', 'unit', 'quantity', 'unit_rate', 'vat_percent']
 
 function fmt(n: number | null | undefined) {
   if (n == null) return ''
@@ -76,14 +90,63 @@ function exportToExcel(items: BOQItem[], projectName: string) {
   XLSX.writeFile(wb, `BOQ_${projectName}_${new Date().toISOString().split('T')[0]}.xlsx`)
 }
 
+// ─── Context Menu ─────────────────────────────────────────────────────────────
+function BOQContextMenu({
+  menu,
+  onEdit,
+  onDuplicate,
+  onInsertAbove,
+  onInsertBelow,
+  onDelete,
+  onClose,
+}: {
+  menu: ContextMenuState
+  onEdit: () => void
+  onDuplicate: () => void
+  onInsertAbove: () => void
+  onInsertBelow: () => void
+  onDelete: () => void
+  onClose: () => void
+}) {
+  useEffect(() => {
+    const handler = () => onClose()
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [onClose])
+
+  return (
+    <div
+      className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px] text-sm"
+      style={{ top: menu.y, left: menu.x }}
+      onClick={e => e.stopPropagation()}
+    >
+      <button onClick={onEdit} className="w-full text-left px-3 py-1.5 hover:bg-gray-50 flex items-center gap-2">
+        ✏️ Edit
+      </button>
+      <button onClick={onDuplicate} className="w-full text-left px-3 py-1.5 hover:bg-gray-50 flex items-center gap-2">
+        ⧉ Duplicate
+      </button>
+      <button onClick={onInsertAbove} className="w-full text-left px-3 py-1.5 hover:bg-gray-50 flex items-center gap-2">
+        ➕ Insert Above
+      </button>
+      <button onClick={onInsertBelow} className="w-full text-left px-3 py-1.5 hover:bg-gray-50 flex items-center gap-2">
+        ➕ Insert Below
+      </button>
+      <div className="border-t border-gray-100 my-1" />
+      <button onClick={onDelete} className="w-full text-left px-3 py-1.5 hover:bg-red-50 text-red-600 flex items-center gap-2">
+        🗑️ Delete
+      </button>
+    </div>
+  )
+}
+
 interface BOQSpreadsheetProps {
   initialItems: BOQItem[]
   projectId: string
   projectName: string
-  onInsertFromLibrary?: (handler: (item: LibraryItem) => Promise<void>) => void
 }
 
-export default function BOQSpreadsheet({ initialItems, projectId, projectName, onInsertFromLibrary }: BOQSpreadsheetProps) {
+export default function BOQSpreadsheet({ initialItems, projectId, projectName }: BOQSpreadsheetProps) {
   const { t } = useTranslation()
   const [items, setItems] = useState<BOQItem[]>(initialItems)
   const [editCell, setEditCell] = useState<{ id: string; field: string } | null>(null)
@@ -94,44 +157,120 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
   const [showPasteModal, setShowPasteModal] = useState(false)
   const [pasteText, setPasteText] = useState('')
   const [pastePreview, setPastePreview] = useState<Partial<BOQItem>[]>([])
-  const [isDragOver, setIsDragOver] = useState(false)
+
+  // Feature 1: Undo/Redo
+  const [history, setHistory] = useState<HistoryEntry[]>([])
+  const [historyIndex, setHistoryIndex] = useState(-1)
+
+  // Feature 2: Keyboard navigation
+  const [selectedCell, setSelectedCell] = useState<{ rowId: string; field: string } | null>(null)
+
+  // Feature 3: Multi-row selection
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
+  const lastSelectedRowRef = useRef<string | null>(null)
+
+  // Feature 4: Drag-and-drop
+  const [dragOverRowId, setDragOverRowId] = useState<string | null>(null)
+  const draggingRowRef = useRef<string | null>(null)
+
+  // Feature 6: Context menu
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
+
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  async function insertFromLibrary(item: LibraryItem) {
-    const maxOrder = items.reduce((m, i) => Math.max(m, i.sort_order ?? 0), 0)
-    const result = await createBOQItem(projectId, {
-      item_code: item.item_code ?? '',
-      description: item.description_en || item.description || '',
-      unit: item.unit ?? 'm',
-      unit_rate: item.typical_rate_ils ?? item.unit_rate ?? 0,
-      quantity: 0,
-      total_amount: 0,
-      vat_percent: 17,
-      vat_amount: 0,
-      sort_order: maxOrder + 1,
-    })
-    if (result.success) setItems(prev => [...prev, result.data as unknown as BOQItem])
-  }
-
-  // Register handler with parent if callback provided
-  if (onInsertFromLibrary) {
-    onInsertFromLibrary(insertFromLibrary)
-  }
-
-  async function handleLibraryDrop(e: React.DragEvent) {
-    e.preventDefault()
-    setIsDragOver(false)
-    const raw = e.dataTransfer.getData('application/json')
-    if (!raw) return
-    const item = JSON.parse(raw) as LibraryItem
-    await insertFromLibrary(item)
-  }
-
   const sortedItems = [...items].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+
+  // ─── History helpers ───────────────────────────────────────────────────────
+
+  const pushHistory = useCallback((entry: HistoryEntry) => {
+    setHistory(prev => {
+      const trimmed = prev.slice(0, historyIndex + 1)
+      return [...trimmed, entry].slice(-50)
+    })
+    setHistoryIndex(prev => Math.min(prev + 1, 49))
+  }, [historyIndex])
+
+  // ─── Undo / Redo ──────────────────────────────────────────────────────────
+
+  const undo = useCallback(async () => {
+    if (historyIndex < 0) return
+    const entry = history[historyIndex]
+    setHistoryIndex(prev => prev - 1)
+    if (entry.type === 'create') {
+      await deleteBOQItem(entry.itemId)
+      setItems(prev => prev.filter(i => i.id !== entry.itemId))
+    } else if (entry.type === 'delete') {
+      const result = await createBOQItem(projectId, entry.previousData)
+      if (result.success) setItems(prev => [...prev, result.data as unknown as BOQItem])
+    } else {
+      setItems(prev => prev.map(i => i.id === entry.itemId ? { ...i, ...entry.previousData } : i))
+      await updateBOQItem(entry.itemId, entry.previousData)
+    }
+  }, [historyIndex, history, projectId])
+
+  const redo = useCallback(async () => {
+    if (historyIndex >= history.length - 1) return
+    const entry = history[historyIndex + 1]
+    setHistoryIndex(prev => prev + 1)
+    if (entry.type === 'delete') {
+      await deleteBOQItem(entry.itemId)
+      setItems(prev => prev.filter(i => i.id !== entry.itemId))
+    } else if (entry.type === 'create') {
+      const result = await createBOQItem(projectId, entry.newData)
+      if (result.success) setItems(prev => [...prev, result.data as unknown as BOQItem])
+    } else {
+      setItems(prev => prev.map(i => i.id === entry.itemId ? { ...i, ...entry.newData } : i))
+      await updateBOQItem(entry.itemId, entry.newData)
+    }
+  }, [historyIndex, history, projectId])
+
+  // ─── Global keyboard shortcuts ────────────────────────────────────────────
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement).tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+
+      if (e.ctrlKey && e.key === 'z') {
+        e.preventDefault()
+        void undo()
+      } else if (e.ctrlKey && e.key === 'y') {
+        e.preventDefault()
+        void redo()
+      } else if (!editCell && selectedCell) {
+        const nonHeaderItems = sortedItems.filter(i => !i.is_section_header)
+        const rowIdx = nonHeaderItems.findIndex(i => i.id === selectedCell.rowId)
+        if (e.key === 'ArrowDown' && rowIdx < nonHeaderItems.length - 1) {
+          setSelectedCell({ rowId: nonHeaderItems[rowIdx + 1].id, field: selectedCell.field })
+        } else if (e.key === 'ArrowUp' && rowIdx > 0) {
+          setSelectedCell({ rowId: nonHeaderItems[rowIdx - 1].id, field: selectedCell.field })
+        } else if (e.key === 'F2') {
+          e.preventDefault()
+          const item = nonHeaderItems[rowIdx]
+          if (item) startEdit(item, selectedCell.field, String(item[selectedCell.field as keyof BOQItem] ?? ''))
+        } else if ((e.key === 'Delete' || e.key === 'Backspace') && rowIdx >= 0) {
+          e.preventDefault()
+          const item = nonHeaderItems[rowIdx]
+          if (item) {
+            const prev: Partial<BOQItem> = { [selectedCell.field]: item[selectedCell.field as keyof BOQItem] as never }
+            const newVal: Partial<BOQItem> = { [selectedCell.field]: null }
+            pushHistory({ type: 'update', itemId: item.id, previousData: prev, newData: newVal })
+            setItems(p => p.map(i => i.id === item.id ? { ...i, ...newVal } : i))
+            void updateBOQItem(item.id, newVal)
+          }
+        }
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [undo, redo, editCell, selectedCell, sortedItems, pushHistory])
+
+  // ─── Edit helpers ──────────────────────────────────────────────────────────
 
   function startEdit(item: BOQItem, field: string, currentVal: string) {
     setEditCell({ id: item.id, field })
     setEditValue(currentVal)
+    setSelectedCell({ rowId: item.id, field })
   }
 
   function cancelEdit() {
@@ -179,6 +318,9 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
       updates.vat_amount = vatAmt
     }
 
+    const previousData: Partial<BOQItem> = { [field]: item[field as keyof BOQItem] as never }
+    pushHistory({ type: 'update', itemId: id, previousData, newData: updates })
+
     setItems(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i))
     setSaveStatus('saving')
     if (saveTimer.current) clearTimeout(saveTimer.current)
@@ -189,6 +331,49 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
       setTimeout(() => setSaveStatus('idle'), 2000)
     }, 800)
   }
+
+  function handleKeyDown(e: React.KeyboardEvent, id: string, field: string) {
+    if (e.key === 'Escape') { cancelEdit(); return }
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      void commitEdit(id, field, editValue)
+      // Move to same field in next row
+      const nonHeaderItems = sortedItems.filter(i => !i.is_section_header)
+      const rowIdx = nonHeaderItems.findIndex(i => i.id === id)
+      if (rowIdx < nonHeaderItems.length - 1) {
+        const next = nonHeaderItems[rowIdx + 1]
+        setTimeout(() => startEdit(next, field, String(next[field as keyof BOQItem] ?? '')), 0)
+      }
+      return
+    }
+    if (e.key === 'Tab') {
+      e.preventDefault()
+      void commitEdit(id, field, editValue)
+      const fieldIdx = TAB_FIELDS.indexOf(field)
+      const nonHeaderItems = sortedItems.filter(i => !i.is_section_header)
+      const rowIdx = nonHeaderItems.findIndex(i => i.id === id)
+      if (e.shiftKey) {
+        if (fieldIdx > 0) {
+          const prevField = TAB_FIELDS[fieldIdx - 1]
+          setTimeout(() => startEdit(nonHeaderItems[rowIdx], prevField, String(nonHeaderItems[rowIdx][prevField as keyof BOQItem] ?? '')), 0)
+        } else if (rowIdx > 0) {
+          const prevRow = nonHeaderItems[rowIdx - 1]
+          const lastField = TAB_FIELDS[TAB_FIELDS.length - 1]
+          setTimeout(() => startEdit(prevRow, lastField, String(prevRow[lastField as keyof BOQItem] ?? '')), 0)
+        }
+      } else {
+        if (fieldIdx < TAB_FIELDS.length - 1) {
+          const nextField = TAB_FIELDS[fieldIdx + 1]
+          setTimeout(() => startEdit(nonHeaderItems[rowIdx], nextField, String(nonHeaderItems[rowIdx][nextField as keyof BOQItem] ?? '')), 0)
+        } else if (rowIdx < nonHeaderItems.length - 1) {
+          const nextRow = nonHeaderItems[rowIdx + 1]
+          setTimeout(() => startEdit(nextRow, TAB_FIELDS[0], String(nextRow[TAB_FIELDS[0] as keyof BOQItem] ?? '')), 0)
+        }
+      }
+    }
+  }
+
+  // ─── Row operations ────────────────────────────────────────────────────────
 
   async function addRow(isSection = false) {
     setRowError(null)
@@ -210,7 +395,33 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
       setTimeout(() => setRowError(null), 8000)
       return
     }
-    setItems(prev => [...prev, result.data as unknown as BOQItem])
+    const newItem = result.data as unknown as BOQItem
+    setItems(prev => [...prev, newItem])
+    pushHistory({ type: 'create', itemId: newItem.id, previousData: {}, newData: newItem })
+  }
+
+  async function addRowAt(referenceId: string, position: 'above' | 'below') {
+    const sorted = [...items].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    const idx = sorted.findIndex(i => i.id === referenceId)
+    const insertIdx = position === 'above' ? idx : idx + 1
+    const prevOrder = sorted[insertIdx - 1]?.sort_order ?? -1
+    const newOrder = prevOrder + 0.5
+    const result = await createBOQItem(projectId, {
+      item_code: '',
+      description: 'New Item',
+      unit: 'm',
+      quantity: 0,
+      unit_rate: 0,
+      total_amount: 0,
+      vat_percent: 17,
+      vat_amount: 0,
+      is_section_header: false,
+      sort_order: newOrder,
+    })
+    if (!result.success) { setRowError(result.error); return }
+    const newItem = result.data as unknown as BOQItem
+    setItems(prev => [...prev, newItem])
+    pushHistory({ type: 'create', itemId: newItem.id, previousData: {}, newData: newItem })
   }
 
   async function copyRow(item: BOQItem) {
@@ -228,14 +439,22 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
       notes: item.notes,
       sort_order: maxOrder + 1,
     })
-    if (result.success) setItems(prev => [...prev, result.data as unknown as BOQItem])
+    if (result.success) {
+      const newItem = result.data as unknown as BOQItem
+      setItems(prev => [...prev, newItem])
+      pushHistory({ type: 'create', itemId: newItem.id, previousData: {}, newData: newItem })
+    }
   }
 
   async function removeRow(id: string) {
     if (!confirm(t('delete_confirm', 'Delete this item?'))) return
+    const item = items.find(i => i.id === id)
+    if (!item) return
     const result = await deleteBOQItem(id)
-    if (result.success) setItems(prev => prev.filter(i => i.id !== id))
-    else setRowError(result.error)
+    if (result.success) {
+      setItems(prev => prev.filter(i => i.id !== id))
+      pushHistory({ type: 'delete', itemId: id, previousData: item, newData: {} })
+    } else setRowError(result.error)
   }
 
   async function moveRow(id: string, direction: 'up' | 'down') {
@@ -251,21 +470,113 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
       if (i.id === b.id) return { ...i, sort_order: aOrder }
       return i
     }))
+    pushHistory({ type: 'move', itemId: id, previousData: { sort_order: aOrder }, newData: { sort_order: bOrder } })
     void updateBOQItem(a.id, { sort_order: bOrder })
     void updateBOQItem(b.id, { sort_order: aOrder })
   }
 
-  function handleKeyDown(e: React.KeyboardEvent, id: string, field: string) {
-    if (e.key === 'Escape') { cancelEdit(); return }
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      commitEdit(id, field, editValue)
+  // ─── Multi-row selection ───────────────────────────────────────────────────
+
+  function handleRowNumberClick(e: React.MouseEvent, itemId: string) {
+    e.stopPropagation()
+    const nonHeaderItems = sortedItems.filter(i => !i.is_section_header)
+    if (e.shiftKey && lastSelectedRowRef.current) {
+      const lastIdx = nonHeaderItems.findIndex(i => i.id === lastSelectedRowRef.current)
+      const currIdx = nonHeaderItems.findIndex(i => i.id === itemId)
+      const [start, end] = [Math.min(lastIdx, currIdx), Math.max(lastIdx, currIdx)]
+      const rangeIds = nonHeaderItems.slice(start, end + 1).map(i => i.id)
+      setSelectedRows(prev => {
+        const next = new Set(prev)
+        rangeIds.forEach(id => next.add(id))
+        return next
+      })
+    } else if (e.ctrlKey || e.metaKey) {
+      setSelectedRows(prev => {
+        const next = new Set(prev)
+        if (next.has(itemId)) next.delete(itemId)
+        else next.add(itemId)
+        return next
+      })
+    } else {
+      setSelectedRows(new Set([itemId]))
     }
-    if (e.key === 'Tab') {
-      e.preventDefault()
-      commitEdit(id, field, editValue)
-    }
+    lastSelectedRowRef.current = itemId
   }
+
+  async function deleteSelectedRows() {
+    if (selectedRows.size === 0) return
+    if (!confirm(`Delete ${selectedRows.size} selected rows?`)) return
+    const ids = Array.from(selectedRows)
+    const batchEntries: HistoryEntry[] = ids.map(id => {
+      const item = items.find(i => i.id === id)
+      return { type: 'delete' as const, itemId: id, previousData: item ?? {}, newData: {} }
+    })
+    for (const id of ids) {
+      await deleteBOQItem(id)
+    }
+    setItems(prev => prev.filter(i => !selectedRows.has(i.id)))
+    setSelectedRows(new Set())
+    batchEntries.forEach(e => pushHistory(e))
+  }
+
+  function copySelectedRows() {
+    const sorted = sortedItems.filter(i => selectedRows.has(i.id))
+    const text = sorted.map(i => [
+      i.item_code ?? '',
+      i.description ?? '',
+      i.unit ?? '',
+      i.quantity ?? '',
+      i.unit_rate ?? '',
+      i.total_amount ?? '',
+      i.vat_percent ?? '',
+      i.category ?? '',
+      i.notes ?? '',
+    ].join('\t')).join('\n')
+    void navigator.clipboard.writeText(text)
+  }
+
+  // ─── Drag and drop ─────────────────────────────────────────────────────────
+
+  const handleDragStart = useCallback((e: React.DragEvent, itemId: string) => {
+    draggingRowRef.current = itemId
+    e.dataTransfer.setData('text/plain', itemId)
+    e.dataTransfer.effectAllowed = 'move'
+  }, [])
+
+  const handleDragEnd = useCallback(() => {
+    draggingRowRef.current = null
+    setDragOverRowId(null)
+  }, [])
+
+  const handleDragOver = useCallback((e: React.DragEvent, itemId: string) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverRowId(itemId)
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent, targetId: string) => {
+    e.preventDefault()
+    const sourceId = draggingRowRef.current
+    setDragOverRowId(null)
+    if (!sourceId || sourceId === targetId) return
+
+    setItems(prevItems => {
+      const sorted = [...prevItems].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+      const sourceIdx = sorted.findIndex(i => i.id === sourceId)
+      const targetIdx = sorted.findIndex(i => i.id === targetId)
+      if (sourceIdx === -1 || targetIdx === -1) return prevItems
+      const reordered = [...sorted]
+      const [moved] = reordered.splice(sourceIdx, 1)
+      reordered.splice(targetIdx, 0, moved)
+      const updated = reordered.map((item, idx) => ({ ...item, sort_order: idx }))
+      updated.forEach(item => {
+        void updateBOQItem(item.id, { sort_order: item.sort_order ?? 0 })
+      })
+      return updated
+    })
+  }, [])
+
+  // ─── Paste modal ───────────────────────────────────────────────────────────
 
   async function confirmPaste() {
     const result = await bulkCreateBOQItems(projectId, pastePreview.map(p => ({
@@ -285,9 +596,29 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
     window.location.reload()
   }
 
+  // ─── Totals ────────────────────────────────────────────────────────────────
+
   const grandTotal = sortedItems.filter(i => !i.is_section_header).reduce((s, i) => s + (i.total_amount ?? 0), 0)
   const vatTotal = sortedItems.filter(i => !i.is_section_header).reduce((s, i) => s + (i.vat_amount ?? 0), 0)
   const netTotal = grandTotal + vatTotal
+
+  // ─── Section grouping ──────────────────────────────────────────────────────
+
+  const sections: { header: BOQItem | null; items: BOQItem[]; key: string }[] = []
+  let currentSection: { header: BOQItem | null; items: BOQItem[]; key: string } = { header: null, items: [], key: 'general' }
+  for (const item of sortedItems) {
+    if (item.is_section_header) {
+      if (currentSection.items.length > 0 || currentSection.header) {
+        sections.push(currentSection)
+      }
+      currentSection = { header: item, items: [], key: item.id }
+    } else {
+      currentSection.items.push(item)
+    }
+  }
+  sections.push(currentSection)
+
+  // ─── Editable cell ─────────────────────────────────────────────────────────
 
   function EditableCell({ item, field, value, type = 'text', className = '' }: {
     item: BOQItem
@@ -305,7 +636,7 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
           type={type}
           value={editValue}
           onChange={e => setEditValue(e.target.value)}
-          onBlur={() => commitEdit(item.id, field, editValue)}
+          onBlur={() => void commitEdit(item.id, field, editValue)}
           onKeyDown={e => handleKeyDown(e, item.id, field)}
           className={`w-full border border-blue-400 rounded px-1 py-0 text-sm outline-none bg-blue-50 ${className}`}
         />
@@ -328,8 +659,8 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
         <select
           autoFocus
           value={editValue}
-          onChange={e => { setEditValue(e.target.value); commitEdit(item.id, 'unit', e.target.value) }}
-          onBlur={() => commitEdit(item.id, 'unit', editValue)}
+          onChange={e => { setEditValue(e.target.value); void commitEdit(item.id, 'unit', e.target.value) }}
+          onBlur={() => void commitEdit(item.id, 'unit', editValue)}
           className="w-full border border-blue-400 rounded px-1 py-0 text-sm outline-none bg-blue-50"
         >
           {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
@@ -346,30 +677,34 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
     )
   }
 
-  const sections: { header: BOQItem | null; items: BOQItem[]; key: string }[] = []
-  let currentSection: { header: BOQItem | null; items: BOQItem[]; key: string } = { header: null, items: [], key: 'general' }
-  for (const item of sortedItems) {
-    if (item.is_section_header) {
-      if (currentSection.items.length > 0 || currentSection.header) {
-        sections.push(currentSection)
-      }
-      currentSection = { header: item, items: [], key: item.id }
-    } else {
-      currentSection.items.push(item)
-    }
-  }
-  sections.push(currentSection)
-
   let rowNum = 0
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <button onClick={() => addRow(false)} className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 flex items-center gap-1">
+    <div className="flex flex-col h-full" onClick={() => setSelectedRows(new Set())}>
+      {/* Main toolbar */}
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
+        <button onClick={() => void addRow(false)} className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 flex items-center gap-1">
           + {t('add_row', 'Add Row')}
         </button>
-        <button onClick={() => addRow(true)} className="px-3 py-1.5 bg-amber-500 text-white text-sm rounded-lg hover:bg-amber-600 flex items-center gap-1">
+        <button onClick={() => void addRow(true)} className="px-3 py-1.5 bg-amber-500 text-white text-sm rounded-lg hover:bg-amber-600 flex items-center gap-1">
           + {t('add_section', 'Add Section')}
+        </button>
+        <div className="h-4 w-px bg-gray-300 mx-1" />
+        <button
+          onClick={() => void undo()}
+          disabled={historyIndex < 0}
+          title="Ctrl+Z"
+          className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+        >
+          ↩ Undo <span className="text-xs text-gray-400">(Ctrl+Z)</span>
+        </button>
+        <button
+          onClick={() => void redo()}
+          disabled={historyIndex >= history.length - 1}
+          title="Ctrl+Y"
+          className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+        >
+          ↪ Redo <span className="text-xs text-gray-400">(Ctrl+Y)</span>
         </button>
         <div className="h-4 w-px bg-gray-300 mx-1" />
         <button onClick={() => exportToExcel(sortedItems.filter(i => !i.is_section_header), projectName)} className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">
@@ -389,13 +724,23 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
         </div>
       </div>
 
-      <div className={`overflow-auto border rounded-xl shadow-sm transition-colors ${isDragOver ? 'border-blue-400 ring-2 ring-blue-200' : ''}`}>
+      {/* Multi-row selection toolbar */}
+      {selectedRows.size > 0 && (
+        <div className="flex items-center gap-3 mb-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm" onClick={e => e.stopPropagation()}>
+          <span className="font-medium text-blue-800">{selectedRows.size} row{selectedRows.size > 1 ? 's' : ''} selected</span>
+          <button onClick={() => void deleteSelectedRows()} className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs">Delete Selected</button>
+          <button onClick={copySelectedRows} className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs">Copy Selected</button>
+          <button onClick={() => setSelectedRows(new Set())} className="px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-xs">Deselect</button>
+        </div>
+      )}
+
+      <div className="overflow-auto border rounded-xl shadow-sm">
         <table className="w-full border-collapse text-sm" style={{ minWidth: 900 }}>
           <thead className="bg-gray-100 sticky top-0 z-10">
             <tr className="border-b">
-              <th className="w-10 px-2 py-2 text-center text-xs font-semibold text-gray-500">#</th>
-              <th className="w-24 px-2 py-2 text-left text-xs font-semibold text-gray-600">{t('item_code', 'Item Code')}</th>
-              <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600">{t('item_description', 'Description')}</th>
+              <th className="w-10 px-2 py-2 text-center text-xs font-semibold text-gray-500 sticky left-0 z-20 bg-gray-100">#</th>
+              <th className="w-24 px-2 py-2 text-left text-xs font-semibold text-gray-600 sticky left-10 z-20 bg-gray-100">{t('item_code', 'Item Code')}</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 sticky left-[6.5rem] z-20 bg-gray-100">{t('item_description', 'Description')}</th>
               <th className="w-20 px-2 py-2 text-left text-xs font-semibold text-gray-600">{t('unit', 'Unit')}</th>
               <th className="w-24 px-2 py-2 text-right text-xs font-semibold text-gray-600">{t('quantity', 'Quantity')}</th>
               <th className="w-28 px-2 py-2 text-right text-xs font-semibold text-gray-600">{t('unit_rate', 'Unit Rate')} ₪</th>
@@ -406,23 +751,19 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
               <th className="w-20 px-2 py-2 text-center text-xs font-semibold text-gray-500">{t('actions', 'Actions')}</th>
             </tr>
           </thead>
-          <tbody
-            onDragOver={e => { e.preventDefault(); setIsDragOver(true) }}
-            onDrop={handleLibraryDrop}
-            onDragLeave={() => setIsDragOver(false)}
-          >
+          <tbody>
             {sections.map((section) => (
               <React.Fragment key={section.key}>
                 {section.header && (
                   <tr className="bg-amber-100 border-b border-amber-200">
-                    <td className="px-2 py-1.5 text-center text-gray-400 text-xs">§</td>
-                    <td colSpan={8} className="px-2 py-1.5">
+                    <td className="px-2 py-1.5 text-center text-gray-400 text-xs sticky left-0 z-10 bg-amber-100">§</td>
+                    <td colSpan={8} className="px-2 py-1.5 sticky left-10 z-10 bg-amber-100">
                       {editCell?.id === section.header.id && editCell?.field === 'description' ? (
                         <input
                           autoFocus
                           value={editValue}
                           onChange={e => setEditValue(e.target.value)}
-                          onBlur={() => commitEdit(section.header!.id, 'description', editValue)}
+                          onBlur={() => void commitEdit(section.header!.id, 'description', editValue)}
                           onKeyDown={e => handleKeyDown(e, section.header!.id, 'description')}
                           className="w-full border border-amber-400 rounded px-2 py-0.5 font-semibold bg-amber-50 outline-none text-sm"
                         />
@@ -438,9 +779,9 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
                     <td className="px-2 py-1.5" />
                     <td className="px-2 py-1.5 text-center">
                       <div className="flex items-center justify-center gap-1">
-                        <button onClick={() => moveRow(section.header!.id, 'up')} className="text-gray-400 hover:text-gray-700 text-xs">▲</button>
-                        <button onClick={() => moveRow(section.header!.id, 'down')} className="text-gray-400 hover:text-gray-700 text-xs">▼</button>
-                        <button onClick={() => removeRow(section.header!.id)} className="text-red-400 hover:text-red-600 text-xs ml-1">✕</button>
+                        <button onClick={() => void moveRow(section.header!.id, 'up')} className="text-gray-400 hover:text-gray-700 text-xs">▲</button>
+                        <button onClick={() => void moveRow(section.header!.id, 'down')} className="text-gray-400 hover:text-gray-700 text-xs">▼</button>
+                        <button onClick={() => void removeRow(section.header!.id)} className="text-red-400 hover:text-red-600 text-xs ml-1">✕</button>
                       </div>
                     </td>
                   </tr>
@@ -448,39 +789,80 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
                 {section.items.map((item) => {
                   rowNum++
                   const net = (item.total_amount ?? 0) + (item.vat_amount ?? 0)
+                  const isSelected = selectedRows.has(item.id)
+                  const isCellSelected = selectedCell?.rowId === item.id && !isSelected
+                  const isDragOver = dragOverRowId === item.id
+                  const rowClass = [
+                    'border-b group',
+                    isSelected ? 'bg-blue-50 border-l-2 border-l-blue-500' : '',
+                    !isSelected && isCellSelected ? 'border-l-2 border-l-blue-300' : '',
+                    !isSelected && !isCellSelected ? 'hover:bg-gray-50' : '',
+                  ].filter(Boolean).join(' ')
                   return (
-                    <tr key={item.id} className="border-b hover:bg-gray-50 group">
-                      <td className="px-2 py-1 text-center text-gray-400 text-xs select-none">{rowNum}</td>
-                      <td className="px-1 py-0.5">
-                        <EditableCell item={item} field="item_code" value={item.item_code} />
-                      </td>
-                      <td className="px-1 py-0.5">
-                        <EditableCell item={item} field="description" value={item.description} />
-                      </td>
-                      <td className="px-1 py-0.5">
-                        <UnitCell item={item} />
-                      </td>
-                      <td className="px-1 py-0.5">
-                        <EditableCell item={item} field="quantity" value={item.quantity} type="number" className="text-right" />
-                      </td>
-                      <td className="px-1 py-0.5">
-                        <EditableCell item={item} field="unit_rate" value={item.unit_rate} type="number" className="text-right" />
-                      </td>
-                      <td className="px-2 py-1 text-right text-green-700 font-medium text-sm">{fmt(item.total_amount)}</td>
-                      <td className="px-1 py-0.5">
-                        <EditableCell item={item} field="vat_percent" value={item.vat_percent} type="number" className="text-right" />
-                      </td>
-                      <td className="px-2 py-1 text-right text-gray-600 text-sm">{fmt(item.vat_amount)}</td>
-                      <td className="px-2 py-1 text-right font-bold text-gray-900 text-sm">{fmt(net)}</td>
-                      <td className="px-2 py-1">
-                        <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => copyRow(item)} title="Copy" className="text-blue-400 hover:text-blue-600 text-xs p-0.5">⧉</button>
-                          <button onClick={() => moveRow(item.id, 'up')} title="Move up" className="text-gray-400 hover:text-gray-600 text-xs p-0.5">▲</button>
-                          <button onClick={() => moveRow(item.id, 'down')} title="Move down" className="text-gray-400 hover:text-gray-600 text-xs p-0.5">▼</button>
-                          <button onClick={() => removeRow(item.id)} title="Delete" className="text-red-400 hover:text-red-600 text-xs p-0.5">✕</button>
-                        </div>
-                      </td>
-                    </tr>
+                    <React.Fragment key={item.id}>
+                      {isDragOver && (
+                        <tr>
+                          <td colSpan={11}>
+                            <div className="h-0.5 bg-blue-400 mx-2" />
+                          </td>
+                        </tr>
+                      )}
+                      <tr
+                        className={rowClass}
+                        onContextMenu={e => {
+                          e.preventDefault()
+                          setContextMenu({ x: e.clientX, y: e.clientY, itemId: item.id })
+                        }}
+                        onDragOver={e => handleDragOver(e, item.id)}
+                        onDrop={e => handleDrop(e, item.id)}
+                      >
+                        <td
+                          className="px-2 py-1 text-center text-gray-400 text-xs select-none cursor-pointer sticky left-0 z-10 bg-inherit"
+                          onClick={e => handleRowNumberClick(e, item.id)}
+                        >
+                          <div className="flex items-center justify-center gap-0.5">
+                            <span
+                              draggable
+                              onDragStart={e => handleDragStart(e, item.id)}
+                              onDragEnd={handleDragEnd}
+                              className="cursor-grab text-gray-300 hover:text-gray-500"
+                            >
+                              <GripVertical size={12} />
+                            </span>
+                            <span>{rowNum}</span>
+                          </div>
+                        </td>
+                        <td className="px-1 py-0.5 sticky left-10 z-10 bg-inherit">
+                          <EditableCell item={item} field="item_code" value={item.item_code} />
+                        </td>
+                        <td className="px-1 py-0.5 sticky left-[6.5rem] z-10 bg-inherit">
+                          <EditableCell item={item} field="description" value={item.description} />
+                        </td>
+                        <td className="px-1 py-0.5">
+                          <UnitCell item={item} />
+                        </td>
+                        <td className="px-1 py-0.5">
+                          <EditableCell item={item} field="quantity" value={item.quantity} type="number" className="text-right" />
+                        </td>
+                        <td className="px-1 py-0.5">
+                          <EditableCell item={item} field="unit_rate" value={item.unit_rate} type="number" className="text-right" />
+                        </td>
+                        <td className="px-2 py-1 text-right text-green-700 font-medium text-sm">{fmt(item.total_amount)}</td>
+                        <td className="px-1 py-0.5">
+                          <EditableCell item={item} field="vat_percent" value={item.vat_percent} type="number" className="text-right" />
+                        </td>
+                        <td className="px-2 py-1 text-right text-gray-600 text-sm">{fmt(item.vat_amount)}</td>
+                        <td className="px-2 py-1 text-right font-bold text-gray-900 text-sm">{fmt(net)}</td>
+                        <td className="px-2 py-1">
+                          <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => void copyRow(item)} title="Copy" className="text-blue-400 hover:text-blue-600 text-xs p-0.5">⧉</button>
+                            <button onClick={() => void moveRow(item.id, 'up')} title="Move up" className="text-gray-400 hover:text-gray-600 text-xs p-0.5">▲</button>
+                            <button onClick={() => void moveRow(item.id, 'down')} title="Move down" className="text-gray-400 hover:text-gray-600 text-xs p-0.5">▼</button>
+                            <button onClick={() => void removeRow(item.id)} title="Delete" className="text-red-400 hover:text-red-600 text-xs p-0.5">✕</button>
+                          </div>
+                        </td>
+                      </tr>
+                    </React.Fragment>
                   )
                 })}
                 {section.items.length > 0 && (
@@ -504,7 +886,7 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
               </React.Fragment>
             ))}
           </tbody>
-          <tfoot className="bg-gray-800 text-white sticky bottom-0">
+          <tfoot className="bg-gray-800 text-white sticky bottom-0 z-10">
             <tr className="border-t-2 border-gray-600">
               <td colSpan={6} className="px-3 py-2 text-right text-sm font-medium text-gray-300">{t('grand_total', 'Grand Total')} (ex. VAT)</td>
               <td className="px-2 py-2 text-right text-sm font-bold text-green-400">₪{fmt(grandTotal)}</td>
@@ -517,6 +899,37 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
         </table>
       </div>
 
+      {/* Context Menu */}
+      {contextMenu && (
+        <BOQContextMenu
+          menu={contextMenu}
+          onClose={() => setContextMenu(null)}
+          onEdit={() => {
+            const item = items.find(i => i.id === contextMenu.itemId)
+            if (item) startEdit(item, 'description', item.description ?? '')
+            setContextMenu(null)
+          }}
+          onDuplicate={() => {
+            const item = items.find(i => i.id === contextMenu.itemId)
+            if (item) void copyRow(item)
+            setContextMenu(null)
+          }}
+          onInsertAbove={() => {
+            void addRowAt(contextMenu.itemId, 'above')
+            setContextMenu(null)
+          }}
+          onInsertBelow={() => {
+            void addRowAt(contextMenu.itemId, 'below')
+            setContextMenu(null)
+          }}
+          onDelete={() => {
+            void removeRow(contextMenu.itemId)
+            setContextMenu(null)
+          }}
+        />
+      )}
+
+      {/* Paste Modal */}
       {showPasteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
@@ -565,7 +978,7 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
             <div className="flex justify-between p-6 border-t bg-gray-50">
               <button onClick={() => { setShowPasteModal(false); setPasteText(''); setPastePreview([]) }} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-100">Cancel</button>
               <button
-                onClick={confirmPaste}
+                onClick={() => void confirmPaste()}
                 disabled={pastePreview.length === 0}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
               >
