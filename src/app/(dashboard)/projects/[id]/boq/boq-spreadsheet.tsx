@@ -326,7 +326,7 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
             const newVal: Partial<BOQItem> = { [selectedCell.field]: null }
             pushHistory({ type: 'update', itemId: item.id, previousData: prev, newData: newVal })
             setItems(p => p.map(i => i.id === item.id ? { ...i, ...newVal } : i))
-            void updateBOQItem(item.id, newVal)
+            void updateBOQItem(item.id, toItemData(newVal))
           }
         }
       }
