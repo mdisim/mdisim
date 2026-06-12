@@ -8,15 +8,14 @@ interface Props {
   activeProjects: number
   completedProjects: number
   onHoldProjects: number
-  totalBudget: number
-  totalSpent: number
+  totalBudgetFormatted: string
+  totalSpentFormatted: string
   budgetRemaining: number
-  formatCurrency: (n: number) => string
 }
 
 export function TranslatedStats({
   totalProjects, activeProjects, completedProjects, onHoldProjects,
-  totalBudget, totalSpent, budgetRemaining, formatCurrency,
+  totalBudgetFormatted, totalSpentFormatted, budgetRemaining,
 }: Props) {
   const { t } = useTranslation()
   return (
@@ -25,8 +24,8 @@ export function TranslatedStats({
       <StatsCard title={t('active', 'Active')} value={String(activeProjects)} icon={TrendingUp} color="green" />
       <StatsCard title={t('completed', 'Completed')} value={String(completedProjects)} icon={CheckCircle} color="green" />
       <StatsCard title={t('on_hold', 'On Hold')} value={String(onHoldProjects)} icon={Clock} color="amber" />
-      <StatsCard title={t('total_budget', 'Total Budget')} value={formatCurrency(totalBudget)} icon={DollarSign} color="purple" />
-      <StatsCard title={t('total_spent', 'Spent')} value={formatCurrency(totalSpent)} icon={AlertCircle} color={budgetRemaining < 0 ? 'red' : 'indigo'} />
+      <StatsCard title={t('total_budget', 'Total Budget')} value={totalBudgetFormatted} icon={DollarSign} color="purple" />
+      <StatsCard title={t('total_spent', 'Spent')} value={totalSpentFormatted} icon={AlertCircle} color={budgetRemaining < 0 ? 'red' : 'indigo'} />
     </div>
   )
 }

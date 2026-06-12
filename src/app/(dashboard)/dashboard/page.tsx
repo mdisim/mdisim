@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { StatsCard } from '@/components/dashboard/stats-card'
 import { RecentActivity } from '@/components/dashboard/recent-activity'
 import { BudgetChart, StatusDonut } from '@/components/dashboard/charts'
 import Link from 'next/link'
@@ -130,10 +129,9 @@ export default async function DashboardPage() {
         activeProjects={activeProjects}
         completedProjects={statusCounts.completed}
         onHoldProjects={statusCounts.on_hold}
-        totalBudget={totalBudget}
-        totalSpent={totalSpent}
+        totalBudgetFormatted={ils(totalBudget)}
+        totalSpentFormatted={ils(totalSpent)}
         budgetRemaining={budgetRemaining}
-        formatCurrency={ils}
       />
 
       {/* Budget Progress */}
