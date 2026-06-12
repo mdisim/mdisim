@@ -134,7 +134,7 @@ export function UploadForm({ projectId }: Props) {
           <Info size={18} className="text-blue-500 shrink-0 mt-0.5" />
           <div className="text-sm text-blue-800">
             <p className="font-medium mb-0.5">DXF file detected</p>
-            <p className="text-blue-700">DXF files are stored for reference. Use the drawing viewer to add manual measurements. Visual DXF rendering is coming soon.</p>
+            <p className="text-blue-700">DXF files are rendered with full layer visibility and support all measurement tools — calibrate scale, measure lengths, areas, and counts, then push to BOQ.</p>
           </div>
         </div>
       )}

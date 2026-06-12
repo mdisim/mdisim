@@ -73,11 +73,15 @@ export async function saveMeasurement(data: {
   page_number: number
   label?: string | null
   measurement_type: string
+  tool_type?: string | null
   points: { x: number; y: number }[]
   color: string
   real_value?: number | null
   unit?: string | null
   notes?: string | null
+  material_spec?: Record<string, unknown> | null
+  computed_quantity?: number | null
+  computed_unit?: string | null
 }) {
   const supabase = await createClient()
   const { data: m, error } = await supabase.from('drawing_measurements').insert(data).select().single()

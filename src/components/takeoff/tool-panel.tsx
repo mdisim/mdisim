@@ -44,7 +44,7 @@ export function ToolPanel({ activeTool, materialSpec, onSelectTool, onMaterialSp
   const activeConfig = activeTool ? TAKEOFF_TOOLS.find(t => t.type === activeTool) : null
 
   return (
-    <div className="flex flex-col gap-0 w-44 shrink-0 bg-slate-900 border-r border-slate-800 overflow-y-auto">
+    <div className="flex flex-col gap-0 flex-1 min-h-0 bg-slate-900 overflow-y-auto">
       {CATEGORIES.map(cat => (
         <div key={cat.label} className="px-2 pt-2">
           <p className="text-xs text-slate-600 uppercase tracking-wider mb-1 px-1">{cat.label}</p>

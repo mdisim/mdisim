@@ -1,21 +1,19 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft, ZoomIn, ZoomOut, ChevronLeft, ChevronRight,
-  AlertCircle, Check, Link2, MousePointer,
+  AlertCircle, Check, Link2, MousePointer, Eye, EyeOff,
 } from 'lucide-react'
 import { DrawingFile, DrawingCalibration, DrawingMeasurement, BOQItem, Point } from '@/lib/types'
 import { saveMeasurement, deleteMeasurement, updateMeasurement, saveCalibration, generateBOQQuantities } from '@/app/actions/takeoff'
 import { TAKEOFF_TOOLS, TakeoffToolType, computeQuantity } from '@/lib/takeoff-tools'
 import { ToolPanel } from './tool-panel'
 import { MeasurementsList, MeasurementEntry } from './measurements-list'
-import { DXFViewer } from './dxf-viewer'
+import { parseDXF, aciToHex } from '@/lib/dxf-parser'
 
-// ────────────────────────────────────────────
-// Geometry helpers
-// ────────────────────────────────────────────
+// ── Geometry helpers ──────────────────────────────────────────────────────────
 function dist(a: Point, b: Point) {
   return Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2)
 }
@@ -42,9 +40,7 @@ function pixelMeasure(toolType: TakeoffToolType, pts: Point[]): number {
   return 0
 }
 
-// ────────────────────────────────────────────
-// Props
-// ────────────────────────────────────────────
+// ── Props ──────────────────────────────────────────────────────────────────────
 interface Props {
   drawing: DrawingFile & { file_type?: string }
   projectId: string
@@ -55,24 +51,39 @@ interface Props {
   dxfContent?: string | null
 }
 
-// ────────────────────────────────────────────
-// Main component
-// ────────────────────────────────────────────
+// ── Main component ─────────────────────────────────────────────────────────────
 export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations, initialMeasurements, boqItems, dxfContent }: Props) {
   const isDxf = drawing.file_type === 'dxf'
 
-  // PDF state
+  // ── PDF state ──
   const [pdfDoc, setPdfDoc] = useState<import('pdfjs-dist').PDFDocumentProxy | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [zoom, setZoom] = useState(1)
   const [pdfLoading, setPdfLoading] = useState(!isDxf)
   const [pdfError, setPdfError] = useState<string | null>(null)
 
-  // Tool state
+  // ── DXF state ──
+  const dxfParsed = useMemo(() => (isDxf && dxfContent ? parseDXF(dxfContent) : null), [isDxf, dxfContent])
+  const [dxfLayerVis, setDxfLayerVis] = useState<Record<string, boolean>>(() => {
+    if (!dxfContent || !isDxf) return {}
+    const p = parseDXF(dxfContent)
+    const init: Record<string, boolean> = {}
+    for (const l of p.layers) init[l.name] = l.visible
+    if (!('0' in init)) init['0'] = true
+    return init
+  })
+  const [dxfOffset, setDxfOffset] = useState({ x: 0, y: 0 })
+  const [dxfScale, setDxfScale] = useState(1)
+  const [dxfDragging, setDxfDragging] = useState(false)
+  const dxfDragStart = useRef({ x: 0, y: 0, ox: 0, oy: 0 })
+  const dxfCanvasRef = useRef<HTMLCanvasElement>(null)
+  const dxfContainerRef = useRef<HTMLDivElement>(null)
+
+  // ── Tool state ──
   const [activeTool, setActiveTool] = useState<TakeoffToolType | null>(null)
   const [materialSpec, setMaterialSpec] = useState<Record<string, number | string>>({})
 
-  // Measurement state
+  // ── Measurement state ──
   const [measurements, setMeasurements] = useState<MeasurementEntry[]>(() =>
     initialMeasurements.map(m => ({
       id: m.id,
@@ -83,7 +94,10 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
       color: m.color,
       boqItemId: m.boq_item_id,
       pageNumber: m.page_number,
-      materialSpec: {},
+      materialSpec: Object.fromEntries(
+        Object.entries((m as DrawingMeasurement & { material_spec?: Record<string, unknown> }).material_spec ?? {})
+          .map(([k, v]) => [k, typeof v === 'number' ? v : String(v)])
+      ),
     }))
   )
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -91,7 +105,7 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
   const [mousePos, setMousePos] = useState<Point | null>(null)
   const [savingId, setSavingId] = useState<string | null>(null)
 
-  // Calibration state
+  // ── Calibration state ──
   const [calibrations, setCalibrations] = useState<Record<number, DrawingCalibration>>(
     Object.fromEntries(initialCalibrations.map(c => [c.page_number, c]))
   )
@@ -101,14 +115,17 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
   const [showCalibDialog, setShowCalibDialog] = useState(false)
   const [pendingCalibPx, setPendingCalibPx] = useState(0)
 
-  // Toast
+  // ── Toast ──
   const [toast, setToast] = useState<string | null>(null)
   const [boqResult, setBoqResult] = useState<string | null>(null)
   const [generatingBOQ, setGeneratingBOQ] = useState(false)
 
-  // Refs
+  // ── Refs ──
   const pdfCanvasRef = useRef<HTMLCanvasElement>(null)
   const overlayRef = useRef<HTMLCanvasElement>(null)
+  const pointsRef = useRef<Map<string, Point[]>>(new Map(
+    initialMeasurements.map(m => [m.id, m.points])
+  ))
 
   const calib = calibrations[currentPage]
   const scaleFactor = calib?.scale_factor ?? null
@@ -154,71 +171,127 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
     return () => { cancelled = true }
   }, [pdfDoc, currentPage, zoom])
 
+  // ── Render DXF ──
+  useEffect(() => {
+    if (!isDxf || !dxfParsed || !dxfCanvasRef.current || !dxfContainerRef.current) return
+    const canvas = dxfCanvasRef.current
+    const container = dxfContainerRef.current
+    const W = container.clientWidth
+    const H = container.clientHeight
+    canvas.width = W
+    canvas.height = H
+    if (overlayRef.current) {
+      overlayRef.current.width = W
+      overlayRef.current.height = H
+    }
 
+    const ctx = canvas.getContext('2d')!
+    ctx.fillStyle = '#1e293b'
+    ctx.fillRect(0, 0, W, H)
 
+    const { extents, entities, layers } = dxfParsed
+    const drawW = extents.maxX - extents.minX || 1
+    const drawH = extents.maxY - extents.minY || 1
+    const fitScale = Math.min(W / drawW, H / drawH) * 0.9
+    const totalScale = fitScale * dxfScale * zoom
+    const ox = (W - drawW * totalScale) / 2 + dxfOffset.x - extents.minX * totalScale
+    const oy = (H - drawH * totalScale) / 2 + dxfOffset.y + extents.maxY * totalScale
+
+    const sx = (x: number) => ox + x * totalScale
+    const sy = (y: number) => oy - y * totalScale
+
+    for (const entity of entities) {
+      if (dxfLayerVis[entity.layer] === false) continue
+      const layerDef = layers.find(l => l.name === entity.layer)
+      const rawColor = entity.color ?? layerDef?.color ?? 7
+      let color = aciToHex(rawColor)
+      if (rawColor === 7 || color === '#FFFFFF') color = '#e2e8f0'
+      ctx.strokeStyle = color
+      ctx.fillStyle = color
+      ctx.lineWidth = 1
+
+      if (entity.type === 'LINE') {
+        const s = entity.start; const e = entity.end
+        if (!s || !e) continue
+        ctx.beginPath(); ctx.moveTo(sx(s.x), sy(s.y)); ctx.lineTo(sx(e.x), sy(e.y)); ctx.stroke()
+      } else if (entity.type === 'LWPOLYLINE') {
+        const verts = entity.vertices
+        if (!verts || verts.length < 2) continue
+        ctx.beginPath(); ctx.moveTo(sx(verts[0].x), sy(verts[0].y))
+        for (let i = 1; i < verts.length; i++) ctx.lineTo(sx(verts[i].x), sy(verts[i].y))
+        if (entity.closed) ctx.closePath()
+        ctx.stroke()
+      } else if (entity.type === 'CIRCLE') {
+        const c = entity.center; const r = entity.radius
+        if (!c || r == null) continue
+        ctx.beginPath(); ctx.arc(sx(c.x), sy(c.y), r * totalScale, 0, Math.PI * 2); ctx.stroke()
+      } else if (entity.type === 'ARC') {
+        const c = entity.center; const r = entity.radius
+        const sa = entity.startAngle; const ea = entity.endAngle
+        if (!c || r == null || sa == null || ea == null) continue
+        ctx.beginPath()
+        ctx.arc(sx(c.x), sy(c.y), r * totalScale, -(sa * Math.PI) / 180, -(ea * Math.PI) / 180, true)
+        ctx.stroke()
+      } else if (entity.type === 'TEXT' || entity.type === 'MTEXT') {
+        const verts = entity.vertices
+        if (!verts || verts.length === 0) continue
+        ctx.font = '12px monospace'
+        ctx.fillText(entity.text ?? '', sx(verts[0].x), sy(verts[0].y))
+      } else if (entity.type === 'DIMENSION') {
+        const verts = entity.vertices
+        if (!verts || verts.length === 0) continue
+        ctx.font = '11px monospace'
+        ctx.fillText(entity.text ?? '', sx(verts[0].x), sy(verts[0].y))
+      }
+    }
+  }, [isDxf, dxfParsed, dxfLayerVis, dxfOffset, dxfScale, zoom])
+
+  // ── ResizeObserver for DXF canvas ──
+  useEffect(() => {
+    if (!isDxf || !dxfContainerRef.current) return
+    const observer = new ResizeObserver(() => setDxfOffset(o => ({ ...o })))
+    observer.observe(dxfContainerRef.current)
+    return () => observer.disconnect()
+  }, [isDxf])
+
+  // ── Draw measurement overlay ──
   function drawMeasurementOnCanvas(
-    ctx: CanvasRenderingContext2D,
-    toolType: string,
-    color: string,
-    pts: Point[],
-    selected: boolean,
-    preview = false
+    ctx: CanvasRenderingContext2D, toolType: string, color: string,
+    pts: Point[], selected: boolean, preview = false
   ) {
     if (!pts.length) return
     ctx.save()
     const cfg = TAKEOFF_TOOLS.find(t => t.type === toolType)
     const isPolygon = cfg?.drawMode === 'polygon' || cfg?.drawMode === 'rectangle'
     const isPoint = cfg?.drawMode === 'point'
-
     if (isPoint) {
       for (const pt of pts) {
-        ctx.beginPath()
-        ctx.arc(pt.x, pt.y, selected ? 8 : 6, 0, Math.PI * 2)
-        ctx.fillStyle = color
-        ctx.fill()
-        ctx.strokeStyle = '#fff'
-        ctx.lineWidth = 2
-        ctx.stroke()
+        ctx.beginPath(); ctx.arc(pt.x, pt.y, selected ? 8 : 6, 0, Math.PI * 2)
+        ctx.fillStyle = color; ctx.fill()
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke()
       }
       if (pts.length > 0) {
-        ctx.fillStyle = '#1e293b'
-        ctx.font = 'bold 11px system-ui'
+        ctx.fillStyle = '#1e293b'; ctx.font = 'bold 11px system-ui'
         ctx.fillText(`×${pts.length}`, pts[0].x + 10, pts[0].y - 8)
       }
     } else {
-      ctx.beginPath()
-      ctx.moveTo(pts[0].x, pts[0].y)
+      ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y)
       for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y)
-      if (isPolygon) {
-        ctx.closePath()
-        ctx.fillStyle = color + '22'
-        ctx.fill()
-      }
+      if (isPolygon) { ctx.closePath(); ctx.fillStyle = color + '22'; ctx.fill() }
       ctx.strokeStyle = selected ? '#f59e0b' : color
       ctx.lineWidth = selected ? 3 : 2
       ctx.setLineDash(preview ? [5, 5] : [])
-      ctx.stroke()
-      ctx.setLineDash([])
+      ctx.stroke(); ctx.setLineDash([])
     }
-
     if (selected && pts.length > 0) {
       for (const pt of pts) {
-        ctx.beginPath()
-        ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2)
-        ctx.fillStyle = '#f59e0b'
-        ctx.fill()
+        ctx.beginPath(); ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2)
+        ctx.fillStyle = '#f59e0b'; ctx.fill()
       }
     }
     ctx.restore()
   }
 
-  // Measurements need a `points` field — but MeasurementEntry doesn't include it.
-  // We maintain a separate ref for points so canvas rendering works.
-  const pointsRef = useRef<Map<string, Point[]>>(new Map(
-    initialMeasurements.map(m => [m.id, m.points])
-  ))
-
-  // Override drawMeasurementOnCanvas call to get actual points from ref
   useEffect(() => {
     const canvas = overlayRef.current
     if (!canvas) return
@@ -245,9 +318,32 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
   }
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (isDxf && !activeTool && dxfDragging) {
+      setDxfOffset({ x: e.clientX - dxfDragStart.current.x + dxfDragStart.current.ox, y: e.clientY - dxfDragStart.current.y + dxfDragStart.current.oy })
+    }
     setMousePos(canvasPoint(e))
+  }, [isDxf, activeTool, dxfDragging])
+
+  const handleMouseLeave = useCallback(() => {
+    setMousePos(null)
+    setDxfDragging(false)
   }, [])
-  const handleMouseLeave = useCallback(() => setMousePos(null), [])
+
+  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (isDxf && !activeTool) {
+      setDxfDragging(true)
+      dxfDragStart.current = { x: e.clientX, y: e.clientY, ox: dxfOffset.x, oy: dxfOffset.y }
+    }
+  }, [isDxf, activeTool, dxfOffset])
+
+  const handleMouseUp = useCallback(() => setDxfDragging(false), [])
+
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLCanvasElement>) => {
+    if (isDxf) {
+      e.preventDefault()
+      setDxfScale(s => Math.min(20, Math.max(0.1, s * (e.deltaY < 0 ? 1.1 : 0.9))))
+    }
+  }, [isDxf])
 
   function showToast(msg: string) {
     setToast(msg)
@@ -291,10 +387,14 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
       page_number: currentPage,
       label: null,
       measurement_type: toolType,
+      tool_type: toolType,
       points: pts,
       color: cfg.color,
       real_value: quantity,
       unit,
+      material_spec: Object.keys(materialSpec).length > 0 ? (materialSpec as Record<string, unknown>) : null,
+      computed_quantity: quantity,
+      computed_unit: unit,
     })
     setSavingId(null)
     if (result.measurement) {
@@ -308,8 +408,8 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
   }
 
   const handleClick = useCallback(async (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const pt = canvasPoint(e)
     if (!activeTool) return
+    const pt = canvasPoint(e)
 
     if (activeTool === 'calibrate') {
       const next = [...calibPoints, pt]
@@ -329,7 +429,6 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
     if (!cfg) return
 
     if (cfg.drawMode === 'point') {
-      // count: each click adds, double-click saves
       if (e.detail === 2 && drawingState.length > 0) {
         await finalizeMeasurement(activeTool, drawingState)
         setDrawingState([])
@@ -375,6 +474,7 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
     setShowCalibDialog(false)
     setCalibInput('')
     setActiveTool(null)
+    showToast(`Scale set: 1 ${calibUnit} = ${pendingCalibPx.toFixed(0)} px`)
   }
 
   async function handleDeleteMeasurement(id: string) {
@@ -404,7 +504,7 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
     const handler = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
       if (e.key === 'Escape') { setDrawingState([]); setActiveTool(null); setCalibPoints([]) }
-      if (e.key === 'Delete' && selectedId) handleDeleteMeasurement(selectedId)
+      if (e.key === 'Delete' && selectedId) void handleDeleteMeasurement(selectedId)
       if (e.key === '+' || e.key === '=') setZoom(z => Math.min(z + 0.25, 4))
       if (e.key === '-') setZoom(z => Math.max(z - 0.25, 0.25))
     }
@@ -415,7 +515,6 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
   function handleSelectTool(type: TakeoffToolType) {
     setActiveTool(type)
     setDrawingState([])
-    // Init material spec defaults
     const cfg = TAKEOFF_TOOLS.find(t => t.type === type)
     if (cfg?.materialInputs) {
       const defaults: Record<string, number | string> = {}
@@ -426,7 +525,14 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
     }
   }
 
-  const cursorStyle = activeTool ? 'crosshair' : 'default'
+  const cursorStyle = isDxf
+    ? (activeTool ? 'crosshair' : dxfDragging ? 'grabbing' : 'grab')
+    : (activeTool ? 'crosshair' : 'default')
+
+  // DXF layer list for left panel
+  const dxfDisplayLayers = dxfParsed?.layers.length
+    ? dxfParsed.layers
+    : dxfParsed ? [{ name: '0', color: 7, lineType: 'CONTINUOUS', visible: true }] : []
 
   return (
     <div className="flex flex-col h-screen bg-slate-950 overflow-hidden -m-4 md:-m-6">
@@ -467,27 +573,68 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
         )}
 
         <div className="flex items-center gap-1">
-          <button onClick={() => setZoom(z => Math.max(z - 0.25, 0.25))} className="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-white"><ZoomOut size={14} /></button>
-          <span className="text-xs text-slate-400 w-12 text-center">{Math.round(zoom * 100)}%</span>
-          <button onClick={() => setZoom(z => Math.min(z + 0.25, 4))} className="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-white"><ZoomIn size={14} /></button>
+          <button onClick={() => isDxf ? setDxfScale(s => Math.max(s - 0.2, 0.1)) : setZoom(z => Math.max(z - 0.25, 0.25))}
+            className="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-white"><ZoomOut size={14} /></button>
+          <span className="text-xs text-slate-400 w-12 text-center">{Math.round((isDxf ? dxfScale : zoom) * 100)}%</span>
+          <button onClick={() => isDxf ? setDxfScale(s => Math.min(s + 0.2, 20)) : setZoom(z => Math.min(z + 0.25, 4))}
+            className="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-white"><ZoomIn size={14} /></button>
         </div>
       </div>
 
       {/* Main area */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left tool panel */}
-        <ToolPanel
-          activeTool={activeTool}
-          materialSpec={materialSpec}
-          onSelectTool={handleSelectTool}
-          onMaterialSpecChange={(key, value) => setMaterialSpec(prev => ({ ...prev, [key]: value }))}
-        />
+        {/* Left panel: tools + DXF layers */}
+        <div className="flex flex-col w-44 shrink-0 bg-slate-900 border-r border-slate-800 overflow-hidden">
+          <ToolPanel
+            activeTool={activeTool}
+            materialSpec={materialSpec}
+            onSelectTool={handleSelectTool}
+            onMaterialSpecChange={(key, value) => setMaterialSpec(prev => ({ ...prev, [key]: value }))}
+          />
+          {isDxf && dxfDisplayLayers.length > 0 && (
+            <div className="border-t border-slate-800 flex flex-col overflow-hidden" style={{ maxHeight: '40%' }}>
+              <div className="px-3 py-2 shrink-0">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Layers</p>
+              </div>
+              <div className="overflow-y-auto flex-1">
+                {dxfDisplayLayers.map(layer => {
+                  const visible = dxfLayerVis[layer.name] !== false
+                  const swatch = aciToHex(layer.color)
+                  return (
+                    <div key={layer.name}
+                      className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-800 cursor-pointer"
+                      onClick={() => setDxfLayerVis(prev => ({ ...prev, [layer.name]: !prev[layer.name] }))}
+                    >
+                      <div className="w-2.5 h-2.5 rounded-sm shrink-0 border border-slate-600"
+                        style={{ backgroundColor: swatch === '#FFFFFF' ? '#e2e8f0' : swatch }} />
+                      <span className={`flex-1 text-xs truncate ${visible ? 'text-slate-200' : 'text-slate-500'}`}>{layer.name}</span>
+                      <span className="text-slate-500 shrink-0">{visible ? <Eye size={11} /> : <EyeOff size={11} />}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Canvas area */}
         <div className="flex-1 overflow-auto bg-slate-800">
           {isDxf ? (
             dxfContent ? (
-              <DXFViewer content={dxfContent} drawingId={drawing.id} projectId={projectId} />
+              <div ref={dxfContainerRef} className="relative w-full h-full overflow-hidden">
+                <canvas ref={dxfCanvasRef} className="absolute inset-0 block" />
+                <canvas
+                  ref={overlayRef}
+                  className="absolute inset-0 block"
+                  style={{ cursor: cursorStyle }}
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseLeave}
+                  onClick={handleClick}
+                  onWheel={handleWheel}
+                />
+              </div>
             ) : (
               <div className="flex items-center justify-center h-full">
                 <div className="bg-slate-900 border border-slate-700 rounded-xl p-8 max-w-sm text-center">
@@ -563,9 +710,10 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
         <span>Tool: <span className="text-slate-300">{activeTool ?? 'none'}</span></span>
         {drawingState.length > 0 && (
           <span className="text-amber-400">
-            {drawingState.length} point{drawingState.length !== 1 ? 's' : ''} — double-click to finish
+            {drawingState.length} pt{drawingState.length !== 1 ? 's' : ''} — double-click to finish
           </span>
         )}
+        {isDxf && !activeTool && <span className="text-slate-500">Drag to pan · Scroll to zoom</span>}
         {mousePos && <span>x:{Math.round(mousePos.x)} y:{Math.round(mousePos.y)}</span>}
         <span className="ml-auto">Esc=cancel Del=delete ±=zoom</span>
       </div>
