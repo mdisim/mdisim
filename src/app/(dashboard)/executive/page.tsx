@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { ils } from '@/lib/server-currency'
+import { EVMDashboard } from '@/components/executive/evm-dashboard'
 
 function monthKey(dateStr: string): string {
   const d = new Date(dateStr)
@@ -133,6 +134,55 @@ export default async function ExecutiveDashboardPage() {
 
   const projectNameMap: Record<string, string> = {}
   for (const p of projectsList) projectNameMap[p.id] = p.name
+
+  // EVM computation
+  const todayMs = Date.now()
+  const evmData = projectsList
+    .filter(p => (p.budget ?? 0) > 0)
+    .map(p => {
+      const bac: number = p.budget
+      const ac: number = projectCostMap[p.id] ?? 0
+
+      // Planned Value: budget × (days elapsed / total duration)
+      let pv = 0
+      if (p.start_date && p.end_date) {
+        const start = new Date(p.start_date).getTime()
+        const end = new Date(p.end_date).getTime()
+        const totalDuration = end - start
+        if (totalDuration > 0) {
+          const elapsed = Math.min(Math.max(todayMs - start, 0), totalDuration)
+          pv = bac * (elapsed / totalDuration)
+        }
+      }
+
+      // Earned Value: budget × (avg phase progress / 100)
+      const phArr = projectPhaseMap[p.id] ?? []
+      const avgProgress = phArr.length > 0
+        ? phArr.reduce((s, v) => s + v, 0) / phArr.length
+        : 0
+      const ev = bac * (avgProgress / 100)
+
+      const cpi = ac > 0 ? ev / ac : 1
+      const spi = pv > 0 ? ev / pv : 1
+      const cv = ev - ac
+      const sv = ev - pv
+      const eac = cpi > 0 ? bac / cpi : bac
+
+      return {
+        id: p.id,
+        name: p.name,
+        budget: bac,
+        actualCost: ac,
+        plannedValue: pv,
+        earnedValue: ev,
+        cpi,
+        spi,
+        cv,
+        sv,
+        eac,
+        status: p.status ?? 'unknown',
+      }
+    })
 
   const currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 

@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx'
 import { updateBOQItem, createBOQItem, deleteBOQItem, bulkCreateBOQItems } from '@/app/actions/boq-spreadsheet'
 import ExcelImportModal from '@/components/boq/excel-import-modal'
 import { useTranslation } from '@/lib/i18n/use-translation'
+import type { LibraryItem } from '@/components/boq/library-panel'
 
 interface BOQItem {
   id: string
@@ -79,9 +80,10 @@ interface BOQSpreadsheetProps {
   initialItems: BOQItem[]
   projectId: string
   projectName: string
+  onInsertFromLibrary?: (handler: (item: LibraryItem) => Promise<void>) => void
 }
 
-export default function BOQSpreadsheet({ initialItems, projectId, projectName }: BOQSpreadsheetProps) {
+export default function BOQSpreadsheet({ initialItems, projectId, projectName, onInsertFromLibrary }: BOQSpreadsheetProps) {
   const { t } = useTranslation()
   const [items, setItems] = useState<BOQItem[]>(initialItems)
   const [editCell, setEditCell] = useState<{ id: string; field: string } | null>(null)
@@ -92,7 +94,38 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName }:
   const [showPasteModal, setShowPasteModal] = useState(false)
   const [pasteText, setPasteText] = useState('')
   const [pastePreview, setPastePreview] = useState<Partial<BOQItem>[]>([])
+  const [isDragOver, setIsDragOver] = useState(false)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  async function insertFromLibrary(item: LibraryItem) {
+    const maxOrder = items.reduce((m, i) => Math.max(m, i.sort_order ?? 0), 0)
+    const result = await createBOQItem(projectId, {
+      item_code: item.item_code ?? '',
+      description: item.description_en || item.description || '',
+      unit: item.unit ?? 'm',
+      unit_rate: item.typical_rate_ils ?? item.unit_rate ?? 0,
+      quantity: 0,
+      total_amount: 0,
+      vat_percent: 17,
+      vat_amount: 0,
+      sort_order: maxOrder + 1,
+    })
+    if (result.success) setItems(prev => [...prev, result.data as unknown as BOQItem])
+  }
+
+  // Register handler with parent if callback provided
+  if (onInsertFromLibrary) {
+    onInsertFromLibrary(insertFromLibrary)
+  }
+
+  async function handleLibraryDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setIsDragOver(false)
+    const raw = e.dataTransfer.getData('application/json')
+    if (!raw) return
+    const item = JSON.parse(raw) as LibraryItem
+    await insertFromLibrary(item)
+  }
 
   const sortedItems = [...items].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
 
@@ -356,7 +389,7 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName }:
         </div>
       </div>
 
-      <div className="overflow-auto border rounded-xl shadow-sm">
+      <div className={`overflow-auto border rounded-xl shadow-sm transition-colors ${isDragOver ? 'border-blue-400 ring-2 ring-blue-200' : ''}`}>
         <table className="w-full border-collapse text-sm" style={{ minWidth: 900 }}>
           <thead className="bg-gray-100 sticky top-0 z-10">
             <tr className="border-b">
@@ -373,7 +406,11 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName }:
               <th className="w-20 px-2 py-2 text-center text-xs font-semibold text-gray-500">{t('actions', 'Actions')}</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody
+            onDragOver={e => { e.preventDefault(); setIsDragOver(true) }}
+            onDrop={handleLibraryDrop}
+            onDragLeave={() => setIsDragOver(false)}
+          >
             {sections.map((section) => (
               <React.Fragment key={section.key}>
                 {section.header && (

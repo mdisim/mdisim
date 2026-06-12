@@ -117,3 +117,61 @@ export async function seedGlobalLibrary() {
   if (error) return { error: error.message }
   return { success: true, count: seeds.length }
 }
+
+interface BulkImportItem {
+  item_code: string
+  description_en: string
+  description_he?: string
+  description_ar?: string
+  unit: string
+  typical_rate_ils?: number
+  category?: string
+  section_code?: string
+  is_section_header?: boolean
+}
+
+export async function bulkImportLibraryItems(
+  inputItems: BulkImportItem[]
+): Promise<{ created: number; updated: number; error?: string }> {
+  const supabase = await createClient()
+  const { data: profile } = await supabase.from('profiles').select('company_id').single()
+  const companyId = profile?.company_id
+
+  const now = Date.now()
+  const rows = inputItems.map((item, index) => ({
+    company_id: companyId ?? null,
+    is_global: false,
+    item_code: item.item_code || `IMPORT-${now}-${index}`,
+    description: item.description_en,
+    description_en: item.description_en,
+    description_he: item.description_he ?? null,
+    description_ar: item.description_ar ?? null,
+    unit: item.unit || 'm',
+    unit_rate: item.typical_rate_ils ?? 0,
+    typical_rate_ils: item.typical_rate_ils ?? null,
+    category: item.category ?? null,
+    section_code: item.section_code ?? null,
+    is_section_header: item.is_section_header ?? false,
+  }))
+
+  // Split into chunks for upsert
+  const chunkSize = 50
+  let created = 0
+  let updated = 0
+
+  for (let i = 0; i < rows.length; i += chunkSize) {
+    const chunk = rows.slice(i, i + chunkSize)
+    const { data, error } = await supabase
+      .from('boq_library')
+      .upsert(chunk, { onConflict: 'item_code,company_id', ignoreDuplicates: false })
+      .select('id')
+
+    if (error) return { created, updated, error: error.message }
+
+    const upserted = data?.length ?? chunk.length
+    created += upserted
+  }
+
+  revalidatePath('/boq-library')
+  return { created, updated }
+}
