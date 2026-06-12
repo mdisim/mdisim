@@ -11,6 +11,7 @@ import { saveMeasurement, deleteMeasurement, updateMeasurement, saveCalibration,
 import { TAKEOFF_TOOLS, TakeoffToolType, computeQuantity } from '@/lib/takeoff-tools'
 import { ToolPanel } from './tool-panel'
 import { MeasurementsList, MeasurementEntry } from './measurements-list'
+import { DXFViewer } from './dxf-viewer'
 
 // ────────────────────────────────────────────
 // Geometry helpers
@@ -51,6 +52,7 @@ interface Props {
   initialCalibrations: DrawingCalibration[]
   initialMeasurements: DrawingMeasurement[]
   boqItems: BOQItem[]
+  dxfContent?: string | null
 }
 
 // ────────────────────────────────────────────
