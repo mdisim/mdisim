@@ -161,15 +161,16 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName }:
     setRowError(null)
     const maxOrder = items.reduce((m, i) => Math.max(m, i.sort_order ?? 0), 0)
     const result = await createBOQItem(projectId, {
+      item_code: '',
       description: isSection ? 'New Section' : 'New Item',
-      unit: isSection ? undefined : 'm²',
-      quantity: isSection ? undefined : 0,
-      unit_rate: isSection ? undefined : 0,
-      total_amount: isSection ? undefined : 0,
+      unit: isSection ? '-' : 'm',
+      quantity: 0,
+      unit_rate: 0,
+      total_amount: 0,
+      vat_percent: isSection ? 0 : 17,
+      vat_amount: 0,
       is_section_header: isSection,
       sort_order: maxOrder + 1,
-      vat_percent: isSection ? undefined : 17,
-      vat_amount: isSection ? undefined : 0,
     })
     if (!result.success) {
       setRowError(result.error)

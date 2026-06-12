@@ -47,8 +47,21 @@ export async function updateBOQItem(id: string, data: ItemData): Promise<ActionR
 export async function createBOQItem(projectId: string, data: ItemData): Promise<{ success: false; error: string } | { success: true; data: Record<string, unknown> }> {
   const supabase = await createClient()
 
+  // Apply NOT NULL defaults so the insert never violates constraints
+  const withDefaults: ItemData = {
+    item_code: '',
+    vat_percent: 0,
+    vat_amount: 0,
+    ...data,
+  }
+  // Coerce null/undefined back to safe values for NOT NULL columns
+  withDefaults.unit = withDefaults.unit ?? 'm'
+  withDefaults.quantity = withDefaults.quantity ?? 0
+  withDefaults.unit_rate = withDefaults.unit_rate ?? 0
+  withDefaults.total_amount = withDefaults.total_amount ?? 0
+
   // First attempt: all columns
-  const payload: Record<string, unknown> = { ...data, project_id: projectId }
+  const payload: Record<string, unknown> = { ...withDefaults, project_id: projectId }
   const { data: item, error } = await supabase
     .from('boq_items')
     .insert(payload)
