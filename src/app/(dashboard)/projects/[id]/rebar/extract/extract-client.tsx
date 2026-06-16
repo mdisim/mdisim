@@ -55,6 +55,7 @@ interface DebugState {
   ocrPreview: string
   calloutCount: number
   usedOCR: boolean
+  matchedLines: MatchedLine[]
 }
 
 function makeId() { return Math.random().toString(36).slice(2) }
@@ -77,18 +78,92 @@ function elementToEditable(el: DetectedElement): EditableElement {
   }
 }
 
-// Render a PDF page to an offscreen canvas at the given scale
+// ─── Image pipeline ────────────────────────────────────────────────────────────
+
+// Render PDF page to canvas at high resolution
 async function renderPageToCanvas(
   pdfPage: Awaited<ReturnType<import('pdfjs-dist').PDFDocumentProxy['getPage']>>,
-  scale = 2.5
+  scale = 4.0   // 4× = ~300 dpi for A1 structural drawings
 ): Promise<HTMLCanvasElement> {
   const viewport = pdfPage.getViewport({ scale })
   const canvas = document.createElement('canvas')
   canvas.width = Math.floor(viewport.width)
   canvas.height = Math.floor(viewport.height)
   const ctx = canvas.getContext('2d')!
+  // White background before rendering (some PDFs have transparent bg → black on black)
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
   await pdfPage.render({ canvasContext: ctx, viewport, canvas } as Parameters<typeof pdfPage.render>[0]).promise
   return canvas
+}
+
+// Grayscale + contrast boost to improve OCR on engineering drawings
+// Converts to grayscale, stretches contrast, applies mild sharpening
+function preprocessForOCR(src: HTMLCanvasElement): HTMLCanvasElement {
+  const dst = document.createElement('canvas')
+  dst.width = src.width
+  dst.height = src.height
+  const ctx = dst.getContext('2d')!
+
+  ctx.drawImage(src, 0, 0)
+  const img = ctx.getImageData(0, 0, dst.width, dst.height)
+  const d = img.data
+
+  // Find luminance range for contrast stretching
+  let minL = 255, maxL = 0
+  for (let i = 0; i < d.length; i += 4) {
+    const l = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2]
+    if (l < minL) minL = l
+    if (l > maxL) maxL = l
+  }
+  const range = Math.max(maxL - minL, 1)
+
+  for (let i = 0; i < d.length; i += 4) {
+    // Grayscale luminance
+    const l = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2]
+    // Stretch contrast to full 0–255 range, then apply gamma to darken text
+    const stretched = Math.min(255, Math.max(0, ((l - minL) / range) * 255))
+    // Binarise-friendly: push midtones toward white/black (S-curve)
+    const g = stretched < 128
+      ? Math.max(0, stretched * 0.75)           // darken dark pixels (ink)
+      : Math.min(255, 255 - (255 - stretched) * 0.4) // lighten light pixels (paper)
+    d[i] = d[i+1] = d[i+2] = g
+    // alpha unchanged
+  }
+
+  ctx.putImageData(img, 0, 0)
+  return dst
+}
+
+// ─── OCR text normalization ────────────────────────────────────────────────────
+// Corrects systematic OCR mistakes on engineering rebar callouts
+function normalizeOCRText(raw: string): string {
+  return raw
+    // Letter O or digit 0 between digits → Ø (e.g. "2O12" "2012" → "2Ø12")
+    .replace(/(\d)([O0])(\d)/g, '$1Ø$3')
+    // Leading O + digits → Ø + digits (e.g. "O12@20" → "Ø12@20")
+    .replace(/\bO(\d{1,2})/g, 'Ø$1')
+    // Standalone 0 before @ spacing → Ø (e.g. "012@20" → "Ø12@20")
+    .replace(/\b0(\d{1,2}@)/g, 'Ø$1')
+    // D as diameter symbol: D12 → Ø12 (common misread on some fonts)
+    .replace(/\bD(\d{1,2})\b/g, 'Ø$1')
+    // At-sign variants: OCR sometimes reads @ as 'a', 'a)', '(a'
+    .replace(/\s+[aA]\s*(\d{2,4})/g, '@$1')
+    // L = / L= spacing variants (OCR adds spaces around =)
+    .replace(/[Ll]\s*=\s*(\d+)/g, 'L=$1')
+    // nX prefix: OCR may read × as x or X (already handled in regex but normalise anyway)
+    .replace(/(\d)\s*[×xX]\s*(\d)/g, '$1X$2')
+    // Remove stray pipe/backslash artefacts common in scanned drawings
+    .replace(/[|\\]/g, '')
+    // Normalise multiple spaces to single
+    .replace(/  +/g, ' ')
+}
+
+interface MatchedLine {
+  line: string
+  normalized: string
+  matches: string[]
+  page: number
 }
 
 export function ExtractClient({ projectId, drawings }: Props) {
@@ -99,7 +174,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
   const [savedCount, setSavedCount] = useState(0)
   const [debug, setDebug] = useState<DebugState>({
     lines: [], pdfChars: 0, ocrChars: 0, ocrConfidence: 0,
-    ocrPreview: '', calloutCount: 0, usedOCR: false,
+    ocrPreview: '', calloutCount: 0, usedOCR: false, matchedLines: [],
   })
   const [, startTransition] = useTransition()
 
@@ -109,7 +184,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
   }
 
   async function extractPDFClientSide(signedUrl: string): Promise<DetectedElement[]> {
-    setDebug({ lines: [], pdfChars: 0, ocrChars: 0, ocrConfidence: 0, ocrPreview: '', calloutCount: 0, usedOCR: false })
+    setDebug({ lines: [], pdfChars: 0, ocrChars: 0, ocrConfidence: 0, ocrPreview: '', calloutCount: 0, usedOCR: false, matchedLines: [] })
     dbg('Loading PDF.js…')
 
     const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist')
@@ -165,48 +240,72 @@ export function ExtractClient({ projectId, drawings }: Props) {
     dbg('Loading Tesseract.js (eng)…')
     const { createWorker } = await import('tesseract.js')
 
-    // Create worker; Tesseract v7 loads lang data from CDN by default
-    // langPath points to /public/tesseract/ where eng.traineddata.gz is bundled.
-    // This avoids the CSP block on cdn.jsdelivr.net for connect-src.
     const worker = await createWorker('eng', 1, {
-      langPath: '/tesseract',
+      langPath: '/tesseract',  // bundled — no CDN call needed
       logger: (m: { status: string; progress?: number }) => {
         if (m.status === 'loading tesseract core') dbg('OCR: loading core…')
         else if (m.status === 'loading language traineddata') dbg('OCR: loading language data (bundled)…')
         else if (m.status === 'initialized api') dbg('OCR: engine ready')
-        else if (m.status === 'recognizing text' && m.progress) {
-          if (Math.round((m.progress ?? 0) * 100) % 25 === 0) {
-            dbg(`OCR: recognizing… ${Math.round((m.progress ?? 0) * 100)}%`)
-          }
+        else if (m.status === 'recognizing text') {
+          const pct = Math.round((m.progress ?? 0) * 100)
+          if (pct % 20 === 0) dbg(`OCR: ${pct}%…`)
         }
       },
     })
 
-    // Set parameters that help with engineering drawing text
+    // PSM 11 = sparse text — best for drawings with scattered annotations
+    // No char whitelist: it blocks Ø which the model doesn't know. Instead we
+    // normalise O/0/D → Ø in post-processing (normalizeOCRText).
     await worker.setParameters({
-      tessedit_char_whitelist: '0123456789ØøφΦTtHhYyRrXx@/=ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz.,-+Ll',
+      tessedit_pageseg_mode: '11' as Parameters<typeof worker.setParameters>[0]['tessedit_pageseg_mode'],
       preserve_interword_spaces: '1',
     })
 
     const allOcrTexts: Array<{ text: string; page: number }> = []
     let totalOcrChars = 0
     let sumConfidence = 0
+    const allMatchedLines: MatchedLine[] = []
 
     for (let p = 1; p <= pdf.numPages; p++) {
-      dbg(`OCR: rendering page ${p} to canvas…`)
+      dbg(`Rendering page ${p} at 4× scale…`)
       const page = await pdf.getPage(p)
-      const canvas = await renderPageToCanvas(page, 2.5)  // 2.5× scale = ~200dpi
 
-      dbg(`OCR: recognizing page ${p} (${canvas.width}×${canvas.height}px)…`)
-      const { data } = await worker.recognize(canvas)
+      // 4× scale ≈ 300 dpi for A1 drawing
+      const rawCanvas = await renderPageToCanvas(page, 4.0)
+      dbg(`  canvas: ${rawCanvas.width}×${rawCanvas.height}px`)
 
-      const ocrText = data.text ?? ''
+      // Grayscale + contrast stretch
+      const processedCanvas = preprocessForOCR(rawCanvas)
+      dbg(`  preprocessing done — running OCR…`)
+
+      const { data } = await worker.recognize(processedCanvas)
+
+      const rawOCR = data.text ?? ''
+      // Normalise OCR output: fix O→Ø, D→Ø, L = → L=, etc.
+      const ocrText = normalizeOCRText(rawOCR)
       const confidence = data.confidence ?? 0
       sumConfidence += confidence
       totalOcrChars += ocrText.length
 
-      dbg(`OCR page ${p}: ${ocrText.length} chars, confidence ${confidence.toFixed(0)}%`)
-      console.log(`[RebarExtract OCR] Page ${p} text:\n${ocrText.slice(0, 2000)}`)
+      dbg(`Page ${p}: ${ocrText.length} chars, confidence ${confidence.toFixed(0)}%`)
+      console.log(`[OCR raw p${p}]:\n${rawOCR.slice(0, 3000)}`)
+      console.log(`[OCR normalized p${p}]:\n${ocrText.slice(0, 3000)}`)
+
+      // Collect per-line matches for the side-by-side preview
+      const lines = ocrText.split('\n')
+      for (const line of lines) {
+        if (!line.trim()) continue
+        const callouts = parseRebarText(line)
+        if (callouts.length > 0) {
+          const rawLine = rawOCR.split('\n')[lines.indexOf(line)] ?? line
+          allMatchedLines.push({
+            line: rawLine.trim(),
+            normalized: line.trim(),
+            matches: callouts.map(c => c.raw),
+            page: p,
+          })
+        }
+      }
 
       allOcrTexts.push({ text: ocrText, page: p })
     }
@@ -214,7 +313,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
     await worker.terminate()
 
     const avgConfidence = allOcrTexts.length > 0 ? sumConfidence / allOcrTexts.length : 0
-    const ocrPreview = allOcrTexts.map(p => p.text).join('\n').slice(0, 500)
+    const ocrPreview = allOcrTexts.map(pt => pt.text).join('\n').slice(0, 500)
 
     setDebug(d => ({
       ...d,
@@ -222,22 +321,23 @@ export function ExtractClient({ projectId, drawings }: Props) {
       ocrConfidence: avgConfidence,
       ocrPreview,
       usedOCR: true,
+      matchedLines: allMatchedLines,
     }))
-    dbg(`OCR complete: ${totalOcrChars} chars, avg confidence ${avgConfidence.toFixed(0)}%`)
 
-    // Count regex matches on OCR output
     let ocrMatchCount = 0
     for (const { text } of allOcrTexts) {
       const c = parseRebarText(text)
       ocrMatchCount += c.length
-      if (c.length > 0) dbg(`  ✓ OCR regex: ${c.slice(0, 8).map(x => x.raw).join(', ')}`)
     }
-    dbg(`OCR regex matches: ${ocrMatchCount}`)
+    dbg(`OCR complete: ${totalOcrChars} chars, confidence ${avgConfidence.toFixed(0)}%, ${ocrMatchCount} regex matches`)
+    if (allMatchedLines.length > 0) {
+      dbg(`  ✓ Matched lines: ${allMatchedLines.slice(0, 6).map(l => l.normalized).join(' | ')}`)
+    }
 
     const elems = extractFromPageText(allOcrTexts)
     const totalBars = elems.flatMap(e => e.callouts).length
     setDebug(d => ({ ...d, calloutCount: totalBars }))
-    dbg(`Done (OCR): ${elems.length} elements, ${totalBars} bars`)
+    dbg(`Done: ${elems.length} elements, ${totalBars} bars`)
 
     return elems
   }
@@ -421,13 +521,50 @@ export function ExtractClient({ projectId, drawings }: Props) {
               ))}
             </div>
 
-            {/* OCR text preview */}
+            {/* OCR output preview */}
             {debug.usedOCR && debug.ocrPreview && (
               <div>
-                <p className="text-xs text-slate-500 mb-1">OCR output preview (first 500 chars):</p>
-                <pre className="p-3 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300 whitespace-pre-wrap max-h-32 overflow-y-auto">
+                <p className="text-xs text-slate-500 mb-1">OCR output — first 500 chars (normalized):</p>
+                <pre className="p-3 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300 whitespace-pre-wrap max-h-32 overflow-y-auto font-mono">
                   {debug.ocrPreview}
                 </pre>
+              </div>
+            )}
+
+            {/* Side-by-side matched lines */}
+            {debug.matchedLines.length > 0 && (
+              <div>
+                <p className="text-xs text-slate-500 mb-1">
+                  Lines with rebar matches — {debug.matchedLines.length} line(s):
+                </p>
+                <div className="rounded-lg border border-slate-700 overflow-hidden">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-slate-800 text-slate-500">
+                        <th className="text-left px-3 py-1.5 font-medium w-8">Pg</th>
+                        <th className="text-left px-3 py-1.5 font-medium">OCR raw</th>
+                        <th className="text-left px-3 py-1.5 font-medium">Normalized</th>
+                        <th className="text-left px-3 py-1.5 font-medium">Regex matches</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {debug.matchedLines.map((ml, i) => (
+                        <tr key={i} className="border-t border-slate-800">
+                          <td className="px-3 py-1 text-slate-600">{ml.page}</td>
+                          <td className="px-3 py-1 font-mono text-slate-500">{ml.line}</td>
+                          <td className="px-3 py-1 font-mono text-slate-300">{ml.normalized}</td>
+                          <td className="px-3 py-1">
+                            {ml.matches.map((m, j) => (
+                              <span key={j} className="inline-block mr-1.5 px-1.5 py-0.5 rounded bg-amber-900/50 text-amber-300 font-mono">
+                                {m}
+                              </span>
+                            ))}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
