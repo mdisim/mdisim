@@ -77,29 +77,65 @@ export function ExtractClient({ projectId, drawings }: Props) {
   const [savedCount, setSavedCount] = useState(0)
   const [, startTransition] = useTransition()
 
+  const [debugInfo, setDebugInfo] = useState<string[]>([])
+
+  function dbg(msg: string) {
+    console.log('[RebarExtract]', msg)
+    setDebugInfo(prev => [...prev, msg])
+  }
+
   async function extractPDFClientSide(signedUrl: string): Promise<DetectedElement[]> {
-    // PDF.js is ESM-only and can't run in Vercel serverless — run it here in the browser
+    setDebugInfo([])
+    dbg('Loading PDF.js…')
+
     const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist')
     GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+    dbg('PDF.js loaded, fetching PDF…')
 
     const res = await fetch(signedUrl)
-    if (!res.ok) throw new Error('Could not fetch PDF')
+    if (!res.ok) throw new Error(`Could not fetch PDF: ${res.status}`)
     const buffer = await res.arrayBuffer()
+    dbg(`PDF fetched — ${(buffer.byteLength / 1024).toFixed(1)} KB`)
 
     const pdf = await getDocument({ data: new Uint8Array(buffer) }).promise
+    dbg(`PDF opened — ${pdf.numPages} page(s)`)
+
     const pageTexts: Array<{ text: string; page: number }> = []
 
     for (let p = 1; p <= pdf.numPages; p++) {
       const page = await pdf.getPage(p)
       const content = await page.getTextContent()
-      const text = content.items
-        .map((item) => ('str' in item ? (item as { str: string }).str : ''))
-        .join('\n')
+      const strings = content.items.map((item) => ('str' in item ? (item as { str: string }).str : ''))
+      const text = strings.join('\n')
       pageTexts.push({ text, page: p })
+      dbg(`Page ${p}: ${strings.length} text items, ${text.length} chars`)
+      // Log raw text to console for debugging (first 2000 chars per page)
+      console.log(`[RebarExtract] Page ${p} raw text:\n${text.slice(0, 2000)}`)
     }
 
-    const { extractFromPageText } = await import('@/lib/rebar-extractor')
-    return extractFromPageText(pageTexts)
+    const totalChars = pageTexts.reduce((s, p) => s + p.text.length, 0)
+    dbg(`Total text extracted: ${totalChars} chars across ${pageTexts.length} page(s)`)
+
+    const { extractFromPageText, parseRebarText } = await import('@/lib/rebar-extractor')
+
+    // Count raw regex matches per page before grouping
+    let rawMatchCount = 0
+    for (const { text } of pageTexts) {
+      const callouts = parseRebarText(text)
+      rawMatchCount += callouts.length
+      if (callouts.length > 0) {
+        dbg(`  ✓ ${callouts.length} callout(s) on this page: ${callouts.slice(0, 5).map(c => c.raw).join(', ')}`)
+      }
+    }
+    dbg(`Total raw callouts matched: ${rawMatchCount}`)
+
+    const elements = extractFromPageText(pageTexts)
+    const totalBars = elements.flatMap(e => e.callouts).length
+    dbg(`Grouped into ${elements.length} element(s), ${totalBars} bar(s)`)
+    if (elements.length > 0) {
+      dbg(`First 5 callouts: ${elements.flatMap(e => e.callouts).slice(0, 5).map(c => c.raw).join(' | ')}`)
+    }
+    return elements
   }
 
   async function handleExtract() {
@@ -136,7 +172,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
       const editable = detectedElements.map(elementToEditable)
       setElements(editable.length > 0 ? editable : [])
       setStatus(editable.length > 0 ? 'review' : 'error')
-      if (editable.length === 0) setErrorMsg('No rebar callouts detected. The drawing must have a text layer with annotations like 6T16, Ø10@150, T12-200. Scanned (rasterised) PDFs cannot be parsed.')
+      if (editable.length === 0) setErrorMsg('No rebar callouts detected. Check the extraction log below — if 0 chars were extracted the PDF has no text layer (scanned drawing). If chars were extracted but 0 matches, share a sample line from the console log.')
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : String(e))
       setStatus('error')
@@ -271,13 +307,26 @@ export function ExtractClient({ projectId, drawings }: Props) {
           {status === 'extracting' ? 'Extracting…' : 'Extract Rebar from Drawing'}
         </button>
         <p className="text-xs text-slate-600 mt-2">
-          Scans TEXT / MTEXT entities (DXF) or text layer (PDF) for rebar callouts like 6T16, Ø10@150, T12-200
+          Scans TEXT / MTEXT entities (DXF) or text layer (PDF) for reinforcement callouts:
+          2Ø12 · 4Ø12@20 · 2X3Ø12 · 2X3Ø12 L=929 · Ø12@20 L=116 · 6T16 TOP · T12-200
         </p>
 
         {status === 'error' && (
           <div className="mt-3 flex items-start gap-2 text-red-400 text-sm bg-red-900/20 border border-red-800 rounded-lg p-3">
             <AlertCircle size={15} className="mt-0.5 shrink-0" />
             {errorMsg}
+          </div>
+        )}
+
+        {/* Debug panel — shown during/after extraction */}
+        {debugInfo.length > 0 && (
+          <div className="mt-4 p-3 bg-slate-900 border border-slate-700 rounded-lg font-mono text-xs text-slate-400 max-h-48 overflow-y-auto">
+            <p className="text-slate-500 mb-1 text-xs uppercase tracking-wider">Extraction log (also in browser console)</p>
+            {debugInfo.map((line, i) => (
+              <p key={i} className={line.startsWith('  ✓') ? 'text-green-400' : line.includes('error') || line.includes('fail') ? 'text-red-400' : 'text-slate-400'}>
+                {line}
+              </p>
+            ))}
           </div>
         )}
       </div>
