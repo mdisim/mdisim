@@ -3,6 +3,29 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+// Fetch all BOQ items for a project — used as client-side fallback in the viewer
+export async function getProjectBOQItems(projectId: string) {
+  const supabase = await createClient()
+  // Try with is_section_header filter first (requires migration 011)
+  const { data, error } = await supabase
+    .from('boq_items')
+    .select('id, project_id, item_code, description, unit, quantity, unit_rate, total_amount, category, notes, created_at, updated_at')
+    .eq('project_id', projectId)
+    .neq('is_section_header', true)
+    .order('sort_order', { ascending: true, nullsFirst: false })
+  if (error) {
+    // Fallback: fetch without is_section_header filter (pre-migration 011 schema)
+    const { data: fallback, error: e2 } = await supabase
+      .from('boq_items')
+      .select('id, project_id, item_code, description, unit, quantity, unit_rate, total_amount, category, notes, created_at, updated_at')
+      .eq('project_id', projectId)
+      .order('item_code', { ascending: true })
+    if (e2) return { items: [], error: e2.message }
+    return { items: fallback ?? [] }
+  }
+  return { items: data ?? [] }
+}
+
 export async function createDrawingRecord(projectId: string, data: {
   name: string
   original_filename: string

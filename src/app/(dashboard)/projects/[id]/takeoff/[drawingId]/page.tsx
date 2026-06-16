@@ -25,7 +25,11 @@ export default async function TakeoffViewerPage({
       .select('*, boq_item:boq_items(item_code, description, unit)')
       .eq('drawing_id', drawingId)
       .order('page_number').order('sort_order'),
-    supabase.from('boq_items').select('*').eq('project_id', id).order('item_code'),
+    supabase.from('boq_items')
+      .select('id, project_id, item_code, description, unit, quantity, unit_rate, total_amount, category, notes, created_at, updated_at')
+      .eq('project_id', id)
+      .neq('is_section_header', true)
+      .order('sort_order', { ascending: true, nullsFirst: false }),
   ])
 
   if (!project || !drawing) notFound()

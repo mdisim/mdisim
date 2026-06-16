@@ -7,7 +7,7 @@ import {
   AlertCircle, Check, Link2, MousePointer, Eye, EyeOff,
 } from 'lucide-react'
 import { DrawingFile, DrawingCalibration, DrawingMeasurement, BOQItem, Point } from '@/lib/types'
-import { saveMeasurement, deleteMeasurement, updateMeasurement, saveCalibration, generateBOQQuantities } from '@/app/actions/takeoff'
+import { saveMeasurement, deleteMeasurement, updateMeasurement, saveCalibration, generateBOQQuantities, getProjectBOQItems } from '@/app/actions/takeoff'
 import { TAKEOFF_TOOLS, TakeoffToolType, computeQuantity } from '@/lib/takeoff-tools'
 import { ToolPanel } from './tool-panel'
 import { MeasurementsList, MeasurementEntry } from './measurements-list'
@@ -53,8 +53,17 @@ interface Props {
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
-export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations, initialMeasurements, boqItems, dxfContent }: Props) {
+export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations, initialMeasurements, boqItems: initialBoqItems, dxfContent }: Props) {
   const isDxf = drawing.file_type === 'dxf'
+
+  // ── BOQ items — client-side fetch ensures we always have the latest ──
+  const [boqItems, setBoqItems] = useState<BOQItem[]>(initialBoqItems)
+  useEffect(() => {
+    // Always fetch fresh from client — server prop may be stale or empty due to RLS/session timing
+    getProjectBOQItems(projectId).then(result => {
+      if (result.items.length > 0) setBoqItems(result.items as BOQItem[])
+    })
+  }, [projectId])
 
   // ── PDF state ──
   const [pdfDoc, setPdfDoc] = useState<import('pdfjs-dist').PDFDocumentProxy | null>(null)
@@ -536,7 +545,13 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
     setBoqResult(null)
     const result = await generateBOQQuantities(drawing.id, projectId)
     setGeneratingBOQ(false)
-    setBoqResult(result.error ? `Error: ${result.error}` : `Updated ${result.updated} BOQ item${result.updated !== 1 ? 's' : ''}`)
+    if (result.error) {
+      setBoqResult(`Error: ${result.error}`)
+    } else {
+      const count = result.updated ?? 0
+      setBoqResult(`✓ ${count} BOQ item${count !== 1 ? 's' : ''} updated`)
+      showToast(`Pushed quantities to ${count} BOQ item${count !== 1 ? 's' : ''}`)
+    }
   }
 
   // ── Keyboard shortcuts ──

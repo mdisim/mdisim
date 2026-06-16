@@ -108,9 +108,11 @@ export function MeasurementsList({
                     onClick={e => e.stopPropagation()}
                     className="flex-1 text-xs bg-slate-800 border border-slate-700 text-slate-400 rounded px-1.5 py-0.5 focus:outline-none focus:border-amber-500 min-w-0"
                   >
-                    <option value="">— Link to BOQ —</option>
+                    <option value="">— Link to BOQ item —</option>
                     {boqItems.map(b => (
-                      <option key={b.id} value={b.id}>{b.item_code} {b.description.slice(0, 20)}</option>
+                      <option key={b.id} value={b.id}>
+                        {b.item_code ? `${b.item_code} ` : ''}{(b.description ?? '').slice(0, 30)}
+                      </option>
                     ))}
                   </select>
                 </div>
