@@ -77,6 +77,31 @@ export function ExtractClient({ projectId, drawings }: Props) {
   const [savedCount, setSavedCount] = useState(0)
   const [, startTransition] = useTransition()
 
+  async function extractPDFClientSide(signedUrl: string): Promise<DetectedElement[]> {
+    // PDF.js is ESM-only and can't run in Vercel serverless — run it here in the browser
+    const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist')
+    GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+
+    const res = await fetch(signedUrl)
+    if (!res.ok) throw new Error('Could not fetch PDF')
+    const buffer = await res.arrayBuffer()
+
+    const pdf = await getDocument({ data: new Uint8Array(buffer) }).promise
+    const pageTexts: Array<{ text: string; page: number }> = []
+
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = await pdf.getPage(p)
+      const content = await page.getTextContent()
+      const text = content.items
+        .map((item) => ('str' in item ? (item as { str: string }).str : ''))
+        .join('\n')
+      pageTexts.push({ text, page: p })
+    }
+
+    const { extractFromPageText } = await import('@/lib/rebar-extractor')
+    return extractFromPageText(pageTexts)
+  }
+
   async function handleExtract() {
     if (!selectedDrawingId) return
     setStatus('extracting')
@@ -88,16 +113,30 @@ export function ExtractClient({ projectId, drawings }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ drawingId: selectedDrawingId }),
       })
-      const json = await res.json() as { elements?: DetectedElement[]; error?: string }
+      const json = await res.json() as {
+        elements?: DetectedElement[]
+        error?: string
+        requiresClientExtraction?: boolean
+        signedUrl?: string
+      }
       if (!res.ok || json.error) {
         setErrorMsg(json.error ?? 'Extraction failed')
         setStatus('error')
         return
       }
-      const editable = (json.elements ?? []).map(elementToEditable)
+
+      let detectedElements: DetectedElement[] = []
+      if (json.requiresClientExtraction && json.signedUrl) {
+        // PDF: extract text in the browser using PDF.js
+        detectedElements = await extractPDFClientSide(json.signedUrl)
+      } else {
+        detectedElements = json.elements ?? []
+      }
+
+      const editable = detectedElements.map(elementToEditable)
       setElements(editable.length > 0 ? editable : [])
       setStatus(editable.length > 0 ? 'review' : 'error')
-      if (editable.length === 0) setErrorMsg('No rebar callouts detected. Verify the drawing has text-based reinforcement annotations.')
+      if (editable.length === 0) setErrorMsg('No rebar callouts detected. The drawing must have a text layer with annotations like 6T16, Ø10@150, T12-200. Scanned (rasterised) PDFs cannot be parsed.')
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : String(e))
       setStatus('error')
