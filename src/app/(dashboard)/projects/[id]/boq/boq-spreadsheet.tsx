@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import * as XLSX from 'xlsx'
-import { GripVertical } from 'lucide-react'
+import { GripVertical, Clipboard } from 'lucide-react'
 import { updateBOQItem, createBOQItem, deleteBOQItem, bulkCreateBOQItems } from '@/app/actions/boq-spreadsheet'
 import ExcelImportModal from '@/components/boq/excel-import-modal'
 import { useTranslation } from '@/lib/i18n/use-translation'
@@ -24,7 +24,7 @@ interface BOQItem {
 }
 
 interface HistoryEntry {
-  type: 'update' | 'create' | 'delete' | 'move'
+  type: 'update' | 'create' | 'delete' | 'move' | 'batch'
   itemId: string
   previousData: Partial<BOQItem>
   newData: Partial<BOQItem>
@@ -77,6 +77,20 @@ function toItemData(d: Partial<BOQItem>): ItemData {
     sort_order: d.sort_order ?? undefined,
     category: d.category,
     notes: d.notes,
+  }
+}
+
+function evaluateFormula(expr: string, row: BOQItem): number | null {
+  const cleaned = expr.slice(1).trim()
+  const withValues = cleaned
+    .replace(/\bquantity\b/g, String(row.quantity ?? 0))
+    .replace(/\bunit_rate\b/g, String(row.unit_rate ?? 0))
+    .replace(/\btotal_amount\b/g, String(row.total_amount ?? 0))
+  if (!/^[\d\s+\-*/().]+$/.test(withValues)) return null
+  try {
+    return Function(`"use strict"; return (${withValues})`)() as number
+  } catch {
+    return null
   }
 }
 
@@ -215,6 +229,18 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
   const [dragOverRowId, setDragOverRowId] = useState<string | null>(null)
   const draggingRowRef = useRef<string | null>(null)
 
+  // Toast notification
+  const [toast, setToast] = useState<string | null>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const showToast = useCallback((msg: string) => {
+    setToast(msg)
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    toastTimer.current = setTimeout(() => setToast(null), 2500)
+  }, [])
+
+  // Internal clipboard for copy/paste
+  const clipboardRef = useRef<BOQItem[]>([])
+
   // Feature 6: Context menu
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
 
@@ -294,6 +320,124 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
     }
   }, [historyIndex, history, projectId])
 
+
+
+  // ─── Fill Down (Ctrl+D) ────────────────────────────────────────────────────
+
+  const handleFillDown = useCallback(async () => {
+    if (selectedRows.size < 2) return
+    const ordered = sortedItems.filter(i => selectedRows.has(i.id))
+    const source = ordered[0]
+    const targets = ordered.slice(1)
+    const fillFields: Array<keyof BOQItem> = editCell
+      ? [editCell.field as keyof BOQItem]
+      : ['description', 'unit', 'unit_rate', 'vat_percent']
+
+    for (const target of targets) {
+      const updates: Partial<BOQItem> = {}
+      for (const f of fillFields) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(updates as Record<string, unknown>)[f as string] = source[f] as unknown
+      }
+      // recalculate totals if needed
+      const qty = 'quantity' in updates ? (updates.quantity ?? 0) : (target.quantity ?? 0)
+      const rate = 'unit_rate' in updates ? (updates.unit_rate ?? 0) : (target.unit_rate ?? 0)
+      const vatPct = 'vat_percent' in updates ? (updates.vat_percent ?? 0) : (target.vat_percent ?? 0)
+      if (fillFields.includes('unit_rate') || fillFields.includes('quantity')) {
+        updates.total_amount = (qty as number) * (rate as number)
+        updates.vat_amount = (updates.total_amount) * (vatPct as number) / 100
+      } else if (fillFields.includes('vat_percent')) {
+        const total = target.total_amount ?? 0
+        updates.vat_amount = total * (vatPct as number) / 100
+      }
+      setItems(prev => prev.map(i => i.id === target.id ? { ...i, ...updates } : i))
+      await updateBOQItem(target.id, updates as ItemData)
+    }
+    pushHistory({ type: 'batch', itemId: source.id, previousData: {}, newData: {} })
+    showToast(`Filled ${targets.length} rows`)
+  }, [selectedRows, sortedItems, editCell, pushHistory, showToast])
+
+  // ─── Copy/Paste ranges ─────────────────────────────────────────────────────
+
+  const handleCopyRows = useCallback(() => {
+    if (selectedRows.size === 0) return
+    const ordered = sortedItems.filter(i => selectedRows.has(i.id))
+    clipboardRef.current = ordered
+    const tsv = ordered.map(i => [
+      i.item_code ?? '',
+      i.description ?? '',
+      i.unit ?? '',
+      String(i.quantity ?? ''),
+      String(i.unit_rate ?? ''),
+      String(i.vat_percent ?? ''),
+    ].join('\t')).join('\n')
+    void navigator.clipboard.writeText(tsv)
+    showToast(`Copied ${ordered.length} rows`)
+  }, [selectedRows, sortedItems, showToast])
+
+  const handlePasteRows = useCallback(async () => {
+    let sources: BOQItem[] = []
+    if (clipboardRef.current.length > 0) {
+      sources = clipboardRef.current
+    } else {
+      try {
+        const text = await navigator.clipboard.readText()
+        if (!text.trim()) return
+        const parsed = parseClipboardData(text)
+        // create placeholder items from parsed data — they won't have real ids yet
+        sources = parsed.map((p, i) => ({
+          id: `temp-${i}`,
+          project_id: projectId,
+          item_code: p.item_code ?? null,
+          description: p.description ?? null,
+          unit: p.unit ?? null,
+          quantity: p.quantity ?? null,
+          unit_rate: p.unit_rate ?? null,
+          total_amount: p.total_amount ?? null,
+          vat_percent: null,
+          vat_amount: null,
+          is_section_header: null,
+          sort_order: null,
+          category: p.category ?? null,
+          notes: p.notes ?? null,
+        }))
+      } catch {
+        return
+      }
+    }
+    if (sources.length === 0) return
+
+    // Determine insert position
+    const sorted = [...items].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    const anchorId = selectedCell?.rowId ?? (sorted[sorted.length - 1]?.id ?? null)
+    const anchorIdx = anchorId ? sorted.findIndex(i => i.id === anchorId) : sorted.length - 1
+    const baseOrder = sorted[anchorIdx]?.sort_order ?? sorted.length
+
+    let created = 0
+    for (let i = 0; i < sources.length; i++) {
+      const src = sources[i]
+      const result = await createBOQItem(projectId, {
+        item_code: src.item_code,
+        description: src.description,
+        unit: src.unit,
+        quantity: src.quantity,
+        unit_rate: src.unit_rate,
+        total_amount: src.total_amount,
+        vat_percent: src.vat_percent,
+        vat_amount: src.vat_amount,
+        is_section_header: false,
+        sort_order: baseOrder + i + 0.5,
+      })
+      if (result.success) {
+        const newItem = result.data as unknown as BOQItem
+        setItems(prev => [...prev, newItem])
+        pushHistory({ type: 'create', itemId: newItem.id, previousData: {}, newData: newItem })
+        created++
+      }
+    }
+    showToast(`Pasted ${created} rows`)
+  }, [items, selectedCell, projectId, pushHistory, showToast])
+
   // ─── Global keyboard shortcuts ────────────────────────────────────────────
 
   useEffect(() => {
@@ -307,6 +451,15 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
       } else if (e.ctrlKey && e.key === 'y') {
         e.preventDefault()
         void redo()
+      } else if (e.ctrlKey && e.key === 'd') {
+        e.preventDefault()
+        void handleFillDown()
+      } else if (e.ctrlKey && e.key === 'c' && selectedRows.size > 0) {
+        e.preventDefault()
+        handleCopyRows()
+      } else if (e.ctrlKey && e.key === 'v') {
+        e.preventDefault()
+        void handlePasteRows()
       } else if (!editCell && selectedCell) {
         const nonHeaderItems = sortedItems.filter(i => !i.is_section_header)
         const rowIdx = nonHeaderItems.findIndex(i => i.id === selectedCell.rowId)
@@ -333,7 +486,8 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [undo, redo, editCell, selectedCell, sortedItems, pushHistory])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [undo, redo, editCell, selectedCell, sortedItems, pushHistory, selectedRows])
 
   // ─── Edit helpers ──────────────────────────────────────────────────────────
 
@@ -355,7 +509,16 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
 
     let value: string | number | null = rawValue
     const numFields = ['quantity', 'unit_rate', 'total_amount', 'vat_percent', 'vat_amount']
-    if (numFields.includes(field)) {
+    // Formula evaluation for quantity and unit_rate
+    if (rawValue.startsWith('=') && (field === 'quantity' || field === 'unit_rate')) {
+      const result = evaluateFormula(rawValue, item)
+      if (result !== null) {
+        value = result
+        showToast(`Formula evaluated: ${result}`)
+      } else {
+        value = 0
+      }
+    } else if (numFields.includes(field)) {
       value = parseFloat(rawValue) || 0
     }
 
@@ -699,15 +862,18 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
   }) {
     const isEditing = editCell?.id === item.id && editCell?.field === field
     const displayVal = value == null ? '' : String(value)
+    const formulaFields = ['quantity', 'unit_rate']
+    const placeholder = formulaFields.includes(field) ? 'e.g. =5*3.5' : ''
     if (isEditing) {
       return (
         <input
           autoFocus
-          type={type}
+          type="text"
           value={editValue}
           onChange={e => setEditValue(e.target.value)}
           onBlur={() => void commitEdit(item.id, field, editValue)}
           onKeyDown={e => handleKeyDown(e, item.id, field)}
+          placeholder={placeholder}
           className={`w-full border border-blue-400 rounded px-1 py-0 text-sm outline-none bg-blue-50 ${className}`}
         />
       )
@@ -751,6 +917,12 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
 
   return (
     <div className="flex flex-col h-full" onClick={() => setSelectedRows(new Set())}>
+      {/* Toast notification */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-gray-900 text-white text-sm px-4 py-2 rounded-lg shadow-lg pointer-events-none">
+          {toast}
+        </div>
+      )}
       {/* Main toolbar */}
       <div className="flex items-center gap-2 mb-2 flex-wrap">
         <button onClick={() => void addRow(false)} className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 flex items-center gap-1">
@@ -798,8 +970,16 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
       {selectedRows.size > 0 && (
         <div className="flex items-center gap-3 mb-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm" onClick={e => e.stopPropagation()}>
           <span className="font-medium text-blue-800">{selectedRows.size} row{selectedRows.size > 1 ? 's' : ''} selected</span>
+          {selectedRows.size >= 2 && (
+            <button onClick={() => void handleFillDown()} className="px-2 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs">Fill Down (Ctrl+D)</button>
+          )}
+          <button onClick={handleCopyRows} className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs flex items-center gap-1">
+            <Clipboard size={12} /> Copy (Ctrl+C)
+          </button>
+          <button onClick={() => void handlePasteRows()} className="px-2 py-1 bg-blue-100 text-blue-800 border border-blue-300 rounded hover:bg-blue-200 text-xs flex items-center gap-1" disabled={clipboardRef.current.length === 0}>
+            <Clipboard size={12} /> Paste (Ctrl+V)
+          </button>
           <button onClick={() => void deleteSelectedRows()} className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs">Delete Selected</button>
-          <button onClick={copySelectedRows} className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs">Copy Selected</button>
           <button onClick={() => setSelectedRows(new Set())} className="px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-xs">Deselect</button>
         </div>
       )}

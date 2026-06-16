@@ -86,3 +86,33 @@ export async function advanceTenderStatus(id: string, newStatus: string) {
   revalidatePath(`/tenders/${id}`)
   return { success: true }
 }
+
+export async function getTenderItems(tenderId: string) {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('tender_items')
+    .select('*, boq_item:boq_items(item_code, description, unit)')
+    .eq('tender_id', tenderId)
+    .order('sort_order')
+  return { data: data ?? [], error: error?.message }
+}
+
+export async function upsertTenderItem(item: {
+  id?: string
+  tender_id: string
+  boq_item_id?: string | null
+  description: string
+  unit?: string | null
+  quantity: number
+  unit_rate: number
+  sort_order?: number
+}) {
+  const supabase = await createClient()
+  const { error } = await supabase.from('tender_items').upsert({
+    ...item,
+    sort_order: item.sort_order ?? 0,
+  })
+  if (error) return { error: error.message }
+  revalidatePath('/tenders')
+  return { success: true }
+}

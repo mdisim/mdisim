@@ -423,6 +423,20 @@ export interface Tender {
   updated_at: string
 }
 
+export interface TenderItem {
+  id: string
+  tender_id: string
+  boq_item_id: string | null
+  description: string
+  unit: string | null
+  quantity: number
+  unit_rate: number
+  total_amount: number
+  sort_order: number
+  created_at: string
+  boq_item?: { item_code: string; description: string; unit: string } | null
+}
+
 export interface ProjectContract {
   id: string
   project_id: string
