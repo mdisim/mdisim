@@ -1,6 +1,8 @@
 export type TakeoffToolType =
   | 'length'
   | 'area'
+  | 'rectangle'
+  | 'circle'
   | 'volume'
   | 'concrete'
   | 'rebar'
@@ -20,7 +22,7 @@ export interface ToolConfig {
   label: string
   icon: string // lucide icon name
   color: string // hex
-  drawMode: 'line' | 'polygon' | 'rectangle' | 'point' | 'none'
+  drawMode: 'line' | 'polygon' | 'rectangle' | 'circle' | 'point' | 'none'
   unit: string
   description: string
   materialInputs?: MaterialInput[]
@@ -62,6 +64,24 @@ export const TAKEOFF_TOOLS: ToolConfig[] = [
     drawMode: 'polygon',
     unit: 'm²',
     description: 'Measure floor area or surface',
+  },
+  {
+    type: 'rectangle',
+    label: 'Rectangle',
+    icon: 'RectangleHorizontal',
+    color: '#10b981',
+    drawMode: 'rectangle',
+    unit: 'm²',
+    description: 'Click two opposite corners to measure rectangular area',
+  },
+  {
+    type: 'circle',
+    label: 'Circle',
+    icon: 'CircleDot',
+    color: '#06b6d4',
+    drawMode: 'circle',
+    unit: 'm²',
+    description: 'Click centre then edge point to measure circular area',
   },
   {
     type: 'volume',
@@ -288,6 +308,8 @@ export function computeQuantity(
       return { quantity: pixelMeasurement / ppm, unit: 'm' }
 
     case 'area':
+    case 'rectangle':
+    case 'circle':
     case 'blockwork':
     case 'plaster':
     case 'paint': {

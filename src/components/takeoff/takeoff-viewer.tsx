@@ -36,6 +36,7 @@ function pixelMeasure(toolType: TakeoffToolType, pts: Point[]): number {
   if (!cfg) return 0
   if (cfg.drawMode === 'line') return polylineLength(pts)
   if (cfg.drawMode === 'polygon' || cfg.drawMode === 'rectangle') return polygonArea(pts)
+  if (cfg.drawMode === 'circle' && pts.length >= 2) return Math.PI * dist(pts[0], pts[1]) ** 2
   if (cfg.drawMode === 'point') return pts.length
   return 0
 }
@@ -263,6 +264,7 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
     ctx.save()
     const cfg = TAKEOFF_TOOLS.find(t => t.type === toolType)
     const isPolygon = cfg?.drawMode === 'polygon' || cfg?.drawMode === 'rectangle'
+    const isCircle = cfg?.drawMode === 'circle'
     const isPoint = cfg?.drawMode === 'point'
     if (isPoint) {
       for (const pt of pts) {
@@ -274,6 +276,14 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
         ctx.fillStyle = '#1e293b'; ctx.font = 'bold 11px system-ui'
         ctx.fillText(`×${pts.length}`, pts[0].x + 10, pts[0].y - 8)
       }
+    } else if (isCircle && pts.length >= 2) {
+      const radius = dist(pts[0], pts[1])
+      ctx.beginPath(); ctx.arc(pts[0].x, pts[0].y, radius, 0, Math.PI * 2)
+      ctx.fillStyle = color + '22'; ctx.fill()
+      ctx.strokeStyle = selected ? '#f59e0b' : color
+      ctx.lineWidth = selected ? 3 : 2
+      ctx.setLineDash(preview ? [5, 5] : [])
+      ctx.stroke(); ctx.setLineDash([])
     } else {
       ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y)
       for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y)
@@ -435,6 +445,36 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
         return
       }
       setDrawingState(prev => [...prev, pt])
+      return
+    }
+
+    if (cfg.drawMode === 'rectangle') {
+      if (drawingState.length === 0) {
+        setDrawingState([pt])
+        return
+      }
+      // Second click: compute 4 corners from two opposite corners
+      const p0 = drawingState[0]
+      const p1 = pt
+      const corners: Point[] = [
+        { x: p0.x, y: p0.y },
+        { x: p1.x, y: p0.y },
+        { x: p1.x, y: p1.y },
+        { x: p0.x, y: p1.y },
+      ]
+      await finalizeMeasurement(activeTool, corners)
+      setDrawingState([])
+      return
+    }
+
+    if (cfg.drawMode === 'circle') {
+      if (drawingState.length === 0) {
+        setDrawingState([pt])
+        return
+      }
+      // Second click: edge point — finalize with [center, edgePt]
+      await finalizeMeasurement(activeTool, [drawingState[0], pt])
+      setDrawingState([])
       return
     }
 

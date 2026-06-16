@@ -3,7 +3,7 @@
 import {
   Ruler, Minus, Square, Box, Layers, GitBranch, Grid3x3,
   PaintRoller, Paintbrush, AlignJustify, Grid2x2, Shovel,
-  MoveDown, Construction, Hash,
+  MoveDown, Construction, Hash, Circle as CircleIcon, RectangleHorizontal,
 } from 'lucide-react'
 import { TAKEOFF_TOOLS, TakeoffToolType, MaterialInput } from '@/lib/takeoff-tools'
 
@@ -23,12 +23,14 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   MoveDown: <MoveDown size={15} />,
   Construction: <Construction size={15} />,
   Hash: <Hash size={15} />,
+  CircleDot: <CircleIcon size={15} />,
+  RectangleHorizontal: <RectangleHorizontal size={15} />,
 }
 
 const CATEGORIES: { label: string; types: TakeoffToolType[] }[] = [
   { label: 'Scale', types: ['calibrate'] },
   { label: 'Linear', types: ['length', 'count'] },
-  { label: 'Area', types: ['area', 'flooring', 'tiles', 'blockwork', 'plaster', 'paint'] },
+  { label: 'Area', types: ['area', 'rectangle', 'circle', 'flooring', 'tiles', 'blockwork', 'plaster', 'paint'] },
   { label: 'Volume', types: ['volume', 'concrete', 'excavation', 'backfill', 'asphalt'] },
   { label: 'Structural', types: ['rebar'] },
 ]
