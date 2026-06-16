@@ -229,20 +229,15 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
   const [dragOverRowId, setDragOverRowId] = useState<string | null>(null)
   const draggingRowRef = useRef<string | null>(null)
 
+  // Feature 6: Context menu
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
+
   // Toast notification
   const [toast, setToast] = useState<string | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const showToast = useCallback((msg: string) => {
-    setToast(msg)
-    if (toastTimer.current) clearTimeout(toastTimer.current)
-    toastTimer.current = setTimeout(() => setToast(null), 2500)
-  }, [])
 
   // Internal clipboard for copy/paste
   const clipboardRef = useRef<BOQItem[]>([])
-
-  // Feature 6: Context menu
-  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -286,6 +281,14 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
     setHistoryIndex(prev => Math.min(prev + 1, 49))
   }, [historyIndex])
 
+  // ─── Toast helper ──────────────────────────────────────────────────────────
+
+  const showToast = useCallback((msg: string) => {
+    setToast(msg)
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    toastTimer.current = setTimeout(() => setToast(null), 2500)
+  }, [])
+
   // ─── Undo / Redo ──────────────────────────────────────────────────────────
 
   const undo = useCallback(async () => {
@@ -320,8 +323,6 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
     }
   }, [historyIndex, history, projectId])
 
-
-
   // ─── Fill Down (Ctrl+D) ────────────────────────────────────────────────────
 
   const handleFillDown = useCallback(async () => {
@@ -336,19 +337,18 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
     for (const target of targets) {
       const updates: Partial<BOQItem> = {}
       for (const f of fillFields) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ;(updates as Record<string, unknown>)[f as string] = source[f] as unknown
       }
       // recalculate totals if needed
-      const qty = 'quantity' in updates ? (updates.quantity ?? 0) : (target.quantity ?? 0)
-      const rate = 'unit_rate' in updates ? (updates.unit_rate ?? 0) : (target.unit_rate ?? 0)
-      const vatPct = 'vat_percent' in updates ? (updates.vat_percent ?? 0) : (target.vat_percent ?? 0)
+      const qty = ('quantity' in updates ? updates.quantity : target.quantity) ?? 0
+      const rate = ('unit_rate' in updates ? updates.unit_rate : target.unit_rate) ?? 0
+      const vatPct = ('vat_percent' in updates ? updates.vat_percent : target.vat_percent) ?? 0
       if (fillFields.includes('unit_rate') || fillFields.includes('quantity')) {
-        updates.total_amount = (qty as number) * (rate as number)
-        updates.vat_amount = (updates.total_amount) * (vatPct as number) / 100
+        updates.total_amount = qty * rate
+        updates.vat_amount = updates.total_amount * vatPct / 100
       } else if (fillFields.includes('vat_percent')) {
         const total = target.total_amount ?? 0
-        updates.vat_amount = total * (vatPct as number) / 100
+        updates.vat_amount = total * vatPct / 100
       }
       setItems(prev => prev.map(i => i.id === target.id ? { ...i, ...updates } : i))
       await updateBOQItem(target.id, updates as ItemData)
@@ -384,7 +384,6 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
         const text = await navigator.clipboard.readText()
         if (!text.trim()) return
         const parsed = parseClipboardData(text)
-        // create placeholder items from parsed data — they won't have real ids yet
         sources = parsed.map((p, i) => ({
           id: `temp-${i}`,
           project_id: projectId,
@@ -486,8 +485,7 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [undo, redo, editCell, selectedCell, sortedItems, pushHistory, selectedRows])
+  }, [undo, redo, editCell, selectedCell, sortedItems, pushHistory, handleFillDown, handleCopyRows, handlePasteRows, selectedRows])
 
   // ─── Edit helpers ──────────────────────────────────────────────────────────
 
@@ -752,22 +750,6 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
     batchEntries.forEach(e => pushHistory(e))
   }
 
-  function copySelectedRows() {
-    const sorted = sortedItems.filter(i => selectedRows.has(i.id))
-    const text = sorted.map(i => [
-      i.item_code ?? '',
-      i.description ?? '',
-      i.unit ?? '',
-      i.quantity ?? '',
-      i.unit_rate ?? '',
-      i.total_amount ?? '',
-      i.vat_percent ?? '',
-      i.category ?? '',
-      i.notes ?? '',
-    ].join('\t')).join('\n')
-    void navigator.clipboard.writeText(text)
-  }
-
   // ─── Drag and drop ─────────────────────────────────────────────────────────
 
   const handleDragStart = useCallback((e: React.DragEvent, itemId: string) => {
@@ -958,6 +940,13 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
         <button onClick={() => setShowPasteModal(true)} className="px-3 py-1.5 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700">
           {t('paste_excel', 'Paste from Excel')}
         </button>
+        <button
+          onClick={() => void handlePasteRows()}
+          title="Paste rows (Ctrl+V)"
+          className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 flex items-center gap-1"
+        >
+          <Clipboard size={14} /> Paste <span className="text-xs text-gray-400">(Ctrl+V)</span>
+        </button>
         <div className="ml-auto flex items-center gap-3 text-sm">
           {rowError && <span className="text-red-600 font-medium text-xs bg-red-50 border border-red-200 rounded px-2 py-1">{rowError}</span>}
           {saveStatus === 'saving' && <span className="text-gray-500 animate-pulse">{t('saving', 'Saving...')}</span>}
@@ -976,7 +965,7 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
           <button onClick={handleCopyRows} className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs flex items-center gap-1">
             <Clipboard size={12} /> Copy (Ctrl+C)
           </button>
-          <button onClick={() => void handlePasteRows()} className="px-2 py-1 bg-blue-100 text-blue-800 border border-blue-300 rounded hover:bg-blue-200 text-xs flex items-center gap-1" disabled={clipboardRef.current.length === 0}>
+          <button onClick={() => void handlePasteRows()} className="px-2 py-1 bg-blue-100 text-blue-800 border border-blue-300 rounded hover:bg-blue-200 text-xs flex items-center gap-1">
             <Clipboard size={12} /> Paste (Ctrl+V)
           </button>
           <button onClick={() => void deleteSelectedRows()} className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs">Delete Selected</button>
