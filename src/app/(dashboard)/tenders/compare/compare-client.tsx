@@ -61,6 +61,10 @@ export function CompareClient({ tenders, tenderItems }: CompareClientProps) {
 
   const minTotal = Math.min(...tenderTotals)
   const maxTotal = Math.max(...tenderTotals)
+  const avgTotal = tenderTotals.length > 0 ? tenderTotals.reduce((s, t) => s + t, 0) / tenderTotals.length : 0
+  const lowestTotalIdx = tenderTotals.indexOf(minTotal)
+  const lowestTender = tenders[lowestTotalIdx]
+  const pctBelowAvg = avgTotal > 0 ? ((avgTotal - minTotal) / avgTotal * 100) : 0
 
   return (
     <div className="space-y-6">
@@ -117,6 +121,25 @@ export function CompareClient({ tenders, tenderItems }: CompareClientProps) {
           </tbody>
         </table>
       </div>
+
+      {/* Winner Recommendation Panel */}
+      {tenders.length > 1 && lowestTender && (
+        <div className="bg-green-50 border border-green-200 rounded-xl px-5 py-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-1">Recommended</p>
+              <p className="font-bold text-green-900 text-lg">{lowestTender.title}</p>
+              <p className="text-sm text-green-700 mt-0.5">
+                {fmt(minTotal)} &mdash; {pctBelowAvg.toFixed(1)}% below average
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-green-600 uppercase tracking-wide">Average Total</p>
+              <p className="font-semibold text-green-800">{fmt(avgTotal)}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* BOQ Line-Item Breakdown */}
       <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto">
@@ -251,7 +274,8 @@ export function CompareClient({ tenders, tenderItems }: CompareClientProps) {
                         }`}
                       >
                         {fmt(total)}
-                        {isLowest && <span className="ml-1 text-xs font-normal text-green-400">Lowest</span>}
+                        {isLowest ? <span className="ml-1 text-xs font-normal text-green-400">Lowest</span> : null}
+                        {!isLowest && minTotal > 0 && <div className="text-xs font-normal text-amber-300 mt-0.5">+{((total - minTotal) / minTotal * 100).toFixed(1)}%</div>}
                       </td>
                     </>
                   )
