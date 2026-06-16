@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-type Tab = 'concrete' | 'steel' | 'earthwork' | 'brick' | 'load'
+type Tab = 'concrete' | 'steel' | 'earthwork' | 'brick' | 'load' | 'plaster' | 'paint' | 'flooring'
 
 // Concrete mix ratios per grade
 const CONCRETE_MIX: Record<string, { cement: number; sand: number; aggregate: number; water: number }> = {
@@ -276,12 +276,173 @@ function LoadCalc() {
   )
 }
 
+function PlasterCalc() {
+  const [area, setArea] = useState('')
+  const [thickness, setThickness] = useState('15')
+  const [waste, setWaste] = useState('10')
+  const [result, setResult] = useState<{ mortarM3: number; cementBags: number } | null>(null)
+
+  function calculate() {
+    const a = parseFloat(area)
+    const t = parseFloat(thickness)
+    const w = parseFloat(waste)
+    if (!a || !t) return
+    const wasteFactor = 1 + (w || 0) / 100
+    const mortarM3 = a * (t / 1000) * wasteFactor
+    // ~350 kg cement per m³ of mortar (1:3 mix), 50 kg bags
+    const cementBags = Math.ceil((mortarM3 * 350) / 50)
+    setResult({ mortarM3, cementBags })
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <label className={labelClass}>Wall Area (m²)</label>
+          <input type="number" min="0" step="0.1" value={area} onChange={e => setArea(e.target.value)} placeholder="e.g. 50" className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>Thickness (mm)</label>
+          <input type="number" min="0" step="1" value={thickness} onChange={e => setThickness(e.target.value)} placeholder="e.g. 15" className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>Waste (%)</label>
+          <input type="number" min="0" step="1" value={waste} onChange={e => setWaste(e.target.value)} placeholder="e.g. 10" className={inputClass} />
+        </div>
+      </div>
+      <button onClick={calculate} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors">
+        Calculate
+      </button>
+      {result && (
+        <div className={resultBox}>
+          <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide mb-2">Plaster Results</p>
+          <ResultRow label="Mortar Volume" value={`${result.mortarM3.toFixed(3)} m³`} />
+          <ResultRow label="Cement Bags (50 kg)" value={`${result.cementBags} bags`} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PaintCalc() {
+  const [area, setArea] = useState('')
+  const [coats, setCoats] = useState('2')
+  const [coverage, setCoverage] = useState('10')
+  const [result, setResult] = useState<{ litres: number; cans5L: number; cans20L: number } | null>(null)
+
+  function calculate() {
+    const a = parseFloat(area)
+    const c = parseFloat(coats)
+    const cov = parseFloat(coverage)
+    if (!a || !c || !cov) return
+    const litres = (a * c) / cov
+    const cans20L = Math.floor(litres / 20)
+    const remaining = litres - cans20L * 20
+    const cans5L = Math.ceil(remaining / 5)
+    setResult({ litres, cans5L, cans20L })
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <label className={labelClass}>Wall Area (m²)</label>
+          <input type="number" min="0" step="0.1" value={area} onChange={e => setArea(e.target.value)} placeholder="e.g. 80" className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>Coats</label>
+          <select value={coats} onChange={e => setCoats(e.target.value)} className={inputClass}>
+            <option value="1">1 coat</option>
+            <option value="2">2 coats</option>
+            <option value="3">3 coats</option>
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Coverage (m²/L)</label>
+          <input type="number" min="0.1" step="0.5" value={coverage} onChange={e => setCoverage(e.target.value)} placeholder="e.g. 10" className={inputClass} />
+        </div>
+      </div>
+      <button onClick={calculate} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors">
+        Calculate
+      </button>
+      {result && (
+        <div className={resultBox}>
+          <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide mb-2">Paint Results</p>
+          <ResultRow label="Total Litres" value={`${result.litres.toFixed(1)} L`} />
+          <ResultRow label="20 L Cans" value={`${result.cans20L} can${result.cans20L !== 1 ? 's' : ''}`} />
+          <ResultRow label="5 L Cans (remainder)" value={`${result.cans5L} can${result.cans5L !== 1 ? 's' : ''}`} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function FlooringCalc() {
+  const [area, setArea] = useState('')
+  const [waste, setWaste] = useState('10')
+  const [tileSize, setTileSize] = useState('600x600')
+  const [result, setResult] = useState<{ totalArea: number; tileCount: number } | null>(null)
+
+  const TILE_SIZES: Record<string, { w: number; h: number }> = {
+    '300x300': { w: 0.3, h: 0.3 },
+    '400x400': { w: 0.4, h: 0.4 },
+    '600x600': { w: 0.6, h: 0.6 },
+  }
+
+  function calculate() {
+    const a = parseFloat(area)
+    const w = parseFloat(waste)
+    if (!a) return
+    const wasteFactor = 1 + (w || 0) / 100
+    const totalArea = a * wasteFactor
+    const tile = TILE_SIZES[tileSize]
+    const tileCount = Math.ceil(totalArea / (tile.w * tile.h))
+    setResult({ totalArea, tileCount })
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <label className={labelClass}>Room Area (m²)</label>
+          <input type="number" min="0" step="0.1" value={area} onChange={e => setArea(e.target.value)} placeholder="e.g. 30" className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>Waste (%)</label>
+          <input type="number" min="0" step="1" value={waste} onChange={e => setWaste(e.target.value)} placeholder="e.g. 10" className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>Tile Size</label>
+          <select value={tileSize} onChange={e => setTileSize(e.target.value)} className={inputClass}>
+            <option value="300x300">300×300 mm</option>
+            <option value="400x400">400×400 mm</option>
+            <option value="600x600">600×600 mm</option>
+          </select>
+        </div>
+      </div>
+      <button onClick={calculate} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors">
+        Calculate
+      </button>
+      {result && (
+        <div className={resultBox}>
+          <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide mb-2">Flooring Results (incl. waste)</p>
+          <ResultRow label="Total Area" value={`${result.totalArea.toFixed(2)} m²`} />
+          <ResultRow label="Number of Tiles" value={result.tileCount.toLocaleString()} />
+        </div>
+      )}
+    </div>
+  )
+}
+
 const TABS: { id: Tab; label: string }[] = [
   { id: 'concrete', label: 'Concrete Mix' },
   { id: 'steel', label: 'Steel Rebar' },
   { id: 'earthwork', label: 'Earthwork' },
   { id: 'brick', label: 'Brick/Block' },
   { id: 'load', label: 'Load/Footing' },
+  { id: 'plaster', label: 'Plaster' },
+  { id: 'paint', label: 'Paint' },
+  { id: 'flooring', label: 'Flooring' },
 ]
 
 export function CalculatorsClient() {
@@ -336,6 +497,24 @@ export function CalculatorsClient() {
           <div>
             <h2 className="text-lg font-semibold text-slate-800 mb-4">Load / Bearing Capacity Calculator</h2>
             <LoadCalc />
+          </div>
+        )}
+        {activeTab === 'plaster' && (
+          <div>
+            <h2 className="text-lg font-semibold text-slate-800 mb-4">Plaster Calculator</h2>
+            <PlasterCalc />
+          </div>
+        )}
+        {activeTab === 'paint' && (
+          <div>
+            <h2 className="text-lg font-semibold text-slate-800 mb-4">Paint Calculator</h2>
+            <PaintCalc />
+          </div>
+        )}
+        {activeTab === 'flooring' && (
+          <div>
+            <h2 className="text-lg font-semibold text-slate-800 mb-4">Flooring Calculator</h2>
+            <FlooringCalc />
           </div>
         )}
       </div>

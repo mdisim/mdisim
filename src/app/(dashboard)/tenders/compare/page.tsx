@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, GitCompare } from 'lucide-react'
 import { CompareClient } from './compare-client'
+import { Tender, TenderItem } from '@/lib/types'
 
 export default async function TenderComparePage({
   searchParams,
@@ -24,6 +25,15 @@ export default async function TenderComparePage({
     .in('id', idList)
 
   if (!tenders || tenders.length < 2) notFound()
+  const typedTenders: Tender[] = tenders as Tender[]
+
+  const { data: tenderItemsRaw } = await supabase
+    .from('tender_items')
+    .select('*, boq_item:boq_items(item_code, description, unit)')
+    .in('tender_id', idList)
+    .order('sort_order')
+
+  const tenderItems: TenderItem[] = (tenderItemsRaw ?? []) as TenderItem[]
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -40,7 +50,7 @@ export default async function TenderComparePage({
         </p>
       </div>
 
-      <CompareClient tenders={tenders} />
+      <CompareClient tenders={typedTenders} tenderItems={tenderItems} />
     </div>
   )
 }
