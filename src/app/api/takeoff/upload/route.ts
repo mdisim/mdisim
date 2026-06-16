@@ -64,12 +64,27 @@ export async function POST(request: NextRequest) {
   const buffer = await file.arrayBuffer()
 
   const contentTypeMime = isDxf ? 'application/octet-stream' : 'application/pdf'
-  const { error: uploadError } = await supabase.storage
+  let { error: uploadError } = await supabase.storage
     .from('drawings')
     .upload(storagePath, buffer, {
       contentType: contentTypeMime,
       upsert: false,
     })
+
+  // If bucket not found, create it then retry once
+  if (uploadError && (uploadError.message.includes('Bucket not found') || uploadError.message.includes('bucket') || uploadError.message.includes('not found'))) {
+    const { error: bucketErr } = await supabase.storage.createBucket('drawings', {
+      public: false,
+      fileSizeLimit: 52428800,
+      allowedMimeTypes: ['application/pdf', 'application/octet-stream'],
+    })
+    if (!bucketErr || bucketErr.message.includes('already exists')) {
+      const { error: retryErr } = await supabase.storage
+        .from('drawings')
+        .upload(storagePath, buffer, { contentType: contentTypeMime, upsert: false })
+      uploadError = retryErr ?? null
+    }
+  }
 
   if (uploadError) {
     return NextResponse.json({ error: uploadError.message }, { status: 500 })
