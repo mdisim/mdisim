@@ -28,6 +28,7 @@ import {
   Users2,
   Mail,
   GitCompare,
+  Wrench,
 } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/badge'
 import { ils } from '@/lib/server-currency'
@@ -131,6 +132,7 @@ export default async function ProjectDetailPage({
     { href: `/projects/${id}/meetings`, label: 'Meeting Minutes', icon: Users2, count: 0 },
     { href: `/projects/${id}/correspondence`, label: 'Correspondence', icon: Mail, count: 0 },
     { href: `/projects/${id}/boq-comparison`, label: 'BOQ Comparison', icon: GitCompare, count: 0 },
+    { href: `/projects/${id}/rebar`, label: 'Rebar Schedule', icon: Wrench, count: 0 },
   ]
 
   return (
