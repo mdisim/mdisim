@@ -6,6 +6,7 @@ import { createRebarElement, createRebarBar } from '@/app/actions/rebar'
 import { calloutToBarDraft, type DetectedElement, type RebarCallout } from '@/lib/rebar-extractor'
 import { REBAR_DIAMETERS } from '@/lib/rebar-calc'
 import { ShapeCodeSVG } from '../[elementId]/shape-code-svg'
+import { normalizeOCRText, scoreCallout } from '@/lib/ocr-normalize'
 
 interface Drawing {
   id: string
@@ -33,6 +34,8 @@ interface EditableBar {
   quantity: number
   notes: string
   keep: boolean
+  confidence: number          // 0–100 per-bar OCR confidence
+  confidenceReasons: string[] // why confidence was reduced
 }
 
 interface EditableElement {
@@ -60,10 +63,20 @@ interface DebugState {
 
 function makeId() { return Math.random().toString(36).slice(2) }
 
-function elementToEditable(el: DetectedElement): EditableElement {
+function elementToEditable(el: DetectedElement, threshold = 60): EditableElement {
   const bars = el.callouts.map((c: RebarCallout, i: number) => {
     const draft = calloutToBarDraft(c, i)
-    return { ...draft, id: makeId(), bending_dims: draft.bending_dims as Record<string, number>, keep: true }
+    // Default confidence 100 for non-OCR (native text / DXF) callouts
+    const conf = (c as RebarCallout & { confidence?: number; confidenceReasons?: string[] }).confidence ?? 100
+    const reasons = (c as RebarCallout & { confidence?: number; confidenceReasons?: string[] }).confidenceReasons ?? []
+    return {
+      ...draft,
+      id: makeId(),
+      bending_dims: draft.bending_dims as Record<string, number>,
+      confidence: conf,
+      confidenceReasons: reasons,
+      keep: conf >= threshold, // auto-exclude low-confidence bars
+    }
   })
   return {
     id: makeId(),
@@ -135,30 +148,6 @@ function preprocessForOCR(src: HTMLCanvasElement): HTMLCanvasElement {
   return dst
 }
 
-// ─── OCR text normalization ────────────────────────────────────────────────────
-// Corrects systematic OCR mistakes on engineering rebar callouts
-function normalizeOCRText(raw: string): string {
-  return raw
-    // Letter O or digit 0 between digits → Ø (e.g. "2O12" "2012" → "2Ø12")
-    .replace(/(\d)([O0])(\d)/g, '$1Ø$3')
-    // Leading O + digits → Ø + digits (e.g. "O12@20" → "Ø12@20")
-    .replace(/\bO(\d{1,2})/g, 'Ø$1')
-    // Standalone 0 before @ spacing → Ø (e.g. "012@20" → "Ø12@20")
-    .replace(/\b0(\d{1,2}@)/g, 'Ø$1')
-    // D as diameter symbol: D12 → Ø12 (common misread on some fonts)
-    .replace(/\bD(\d{1,2})\b/g, 'Ø$1')
-    // At-sign variants: OCR sometimes reads @ as 'a', 'a)', '(a'
-    .replace(/\s+[aA]\s*(\d{2,4})/g, '@$1')
-    // L = / L= spacing variants (OCR adds spaces around =)
-    .replace(/[Ll]\s*=\s*(\d+)/g, 'L=$1')
-    // nX prefix: OCR may read × as x or X (already handled in regex but normalise anyway)
-    .replace(/(\d)\s*[×xX]\s*(\d)/g, '$1X$2')
-    // Remove stray pipe/backslash artefacts common in scanned drawings
-    .replace(/[|\\]/g, '')
-    // Normalise multiple spaces to single
-    .replace(/  +/g, ' ')
-}
-
 interface MatchedLine {
   line: string
   normalized: string
@@ -176,6 +165,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
     lines: [], pdfChars: 0, ocrChars: 0, ocrConfidence: 0,
     ocrPreview: '', calloutCount: 0, usedOCR: false, matchedLines: [],
   })
+  const [confidenceThreshold, setConfidenceThreshold] = useState(60)
   const [, startTransition] = useTransition()
 
   function dbg(msg: string) {
@@ -265,6 +255,8 @@ export function ExtractClient({ projectId, drawings }: Props) {
     let totalOcrChars = 0
     let sumConfidence = 0
     const allMatchedLines: MatchedLine[] = []
+    // Map raw callout string → scored callout (for attaching confidence after extraction)
+    const scoreMap = new Map<string, { confidence: number; confidenceReasons: string[] }>()
 
     for (let p = 1; p <= pdf.numPages; p++) {
       dbg(`Rendering page ${p} at 4× scale…`)
@@ -281,7 +273,6 @@ export function ExtractClient({ projectId, drawings }: Props) {
       const { data } = await worker.recognize(processedCanvas)
 
       const rawOCR = data.text ?? ''
-      // Normalise OCR output: fix O→Ø, D→Ø, L = → L=, etc.
       const ocrText = normalizeOCRText(rawOCR)
       const confidence = data.confidence ?? 0
       sumConfidence += confidence
@@ -291,19 +282,29 @@ export function ExtractClient({ projectId, drawings }: Props) {
       console.log(`[OCR raw p${p}]:\n${rawOCR.slice(0, 3000)}`)
       console.log(`[OCR normalized p${p}]:\n${ocrText.slice(0, 3000)}`)
 
-      // Collect per-line matches for the side-by-side preview
-      const lines = ocrText.split('\n')
-      for (const line of lines) {
+      // Collect per-line matches, score each callout, and populate scoreMap
+      const rawLines = rawOCR.split('\n')
+      const normLines = ocrText.split('\n')
+      for (let li = 0; li < normLines.length; li++) {
+        const line = normLines[li]
         if (!line.trim()) continue
         const callouts = parseRebarText(line)
         if (callouts.length > 0) {
-          const rawLine = rawOCR.split('\n')[lines.indexOf(line)] ?? line
+          const rawLine = rawLines[li] ?? line
           allMatchedLines.push({
             line: rawLine.trim(),
             normalized: line.trim(),
             matches: callouts.map(c => c.raw),
             page: p,
           })
+          for (const c of callouts) {
+            const scored = scoreCallout(c, rawLine)
+            // Keep the worst score if same raw string appears multiple times
+            const existing = scoreMap.get(c.raw)
+            if (!existing || scored.confidence < existing.confidence) {
+              scoreMap.set(c.raw, { confidence: scored.confidence, confidenceReasons: scored.confidenceReasons })
+            }
+          }
         }
       }
 
@@ -335,6 +336,16 @@ export function ExtractClient({ projectId, drawings }: Props) {
     }
 
     const elems = extractFromPageText(allOcrTexts)
+    // Attach per-callout confidence scores from the scoreMap
+    for (const el of elems) {
+      for (const c of el.callouts) {
+        const sc = scoreMap.get(c.raw)
+        if (sc) {
+          (c as RebarCallout & { confidence: number; confidenceReasons: string[] }).confidence = sc.confidence;
+          (c as RebarCallout & { confidence: number; confidenceReasons: string[] }).confidenceReasons = sc.confidenceReasons
+        }
+      }
+    }
     const totalBars = elems.flatMap(e => e.callouts).length
     setDebug(d => ({ ...d, calloutCount: totalBars }))
     dbg(`Done: ${elems.length} elements, ${totalBars} bars`)
@@ -372,7 +383,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
         detectedElements = json.elements ?? []
       }
 
-      const editable = detectedElements.map(elementToEditable)
+      const editable = detectedElements.map(el => elementToEditable(el, confidenceThreshold))
       setElements(editable.length > 0 ? editable : [])
       setStatus(editable.length > 0 ? 'review' : 'error')
       if (editable.length === 0) {
@@ -413,6 +424,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
     const newBar: EditableBar = {
       id: makeId(), bar_mark: 'A', diameter_mm: 12, shape_code: '00',
       bending_dims: { A: 0 }, quantity: 1, notes: '', keep: true,
+      confidence: 100, confidenceReasons: [],
     }
     setElements(prev => prev.map(el => el.id === elId ? { ...el, bars: [...el.bars, newBar] } : el))
   }
@@ -571,6 +583,22 @@ export function ExtractClient({ projectId, drawings }: Props) {
         )}
       </div>
 
+      {/* Confidence threshold slider — shown when OCR was used */}
+      {debug.usedOCR && (status === 'review' || status === 'saving' || status === 'done') && (
+        <div className="mb-6 p-3 bg-slate-900 border border-slate-700 rounded-lg flex items-center gap-4 flex-wrap">
+          <label className="text-xs text-slate-400 whitespace-nowrap">
+            OCR confidence threshold:
+            <strong className={`ml-1.5 ${confidenceThreshold >= 70 ? 'text-green-400' : confidenceThreshold >= 50 ? 'text-amber-400' : 'text-red-400'}`}>
+              {confidenceThreshold}%
+            </strong>
+          </label>
+          <input type="range" min={0} max={100} step={5} value={confidenceThreshold}
+            onChange={e => setConfidenceThreshold(Number(e.target.value))}
+            className="flex-1 min-w-[120px] accent-amber-500" />
+          <span className="text-xs text-slate-600">Bars below this threshold are unchecked automatically</span>
+        </div>
+      )}
+
       {/* Step 3: Review */}
       {(status === 'review' || status === 'saving' || status === 'done') && elements.length > 0 && (
         <div className="mb-6">
@@ -633,6 +661,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
                             <th className="text-right py-1 pr-2 font-medium">C (mm)</th>
                             <th className="text-right py-1 pr-2 font-medium">Qty</th>
                             <th className="text-left py-1 font-medium">Notes / Raw callout</th>
+                            <th className="text-center py-1 pr-2 font-medium">Conf.</th>
                             <th className="w-5" />
                           </tr>
                         </thead>
@@ -675,6 +704,18 @@ export function ExtractClient({ projectId, drawings }: Props) {
                                   className="bg-slate-800 border border-slate-700 text-slate-200 rounded px-1 py-0.5 w-14 text-right focus:outline-none focus:border-amber-500" />
                               </td>
                               <td className="py-1 text-slate-500 truncate max-w-xs">{bar.notes}</td>
+                              <td className="py-1 pr-2 text-center">
+                                {bar.confidence < 100 && (
+                                  <span title={bar.confidenceReasons.join('; ')}
+                                    className={`inline-block px-1.5 py-0.5 rounded text-xs font-mono font-semibold ${
+                                      bar.confidence >= 80 ? 'bg-green-900/50 text-green-400' :
+                                      bar.confidence >= 60 ? 'bg-amber-900/50 text-amber-400' :
+                                      'bg-red-900/50 text-red-400'
+                                    }`}>
+                                    {bar.confidence}%
+                                  </span>
+                                )}
+                              </td>
                               <td className="py-1 pl-1">
                                 <button onClick={() => removeBar(el.id, bar.id)} className="text-slate-700 hover:text-red-400 transition-colors">
                                   <Trash2 size={11} />
