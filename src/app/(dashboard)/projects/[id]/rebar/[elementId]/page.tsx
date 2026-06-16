@@ -31,7 +31,15 @@ export default async function BBSEditorPage({
           <span className="ml-2 font-mono font-bold text-white text-lg">{element.element_mark}</span>
           {element.floor_level && <span className="ml-2 text-sm text-slate-500">{element.floor_level}</span>}
         </div>
-        <div className="ml-auto text-sm text-slate-400">{project.name}</div>
+        <div className="ml-auto flex items-center gap-3">
+          <Link
+            href={`/projects/${id}/rebar/${elementId}/fabrication`}
+            className="px-3 py-1.5 text-sm rounded bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors"
+          >
+            Fabrication Drawing
+          </Link>
+          <span className="text-sm text-slate-500">{project.name}</span>
+        </div>
       </div>
 
       <BBSEditor elementId={elementId} initialBars={bars ?? []} />

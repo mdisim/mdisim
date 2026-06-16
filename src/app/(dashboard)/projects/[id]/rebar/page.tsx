@@ -32,10 +32,22 @@ export default async function RebarSchedulePage({
         </div>
         <div className="flex items-center gap-3">
           <Link
+            href={`/projects/${id}/rebar/extract`}
+            className="px-3 py-1.5 text-sm rounded bg-amber-600 hover:bg-amber-500 text-white transition-colors font-medium"
+          >
+            ⚡ Extract from Drawing
+          </Link>
+          <a
+            href={`/api/rebar/export?projectId=${id}`}
+            className="px-3 py-1.5 text-sm rounded bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors"
+          >
+            Export Excel
+          </a>
+          <Link
             href={`/projects/${id}/rebar/procurement`}
             className="px-3 py-1.5 text-sm rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
           >
-            Procurement Summary
+            Procurement
           </Link>
         </div>
       </div>
