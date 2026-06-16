@@ -717,6 +717,66 @@ export function ExtractClient({ projectId, drawings }: Props) {
         </div>
       )}
 
+      {/* Confidence Report — shown when OCR was used */}
+      {debug.usedOCR && (status === 'review' || status === 'saving' || status === 'done') && elements.length > 0 && (() => {
+        const allBars = elements.flatMap(e => e.bars)
+        const accepted  = allBars.filter(b => b.confidence >= confidenceThreshold)
+        const warnings  = allBars.filter(b => b.confidence >= 40 && b.confidence < confidenceThreshold)
+        const rejected  = allBars.filter(b => b.confidence < 40)
+        return (
+          <div className="mb-6 rounded-lg border border-slate-700 bg-slate-900 overflow-hidden">
+            <div className="flex items-center gap-4 px-4 py-3 bg-slate-800 flex-wrap">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Confidence Report</span>
+              <span className="flex items-center gap-1.5 text-xs px-2 py-1 rounded bg-green-900/50 text-green-400">
+                ✓ {accepted.length} accepted
+              </span>
+              {warnings.length > 0 && (
+                <span className="flex items-center gap-1.5 text-xs px-2 py-1 rounded bg-amber-900/50 text-amber-400">
+                  ⚠ {warnings.length} warnings
+                </span>
+              )}
+              {rejected.length > 0 && (
+                <span className="flex items-center gap-1.5 text-xs px-2 py-1 rounded bg-red-900/50 text-red-400">
+                  ✗ {rejected.length} rejected
+                </span>
+              )}
+              <span className="text-xs text-slate-600 ml-auto">
+                Threshold: {confidenceThreshold}% · OCR confidence: {debug.ocrConfidence.toFixed(0)}%
+              </span>
+            </div>
+            {rejected.length > 0 && (
+              <div className="px-4 py-3 border-t border-slate-800">
+                <p className="text-xs text-red-400 font-semibold mb-2">Rejected bars (confidence &lt; 40%) — review before saving:</p>
+                <div className="flex flex-wrap gap-2">
+                  {rejected.map(b => (
+                    <span key={b.id} className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-red-900/30 border border-red-800 text-xs text-red-300 font-mono">
+                      {b.notes.split(' ')[0]}
+                      <span className="text-red-500">{b.confidence}%</span>
+                      {b.confidenceReasons.length > 0 && (
+                        <span className="text-red-600" title={b.confidenceReasons.join('; ')}>ℹ</span>
+                      )}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {warnings.length > 0 && (
+              <div className="px-4 py-3 border-t border-slate-800">
+                <p className="text-xs text-amber-400 font-semibold mb-2">Warnings (below threshold, unchecked):</p>
+                <div className="flex flex-wrap gap-2">
+                  {warnings.map(b => (
+                    <span key={b.id} className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-amber-900/30 border border-amber-800 text-xs text-amber-300 font-mono">
+                      {b.notes.split(' ')[0]}
+                      <span className="text-amber-500">{b.confidence}%</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })()}
+
       {/* Step 3: Review */}
       {(status === 'review' || status === 'saving' || status === 'done') && elements.length > 0 && (
         <div className="mb-6">
