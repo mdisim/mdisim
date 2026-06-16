@@ -64,7 +64,7 @@ export function UploadForm({ projectId }: Props) {
       if (!isDxf) {
         try {
           const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist')
-          GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs`
+          GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
           const buf = await file.arrayBuffer()
           const pdf = await getDocument({ data: buf }).promise
           pageCount = pdf.numPages

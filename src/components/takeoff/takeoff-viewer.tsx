@@ -138,7 +138,7 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
     ;(async () => {
       try {
         const pdfjsLib = await import('pdfjs-dist')
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs`
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
         const doc = await pdfjsLib.getDocument({ url: pdfUrl }).promise
         if (!cancelled) { setPdfDoc(doc); setPdfLoading(false) }
       } catch (err) {
