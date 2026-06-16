@@ -166,10 +166,13 @@ export function ExtractClient({ projectId, drawings }: Props) {
     const { createWorker } = await import('tesseract.js')
 
     // Create worker; Tesseract v7 loads lang data from CDN by default
+    // langPath points to /public/tesseract/ where eng.traineddata.gz is bundled.
+    // This avoids the CSP block on cdn.jsdelivr.net for connect-src.
     const worker = await createWorker('eng', 1, {
+      langPath: '/tesseract',
       logger: (m: { status: string; progress?: number }) => {
         if (m.status === 'loading tesseract core') dbg('OCR: loading core…')
-        else if (m.status === 'loading language traineddata') dbg('OCR: loading language data…')
+        else if (m.status === 'loading language traineddata') dbg('OCR: loading language data (bundled)…')
         else if (m.status === 'initialized api') dbg('OCR: engine ready')
         else if (m.status === 'recognizing text' && m.progress) {
           if (Math.round((m.progress ?? 0) * 100) % 25 === 0) {
