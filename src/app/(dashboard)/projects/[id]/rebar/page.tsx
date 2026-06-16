@@ -49,6 +49,12 @@ export default async function RebarSchedulePage({
           >
             Procurement
           </Link>
+          <Link
+            href={`/projects/${id}/rebar/fabrication-all`}
+            className="px-3 py-1.5 text-sm rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+          >
+            Full BBS PDF
+          </Link>
         </div>
       </div>
 

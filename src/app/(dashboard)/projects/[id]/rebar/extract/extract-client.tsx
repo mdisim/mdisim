@@ -7,6 +7,8 @@ import { calloutToBarDraft, type DetectedElement, type RebarCallout } from '@/li
 import { REBAR_DIAMETERS } from '@/lib/rebar-calc'
 import { ShapeCodeSVG } from '../[elementId]/shape-code-svg'
 import { normalizeOCRText, scoreCallout } from '@/lib/ocr-normalize'
+import { AnnotatedViewer, exportAnnotatedCanvas, type PageRender, type AnnotatedCallout } from './annotated-viewer'
+import { buildSinglePageImagePDF } from '@/lib/build-pdf'
 
 interface Drawing {
   id: string
@@ -166,6 +168,11 @@ export function ExtractClient({ projectId, drawings }: Props) {
     ocrPreview: '', calloutCount: 0, usedOCR: false, matchedLines: [],
   })
   const [confidenceThreshold, setConfidenceThreshold] = useState(60)
+  const [pageRenders, setPageRenders] = useState<PageRender[]>([])
+  const [annotatedCallouts, setAnnotatedCallouts] = useState<AnnotatedCallout[]>([])
+  const [activeRaw, setActiveRaw] = useState<string | null>(null)
+  const [labelOffsets, setLabelOffsets] = useState<Record<string, { dx: number; dy: number }>>({})
+  const [showDrawingView, setShowDrawingView] = useState(false)
   const [, startTransition] = useTransition()
 
   function dbg(msg: string) {
@@ -175,6 +182,10 @@ export function ExtractClient({ projectId, drawings }: Props) {
 
   async function extractPDFClientSide(signedUrl: string): Promise<DetectedElement[]> {
     setDebug({ lines: [], pdfChars: 0, ocrChars: 0, ocrConfidence: 0, ocrPreview: '', calloutCount: 0, usedOCR: false, matchedLines: [] })
+    setPageRenders([])
+    setAnnotatedCallouts([])
+    setActiveRaw(null)
+    setLabelOffsets({})
     dbg('Loading PDF.js…')
 
     const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist')
@@ -255,8 +266,11 @@ export function ExtractClient({ projectId, drawings }: Props) {
     let totalOcrChars = 0
     let sumConfidence = 0
     const allMatchedLines: MatchedLine[] = []
-    // Map raw callout string → scored callout (for attaching confidence after extraction)
     const scoreMap = new Map<string, { confidence: number; confidenceReasons: string[] }>()
+    // Drawing annotation state accumulated across pages
+    const localPageRenders: PageRender[] = []
+    const localAnnotatedCallouts: AnnotatedCallout[] = []
+    type TLine = { text: string; bbox: { x0: number; y0: number; x1: number; y1: number } }
 
     for (let p = 1; p <= pdf.numPages; p++) {
       dbg(`Rendering page ${p} at 4× scale…`)
@@ -272,8 +286,38 @@ export function ExtractClient({ projectId, drawings }: Props) {
 
       const { data } = await worker.recognize(processedCanvas)
 
+      // Store page render for annotated drawing overlay
+      localPageRenders.push({
+        page: p,
+        dataUrl: processedCanvas.toDataURL('image/jpeg', 0.82),
+        width: processedCanvas.width,
+        height: processedCanvas.height,
+      })
+
       const rawOCR = data.text ?? ''
       const ocrText = normalizeOCRText(rawOCR)
+
+      // Collect Tesseract line bboxes for annotation overlay
+      const tLines = (data as { lines?: TLine[] }).lines ?? []
+      for (const tl of tLines) {
+        const normLineText = normalizeOCRText(tl.text ?? '')
+        const lineCallouts = parseRebarText(normLineText)
+        for (const c of lineCallouts) {
+          localAnnotatedCallouts.push({
+            raw: c.raw,
+            count: c.count,
+            diameterMm: c.diameterMm,
+            spacingMm: c.spacingMm,
+            cutLengthMm: c.cutLengthMm,
+            confidence: 100, // updated from scoreMap after full loop
+            page: p,
+            x0: tl.bbox.x0, y0: tl.bbox.y0,
+            x1: tl.bbox.x1, y1: tl.bbox.y1,
+            canvasW: processedCanvas.width,
+            canvasH: processedCanvas.height,
+          })
+        }
+      }
       const confidence = data.confidence ?? 0
       sumConfidence += confidence
       totalOcrChars += ocrText.length
@@ -312,6 +356,14 @@ export function ExtractClient({ projectId, drawings }: Props) {
     }
 
     await worker.terminate()
+
+    // Attach per-callout confidence from scoreMap to annotated callouts
+    const scoredAnnotated = localAnnotatedCallouts.map(ac => ({
+      ...ac,
+      confidence: scoreMap.get(ac.raw)?.confidence ?? 100,
+    }))
+    setPageRenders(localPageRenders)
+    setAnnotatedCallouts(scoredAnnotated)
 
     const avgConfidence = allOcrTexts.length > 0 ? sumConfidence / allOcrTexts.length : 0
     const ocrPreview = allOcrTexts.map(pt => pt.text).join('\n').slice(0, 500)
@@ -445,6 +497,37 @@ export function ExtractClient({ projectId, drawings }: Props) {
       setSavedCount(saved)
       setStatus('done')
     })
+  }
+
+  async function handleExportAnnotatedDrawing() {
+    for (const render of pageRenders) {
+      const dataUrl = await exportAnnotatedCanvas(render, annotatedCallouts, labelOffsets)
+      const pdfBytes = buildSinglePageImagePDF(dataUrl, render.width, render.height)
+      const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' })
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement('a')
+      a.href = url
+      a.download = pageRenders.length > 1 ? `annotated_drawing_p${render.page}.pdf` : 'annotated_drawing.pdf'
+      a.click()
+      setTimeout(() => URL.revokeObjectURL(url), 10_000)
+    }
+  }
+
+  async function handleFactoryPackage() {
+    // 1. Excel BBS + procurement
+    const a = document.createElement('a')
+    a.href = `/api/rebar/export?projectId=${projectId}`
+    a.click()
+
+    // 2. Annotated drawing PDF(s) — only if OCR was used
+    if (pageRenders.length > 0) {
+      await new Promise(r => setTimeout(r, 400)) // stagger downloads
+      await handleExportAnnotatedDrawing()
+    }
+
+    // 3. Open fabrication PDF in new tab (user prints)
+    await new Promise(r => setTimeout(r, 400))
+    window.open(`/projects/${projectId}/rebar/fabrication-all`, '_blank')
   }
 
   const keptElements = elements.filter(e => e.keep)
@@ -583,6 +666,41 @@ export function ExtractClient({ projectId, drawings }: Props) {
         )}
       </div>
 
+      {/* Annotated drawing view — shown when OCR produced renders */}
+      {pageRenders.length > 0 && (status === 'review' || status === 'saving' || status === 'done') && (
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-3">
+            <button onClick={() => setShowDrawingView(v => !v)}
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded border transition-colors ${
+                showDrawingView
+                  ? 'border-amber-500 bg-amber-500/10 text-amber-300'
+                  : 'border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-600'
+              }`}>
+              {showDrawingView ? '▲' : '▼'} Annotated Drawing View
+              <span className="text-xs opacity-70">({annotatedCallouts.length} callouts placed)</span>
+            </button>
+            {pageRenders.length > 0 && (
+              <button onClick={handleExportAnnotatedDrawing}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm rounded border border-slate-700 bg-slate-800 text-slate-400 hover:border-amber-600 hover:text-amber-400 transition-colors">
+                ↓ Export Annotated Drawing PDF
+              </button>
+            )}
+          </div>
+          {showDrawingView && (
+            <AnnotatedViewer
+              pageRenders={pageRenders}
+              callouts={annotatedCallouts}
+              activeRaw={activeRaw}
+              labelOffsets={labelOffsets}
+              onActivate={setActiveRaw}
+              onLabelMove={(raw, dx, dy) =>
+                setLabelOffsets(prev => ({ ...prev, [raw]: { dx, dy } }))
+              }
+            />
+          )}
+        </div>
+      )}
+
       {/* Confidence threshold slider — shown when OCR was used */}
       {debug.usedOCR && (status === 'review' || status === 'saving' || status === 'done') && (
         <div className="mb-6 p-3 bg-slate-900 border border-slate-700 rounded-lg flex items-center gap-4 flex-wrap">
@@ -607,10 +725,12 @@ export function ExtractClient({ projectId, drawings }: Props) {
               Step 3 — Review &amp; Correct ({keptElements.length} elements, {totalBars} bars)
             </h2>
             {status === 'review' && (
-              <button onClick={handleSave}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white font-semibold text-sm transition-colors">
-                <Check size={14} /> Save to Rebar Schedule
-              </button>
+              <div className="flex items-center gap-2">
+                <button onClick={handleSave}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white font-semibold text-sm transition-colors">
+                  <Check size={14} /> Save to Rebar Schedule
+                </button>
+              </div>
             )}
             {status === 'done' && (
               <span className="flex items-center gap-2 text-green-400 text-sm font-semibold">
@@ -666,8 +786,14 @@ export function ExtractClient({ projectId, drawings }: Props) {
                           </tr>
                         </thead>
                         <tbody>
-                          {el.bars.map(bar => (
-                            <tr key={bar.id} className={`border-t border-slate-800/50 ${bar.keep ? '' : 'opacity-40'}`}>
+                          {el.bars.map(bar => {
+                            const rawOfBar = bar.notes.split(' ')[0]
+                            const isBarActive = activeRaw === rawOfBar
+                            return (
+                            <tr key={bar.id}
+                              className={`border-t border-slate-800/50 cursor-pointer transition-colors ${bar.keep ? '' : 'opacity-40'} ${isBarActive ? 'bg-amber-900/30 ring-1 ring-inset ring-amber-600' : 'hover:bg-slate-800/30'}`}
+                              onClick={() => setActiveRaw(isBarActive ? null : rawOfBar)}
+                            >
                               <td className="py-1 pr-1">
                                 <input type="checkbox" checked={bar.keep} onChange={e => updateBar(el.id, bar.id, 'keep', e.target.checked)} className="w-3 h-3 accent-amber-500" />
                               </td>
@@ -717,12 +843,13 @@ export function ExtractClient({ projectId, drawings }: Props) {
                                 )}
                               </td>
                               <td className="py-1 pl-1">
-                                <button onClick={() => removeBar(el.id, bar.id)} className="text-slate-700 hover:text-red-400 transition-colors">
+                                <button onClick={e => { e.stopPropagation(); removeBar(el.id, bar.id) }} className="text-slate-700 hover:text-red-400 transition-colors">
                                   <Trash2 size={11} />
                                 </button>
                               </td>
                             </tr>
-                          ))}
+                            )
+                          })}
                         </tbody>
                       </table>
                       <button onClick={() => addBar(el.id)}
@@ -737,7 +864,14 @@ export function ExtractClient({ projectId, drawings }: Props) {
           </div>
 
           {status === 'review' && keptElements.length > 0 && (
-            <div className="mt-6 flex justify-end">
+            <div className="mt-6 flex items-center justify-between flex-wrap gap-3">
+              <button onClick={handleFactoryPackage}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-semibold text-sm transition-colors border border-slate-600">
+                📦 Generate Steel Factory Package
+              </button>
+              <div className="text-xs text-slate-600 max-w-xs">
+                Downloads: Excel BBS · Annotated Drawing PDF · opens Full BBS print page
+              </div>
               <button onClick={handleSave}
                 className="flex items-center gap-2 px-6 py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white font-semibold transition-colors">
                 <Check size={15} />
@@ -749,7 +883,16 @@ export function ExtractClient({ projectId, drawings }: Props) {
           {status === 'done' && (
             <div className="mt-6 p-4 bg-green-900/20 border border-green-800 rounded-lg">
               <p className="text-green-400 font-semibold">✓ {savedCount} elements saved to Rebar Schedule</p>
-              <p className="text-green-600 text-sm mt-1">Go to Rebar Schedule to set any remaining cut lengths and export.</p>
+              <div className="flex items-center gap-3 mt-3 flex-wrap">
+                <button onClick={handleFactoryPackage}
+                  className="flex items-center gap-2 px-4 py-2 rounded bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold transition-colors">
+                  📦 Generate Steel Factory Package
+                </button>
+                <a href={`/projects/${projectId}/rebar`}
+                  className="px-4 py-2 rounded bg-green-700 hover:bg-green-600 text-white text-sm font-semibold transition-colors">
+                  → Open Rebar Schedule
+                </a>
+              </div>
             </div>
           )}
         </div>
