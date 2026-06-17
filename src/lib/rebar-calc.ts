@@ -1,7 +1,7 @@
 // Rebar calculation engine — BS 8666 / IS 451 conventions
 // All lengths in mm, weights in kg
 
-export const REBAR_DIAMETERS = [6, 8, 10, 12, 16, 20, 25, 32, 40] as const
+export const REBAR_DIAMETERS = [6, 8, 10, 12, 14, 16, 20, 25, 32, 40] as const
 export type RebarDiameter = (typeof REBAR_DIAMETERS)[number]
 
 // Unit weight kg/m  = π/4 × d² × 7850 / 1e6
@@ -10,6 +10,7 @@ export const UNIT_WEIGHT: Record<RebarDiameter, number> = {
   8:  0.395,
   10: 0.617,
   12: 0.888,
+  14: 1.208,
   16: 1.578,
   20: 2.466,
   25: 3.854,

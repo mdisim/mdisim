@@ -11,7 +11,7 @@ export default async function MarkedDrawingPage({
   const { id } = await params
   const supabase = await createClient()
 
-  const [{ data: project }, { data: elements }, { data: extractionPages }] = await Promise.all([
+  const [{ data: project }, elemResult, pagesResult] = await Promise.all([
     supabase.from('projects').select('id, name').eq('id', id).single(),
     supabase
       .from('rebar_elements')
@@ -24,6 +24,19 @@ export default async function MarkedDrawingPage({
       .eq('project_id', id)
       .order('page_number'),
   ])
+
+  // Fallback if columns don't exist yet (migration 019 not applied)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let elements: any[] | null = elemResult.data
+  if (elemResult.error && elemResult.error.message.includes('column')) {
+    const fallback = await supabase
+      .from('rebar_elements')
+      .select('id, element_mark, element_type, bars:rebar_bars(id, bar_mark, diameter_mm, shape_code, quantity, notes)')
+      .eq('project_id', id)
+      .order('sort_order')
+    elements = fallback.data
+  }
+  const extractionPages = pagesResult.error ? [] : (pagesResult.data ?? [])
 
   if (!project) notFound()
 

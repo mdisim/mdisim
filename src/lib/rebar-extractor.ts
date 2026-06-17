@@ -2,17 +2,20 @@
 //
 // Supported notations (all diameter symbols: Ø ø φ Φ T H Y R #):
 //   2Ø12              count + dia
-//   4Ø12@20           count + dia + spacing
+//   4Ø12@200          count + dia + spacing
 //   2X3Ø12            rows × count + dia  (total = 2×3 = 6)
 //   2X3Ø12 L=929      rows × count + dia + explicit cut length
-//   Ø12@20            dia + spacing (no count)
-//   Ø12@20 L=116      dia + spacing + cut length
+//   Ø12@200           dia + spacing (no count)
+//   Ø12@200 L=116     dia + spacing + cut length
 //   6T16 TOP          British notation with position keyword
 //   T12-200           dash spacing
 //   6T16+4T12         compound bars
+//   4T12@200 B1       count + dia + spacing + element context
+
+// ─── Valid diameters for filtering false positives ──────────────────────────
+const VALID_DIAMETERS = new Set([6, 8, 10, 12, 14, 16, 20, 25, 32, 40])
 
 // ─── Diameter symbol class (covers Ø ø Ö ö φ Φ and letters T H Y R) ─────────
-// Using explicit chars to avoid regex flag issues across engines
 const DIA_SYM = '[TtHhYyRrØøÖöφΦØøφΦ#]'
 
 // ─── Master rebar pattern ─────────────────────────────────────────────────────
@@ -20,7 +23,7 @@ const DIA_SYM = '[TtHhYyRrØøÖöφΦØøφΦ#]'
 //  1: rows (nX prefix)    e.g. "2" from "2X3Ø12"
 //  2: count               e.g. "3" from "2X3Ø12", or "4" from "4Ø12"
 //  3: diameter            e.g. "12"
-//  4: spacing             e.g. "20" from "@20" or "-200"
+//  4: spacing             e.g. "200" from "@200" or "-200"
 //  5: cut length          e.g. "929" from "L=929"
 //  6: position keyword    e.g. "TOP"
 const REBAR_RE = new RegExp(
@@ -30,7 +33,7 @@ const REBAR_RE = new RegExp(
   `(\\d+)?` +
   // diameter symbol + digits:
   `${DIA_SYM}(\\d{1,2})` +
-  // optional spacing:  @20  -200  -20
+  // optional spacing:  @200  -200  -20
   `(?:\\s*[@\\-]\\s*(\\d{2,4}))?` +
   // optional cut length:  L=929  l=116  L =929
   `(?:\\s+[Ll]\\s*=\\s*(\\d+))?` +
@@ -66,7 +69,6 @@ export interface DetectedElement {
 }
 
 // ─── Spacing inference: drawings often write spacing in cm, not mm ─────────────
-// Heuristic: if spacing < 50, assume cm → convert to mm
 function normaliseSpacing(raw: number): number {
   return raw < 50 ? raw * 10 : raw
 }
@@ -82,8 +84,9 @@ export function parseRebarText(text: string, nearText = ''): RebarCallout[] {
     for (let i = 0; i < 2; i++) {
       const count = parseInt(m[1 + i * 2], 10)
       const dia   = parseInt(m[2 + i * 2], 10)
-      if (dia < 6 || dia > 50 || count < 1 || count > 200) continue
-      const key = `${count}:${dia}:${m[0]}`
+      if (!VALID_DIAMETERS.has(dia)) continue
+      if (count < 1 || count > 200) continue
+      const key = `${count}:${dia}:compound`
       if (seen.has(key)) continue
       seen.add(key)
       results.push({ raw: m[0].trim(), count, diameterMm: dia, isStirrup: false, nearText: combined })
@@ -95,32 +98,35 @@ export function parseRebarText(text: string, nearText = ''): RebarCallout[] {
     const rawMatch = m[0].trim()
     if (!rawMatch) continue
 
-    const rows    = m[1] ? parseInt(m[1], 10) : 1       // nX prefix
-    const n       = m[2] ? parseInt(m[2], 10) : 1       // bar count
-    const dia     = parseInt(m[3], 10)                  // diameter
+    const rows    = m[1] ? parseInt(m[1], 10) : 1
+    const n       = m[2] ? parseInt(m[2], 10) : 1
+    const dia     = parseInt(m[3], 10)
     const rawSpc  = m[4] ? parseInt(m[4], 10) : undefined
     const cutLen  = m[5] ? parseInt(m[5], 10) : undefined
     const pos     = m[6]?.toUpperCase()
 
-    if (dia < 6 || dia > 50) continue
-    if (n < 1 || n > 500) continue
+    // Strict diameter validation — reject non-standard diameters
+    if (!VALID_DIAMETERS.has(dia)) continue
+    if (n < 1 || n > 200) continue
     if (rows < 1 || rows > 20) continue
 
     const totalCount = rows * n
     const spacingMm  = rawSpc !== undefined ? normaliseSpacing(rawSpc) : undefined
 
-    // Deduplicate compound matches already captured above
-    const key = `${totalCount}:${dia}:${rawMatch}`
-    if (seen.has(key)) continue
-    seen.add(key)
+    // Deduplicate: use count+dia+spacing as key to catch "4Ø12" and "4T12"
+    const dedupeKey = `${totalCount}:${dia}:${spacingMm ?? 'none'}:${cutLen ?? 'none'}`
+    if (seen.has(dedupeKey)) continue
+    seen.add(dedupeKey)
 
-    // Skip if spacing is implausible (e.g. 5mm or 5000mm)
+    // Skip if spacing is implausible
     if (spacingMm !== undefined && (spacingMm < 50 || spacingMm > 2000)) continue
 
-    const isStirrup = (spacingMm !== undefined && dia <= 16) ||
-                      pos?.includes('STIR') ||
-                      pos?.includes('LINK') ||
-                      false
+    // Skip if cut length is implausible (< 100mm or > 20000mm)
+    if (cutLen !== undefined && (cutLen < 100 || cutLen > 20000)) continue
+
+    const isStirrup =
+      pos === 'LINK' || pos?.includes('STIR') || pos === 'LEG' || pos === 'HANGER' ||
+      (spacingMm !== undefined && dia <= 16 && totalCount <= 1)
 
     results.push({
       raw: rawMatch,
@@ -329,8 +335,20 @@ function mergeByMark(elements: DetectedElement[]): DetectedElement[] {
   for (const el of elements) {
     const key = `${el.elementType}:${el.elementMark}`
     const existing = map.get(key)
-    if (existing) existing.callouts.push(...el.callouts)
-    else map.set(key, { ...el, callouts: [...el.callouts] })
+    if (existing) {
+      // Deduplicate callouts within merged element
+      for (const c of el.callouts) {
+        const isDupe = existing.callouts.some(ec =>
+          ec.diameterMm === c.diameterMm &&
+          ec.count === c.count &&
+          ec.spacingMm === c.spacingMm &&
+          ec.cutLengthMm === c.cutLengthMm
+        )
+        if (!isDupe) existing.callouts.push(c)
+      }
+    } else {
+      map.set(key, { ...el, callouts: [...el.callouts] })
+    }
   }
   return Array.from(map.values())
 }
@@ -346,19 +364,21 @@ export interface BBSBarDraft {
 }
 
 export function calloutToBarDraft(callout: RebarCallout, index: number): BBSBarDraft {
-  const mark = String.fromCharCode(65 + (index % 26)) // A, B, C, …
+  const mark = String.fromCharCode(65 + (index % 26))
 
-  let shapeCode = '00'
-  if (callout.isStirrup || (callout.spacingMm !== undefined && callout.diameterMm <= 16)) {
-    shapeCode = '51'
+  let shapeCode = '00' // straight bar
+  if (callout.isStirrup || callout.position === 'LINK' || callout.position?.includes('STIR')) {
+    shapeCode = '51' // links/stirrups
+  } else if (callout.position === 'LEG' || callout.position === 'HANGER') {
+    shapeCode = '21' // L-shape
   } else if (callout.position?.startsWith('BOT') || callout.position === 'B') {
-    shapeCode = '11'
+    shapeCode = '11' // cranked bar
   }
 
-  // Pre-fill cut length if the drawing told us
-  const dims: Record<string, number> = callout.cutLengthMm
-    ? { A: callout.cutLengthMm }
-    : { A: 0 }
+  const dims: Record<string, number> = {}
+  if (callout.cutLengthMm) {
+    dims.A = callout.cutLengthMm
+  }
 
   const noteParts = [callout.raw]
   if (callout.position) noteParts.push(`[${callout.position}]`)

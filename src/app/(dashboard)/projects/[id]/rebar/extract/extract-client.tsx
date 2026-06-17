@@ -5,7 +5,7 @@ import { FileText, Zap, Check, AlertCircle, Trash2, ChevronDown, ChevronRight, P
 import { useTranslation } from '@/lib/i18n/use-translation'
 import { createRebarElement, createRebarBar, saveExtractionPageMeta } from '@/app/actions/rebar'
 import { calloutToBarDraft, type DetectedElement, type RebarCallout } from '@/lib/rebar-extractor'
-import { REBAR_DIAMETERS } from '@/lib/rebar-calc'
+import { REBAR_DIAMETERS, UNIT_WEIGHT, type RebarDiameter, calcCutLength, type ShapeCode, type BendingDims } from '@/lib/rebar-calc'
 import { ShapeCodeSVG } from '../[elementId]/shape-code-svg'
 import { normalizeOCRText, scoreCallout } from '@/lib/ocr-normalize'
 import { AnnotatedViewer, exportAnnotatedCanvas, type PageRender, type AnnotatedCallout } from './annotated-viewer'
@@ -483,7 +483,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
   function addBar(elId: string) {
     const newBar: EditableBar = {
       id: makeId(), bar_mark: 'A', diameter_mm: 12, shape_code: '00',
-      bending_dims: { A: 0 }, quantity: 1, notes: '', keep: true,
+      bending_dims: {}, quantity: 1, notes: '', keep: true,
       confidence: 100, confidenceReasons: [],
     }
     setElements(prev => prev.map(el => el.id === elId ? { ...el, bars: [...el.bars, newBar] } : el))
@@ -677,7 +677,15 @@ export function ExtractClient({ projectId, drawings }: Props) {
   }
 
   const keptElements = elements.filter(e => e.keep)
-  const totalBars = keptElements.flatMap(e => e.bars.filter(b => b.keep)).length
+  const keptBars = keptElements.flatMap(e => e.bars.filter(b => b.keep))
+  const totalBars = keptBars.length
+  const totalWeightKg = keptBars.reduce((sum, bar) => {
+    const d = bar.diameter_mm as RebarDiameter
+    const uw = UNIT_WEIGHT[d]
+    if (!uw) return sum
+    const cutLen = calcCutLength(bar.shape_code as ShapeCode, bar.bending_dims as BendingDims, bar.diameter_mm)
+    return sum + (cutLen / 1000) * uw * bar.quantity
+  }, 0)
 
   return (
     <div className="flex-1 overflow-auto p-6 max-w-6xl mx-auto w-full">
@@ -928,7 +936,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
-              Step 3 — Review &amp; Correct ({keptElements.length} elements, {totalBars} bars)
+              Step 3 — Review &amp; Correct ({keptElements.length} elements, {totalBars} bars, {totalWeightKg.toFixed(0)} kg)
             </h2>
             {status === 'review' && (
               <div className="flex items-center gap-2">
@@ -986,6 +994,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
                             <th className="text-right py-1 pr-2 font-medium">B (mm)</th>
                             <th className="text-right py-1 pr-2 font-medium">C (mm)</th>
                             <th className="text-right py-1 pr-2 font-medium">Qty</th>
+                            <th className="text-right py-1 pr-2 font-medium">Weight</th>
                             <th className="text-left py-1 font-medium">Notes / Raw callout</th>
                             <th className="text-center py-1 pr-2 font-medium">Conf.</th>
                             <th className="w-5" />
@@ -1034,6 +1043,16 @@ export function ExtractClient({ projectId, drawings }: Props) {
                                 <input type="number" value={bar.quantity} min={1}
                                   onChange={e => updateBar(el.id, bar.id, 'quantity', Number(e.target.value))}
                                   className="bg-slate-800 border border-slate-700 text-slate-200 rounded px-1 py-0.5 w-14 text-right focus:outline-none focus:border-amber-500" />
+                              </td>
+                              <td className="py-1 pr-2 text-right">
+                                {(() => {
+                                  const d = bar.diameter_mm as RebarDiameter
+                                  const uw = UNIT_WEIGHT[d]
+                                  if (!uw) return <span className="text-slate-700">—</span>
+                                  const cutLen = calcCutLength(bar.shape_code as ShapeCode, bar.bending_dims as BendingDims, bar.diameter_mm)
+                                  const totalKg = (cutLen / 1000) * uw * bar.quantity
+                                  return <span className="text-slate-400 font-mono">{totalKg.toFixed(1)}<span className="text-slate-600 text-[9px] ml-0.5">kg</span></span>
+                                })()}
                               </td>
                               <td className="py-1 text-slate-500 truncate max-w-xs">{bar.notes}</td>
                               <td className="py-1 pr-2 text-center">

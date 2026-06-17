@@ -92,22 +92,33 @@ function phase4LengthFix(text: string): string {
 // a valid diameter, preferring earlier positions.
 function phase5LetterDiaFix(text: string): string {
   return text.replace(
-    /\b([THYHRr])(\d{3,6})\b/g,
-    (_m, letter, digits) => {
-      // Already valid if exactly 1–2 chars
+    /\b([THYRr])(\d{3,6})(?:\s*[@\-]\s*(\d{2,4}))?\b/g,
+    (_m, letter: string, digits: string, spacing: string | undefined) => {
       if (digits.length <= 2) return _m
 
-      // Sliding window: find first 2-char substring that is a valid diameter
+      // Try to split as "count + diameter" — e.g. "T1216" → count=12? No. "T412" → 4+12
+      // Strategy: try count(1-2 digits) + valid diameter(1-2 digits) reading from left
+      for (let split = 1; split <= Math.min(2, digits.length - 1); split++) {
+        const countPart = digits.slice(0, split)
+        const diaPart = digits.slice(split, split + 2)
+        const dia = parseInt(diaPart, 10)
+        const count = parseInt(countPart, 10)
+        if (VALID_DIAMETERS.has(dia) && count >= 1 && count <= 50) {
+          const suffix = spacing ? `@${spacing}` : ''
+          return `${count}${letter}${dia}${suffix}`
+        }
+      }
+
+      // Fallback: sliding window for valid diameter anywhere in the digits
       for (let i = 0; i <= digits.length - 2; i++) {
         const candidate = parseInt(digits.slice(i, i + 2), 10)
-        if (VALID_DIAMETERS.has(candidate)) return `${letter}${candidate}`
+        if (VALID_DIAMETERS.has(candidate)) {
+          const suffix = spacing ? `@${spacing}` : ''
+          return `${letter}${candidate}${suffix}`
+        }
       }
-      // Fallback: try 1-char substrings
-      for (const ch of digits) {
-        const candidate = parseInt(ch, 10)
-        if (VALID_DIAMETERS.has(candidate)) return `${letter}${candidate}`
-      }
-      return _m  // give up — will be caught by confidence filter
+
+      return _m
     }
   )
 }
@@ -172,43 +183,60 @@ export function scoreCallout(
   let score = 100
   const reasons: string[] = []
 
-  // Diameter validity
+  // Diameter validity — hard penalty for non-standard
   if (!VALID_DIAMETERS.has(callout.diameterMm)) {
     score -= 40
     reasons.push(`Non-standard diameter T${callout.diameterMm}`)
   }
 
-  // Count plausibility (1–100 bars)
-  if (callout.count < 1 || callout.count > 100) {
+  // Count plausibility
+  if (callout.count < 1) {
     score -= 30
-    reasons.push(`Unusual bar count: ${callout.count}`)
-  }
-
-  // Spacing plausibility (50–500 mm c/c)
-  if (callout.spacingMm !== undefined && (callout.spacingMm < 50 || callout.spacingMm > 600)) {
+    reasons.push(`Invalid bar count: ${callout.count}`)
+  } else if (callout.count > 50) {
     score -= 20
-    reasons.push(`Unusual spacing: ${callout.spacingMm}mm`)
+    reasons.push(`High bar count: ${callout.count}`)
   }
 
-  // OCR normalization was needed (raw ≠ original line)
-  const wasNormalized = callout.raw !== originalLine.trim() &&
-    !originalLine.includes(callout.raw)
-  if (wasNormalized) {
-    score -= 15
-    reasons.push('Match required OCR correction')
+  // Spacing plausibility (75–600 mm c/c typical)
+  if (callout.spacingMm !== undefined) {
+    if (callout.spacingMm < 50 || callout.spacingMm > 600) {
+      score -= 20
+      reasons.push(`Unusual spacing: ${callout.spacingMm}mm`)
+    }
   }
 
-  // If raw match still contains digits that look corrupted (more than 2 consecutive
-  // digits in a position where a diameter should be 1–2 digits)
-  if (/\d{3,}/.test(callout.raw)) {
+  // OCR normalization: only penalize heavy corrections, not simple whitespace fixes
+  const rawTrimmed = originalLine.trim()
+  const wasHeavilyNormalized = callout.raw !== rawTrimmed &&
+    !rawTrimmed.includes(callout.raw) &&
+    levenshteinLike(callout.raw, rawTrimmed) > 3
+  if (wasHeavilyNormalized) {
+    score -= 10
+    reasons.push('OCR correction applied')
+  }
+
+  // Digit corruption in the raw match — but exclude L= values and spacing
+  const withoutLenAndSpc = callout.raw.replace(/L=\d+/g, '').replace(/@\d+/g, '').replace(/-\d+/g, '')
+  if (/\d{4,}/.test(withoutLenAndSpc)) {
     score -= 25
-    reasons.push('Possible digit corruption in match')
+    reasons.push('Possible digit corruption')
   }
 
-  // Boost: has explicit L= length (strong signal the OCR was clean enough)
-  if (callout.cutLengthMm) {
+  // Boost: has explicit L= length
+  if (callout.cutLengthMm && callout.cutLengthMm >= 100) {
     score = Math.min(100, score + 10)
     reasons.push('L= length confirmed')
+  }
+
+  // Boost: has position keyword (strong structural signal)
+  if (callout.position) {
+    score = Math.min(100, score + 5)
+  }
+
+  // Boost: valid diameter + reasonable count + spacing = very likely real
+  if (VALID_DIAMETERS.has(callout.diameterMm) && callout.count >= 1 && callout.count <= 20 && callout.spacingMm) {
+    score = Math.min(100, score + 5)
   }
 
   return {
@@ -217,4 +245,14 @@ export function scoreCallout(
     confidence: Math.max(0, Math.min(100, score)),
     confidenceReasons: reasons,
   }
+}
+
+function levenshteinLike(a: string, b: string): number {
+  // Simplified char-diff count (not full Levenshtein, but fast and sufficient)
+  let diff = Math.abs(a.length - b.length)
+  const minLen = Math.min(a.length, b.length)
+  for (let i = 0; i < minLen; i++) {
+    if (a[i] !== b[i]) diff++
+  }
+  return diff
 }

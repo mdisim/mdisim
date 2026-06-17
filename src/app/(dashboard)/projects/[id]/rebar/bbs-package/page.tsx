@@ -33,7 +33,7 @@ export default async function BBSPackagePage({
   const { id } = await params
   const supabase = await createClient()
 
-  const [{ data: project }, { data: rawElements }, { data: extractionPages }] = await Promise.all([
+  const [{ data: project }, elemResult, pagesResult] = await Promise.all([
     supabase.from('projects').select('id, name, location, client_name, start_date, end_date').eq('id', id).single(),
     supabase
       .from('rebar_elements')
@@ -48,7 +48,19 @@ export default async function BBSPackagePage({
   ])
 
   if (!project) notFound()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let rawElements: any[] | null = elemResult.data
+  if (elemResult.error && elemResult.error.message.includes('column')) {
+    const fallback = await supabase
+      .from('rebar_elements')
+      .select('id, element_mark, element_type, floor_level, bars:rebar_bars(id, bar_mark, diameter_mm, shape_code, bending_dims, cut_length_mm, quantity, unit_weight_kg_m, total_weight_kg, notes)')
+      .eq('project_id', id)
+      .order('sort_order')
+    rawElements = fallback.data
+  }
   const elements = (rawElements ?? []) as Element[]
+  const extractionPages = pagesResult.error ? [] : (pagesResult.data ?? [])
 
   // Get signed URLs for extraction page images (for marked drawing in package)
   const markedDrawingPages = await Promise.all(
