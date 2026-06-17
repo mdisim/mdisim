@@ -50,6 +50,12 @@ export default async function RebarSchedulePage({
             Procurement
           </Link>
           <Link
+            href={`/projects/${id}/rebar/marked-drawing`}
+            className="px-3 py-1.5 text-sm rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+          >
+            Marked Drawing
+          </Link>
+          <Link
             href={`/projects/${id}/rebar/bbs-package`}
             className="px-3 py-1.5 text-sm rounded bg-green-700 hover:bg-green-600 text-white transition-colors font-medium"
           >
