@@ -49,5 +49,14 @@ SET
   ]
 WHERE id = 'drawings';
 
+-- ─── Unique constraint for extraction pages upsert ─────────────────────────
+CREATE UNIQUE INDEX IF NOT EXISTS idx_rebar_extraction_pages_unique
+  ON rebar_extraction_pages(project_id, drawing_id, page_number);
+
+-- ─── Label position persistence on rebar_bars ──────────────────────────────
+ALTER TABLE rebar_bars
+  ADD COLUMN IF NOT EXISTS label_x real DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS label_y real DEFAULT NULL;
+
 -- ─── Notify PostgREST to refresh schema cache ──────────────────────────────
 NOTIFY pgrst, 'reload schema';

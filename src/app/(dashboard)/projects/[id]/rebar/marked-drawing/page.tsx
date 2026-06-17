@@ -15,7 +15,7 @@ export default async function MarkedDrawingPage({
     supabase.from('projects').select('id, name').eq('id', id).single(),
     supabase
       .from('rebar_elements')
-      .select('id, element_mark, element_type, source_drawing_id, source_page, bars:rebar_bars(id, bar_mark, diameter_mm, shape_code, quantity, ocr_bbox, ocr_confidence, notes)')
+      .select('id, element_mark, element_type, source_drawing_id, source_page, bars:rebar_bars(id, bar_mark, diameter_mm, shape_code, quantity, ocr_bbox, ocr_confidence, label_x, label_y, notes)')
       .eq('project_id', id)
       .order('sort_order'),
     supabase
@@ -52,6 +52,8 @@ export default async function MarkedDrawingPage({
     quantity: number
     ocr_bbox: { x0: number; y0: number; x1: number; y1: number; canvasW: number; canvasH: number; page: number } | null
     ocr_confidence: number | null
+    label_x: number | null
+    label_y: number | null
     notes: string | null
   }
   type ElemRow = {
@@ -73,6 +75,8 @@ export default async function MarkedDrawingPage({
       element: el.element_mark,
       bbox: b.ocr_bbox ?? null,
       confidence: b.ocr_confidence ?? null,
+      labelX: b.label_x ?? null,
+      labelY: b.label_y ?? null,
       notes: b.notes,
       sourceDrawingId: el.source_drawing_id ?? null,
       sourcePage: el.source_page ?? null,

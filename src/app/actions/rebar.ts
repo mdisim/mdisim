@@ -29,6 +29,8 @@ export interface RebarBarInput {
   sort_order?: number
   ocr_bbox?: { x0: number; y0: number; x1: number; y1: number; canvasW: number; canvasH: number; page: number } | null
   ocr_confidence?: number | null
+  label_x?: number | null
+  label_y?: number | null
 }
 
 // ─── Elements ────────────────────────────────────────────────────────────────
@@ -159,6 +161,8 @@ export async function createRebarBar(input: RebarBarInput) {
   }
   if (input.ocr_bbox) row.ocr_bbox = input.ocr_bbox
   if (input.ocr_confidence != null) row.ocr_confidence = input.ocr_confidence
+  if (input.label_x != null) row.label_x = input.label_x
+  if (input.label_y != null) row.label_y = input.label_y
 
   let { data, error } = await supabase
     .from('rebar_bars')
@@ -208,6 +212,16 @@ export async function updateRebarBar(id: string, updates: Partial<RebarBarInput>
 export async function deleteRebarBar(id: string) {
   const supabase = await createClient()
   const { error } = await supabase.from('rebar_bars').delete().eq('id', id)
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+export async function updateBarLabel(barId: string, labelX: number, labelY: number) {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('rebar_bars')
+    .update({ label_x: labelX, label_y: labelY })
+    .eq('id', barId)
   if (error) return { error: error.message }
   return { success: true }
 }

@@ -67,19 +67,33 @@ interface DebugState {
 
 function makeId() { return Math.random().toString(36).slice(2) }
 
-function elementToEditable(el: DetectedElement, threshold = 60): EditableElement {
+function elementToEditable(
+  el: DetectedElement,
+  threshold = 60,
+  bboxLookup?: Map<string, { x0: number; y0: number; x1: number; y1: number; canvasW: number; canvasH: number; page: number }[]>,
+): EditableElement {
+  const bboxUsed = new Map<string, number>()
   const bars = el.callouts.map((c: RebarCallout, i: number) => {
     const draft = calloutToBarDraft(c, i)
-    // Default confidence 100 for non-OCR (native text / DXF) callouts
     const conf = (c as RebarCallout & { confidence?: number; confidenceReasons?: string[] }).confidence ?? 100
     const reasons = (c as RebarCallout & { confidence?: number; confidenceReasons?: string[] }).confidenceReasons ?? []
+    let bbox: EditableBar['ocr_bbox'] = null
+    if (bboxLookup) {
+      const bboxes = bboxLookup.get(c.raw)
+      if (bboxes && bboxes.length > 0) {
+        const idx = bboxUsed.get(c.raw) ?? 0
+        bbox = bboxes[Math.min(idx, bboxes.length - 1)]
+        bboxUsed.set(c.raw, idx + 1)
+      }
+    }
     return {
       ...draft,
       id: makeId(),
       bending_dims: draft.bending_dims as Record<string, number>,
       confidence: conf,
       confidenceReasons: reasons,
-      keep: conf >= threshold, // auto-exclude low-confidence bars
+      keep: conf >= threshold,
+      ocr_bbox: bbox,
     }
   })
   return {
@@ -181,6 +195,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
   const [activeRaw, setActiveRaw] = useState<string | null>(null)
   const [labelOffsets, setLabelOffsets] = useState<Record<string, { dx: number; dy: number }>>({})
   const [showDrawingView, setShowDrawingView] = useState(false)
+  const [bboxMultiLookup, setBboxMultiLookup] = useState<Map<string, { x0: number; y0: number; x1: number; y1: number; canvasW: number; canvasH: number; page: number }[]>>(new Map())
   const [, startTransition] = useTransition()
 
   function dbg(msg: string) {
@@ -372,6 +387,13 @@ export function ExtractClient({ projectId, drawings }: Props) {
     }))
     setPageRenders(localPageRenders)
     setAnnotatedCallouts(scoredAnnotated)
+    const multiMap = new Map<string, { x0: number; y0: number; x1: number; y1: number; canvasW: number; canvasH: number; page: number }[]>()
+    for (const ac of scoredAnnotated) {
+      const list = multiMap.get(ac.raw) ?? []
+      list.push({ x0: ac.x0, y0: ac.y0, x1: ac.x1, y1: ac.y1, canvasW: ac.canvasW, canvasH: ac.canvasH, page: ac.page })
+      multiMap.set(ac.raw, list)
+    }
+    setBboxMultiLookup(multiMap)
 
     const avgConfidence = allOcrTexts.length > 0 ? sumConfidence / allOcrTexts.length : 0
     const ocrPreview = allOcrTexts.map(pt => pt.text).join('\n').slice(0, 500)
@@ -443,7 +465,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
         detectedElements = json.elements ?? []
       }
 
-      const editable = detectedElements.map(el => elementToEditable(el, confidenceThreshold))
+      const editable = detectedElements.map(el => elementToEditable(el, confidenceThreshold, bboxMultiLookup))
       setElements(editable.length > 0 ? editable : [])
       setStatus(editable.length > 0 ? 'review' : 'error')
       if (editable.length === 0) {
@@ -553,14 +575,6 @@ export function ExtractClient({ projectId, drawings }: Props) {
         }
       }
 
-      // ── Build bbox lookup ───────────────────────────────────────────────
-      const bboxByRaw = new Map<string, { x0: number; y0: number; x1: number; y1: number; canvasW: number; canvasH: number; page: number }>()
-      for (const ac of annotatedCallouts) {
-        if (!bboxByRaw.has(ac.raw)) {
-          bboxByRaw.set(ac.raw, { x0: ac.x0, y0: ac.y0, x1: ac.x1, y1: ac.y1, canvasW: ac.canvasW, canvasH: ac.canvasH, page: ac.page })
-        }
-      }
-
       // ── Save elements and bars ──────────────────────────────────────────
       for (const el of keptEls) {
         const keptBarsForEl = el.bars.filter(b => b.keep)
@@ -597,8 +611,13 @@ export function ExtractClient({ projectId, drawings }: Props) {
         savedElements++
 
         for (const bar of keptBarsForEl) {
-          const rawKey = bar.notes.split(' ')[0]
-          const bbox = bboxByRaw.get(rawKey) ?? null
+          const bbox = bar.ocr_bbox ?? null
+          let labelX: number | null = null
+          let labelY: number | null = null
+          if (bbox) {
+            labelX = ((bbox.x0 + bbox.x1) / 2 / bbox.canvasW) * 100
+            labelY = ((bbox.y0 + bbox.y1) / 2 / bbox.canvasH) * 100
+          }
           const barResult = await createRebarBar({
             element_id: result.element.id,
             bar_mark: bar.bar_mark,
@@ -609,6 +628,8 @@ export function ExtractClient({ projectId, drawings }: Props) {
             notes: bar.notes || null,
             ocr_bbox: bbox,
             ocr_confidence: bar.confidence < 100 ? bar.confidence : null,
+            label_x: labelX,
+            label_y: labelY,
           })
           if (barResult.error) {
             const msg = `Bar "${bar.bar_mark}" in "${el.elementMark}": ${barResult.error}`
@@ -1108,26 +1129,48 @@ export function ExtractClient({ projectId, drawings }: Props) {
           {status === 'done' && (
             <div className="mt-6 p-4 bg-green-900/20 border border-green-800 rounded-lg">
               <p className="text-green-400 font-semibold">✓ {savedCount} bars saved successfully to Rebar Schedule</p>
-              {saveDiagnostics && (
-                <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                  <div className="bg-slate-800 rounded px-3 py-2">
-                    <span className="text-slate-500">Detected</span>
-                    <span className="block text-white font-mono font-bold">{saveDiagnostics.detected} bars</span>
+              {saveDiagnostics && (() => {
+                const allBars = elements.flatMap(e => e.bars)
+                const rejected = allBars.filter(b => !b.keep).length
+                const avgConf = allBars.length > 0 ? Math.round(allBars.reduce((s, b) => s + b.confidence, 0) / allBars.length) : 0
+                const withBbox = allBars.filter(b => b.ocr_bbox).length
+                return (
+                  <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    <div className="bg-slate-800 rounded px-3 py-2">
+                      <span className="text-slate-500">Detected</span>
+                      <span className="block text-white font-mono font-bold">{saveDiagnostics.detected} bars</span>
+                    </div>
+                    <div className="bg-slate-800 rounded px-3 py-2">
+                      <span className="text-slate-500">Selected</span>
+                      <span className="block text-amber-300 font-mono font-bold">{saveDiagnostics.selected} bars</span>
+                    </div>
+                    <div className="bg-slate-800 rounded px-3 py-2">
+                      <span className="text-slate-500">Saved</span>
+                      <span className="block text-green-400 font-mono font-bold">{saveDiagnostics.saved} bars</span>
+                    </div>
+                    <div className="bg-slate-800 rounded px-3 py-2">
+                      <span className="text-slate-500">Rejected</span>
+                      <span className="block text-red-400 font-mono font-bold">{rejected} bars</span>
+                    </div>
+                    <div className="bg-slate-800 rounded px-3 py-2">
+                      <span className="text-slate-500">Elements</span>
+                      <span className="block text-white font-mono font-bold">{saveDiagnostics.elementsCreated} created</span>
+                    </div>
+                    <div className="bg-slate-800 rounded px-3 py-2">
+                      <span className="text-slate-500">Avg Confidence</span>
+                      <span className={`block font-mono font-bold ${avgConf >= 70 ? 'text-green-400' : avgConf >= 50 ? 'text-amber-400' : 'text-red-400'}`}>{avgConf}%</span>
+                    </div>
+                    <div className="bg-slate-800 rounded px-3 py-2">
+                      <span className="text-slate-500">With Bbox</span>
+                      <span className="block text-blue-400 font-mono font-bold">{withBbox} bars</span>
+                    </div>
+                    <div className="bg-slate-800 rounded px-3 py-2">
+                      <span className="text-slate-500">Total Weight</span>
+                      <span className="block text-white font-mono font-bold">{totalWeightKg.toFixed(0)} kg</span>
+                    </div>
                   </div>
-                  <div className="bg-slate-800 rounded px-3 py-2">
-                    <span className="text-slate-500">Selected</span>
-                    <span className="block text-amber-300 font-mono font-bold">{saveDiagnostics.selected} bars</span>
-                  </div>
-                  <div className="bg-slate-800 rounded px-3 py-2">
-                    <span className="text-slate-500">Saved</span>
-                    <span className="block text-green-400 font-mono font-bold">{saveDiagnostics.saved} bars</span>
-                  </div>
-                  <div className="bg-slate-800 rounded px-3 py-2">
-                    <span className="text-slate-500">Elements</span>
-                    <span className="block text-white font-mono font-bold">{saveDiagnostics.elementsCreated} created</span>
-                  </div>
-                </div>
-              )}
+                )
+              })()}
               {saveDiagnostics?.errors && saveDiagnostics.errors.length > 0 && (
                 <div className="mt-3 p-3 bg-red-900/20 border border-red-800 rounded text-xs text-red-400">
                   <p className="font-semibold mb-1">{saveDiagnostics.errors.length} error(s):</p>
