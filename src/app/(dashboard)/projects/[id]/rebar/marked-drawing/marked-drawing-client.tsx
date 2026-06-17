@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
-import { useTranslation } from '@/lib/i18n/use-translation'
+import { useState, useRef, useCallback, useEffect } from 'react'
+import { Loader2 } from 'lucide-react'
 
 interface BarMark {
   id: string
@@ -37,15 +37,17 @@ interface PlacedLabel {
 interface Props {
   barMarks: BarMark[]
   pageImages: PageImage[]
+  sourceDrawingUrl: string | null
+  sourceDrawingType: string | null
 }
 
-export function MarkedDrawingClient({ barMarks, pageImages }: Props) {
-  const { t } = useTranslation()
+export function MarkedDrawingClient({ barMarks, pageImages, sourceDrawingUrl, sourceDrawingType }: Props) {
   const [imageUrl, setImageUrl] = useState<string | null>(pageImages[0]?.url ?? null)
   const [imageSize, setImageSize] = useState<{ w: number; h: number } | null>(
     pageImages[0] ? { w: pageImages[0].width, h: pageImages[0].height } : null
   )
   const [currentPage, setCurrentPage] = useState(pageImages[0]?.page ?? 1)
+  const [totalPages, setTotalPages] = useState(pageImages.length || 1)
   const [labels, setLabels] = useState<PlacedLabel[]>(() => initLabelsFromBbox(barMarks, pageImages))
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 })
@@ -54,16 +56,104 @@ export function MarkedDrawingClient({ barMarks, pageImages }: Props) {
   const [dragLabel, setDragLabel] = useState<string | null>(null)
   const [activeBarId, setActiveBarId] = useState<string | null>(null)
   const [confidenceFilter, setConfidenceFilter] = useState(0)
+  const [renderingPdf, setRenderingPdf] = useState(false)
+  const [pdfRenderedPages, setPdfRenderedPages] = useState<Map<number, string>>(new Map())
   const containerRef = useRef<HTMLDivElement>(null)
   const imgRef = useRef<HTMLImageElement>(null)
 
   const hasAutoImage = pageImages.length > 0
+  const hasPdfFallback = !hasAutoImage && !!sourceDrawingUrl && sourceDrawingType !== 'dxf'
+
+  // Render source PDF pages when no extraction page images exist
+  useEffect(() => {
+    if (!hasPdfFallback || renderingPdf || pdfRenderedPages.size > 0) return
+
+    let cancelled = false
+    setRenderingPdf(true)
+
+    ;(async () => {
+      try {
+        const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist')
+        GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+
+        const res = await fetch(sourceDrawingUrl!)
+        if (!res.ok) throw new Error(`Failed to fetch drawing: ${res.status}`)
+        const buf = await res.arrayBuffer()
+        const pdf = await getDocument({ data: new Uint8Array(buf) }).promise
+
+        if (cancelled) return
+        setTotalPages(pdf.numPages)
+
+        const rendered = new Map<number, string>()
+        for (let p = 1; p <= pdf.numPages; p++) {
+          const page = await pdf.getPage(p)
+          const scale = 3.0
+          const viewport = page.getViewport({ scale })
+          const canvas = document.createElement('canvas')
+          canvas.width = Math.floor(viewport.width)
+          canvas.height = Math.floor(viewport.height)
+          const ctx = canvas.getContext('2d')!
+          ctx.fillStyle = '#ffffff'
+          ctx.fillRect(0, 0, canvas.width, canvas.height)
+          await page.render({ canvasContext: ctx, viewport, canvas } as Parameters<typeof page.render>[0]).promise
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
+          rendered.set(p, dataUrl)
+
+          if (cancelled) return
+
+          if (p === 1) {
+            setImageUrl(dataUrl)
+            setImageSize({ w: canvas.width, h: canvas.height })
+            setCurrentPage(1)
+          }
+        }
+
+        await pdf.cleanup()
+        if (!cancelled) {
+          setPdfRenderedPages(rendered)
+          // Place labels that have bbox data (even without extraction page images)
+          if (barMarks.some(bm => bm.bbox)) {
+            setLabels(barMarks.filter(bm => bm.bbox).map(bm => {
+              const bbox = bm.bbox!
+              const cx = ((bbox.x0 + bbox.x1) / 2 / bbox.canvasW) * 100
+              const cy = ((bbox.y0 + bbox.y1) / 2 / bbox.canvasH) * 100
+              return {
+                barId: bm.id,
+                mark: bm.mark,
+                diameter: bm.diameter,
+                quantity: bm.quantity,
+                element: bm.element,
+                x: Math.max(0, Math.min(100, cx)),
+                y: Math.max(0, Math.min(100, cy)),
+                page: bbox.page,
+                confidence: bm.confidence,
+              }
+            }))
+          }
+        }
+      } catch (err) {
+        console.error('[MarkedDrawing] PDF render failed:', err)
+      } finally {
+        if (!cancelled) setRenderingPdf(false)
+      }
+    })()
+
+    return () => { cancelled = true }
+  }, [hasPdfFallback, sourceDrawingUrl, renderingPdf, pdfRenderedPages.size, barMarks])
 
   function switchPage(page: number) {
+    // From extraction page images
     const pi = pageImages.find(p => p.page === page)
     if (pi) {
       setImageUrl(pi.url)
       setImageSize({ w: pi.width, h: pi.height })
+      setCurrentPage(page)
+      return
+    }
+    // From PDF-rendered pages
+    const rendered = pdfRenderedPages.get(page)
+    if (rendered) {
+      setImageUrl(rendered)
       setCurrentPage(page)
     }
   }
@@ -138,6 +228,24 @@ export function MarkedDrawingClient({ barMarks, pageImages }: Props) {
 
   const highlightBar = (barId: string) => {
     setActiveBarId(prev => prev === barId ? null : barId)
+
+    // Zoom to bar location
+    const label = labels.find(l => l.barId === barId)
+    if (label && containerRef.current && imgRef.current) {
+      // Switch page if needed
+      if (label.page !== currentPage) {
+        switchPage(label.page)
+      }
+      const container = containerRef.current
+      const cw = container.clientWidth
+      const ch = container.clientHeight
+      const img = imgRef.current
+      const targetZoom = Math.max(2, zoom)
+      const px = (label.x / 100) * img.clientWidth * targetZoom
+      const py = (label.y / 100) * img.clientHeight * targetZoom
+      setZoom(targetZoom)
+      setPan({ x: cw / 2 - px, y: ch / 2 - py })
+    }
   }
 
   const visibleLabels = labels
@@ -190,29 +298,45 @@ export function MarkedDrawingClient({ barMarks, pageImages }: Props) {
     URL.revokeObjectURL(url)
   }
 
+  const showUploadFallback = !hasAutoImage && !hasPdfFallback && !imageUrl
+
   return (
     <div className="flex flex-1 overflow-hidden">
       {/* Sidebar */}
       <div className="w-72 border-r border-slate-800 p-4 overflow-y-auto shrink-0 flex flex-col gap-4">
-        {!hasAutoImage && (
-          <label className="block">
-            <span className="text-xs text-slate-400 uppercase tracking-wide">Upload Drawing</span>
-            <input type="file" accept="image/*" onChange={handleFileUpload} className="mt-1 block w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:bg-amber-600 file:text-white file:text-xs file:cursor-pointer" />
-          </label>
-        )}
-
         {hasAutoImage && (
           <div className="bg-green-900/20 border border-green-800 rounded p-2 text-xs text-green-400">
             Drawing auto-loaded from OCR extraction
           </div>
         )}
 
-        {pageImages.length > 1 && (
+        {hasPdfFallback && !renderingPdf && imageUrl && (
+          <div className="bg-blue-900/20 border border-blue-800 rounded p-2 text-xs text-blue-400">
+            Drawing loaded from source PDF
+          </div>
+        )}
+
+        {renderingPdf && (
+          <div className="bg-amber-900/20 border border-amber-800 rounded p-2 text-xs text-amber-400 flex items-center gap-2">
+            <Loader2 size={12} className="animate-spin" />
+            Rendering source drawing…
+          </div>
+        )}
+
+        {showUploadFallback && (
+          <label className="block">
+            <span className="text-xs text-slate-400 uppercase tracking-wide">Upload Drawing</span>
+            <input type="file" accept="image/*,.pdf" onChange={handleFileUpload} className="mt-1 block w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:bg-amber-600 file:text-white file:text-xs file:cursor-pointer" />
+          </label>
+        )}
+
+        {/* Page selector */}
+        {totalPages > 1 && (
           <div className="flex gap-1 flex-wrap">
-            {pageImages.map(pi => (
-              <button key={pi.page} onClick={() => switchPage(pi.page)}
-                className={`px-2 py-1 text-xs rounded ${currentPage === pi.page ? 'bg-amber-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
-                P{pi.page}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+              <button key={p} onClick={() => switchPage(p)}
+                className={`px-2 py-1 text-xs rounded ${currentPage === p ? 'bg-amber-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
+                P{p}
               </button>
             ))}
           </div>
@@ -249,7 +373,7 @@ export function MarkedDrawingClient({ barMarks, pageImages }: Props) {
             return (
               <button
                 key={bm.id}
-                onClick={() => placed ? highlightBar(bm.id) : addLabel(bm)}
+                onClick={() => highlightBar(bm.id)}
                 className={`w-full text-left px-2 py-1.5 text-xs rounded flex items-center gap-2 transition-colors ${
                   isActive ? 'bg-amber-600/30 ring-1 ring-amber-500 text-amber-200' :
                   placed ? 'bg-slate-800/80 hover:bg-slate-700' : 'bg-slate-800/30 hover:bg-slate-700 opacity-60'
@@ -258,18 +382,24 @@ export function MarkedDrawingClient({ barMarks, pageImages }: Props) {
                 <span className="font-mono font-bold text-amber-400">{bm.mark}</span>
                 <span className="text-slate-500">T{bm.diameter}</span>
                 <span className="text-slate-600">×{bm.quantity}</span>
+                <span className="text-slate-700 text-[10px] ml-auto">{bm.element}</span>
                 {bm.confidence != null && bm.confidence < 80 && (
-                  <span className={`ml-auto text-[10px] px-1 rounded ${
+                  <span className={`text-[10px] px-1 rounded ${
                     bm.confidence >= 60 ? 'bg-amber-900/50 text-amber-400' : 'bg-red-900/50 text-red-400'
                   }`}>{bm.confidence}%</span>
                 )}
-                {placed && <span className="ml-auto text-green-500 text-[10px]">●</span>}
+                {placed ? (
+                  <span className="text-green-500 text-[10px]">●</span>
+                ) : (
+                  <button onClick={e => { e.stopPropagation(); addLabel(bm) }}
+                    className="text-[10px] text-slate-600 hover:text-amber-400">+</button>
+                )}
               </button>
             )
           })}
         </div>
 
-        <p className="text-[10px] text-slate-600">Alt+drag to pan. Scroll to zoom. Drag labels to reposition. Click bar to highlight.</p>
+        <p className="text-[10px] text-slate-600">Click bar to zoom. Alt+drag to pan. Scroll to zoom. Drag labels to reposition.</p>
       </div>
 
       {/* Canvas area */}
@@ -282,18 +412,26 @@ export function MarkedDrawingClient({ barMarks, pageImages }: Props) {
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
       >
-        {!imageUrl ? (
+        {renderingPdf ? (
+          <div className="flex items-center justify-center h-full text-slate-500">
+            <div className="text-center">
+              <Loader2 size={32} className="animate-spin mx-auto mb-3 text-amber-500" />
+              <p className="text-lg mb-1">Rendering drawing…</p>
+              <p className="text-sm text-slate-600">Loading source PDF for marking</p>
+            </div>
+          </div>
+        ) : !imageUrl ? (
           <div className="flex items-center justify-center h-full text-slate-600">
             <div className="text-center">
               <p className="text-lg mb-2">No drawing available</p>
-              <p className="text-sm">Run OCR extraction first, or upload a drawing manually</p>
+              <p className="text-sm">Upload a structural drawing first, then run OCR extraction</p>
             </div>
           </div>
         ) : (
           <div
             style={{
               transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-              transformOrigin: 'center center',
+              transformOrigin: '0 0',
             }}
             className="relative inline-block"
           >
@@ -304,6 +442,10 @@ export function MarkedDrawingClient({ barMarks, pageImages }: Props) {
               alt="Structural drawing"
               className="max-w-none select-none"
               draggable={false}
+              onLoad={() => {
+                const el = imgRef.current
+                if (el) setImageSize({ w: el.naturalWidth, h: el.naturalHeight })
+              }}
             />
             {visibleLabels.map(label => {
               const isActive = activeBarId === label.barId
