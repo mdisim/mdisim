@@ -65,12 +65,14 @@ interface DebugState {
   matchedLines: MatchedLine[]
 }
 
+type BboxEntry = { x0: number; y0: number; x1: number; y1: number; canvasW: number; canvasH: number; page: number }
+
 function makeId() { return Math.random().toString(36).slice(2) }
 
 function elementToEditable(
   el: DetectedElement,
   threshold = 60,
-  bboxLookup?: Map<string, { x0: number; y0: number; x1: number; y1: number; canvasW: number; canvasH: number; page: number }[]>,
+  bboxLookup?: Map<string, BboxEntry[]>,
 ): EditableElement {
   const bboxUsed = new Map<string, number>()
   const bars = el.callouts.map((c: RebarCallout, i: number) => {
@@ -195,7 +197,6 @@ export function ExtractClient({ projectId, drawings }: Props) {
   const [activeRaw, setActiveRaw] = useState<string | null>(null)
   const [labelOffsets, setLabelOffsets] = useState<Record<string, { dx: number; dy: number }>>({})
   const [showDrawingView, setShowDrawingView] = useState(false)
-  const [bboxMultiLookup, setBboxMultiLookup] = useState<Map<string, { x0: number; y0: number; x1: number; y1: number; canvasW: number; canvasH: number; page: number }[]>>(new Map())
   const [, startTransition] = useTransition()
 
   function dbg(msg: string) {
@@ -203,7 +204,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
     setDebug(d => ({ ...d, lines: [...d.lines, msg] }))
   }
 
-  async function extractPDFClientSide(signedUrl: string): Promise<DetectedElement[]> {
+  async function extractPDFClientSide(signedUrl: string): Promise<{ elements: DetectedElement[]; bboxMap: Map<string, BboxEntry[]> }> {
     setDebug({ lines: [], pdfChars: 0, ocrChars: 0, ocrConfidence: 0, ocrPreview: '', calloutCount: 0, usedOCR: false, matchedLines: [] })
     setPageRenders([])
     setAnnotatedCallouts([])
@@ -253,7 +254,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
         const total = elems.flatMap(e => e.callouts).length
         setDebug(d => ({ ...d, calloutCount: total, usedOCR: false }))
         dbg(`Done (native text): ${elems.length} elements, ${total} bars`)
-        return elems
+        return { elements: elems, bboxMap: new Map() }
       }
       dbg('Native text found but 0 rebar matches — falling through to OCR')
     } else {
@@ -387,13 +388,12 @@ export function ExtractClient({ projectId, drawings }: Props) {
     }))
     setPageRenders(localPageRenders)
     setAnnotatedCallouts(scoredAnnotated)
-    const multiMap = new Map<string, { x0: number; y0: number; x1: number; y1: number; canvasW: number; canvasH: number; page: number }[]>()
+    const multiMap = new Map<string, BboxEntry[]>()
     for (const ac of scoredAnnotated) {
       const list = multiMap.get(ac.raw) ?? []
       list.push({ x0: ac.x0, y0: ac.y0, x1: ac.x1, y1: ac.y1, canvasW: ac.canvasW, canvasH: ac.canvasH, page: ac.page })
       multiMap.set(ac.raw, list)
     }
-    setBboxMultiLookup(multiMap)
 
     const avgConfidence = allOcrTexts.length > 0 ? sumConfidence / allOcrTexts.length : 0
     const ocrPreview = allOcrTexts.map(pt => pt.text).join('\n').slice(0, 500)
@@ -432,7 +432,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
     setDebug(d => ({ ...d, calloutCount: totalBars }))
     dbg(`Done: ${elems.length} elements, ${totalBars} bars`)
 
-    return elems
+    return { elements: elems, bboxMap: multiMap }
   }
 
   async function handleExtract() {
@@ -459,13 +459,16 @@ export function ExtractClient({ projectId, drawings }: Props) {
       }
 
       let detectedElements: DetectedElement[] = []
+      let extractedBboxMap = new Map<string, BboxEntry[]>()
       if (json.requiresClientExtraction && json.signedUrl) {
-        detectedElements = await extractPDFClientSide(json.signedUrl)
+        const result = await extractPDFClientSide(json.signedUrl)
+        detectedElements = result.elements
+        extractedBboxMap = result.bboxMap
       } else {
         detectedElements = json.elements ?? []
       }
 
-      const editable = detectedElements.map(el => elementToEditable(el, confidenceThreshold, bboxMultiLookup))
+      const editable = detectedElements.map(el => elementToEditable(el, confidenceThreshold, extractedBboxMap))
       setElements(editable.length > 0 ? editable : [])
       setStatus(editable.length > 0 ? 'review' : 'error')
       if (editable.length === 0) {
@@ -1018,6 +1021,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
                             <th className="text-right py-1 pr-2 font-medium">Weight</th>
                             <th className="text-left py-1 font-medium">Notes / Raw callout</th>
                             <th className="text-center py-1 pr-2 font-medium">Conf.</th>
+                            <th className="text-center py-1 pr-2 font-medium w-6">Pos</th>
                             <th className="w-5" />
                           </tr>
                         </thead>
@@ -1086,6 +1090,13 @@ export function ExtractClient({ projectId, drawings }: Props) {
                                     }`}>
                                     {bar.confidence}%
                                   </span>
+                                )}
+                              </td>
+                              <td className="py-1 pr-2 text-center">
+                                {bar.ocr_bbox ? (
+                                  <span className="text-blue-400" title={`p${bar.ocr_bbox.page} (${bar.ocr_bbox.x0},${bar.ocr_bbox.y0})→(${bar.ocr_bbox.x1},${bar.ocr_bbox.y1})`}>&#8853;</span>
+                                ) : (
+                                  <span className="text-slate-700">-</span>
                                 )}
                               </td>
                               <td className="py-1 pl-1">

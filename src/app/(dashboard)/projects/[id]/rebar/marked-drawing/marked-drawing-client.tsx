@@ -84,11 +84,14 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
 
   const linkedBars = barMarks.filter(b => b.sourceDrawingId === selectedDrawingId)
   const unlinkedBars = barMarks.filter(b => !b.sourceDrawingId)
+  const allDisplayBars = [...linkedBars, ...unlinkedBars]
 
-  // Auto-place labels from persisted positions or OCR bboxes
   function placeLabelsForDrawing(drawingId: string) {
-    const bars = barMarks.filter(b => b.sourceDrawingId === drawingId || !b.sourceDrawingId)
-    const placeable = bars.filter(b => b.labelX != null || b.bbox)
+    const linked = barMarks.filter(b => b.sourceDrawingId === drawingId)
+    const unlinked = barMarks.filter(b => !b.sourceDrawingId)
+    // Use linked bars if any; otherwise fall back to all unlinked bars with position data
+    const candidates = linked.length > 0 ? [...linked, ...unlinked] : unlinked
+    const placeable = candidates.filter(b => b.labelX != null || b.bbox)
 
     setLabels(placeable.map(bm => {
       let x: number, y: number, page: number
@@ -343,7 +346,7 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
     .filter(l => (l.confidence ?? 100) >= confidenceFilter)
 
   const barsWithLabels = new Set(labels.map(l => l.barId))
-  const placedCount = linkedBars.filter(b => barsWithLabels.has(b.id)).length
+  const placedCount = allDisplayBars.filter(b => barsWithLabels.has(b.id)).length
 
   const exportPDF = async () => {
     if (!imgRef.current || !imageUrl) return
@@ -438,17 +441,25 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
         )}
 
         {/* Placement stats */}
-        {selectedDrawingId && linkedBars.length > 0 && (
+        {selectedDrawingId && (linkedBars.length > 0 || unlinkedBars.length > 0) && (
           <div className="flex items-center gap-2 text-[10px]">
             <span className="text-slate-600">Placed:</span>
-            <span className={placedCount === linkedBars.length ? 'text-green-400' : 'text-amber-400'}>
-              {placedCount}/{linkedBars.length}
+            <span className={placedCount === allDisplayBars.length ? 'text-green-400' : 'text-amber-400'}>
+              {placedCount}/{allDisplayBars.length}
             </span>
             <div className="flex-1 bg-slate-800 rounded-full h-1.5 overflow-hidden">
-              <div className="bg-amber-500 h-full rounded-full transition-all" style={{ width: `${(placedCount / Math.max(1, linkedBars.length)) * 100}%` }} />
+              <div className="bg-amber-500 h-full rounded-full transition-all" style={{ width: `${(placedCount / Math.max(1, allDisplayBars.length)) * 100}%` }} />
             </div>
           </div>
         )}
+
+        {/* Legend */}
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500">
+          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" /> Placed</span>
+          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block" /> Has OCR pos</span>
+          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" /> Linked</span>
+          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-slate-600 inline-block" /> No position</span>
+        </div>
 
         {/* Page selector */}
         {totalPages > 1 && (
@@ -480,10 +491,15 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
             className="w-full accent-amber-500" />
         </div>
 
-        {imageUrl && (
-          <button onClick={exportPDF} className="w-full px-3 py-2 text-sm rounded bg-green-700 hover:bg-green-600 text-white font-medium">
-            Export Marked Drawing PDF
-          </button>
+        {imageUrl && selectedDrawingId && (
+          <div className="flex flex-col gap-1.5">
+            <button onClick={() => placeLabelsForDrawing(selectedDrawingId)} className="w-full px-3 py-2 text-sm rounded bg-amber-700 hover:bg-amber-600 text-white font-medium">
+              Auto Place Markers Again
+            </button>
+            <button onClick={exportPDF} className="w-full px-3 py-2 text-sm rounded bg-green-700 hover:bg-green-600 text-white font-medium">
+              Export Marked Drawing PDF
+            </button>
+          </div>
         )}
 
         {/* Bar list — linked bars */}
@@ -634,6 +650,8 @@ function BarButton({ bm, labels, activeBarId, onHighlight, onAdd }: {
 }) {
   const placed = labels.some(l => l.barId === bm.id)
   const isActive = activeBarId === bm.id
+  const isLinked = !!bm.sourceDrawingId
+  const hasBbox = !!bm.bbox
   return (
     <button
       id={`bar-btn-${bm.id}`}
@@ -643,11 +661,14 @@ function BarButton({ bm, labels, activeBarId, onHighlight, onAdd }: {
         placed ? 'bg-slate-800/80 hover:bg-slate-700' : 'bg-slate-800/30 hover:bg-slate-700 opacity-60'
       }`}
     >
+      {/* Link status indicator */}
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+        placed ? 'bg-green-500' : hasBbox ? 'bg-blue-500' : isLinked ? 'bg-amber-500' : 'bg-slate-600'
+      }`} title={placed ? 'Placed on drawing' : hasBbox ? 'Has OCR position' : isLinked ? 'Linked to drawing' : 'No position data'} />
       <span className="font-mono font-bold text-amber-400">{bm.mark}</span>
       <span className="text-slate-500">T{bm.diameter}</span>
       <span className="text-slate-600">x{bm.quantity}</span>
       <span className="text-slate-700 text-[10px] ml-auto">{bm.element}</span>
-      {bm.bbox && <span className="text-blue-400 text-[10px]" title={`p${bm.bbox.page} (${bm.bbox.x0},${bm.bbox.y0})`}>&#8853;</span>}
       {bm.confidence != null && bm.confidence < 80 && (
         <span className={`text-[10px] px-1 rounded ${
           bm.confidence >= 60 ? 'bg-amber-900/50 text-amber-400' : 'bg-red-900/50 text-red-400'
