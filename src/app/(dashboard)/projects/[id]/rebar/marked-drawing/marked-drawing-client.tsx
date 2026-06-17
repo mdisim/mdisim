@@ -71,6 +71,7 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
   const [panStart, setPanStart] = useState({ x: 0, y: 0 })
   const [dragLabel, setDragLabel] = useState<string | null>(null)
   const [activeBarId, setActiveBarId] = useState<string | null>(null)
+  const [showDiag, setShowDiag] = useState(false)
   const [confidenceFilter, setConfidenceFilter] = useState(0)
   const [renderingPdf, setRenderingPdf] = useState(false)
   const [renderError, setRenderError] = useState<string | null>(null)
@@ -86,14 +87,59 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
   const unlinkedBars = barMarks.filter(b => !b.sourceDrawingId)
   const allDisplayBars = [...linkedBars, ...unlinkedBars]
 
+  const [diagLog, setDiagLog] = useState<string[]>([])
+
   function placeLabelsForDrawing(drawingId: string) {
+    const log: string[] = []
+    log.push(`=== placeLabelsForDrawing("${drawingId}") ===`)
+    log.push(`Total barMarks from server: ${barMarks.length}`)
+
     const linked = barMarks.filter(b => b.sourceDrawingId === drawingId)
     const unlinked = barMarks.filter(b => !b.sourceDrawingId)
-    // Use linked bars if any; otherwise fall back to all unlinked bars with position data
-    const candidates = linked.length > 0 ? [...linked, ...unlinked] : unlinked
-    const placeable = candidates.filter(b => b.labelX != null || b.bbox)
+    const otherDrawing = barMarks.filter(b => b.sourceDrawingId && b.sourceDrawingId !== drawingId)
+    log.push(`Linked to this drawing: ${linked.length}`)
+    log.push(`Unlinked (no sourceDrawingId): ${unlinked.length}`)
+    log.push(`Linked to OTHER drawing: ${otherDrawing.length}`)
 
-    setLabels(placeable.map(bm => {
+    const candidates = linked.length > 0 ? [...linked, ...unlinked] : unlinked
+    log.push(`Candidates for placement: ${candidates.length}`)
+
+    const withBbox = candidates.filter(b => b.bbox)
+    const withLabelXY = candidates.filter(b => b.labelX != null && b.labelY != null)
+    const withEither = candidates.filter(b => b.labelX != null || b.bbox)
+    const withNeither = candidates.filter(b => b.labelX == null && !b.bbox)
+    log.push(`  with bbox: ${withBbox.length}`)
+    log.push(`  with label_x/label_y: ${withLabelXY.length}`)
+    log.push(`  with either (placeable): ${withEither.length}`)
+    log.push(`  with NEITHER (no position): ${withNeither.length}`)
+
+    for (const bm of candidates) {
+      const hasBbox = !!bm.bbox
+      const hasLabel = bm.labelX != null && bm.labelY != null
+      let computedX = '—', computedY = '—', computedPage = '—', source = 'NONE'
+      if (hasLabel) {
+        computedX = String(bm.labelX)
+        computedY = String(bm.labelY)
+        computedPage = String(bm.bbox?.page ?? bm.sourcePage ?? 1)
+        source = 'label_xy'
+      } else if (hasBbox) {
+        const bbox = bm.bbox!
+        computedX = (((bbox.x0 + bbox.x1) / 2 / bbox.canvasW) * 100).toFixed(2)
+        computedY = (((bbox.y0 + bbox.y1) / 2 / bbox.canvasH) * 100).toFixed(2)
+        computedPage = String(bbox.page)
+        source = 'bbox'
+      }
+      log.push(
+        `  ${bm.mark} T${bm.diameter} x${bm.quantity} | ` +
+        `srcDwg=${bm.sourceDrawingId ? bm.sourceDrawingId.slice(0, 8) : 'null'} | ` +
+        `bbox=${hasBbox ? `p${bm.bbox!.page}(${bm.bbox!.x0},${bm.bbox!.y0})→(${bm.bbox!.x1},${bm.bbox!.y1}) canvas=${bm.bbox!.canvasW}x${bm.bbox!.canvasH}` : 'null'} | ` +
+        `label=(${bm.labelX ?? 'null'},${bm.labelY ?? 'null'}) | ` +
+        `→ source=${source} x=${computedX}% y=${computedY}% page=${computedPage}`
+      )
+    }
+
+    const placeable = candidates.filter(b => b.labelX != null || b.bbox)
+    const newLabels = placeable.map(bm => {
       let x: number, y: number, page: number
       if (bm.labelX != null && bm.labelY != null) {
         x = bm.labelX
@@ -113,7 +159,19 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
         y: Math.max(0, Math.min(100, y)),
         page, confidence: bm.confidence,
       }
-    }).filter((l): l is PlacedLabel => l !== null))
+    }).filter((l): l is PlacedLabel => l !== null)
+
+    log.push(`Labels created: ${newLabels.length}`)
+    log.push(`Current page: ${currentPage}`)
+    const onCurrentPage = newLabels.filter(l => l.page === currentPage)
+    log.push(`Labels on current page ${currentPage}: ${onCurrentPage.length}`)
+    for (const l of newLabels) {
+      log.push(`  LABEL: ${l.mark} T${l.diameter} x=${l.x.toFixed(2)}% y=${l.y.toFixed(2)}% page=${l.page}`)
+    }
+
+    console.log('[MarkedDrawing] Diagnostics:\n' + log.join('\n'))
+    setDiagLog(log)
+    setLabels(newLabels)
   }
 
   useEffect(() => {
@@ -499,6 +557,117 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
             <button onClick={exportPDF} className="w-full px-3 py-2 text-sm rounded bg-green-700 hover:bg-green-600 text-white font-medium">
               Export Marked Drawing PDF
             </button>
+          </div>
+        )}
+
+        {/* Diagnostics toggle */}
+        <button onClick={() => setShowDiag(d => !d)} className="text-[10px] text-slate-600 hover:text-slate-400 text-left">
+          {showDiag ? '▼' : '▶'} Diagnostics ({barMarks.length} bars, {labels.length} labels, {visibleLabels.length} visible)
+        </button>
+
+        {showDiag && (
+          <div className="rounded border border-slate-700 bg-slate-900 p-2 text-[10px] font-mono max-h-60 overflow-y-auto space-y-2">
+            {/* Summary stats */}
+            <div className="grid grid-cols-2 gap-1">
+              <div className="px-1.5 py-1 bg-slate-800 rounded">
+                <span className="text-slate-500">Total bars</span>
+                <span className="block text-white font-bold">{barMarks.length}</span>
+              </div>
+              <div className="px-1.5 py-1 bg-slate-800 rounded">
+                <span className="text-slate-500">With bbox</span>
+                <span className="block text-blue-400 font-bold">{barMarks.filter(b => b.bbox).length}</span>
+              </div>
+              <div className="px-1.5 py-1 bg-slate-800 rounded">
+                <span className="text-slate-500">With label_xy</span>
+                <span className="block text-green-400 font-bold">{barMarks.filter(b => b.labelX != null).length}</span>
+              </div>
+              <div className="px-1.5 py-1 bg-slate-800 rounded">
+                <span className="text-slate-500">No position</span>
+                <span className="block text-red-400 font-bold">{barMarks.filter(b => !b.bbox && b.labelX == null).length}</span>
+              </div>
+              <div className="px-1.5 py-1 bg-slate-800 rounded">
+                <span className="text-slate-500">Labels placed</span>
+                <span className="block text-amber-400 font-bold">{labels.length}</span>
+              </div>
+              <div className="px-1.5 py-1 bg-slate-800 rounded">
+                <span className="text-slate-500">Visible (p{currentPage})</span>
+                <span className="block text-amber-400 font-bold">{visibleLabels.length}</span>
+              </div>
+              <div className="px-1.5 py-1 bg-slate-800 rounded">
+                <span className="text-slate-500">Linked</span>
+                <span className="block text-green-400 font-bold">{linkedBars.length}</span>
+              </div>
+              <div className="px-1.5 py-1 bg-slate-800 rounded">
+                <span className="text-slate-500">Unlinked</span>
+                <span className="block text-slate-400 font-bold">{unlinkedBars.length}</span>
+              </div>
+            </div>
+
+            {/* Per-bar detail table */}
+            <table className="w-full text-[9px]">
+              <thead>
+                <tr className="text-slate-500">
+                  <th className="text-left py-0.5">Mark</th>
+                  <th className="text-left py-0.5">Dia</th>
+                  <th className="text-left py-0.5">srcDwg</th>
+                  <th className="text-left py-0.5">bbox</th>
+                  <th className="text-left py-0.5">label_xy</th>
+                  <th className="text-left py-0.5">placed?</th>
+                </tr>
+              </thead>
+              <tbody>
+                {barMarks.map(bm => {
+                  const hasBbox = !!bm.bbox
+                  const hasLabel = bm.labelX != null && bm.labelY != null
+                  const isPlaced = labels.some(l => l.barId === bm.id)
+                  return (
+                    <tr key={bm.id} className="border-t border-slate-800/50">
+                      <td className="py-0.5 text-amber-400 font-bold">{bm.mark}</td>
+                      <td className="py-0.5 text-slate-400">T{bm.diameter}</td>
+                      <td className="py-0.5">
+                        {bm.sourceDrawingId ? (
+                          <span className={bm.sourceDrawingId === selectedDrawingId ? 'text-green-400' : 'text-orange-400'}>
+                            {bm.sourceDrawingId.slice(0, 6)}
+                          </span>
+                        ) : <span className="text-red-500">null</span>}
+                      </td>
+                      <td className="py-0.5">
+                        {hasBbox ? (
+                          <span className="text-blue-400" title={JSON.stringify(bm.bbox)}>
+                            p{bm.bbox!.page} ({bm.bbox!.x0},{bm.bbox!.y0})
+                          </span>
+                        ) : <span className="text-red-500">null</span>}
+                      </td>
+                      <td className="py-0.5">
+                        {hasLabel ? (
+                          <span className="text-green-400">
+                            ({bm.labelX!.toFixed(1)},{bm.labelY!.toFixed(1)})
+                          </span>
+                        ) : <span className="text-red-500">null</span>}
+                      </td>
+                      <td className="py-0.5">
+                        {isPlaced ? <span className="text-green-500">YES</span> : <span className="text-red-500">NO</span>}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+
+            {/* Placement log */}
+            {diagLog.length > 0 && (
+              <div className="mt-1 border-t border-slate-700 pt-1">
+                <p className="text-slate-500 mb-0.5">Last placement log:</p>
+                {diagLog.map((line, i) => (
+                  <p key={i} className={
+                    line.startsWith('===') ? 'text-amber-400 font-bold' :
+                    line.includes('LABEL:') ? 'text-green-400' :
+                    line.includes('NEITHER') || line.includes('null') ? 'text-red-400' :
+                    'text-slate-400'
+                  }>{line}</p>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
