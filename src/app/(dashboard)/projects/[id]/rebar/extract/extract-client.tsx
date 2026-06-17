@@ -265,44 +265,18 @@ export function ExtractClient({ projectId, drawings }: Props) {
       }
       dbg(`Native text regex matches: ${rawCount}`)
       if (rawCount > 0) {
-        // Build bbox map from PDF text item positions
+        // Build bbox map by grouping text items into lines (same Y),
+        // concatenating their text, parsing rebar callouts, and using
+        // the line's bounding box for each callout found.
         const nativeBboxMap = new Map<string, BboxEntry[]>()
-        for (const { items, page: p, vpHeight } of pageTextItems) {
-          for (const ti of items) {
-            if (!ti.str.trim()) continue
-            const normText = normalizeOCRText(ti.str)
-            const callouts = parseRebarText(normText)
-            if (callouts.length === 0) continue
-            // PDF transform: [scaleX, skewY, skewX, scaleY, translateX, translateY]
-            // At 4x scale, coords are already in canvas pixels
-            const scale = 4.0
-            const tx = ti.transform[4] * scale
-            const ty = ti.transform[5] * scale
-            const w = ti.width * scale
-            const fontSize = Math.abs(ti.transform[3]) * scale
-            // PDF Y is bottom-up; canvas Y is top-down
-            const canvasY = vpHeight - ty
-            const x0 = Math.round(tx)
-            const y0 = Math.round(canvasY - fontSize)
-            const x1 = Math.round(tx + w)
-            const y1 = Math.round(canvasY)
-            // Estimate canvas size from viewport at 4x
-            const canvasW = Math.round(vpHeight * 1.414) // A-series aspect
-            const canvasH = Math.round(vpHeight)
-            for (const c of callouts) {
-              const list = nativeBboxMap.get(c.raw) ?? []
-              list.push({ x0, y0, x1, y1, canvasW, canvasH, page: p })
-              nativeBboxMap.set(c.raw, list)
-            }
-          }
-        }
-        dbg(`Native text bboxMap: ${nativeBboxMap.size} keys`)
-        for (const [raw, entries] of nativeBboxMap) {
-          dbg(`  native["${raw}"] = p${entries[0].page} (${entries[0].x0},${entries[0].y0})→(${entries[0].x1},${entries[0].y1}) canvas=${entries[0].canvasW}x${entries[0].canvasH}`)
-        }
-        // Render page images for marked drawing overlay
+        let totalTextItems = 0
+        let totalGroupedLines = 0
+        let totalBboxEntries = 0
+
+        // Render pages first so we know actual canvas dimensions
         dbg('Rendering page images for native text extraction...')
         const nativePageRenders: PageRender[] = []
+        const canvasDims = new Map<number, { w: number; h: number }>()
         for (let p = 1; p <= pdf.numPages; p++) {
           const page = await pdf.getPage(p)
           const canvas = await renderPageToCanvas(page, 4.0)
@@ -312,19 +286,92 @@ export function ExtractClient({ projectId, drawings }: Props) {
             width: canvas.width,
             height: canvas.height,
           })
-          // Update bbox canvasW/canvasH to actual rendered size
-          for (const [, entries] of nativeBboxMap) {
-            for (const entry of entries) {
-              if (entry.page === p) {
-                entry.canvasW = canvas.width
-                entry.canvasH = canvas.height
-              }
-            }
-          }
+          canvasDims.set(p, { w: canvas.width, h: canvas.height })
           dbg(`  Page ${p} rendered: ${canvas.width}x${canvas.height}`)
         }
         setPageRenders(nativePageRenders)
+
+        for (const { items, page: p, vpHeight } of pageTextItems) {
+          const dims = canvasDims.get(p) ?? { w: Math.round(vpHeight * 1.414), h: Math.round(vpHeight) }
+          const scale = 4.0
+          totalTextItems += items.length
+
+          // Group text items by Y coordinate (within tolerance)
+          // PDF items at similar Y are on the same line
+          type PosItem = { str: string; x: number; y: number; w: number; h: number }
+          const posItems: PosItem[] = items.map(ti => ({
+            str: ti.str,
+            x: ti.transform[4] * scale,
+            y: ti.transform[5] * scale,
+            w: ti.width * scale,
+            h: Math.abs(ti.transform[3]) * scale,
+          }))
+
+          // Sort by Y (descending = top of page first in PDF coords) then X
+          posItems.sort((a, b) => b.y - a.y || a.x - b.x)
+
+          // Group into lines: items within 5px of same Y
+          const lines: PosItem[][] = []
+          let currentLine: PosItem[] = []
+          let currentY = -Infinity
+          for (const item of posItems) {
+            if (Math.abs(item.y - currentY) > 5) {
+              if (currentLine.length > 0) lines.push(currentLine)
+              currentLine = [item]
+              currentY = item.y
+            } else {
+              currentLine.push(item)
+            }
+          }
+          if (currentLine.length > 0) lines.push(currentLine)
+          totalGroupedLines += lines.length
+
+          // Parse each line
+          for (const lineItems of lines) {
+            // Sort left-to-right within line
+            lineItems.sort((a, b) => a.x - b.x)
+            const lineText = lineItems.map(i => i.str).join(' ')
+            const normText = normalizeOCRText(lineText)
+            const callouts = parseRebarText(normText)
+            if (callouts.length === 0) continue
+
+            // Line bounding box
+            const minX = Math.min(...lineItems.map(i => i.x))
+            const maxX = Math.max(...lineItems.map(i => i.x + i.w))
+            const maxY = Math.max(...lineItems.map(i => i.y))
+            const maxH = Math.max(...lineItems.map(i => i.h))
+            // Convert PDF Y (bottom-up) to canvas Y (top-down)
+            const canvasY0 = Math.round(vpHeight - maxY)
+            const canvasY1 = Math.round(vpHeight - maxY + maxH)
+            const x0 = Math.round(minX)
+            const x1 = Math.round(maxX)
+
+            for (const c of callouts) {
+              const list = nativeBboxMap.get(c.raw) ?? []
+              list.push({ x0, y0: canvasY0, x1, y1: canvasY1, canvasW: dims.w, canvasH: dims.h, page: p })
+              nativeBboxMap.set(c.raw, list)
+              totalBboxEntries++
+            }
+          }
+        }
+
+        dbg(`Native bbox: ${totalTextItems} text items → ${totalGroupedLines} lines → ${nativeBboxMap.size} unique keys, ${totalBboxEntries} entries`)
+        for (const [raw, entries] of nativeBboxMap) {
+          dbg(`  bbox["${raw}"] = p${entries[0].page} (${entries[0].x0},${entries[0].y0})→(${entries[0].x1},${entries[0].y1}) canvas=${entries[0].canvasW}x${entries[0].canvasH}`)
+        }
+
+        // Also log what extractFromPageText will produce, so we can compare keys
         const elems = extractFromPageText(pageTexts)
+        const allCalloutRaws = elems.flatMap(e => e.callouts.map(c => c.raw))
+        dbg(`extractFromPageText produced ${allCalloutRaws.length} callout raws: [${allCalloutRaws.join(', ')}]`)
+        const matched = allCalloutRaws.filter(r => nativeBboxMap.has(r))
+        const unmatched = allCalloutRaws.filter(r => !nativeBboxMap.has(r))
+        dbg(`  Matched to bboxMap: ${matched.length}`)
+        if (unmatched.length > 0) {
+          dbg(`  UNMATCHED: [${unmatched.join(', ')}]`)
+          dbg(`  bboxMap keys: [${Array.from(nativeBboxMap.keys()).join(', ')}]`)
+        }
+
         const total = elems.flatMap(e => e.callouts).length
         setDebug(d => ({ ...d, calloutCount: total, usedOCR: false }))
         dbg(`Done (native text): ${elems.length} elements, ${total} bars`)
