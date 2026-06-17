@@ -2,85 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { PrintButton } from '../../fabrication-all/print-button'
-
-// ─── SVG bar shape renderers ──────────────────────────────────────────────────
-function BarShapeSVG({
-  shapeCode,
-  dims,
-  diameter,
-}: {
-  shapeCode: string
-  dims: Record<string, number>
-  diameter: number
-}) {
-  const W = 200
-  const H = 120
-  const stroke = '#f59e0b'
-  const sw = Math.max(2, diameter / 4)
-  const label = (x: number, y: number, text: string) => (
-    <text x={x} y={y} fontSize={10} fill="#94a3b8" textAnchor="middle">{text}</text>
-  )
-
-  const shapes: Record<string, React.ReactNode> = {
-    '00': (
-      <g>
-        <line x1={10} y1={H/2} x2={W-10} y2={H/2} stroke={stroke} strokeWidth={sw} strokeLinecap="round" />
-        {dims.A && label(W/2, H/2-10, `A=${dims.A}`)}
-      </g>
-    ),
-    '11': (
-      <g>
-        <polyline points={`10,${H-15} 10,15 ${W-10},15`} fill="none" stroke={stroke} strokeWidth={sw} strokeLinejoin="round" strokeLinecap="round" />
-        {dims.A && label(10-18, H/2, `A=${dims.A}`)}
-        {dims.B && label(W/2, 8, `B=${dims.B}`)}
-      </g>
-    ),
-    '21': (
-      <g>
-        <polyline points={`10,15 10,${H-15} ${W-10},${H-15} ${W-10},15`} fill="none" stroke={stroke} strokeWidth={sw} strokeLinejoin="round" strokeLinecap="round" />
-        {dims.A && label(W/2, H-8, `A=${dims.A}`)}
-        {dims.B && label(18, H/2, `B=${dims.B}`)}
-      </g>
-    ),
-    '31': (
-      <g>
-        <polyline points={`10,15 ${W*0.4},15 ${W*0.6},${H-15} ${W-10},${H-15}`} fill="none" stroke={stroke} strokeWidth={sw} strokeLinejoin="round" strokeLinecap="round" />
-        {dims.A && label(W*0.2, 8, `A=${dims.A}`)}
-        {dims.B && label(W/2, H/2, `B`)}
-        {dims.C && label(W*0.8, H-8, `C=${dims.C}`)}
-      </g>
-    ),
-    '41': (
-      <g>
-        <polyline points={`10,15 10,${H-15} ${W-10},${H-15} ${W-10},15`} fill="none" stroke={stroke} strokeWidth={sw} strokeLinejoin="round" strokeLinecap="round" />
-        {dims.A && label(W/2, H-8, `A=${dims.A}`)}
-        {dims.B && label(18, H/2, `B=${dims.B}`)}
-      </g>
-    ),
-    '51': (
-      <g>
-        <rect x={15} y={15} width={W-30} height={H-30} fill="none" stroke={stroke} strokeWidth={sw} strokeLinejoin="round" />
-        <line x1={15} y1={15} x2={30} y2={5} stroke={stroke} strokeWidth={sw} strokeLinecap="round" />
-        <line x1={W-15} y1={15} x2={W-5} y2={5} stroke={stroke} strokeWidth={sw} strokeLinecap="round" />
-        {dims.A && label(W/2, H-4, `A=${dims.A}`)}
-        {dims.B && label(6, H/2, `B=${dims.B}`)}
-      </g>
-    ),
-    '60': (
-      <g>
-        <ellipse cx={W/2} cy={H/2} rx={W/2-15} ry={H/2-15} fill="none" stroke={stroke} strokeWidth={sw} strokeDasharray="6 3" />
-        {dims.B && label(W/2, H/2+4, `Ø${dims.B}`)}
-        {dims.A && label(W/2, H-4, `p=${dims.A}`)}
-      </g>
-    ),
-  }
-
-  return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="bg-slate-800/50 rounded">
-      {shapes[shapeCode] ?? shapes['00']}
-    </svg>
-  )
-}
+import { ShapeCodeSVG } from '../shape-code-svg'
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default async function FabricationPage({
@@ -164,7 +86,7 @@ export default async function FabricationPage({
                 <span className="font-mono font-bold text-white text-lg">Bar {bar.bar_mark}</span>
                 <span className="text-amber-300 text-sm">T{bar.diameter_mm}</span>
               </div>
-              <BarShapeSVG shapeCode={bar.shape_code} dims={bar.bending_dims ?? {}} diameter={bar.diameter_mm} />
+              <ShapeCodeSVG shapeCode={bar.shape_code} dims={bar.bending_dims ?? {}} showDims />
               <div className="mt-2 grid grid-cols-2 gap-x-3 text-xs text-slate-400">
                 <span>Shape: <strong className="text-slate-200">{bar.shape_code}</strong></span>
                 <span>Qty: <strong className="text-slate-200">{bar.quantity}</strong></span>

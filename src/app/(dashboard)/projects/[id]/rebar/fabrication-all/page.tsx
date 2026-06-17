@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { PrintButton } from './print-button'
+import { ShapeCodeSVG } from '../[elementId]/shape-code-svg'
 
 type Bar = {
   id: string
@@ -22,28 +23,6 @@ type Element = {
   element_type: string
   floor_level: string | null
   bars: Bar[]
-}
-
-// ─── Lightweight bar shape SVG (print-safe) ───────────────────────────────────
-function BarShapeMini({ shapeCode, dims }: { shapeCode: string; dims: Record<string, number> }) {
-  const W = 80, H = 50
-  const stroke = '#1f2937'  // dark for print
-  const sw = 2
-  const shapes: Record<string, React.ReactNode> = {
-    '00': <line x1={4} y1={H/2} x2={W-4} y2={H/2} stroke={stroke} strokeWidth={sw} strokeLinecap="round" />,
-    '11': <polyline points={`4,${H-4} 4,4 ${W-4},4`} fill="none" stroke={stroke} strokeWidth={sw} strokeLinejoin="round" strokeLinecap="round" />,
-    '21': <polyline points={`4,4 4,${H-4} ${W-4},${H-4} ${W-4},4`} fill="none" stroke={stroke} strokeWidth={sw} strokeLinejoin="round" strokeLinecap="round" />,
-    '31': <polyline points={`4,4 ${W*0.4},4 ${W*0.6},${H-4} ${W-4},${H-4}`} fill="none" stroke={stroke} strokeWidth={sw} strokeLinejoin="round" strokeLinecap="round" />,
-    '41': <polyline points={`4,4 4,${H-4} ${W-4},${H-4} ${W-4},4`} fill="none" stroke={stroke} strokeWidth={sw} strokeLinejoin="round" strokeLinecap="round" />,
-    '51': <><rect x={4} y={4} width={W-8} height={H-8} fill="none" stroke={stroke} strokeWidth={sw} strokeLinejoin="round" /><line x1={4} y1={4} x2={10} y2={1} stroke={stroke} strokeWidth={sw} /><line x1={W-4} y1={4} x2={W-2} y2={1} stroke={stroke} strokeWidth={sw} /></>,
-    '60': <ellipse cx={W/2} cy={H/2} rx={W/2-4} ry={H/2-4} fill="none" stroke={stroke} strokeWidth={sw} strokeDasharray="4 2" />,
-  }
-  void dims
-  return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
-      {shapes[shapeCode] ?? shapes['00']}
-    </svg>
-  )
 }
 
 export default async function FabricationAllPage({
@@ -141,7 +120,7 @@ export default async function FabricationAllPage({
                 {(el.bars ?? []).map(bar => (
                   <div key={bar.id} className="border border-gray-300 rounded p-2 text-center w-28 shrink-0">
                     <div className="text-xs font-bold mb-1">Bar {bar.bar_mark}</div>
-                    <BarShapeMini shapeCode={bar.shape_code} dims={bar.bending_dims ?? {}} />
+                    <ShapeCodeSVG shapeCode={bar.shape_code} dims={bar.bending_dims ?? {}} size={50} />
                     <div className="text-xs text-gray-600 mt-1">
                       T{bar.diameter_mm} · {bar.shape_code}
                     </div>
