@@ -486,9 +486,42 @@ export function ExtractClient({ projectId, drawings }: Props) {
   function handleSave() {
     startTransition(async () => {
       setStatus('saving')
-      let saved = 0
+      setErrorMsg('')
+      const saveErrors: string[] = []
+      let savedElements = 0
+      let savedBars = 0
+      let skippedEmptyElements = 0
 
-      // Upload page render images directly to storage, then save metadata
+      // ── Validation ──────────────────────────────────────────────────────
+      const keptEls = elements.filter(e => e.keep)
+      const allKeptBars = keptEls.flatMap(e => e.bars.filter(b => b.keep))
+      dbg(`Save: ${keptEls.length} elements, ${allKeptBars.length} bars selected`)
+
+      if (allKeptBars.length === 0) {
+        setErrorMsg('No bars selected. Check at least one bar before saving.')
+        setStatus('review')
+        return
+      }
+
+      for (const bar of allKeptBars) {
+        if (!bar.diameter_mm || bar.diameter_mm <= 0) {
+          saveErrors.push(`Bar "${bar.bar_mark}": invalid diameter (${bar.diameter_mm})`)
+        }
+        if (!bar.quantity || bar.quantity <= 0) {
+          saveErrors.push(`Bar "${bar.bar_mark}": invalid quantity (${bar.quantity})`)
+        }
+        const dimA = bar.bending_dims?.A
+        if (dimA !== undefined && dimA < 0) {
+          saveErrors.push(`Bar "${bar.bar_mark}": negative dimension A (${dimA})`)
+        }
+      }
+      if (saveErrors.length > 0) {
+        setErrorMsg(`Validation failed:\n${saveErrors.join('\n')}`)
+        setStatus('review')
+        return
+      }
+
+      // ── Upload page render images ───────────────────────────────────────
       if (pageRenders.length > 0 && selectedDrawingId) {
         const { uploadExtractionPage } = await import('@/lib/upload-client')
         for (const pr of pageRenders) {
@@ -500,6 +533,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
           )
           if ('error' in result) {
             dbg(`  ⚠ Upload failed: ${result.error}`)
+            saveErrors.push(`Page ${pr.page} image upload: ${result.error}`)
             continue
           }
           await saveExtractionPageMeta({
@@ -514,7 +548,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
         }
       }
 
-      // Build bbox lookup from annotated callouts
+      // ── Build bbox lookup ───────────────────────────────────────────────
       const bboxByRaw = new Map<string, { x0: number; y0: number; x1: number; y1: number; canvasW: number; canvasH: number; page: number }>()
       for (const ac of annotatedCallouts) {
         if (!bboxByRaw.has(ac.raw)) {
@@ -522,8 +556,16 @@ export function ExtractClient({ projectId, drawings }: Props) {
         }
       }
 
-      for (const el of elements) {
-        if (!el.keep) continue
+      // ── Save elements and bars ──────────────────────────────────────────
+      for (const el of keptEls) {
+        const keptBarsForEl = el.bars.filter(b => b.keep)
+        if (keptBarsForEl.length === 0) {
+          dbg(`Skipping element "${el.elementMark}" — no selected bars`)
+          skippedEmptyElements++
+          continue
+        }
+
+        dbg(`Creating element "${el.elementMark}" (${el.elementType}) with ${keptBarsForEl.length} bars…`)
         const result = await createRebarElement({
           project_id: projectId,
           element_type: el.elementType,
@@ -532,12 +574,27 @@ export function ExtractClient({ projectId, drawings }: Props) {
           source_drawing_id: selectedDrawingId || null,
           source_page: el.sourcePage ?? null,
         })
-        if (!result.success || !result.element) continue
-        for (const bar of el.bars) {
-          if (!bar.keep) continue
+
+        if (result.error) {
+          const msg = `Element "${el.elementMark}": ${result.error}`
+          dbg(`  ✗ ${msg}`)
+          saveErrors.push(msg)
+          continue
+        }
+        if (!result.element) {
+          const msg = `Element "${el.elementMark}": no data returned`
+          dbg(`  ✗ ${msg}`)
+          saveErrors.push(msg)
+          continue
+        }
+
+        dbg(`  ✓ Element created: ${result.element.id}`)
+        savedElements++
+
+        for (const bar of keptBarsForEl) {
           const rawKey = bar.notes.split(' ')[0]
           const bbox = bboxByRaw.get(rawKey) ?? null
-          await createRebarBar({
+          const barResult = await createRebarBar({
             element_id: result.element.id,
             bar_mark: bar.bar_mark,
             diameter_mm: bar.diameter_mm,
@@ -548,11 +605,28 @@ export function ExtractClient({ projectId, drawings }: Props) {
             ocr_bbox: bbox,
             ocr_confidence: bar.confidence < 100 ? bar.confidence : null,
           })
+          if (barResult.error) {
+            const msg = `Bar "${bar.bar_mark}" in "${el.elementMark}": ${barResult.error}`
+            dbg(`  ✗ ${msg}`)
+            saveErrors.push(msg)
+          } else {
+            savedBars++
+          }
         }
-        saved++
       }
-      setSavedCount(saved)
-      setStatus('done')
+
+      dbg(`Save complete: ${savedElements} elements, ${savedBars} bars saved, ${skippedEmptyElements} empty elements skipped, ${saveErrors.length} errors`)
+      setSavedCount(savedBars)
+
+      if (saveErrors.length > 0 && savedBars === 0) {
+        setErrorMsg(`Save failed — 0 bars persisted.\n${saveErrors.join('\n')}`)
+        setStatus('error')
+      } else if (saveErrors.length > 0) {
+        setErrorMsg(`${savedBars} bars saved with ${saveErrors.length} error(s):\n${saveErrors.join('\n')}`)
+        setStatus('done')
+      } else {
+        setStatus('done')
+      }
     })
   }
 
@@ -851,7 +925,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
             )}
             {status === 'done' && (
               <span className="flex items-center gap-2 text-green-400 text-sm font-semibold">
-                <Check size={14} /> {savedCount} elements saved
+                <Check size={14} /> {savedCount} bars saved successfully
               </span>
             )}
           </div>
@@ -999,7 +1073,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
 
           {status === 'done' && (
             <div className="mt-6 p-4 bg-green-900/20 border border-green-800 rounded-lg">
-              <p className="text-green-400 font-semibold">✓ {savedCount} elements saved to Rebar Schedule</p>
+              <p className="text-green-400 font-semibold">✓ {savedCount} bars saved successfully to Rebar Schedule</p>
               <div className="flex items-center gap-3 mt-3 flex-wrap">
                 <button onClick={handleFactoryPackage}
                   className="flex items-center gap-2 px-4 py-2 rounded bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold transition-colors">
