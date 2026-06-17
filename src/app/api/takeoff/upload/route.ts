@@ -52,11 +52,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing file or projectId' }, { status: 400 })
   }
 
-  const isDxf = file.name.toLowerCase().endsWith('.dxf')
-  const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+  const lower = file.name.toLowerCase()
+  const isDxf = lower.endsWith('.dxf')
+  const isPdf = file.type === 'application/pdf' || lower.endsWith('.pdf')
+  const isImage = ['image/jpeg', 'image/png', 'image/jpg'].includes(file.type) || /\.(jpe?g|png)$/.test(lower)
 
-  if (!isPdf && !isDxf) {
-    return NextResponse.json({ error: 'Only PDF and DXF files are supported' }, { status: 400 })
+  if (!isPdf && !isDxf && !isImage) {
+    return NextResponse.json({ error: 'Only PDF, DXF, JPG, and PNG files are supported' }, { status: 400 })
   }
 
   if (file.size > 100 * 1024 * 1024) {
@@ -70,7 +72,7 @@ export async function POST(request: NextRequest) {
   const storagePath = `${user.id}/${projectId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
   const buffer = await file.arrayBuffer()
 
-  const contentTypeMime = isDxf ? 'application/octet-stream' : 'application/pdf'
+  const contentTypeMime = isDxf ? 'application/octet-stream' : isImage ? file.type : 'application/pdf'
   let { error: uploadError } = await supabase.storage
     .from('drawings')
     .upload(storagePath, buffer, {
@@ -101,6 +103,6 @@ export async function POST(request: NextRequest) {
     storagePath,
     originalFilename: file.name,
     fileSizeBytes: file.size,
-    fileType: isDxf ? 'dxf' : 'pdf',
+    fileType: isDxf ? 'dxf' : isImage ? 'image' : 'pdf',
   })
 }

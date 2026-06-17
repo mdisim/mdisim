@@ -46,29 +46,36 @@ export async function uploadToStorage(
   try {
     const supabase = createClient()
 
-    const { error } = await supabase.storage
+    let { error } = await supabase.storage
       .from(bucket)
       .upload(path, data, { contentType, upsert: true })
 
+    // If MIME type is rejected, retry with application/octet-stream
+    if (error && (error.message.includes('mime type') || error.message.includes('not supported'))) {
+      console.log(`[Upload] MIME "${contentType}" rejected, retrying as application/octet-stream`)
+      const { error: retryErr } = await supabase.storage
+        .from(bucket)
+        .upload(path, data, { contentType: 'application/octet-stream', upsert: true })
+      error = retryErr ?? null
+    }
+
+    // If bucket doesn't exist, create it then retry
+    if (error && (error.message.includes('not found') || error.message.includes('Bucket'))) {
+      console.log(`[Upload] Bucket "${bucket}" not found, creating…`)
+      await supabase.storage.createBucket(bucket, {
+        public: false,
+        fileSizeLimit: MAX_FILE_SIZE,
+        allowedMimeTypes: ['application/pdf', 'application/octet-stream', 'image/jpeg', 'image/png', 'image/vnd.dxf', 'application/dxf'],
+      })
+      const { error: retryErr } = await supabase.storage
+        .from(bucket)
+        .upload(path, data, { contentType, upsert: true })
+      error = retryErr ?? null
+    }
+
     if (error) {
-      // If bucket doesn't exist, try to create it
-      if (error.message.includes('not found') || error.message.includes('Bucket')) {
-        console.log(`[Upload] Bucket "${bucket}" not found, creating…`)
-        await supabase.storage.createBucket(bucket, {
-          public: false,
-          fileSizeLimit: MAX_FILE_SIZE,
-        })
-        const { error: retryErr } = await supabase.storage
-          .from(bucket)
-          .upload(path, data, { contentType, upsert: true })
-        if (retryErr) {
-          onProgress?.({ phase: 'error', percent: 0, message: retryErr.message })
-          return { error: retryErr.message }
-        }
-      } else {
-        onProgress?.({ phase: 'error', percent: 0, message: error.message })
-        return { error: error.message }
-      }
+      onProgress?.({ phase: 'error', percent: 0, message: error.message })
+      return { error: error.message }
     }
 
     console.log(`[Upload] Complete: ${path} (${sizeMB} MB)`)

@@ -24,17 +24,17 @@ export function UploadForm({ projectId }: Props) {
 
   const acceptFile = useCallback((f: File) => {
     const lower = f.name.toLowerCase()
-    if (!(f.type === 'application/pdf' || lower.endsWith('.pdf') || lower.endsWith('.dxf'))) {
-      setError('Only PDF and DXF files are supported.')
+    if (!(f.type === 'application/pdf' || lower.endsWith('.pdf') || lower.endsWith('.dxf') || /\.(jpe?g|png)$/.test(lower))) {
+      setError('Only PDF, DXF, JPG, and PNG files are supported.')
       return
     }
     if (f.size > MAX_SIZE_BYTES) {
       const sizeMB = (f.size / (1024 * 1024)).toFixed(1)
-      setError(`File size ${sizeMB} MB exceeds the ${MAX_SIZE_MB} MB limit. Try compressing the PDF or splitting into smaller files.`)
+      setError(`File size ${sizeMB} MB exceeds the ${MAX_SIZE_MB} MB limit. Try compressing the file or splitting into smaller files.`)
       return
     }
     setFile(f)
-    setName(f.name.replace(/\.(pdf|dxf)$/i, ''))
+    setName(f.name.replace(/\.(pdf|dxf|jpe?g|png)$/i, ''))
     setError(null)
   }, [MAX_SIZE_BYTES])
 
@@ -113,7 +113,7 @@ export function UploadForm({ projectId }: Props) {
           file ? 'border-green-400 bg-green-50 cursor-default' : 'border-slate-300 hover:border-amber-400 hover:bg-amber-50/30'
         }`}
       >
-        <input ref={inputRef} type="file" accept=".pdf,.dxf" className="hidden" onChange={onFileChange} />
+        <input ref={inputRef} type="file" accept=".pdf,.dxf,.jpg,.jpeg,.png" className="hidden" onChange={onFileChange} />
 
         {file ? (
           <div className="flex items-center justify-center gap-3">
@@ -130,8 +130,8 @@ export function UploadForm({ projectId }: Props) {
         ) : (
           <>
             <Upload size={36} className="mx-auto mb-3 text-slate-400" />
-            <p className="text-slate-700 font-medium">Drop a PDF or DXF here or click to browse</p>
-            <p className="text-sm text-slate-400 mt-1">Max {MAX_SIZE_MB} MB · PDF or DXF</p>
+            <p className="text-slate-700 font-medium">Drop a PDF, DXF, or image here or click to browse</p>
+            <p className="text-sm text-slate-400 mt-1">Max {MAX_SIZE_MB} MB · PDF, DXF, JPG, PNG</p>
           </>
         )}
       </div>

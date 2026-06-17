@@ -166,6 +166,11 @@ export function ExtractClient({ projectId, drawings }: Props) {
   const [errorMsg, setErrorMsg] = useState('')
   const [elements, setElements] = useState<EditableElement[]>([])
   const [savedCount, setSavedCount] = useState(0)
+  const [saveDiagnostics, setSaveDiagnostics] = useState<{
+    detected: number; selected: number; saved: number
+    elementsCreated: number; elementsSkipped: number
+    drawingId: string; errors: string[]
+  } | null>(null)
   const [debug, setDebug] = useState<DebugState>({
     lines: [], pdfChars: 0, ocrChars: 0, ocrConfidence: 0,
     ocrPreview: '', calloutCount: 0, usedOCR: false, matchedLines: [],
@@ -615,8 +620,18 @@ export function ExtractClient({ projectId, drawings }: Props) {
         }
       }
 
+      const allDetectedBars = elements.flatMap(e => e.bars).length
       dbg(`Save complete: ${savedElements} elements, ${savedBars} bars saved, ${skippedEmptyElements} empty elements skipped, ${saveErrors.length} errors`)
       setSavedCount(savedBars)
+      setSaveDiagnostics({
+        detected: allDetectedBars,
+        selected: allKeptBars.length,
+        saved: savedBars,
+        elementsCreated: savedElements,
+        elementsSkipped: skippedEmptyElements,
+        drawingId: selectedDrawingId,
+        errors: saveErrors,
+      })
 
       if (saveErrors.length > 0 && savedBars === 0) {
         setErrorMsg(`Save failed — 0 bars persisted.\n${saveErrors.join('\n')}`)
@@ -1074,6 +1089,32 @@ export function ExtractClient({ projectId, drawings }: Props) {
           {status === 'done' && (
             <div className="mt-6 p-4 bg-green-900/20 border border-green-800 rounded-lg">
               <p className="text-green-400 font-semibold">✓ {savedCount} bars saved successfully to Rebar Schedule</p>
+              {saveDiagnostics && (
+                <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                  <div className="bg-slate-800 rounded px-3 py-2">
+                    <span className="text-slate-500">Detected</span>
+                    <span className="block text-white font-mono font-bold">{saveDiagnostics.detected} bars</span>
+                  </div>
+                  <div className="bg-slate-800 rounded px-3 py-2">
+                    <span className="text-slate-500">Selected</span>
+                    <span className="block text-amber-300 font-mono font-bold">{saveDiagnostics.selected} bars</span>
+                  </div>
+                  <div className="bg-slate-800 rounded px-3 py-2">
+                    <span className="text-slate-500">Saved</span>
+                    <span className="block text-green-400 font-mono font-bold">{saveDiagnostics.saved} bars</span>
+                  </div>
+                  <div className="bg-slate-800 rounded px-3 py-2">
+                    <span className="text-slate-500">Elements</span>
+                    <span className="block text-white font-mono font-bold">{saveDiagnostics.elementsCreated} created</span>
+                  </div>
+                </div>
+              )}
+              {saveDiagnostics?.errors && saveDiagnostics.errors.length > 0 && (
+                <div className="mt-3 p-3 bg-red-900/20 border border-red-800 rounded text-xs text-red-400">
+                  <p className="font-semibold mb-1">{saveDiagnostics.errors.length} error(s):</p>
+                  {saveDiagnostics.errors.map((e, i) => <p key={i}>{e}</p>)}
+                </div>
+              )}
               <div className="flex items-center gap-3 mt-3 flex-wrap">
                 <button onClick={handleFactoryPackage}
                   className="flex items-center gap-2 px-4 py-2 rounded bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold transition-colors">

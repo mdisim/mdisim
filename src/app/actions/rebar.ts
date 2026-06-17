@@ -49,11 +49,42 @@ export async function createRebarElement(input: RebarElementInput) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Unauthorized' }
 
-  const { data, error } = await supabase
+  // Build insert payload — only include optional columns if they have values,
+  // so the insert succeeds even if migration 019 hasn't run yet
+  const row: Record<string, unknown> = {
+    project_id: input.project_id,
+    element_type: input.element_type,
+    element_mark: input.element_mark,
+    floor_level: input.floor_level ?? null,
+    dimensions: input.dimensions ?? {},
+    notes: input.notes ?? null,
+    sort_order: input.sort_order ?? 0,
+    created_by: user.id,
+  }
+  if (input.drawing_id) row.drawing_id = input.drawing_id
+  if (input.source_drawing_id) row.source_drawing_id = input.source_drawing_id
+  if (input.source_page != null) row.source_page = input.source_page
+
+  let { data, error } = await supabase
     .from('rebar_elements')
-    .insert({ ...input, created_by: user.id, dimensions: input.dimensions ?? {} })
+    .insert(row)
     .select()
     .single()
+
+  // Fallback: if source_drawing_id column doesn't exist yet, retry without it
+  if (error && error.message.includes('source_drawing_id')) {
+    console.warn('[createRebarElement] source_drawing_id column missing — retrying without it. Run migration 019.')
+    delete row.source_drawing_id
+    delete row.source_page
+    const retry = await supabase
+      .from('rebar_elements')
+      .insert(row)
+      .select()
+      .single()
+    data = retry.data
+    error = retry.error
+  }
+
   if (error) return { error: error.message }
   revalidatePath(`/projects/${input.project_id}/rebar`)
   return { success: true, element: data }
@@ -114,11 +145,37 @@ function computeBarWeights(input: RebarBarInput) {
 export async function createRebarBar(input: RebarBarInput) {
   const supabase = await createClient()
   const computed = computeBarWeights(input)
-  const { data, error } = await supabase
+
+  const row: Record<string, unknown> = {
+    element_id: input.element_id,
+    bar_mark: input.bar_mark,
+    diameter_mm: input.diameter_mm,
+    shape_code: input.shape_code,
+    bending_dims: input.bending_dims,
+    quantity: input.quantity,
+    notes: input.notes ?? null,
+    sort_order: input.sort_order ?? 0,
+    ...computed,
+  }
+  if (input.ocr_bbox) row.ocr_bbox = input.ocr_bbox
+  if (input.ocr_confidence != null) row.ocr_confidence = input.ocr_confidence
+
+  let { data, error } = await supabase
     .from('rebar_bars')
-    .insert({ ...input, ...computed })
+    .insert(row)
     .select()
     .single()
+
+  // Fallback: if ocr columns don't exist yet, retry without them
+  if (error && (error.message.includes('ocr_bbox') || error.message.includes('ocr_confidence'))) {
+    console.warn('[createRebarBar] ocr columns missing — retrying without them. Run migration 019.')
+    delete row.ocr_bbox
+    delete row.ocr_confidence
+    const retry = await supabase.from('rebar_bars').insert(row).select().single()
+    data = retry.data
+    error = retry.error
+  }
+
   if (error) return { error: error.message }
   return { success: true, bar: data }
 }
