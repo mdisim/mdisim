@@ -76,12 +76,69 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
     })
   }
 
-  const totalWeight = elements
-    .flatMap(e => e.bars)
-    .reduce((sum, b) => sum + (b.total_weight_kg ?? 0), 0)
+  const allBars = elements.flatMap(e => e.bars)
+  const totalWeight = allBars.reduce((sum, b) => sum + (b.total_weight_kg ?? 0), 0)
+  const totalBarCount = allBars.reduce((sum, b) => sum + b.quantity, 0)
+
+  const diaMap = new Map<number, { count: number; weight: number }>()
+  for (const bar of allBars) {
+    const row = diaMap.get(bar.diameter_mm) ?? { count: 0, weight: 0 }
+    row.count += bar.quantity
+    row.weight += bar.total_weight_kg ?? 0
+    diaMap.set(bar.diameter_mm, row)
+  }
+  const diaRows = [...diaMap.entries()].sort((a, b) => a[0] - b[0])
+  const maxDiaWeight = Math.max(...diaRows.map(([, r]) => r.weight), 1)
 
   return (
     <div className="flex-1 overflow-auto p-6">
+      {/* Dashboard */}
+      <div className="grid grid-cols-4 gap-3 mb-6">
+        <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 text-center">
+          <p className="text-xs text-slate-500 uppercase tracking-wide">{t('total_weight', 'Total Weight')}</p>
+          <p className="text-2xl font-bold text-amber-400 mt-1">{totalWeight.toFixed(2)} kg</p>
+          <p className="text-xs text-slate-600 mt-0.5">{(totalWeight / 1000).toFixed(3)} t</p>
+        </div>
+        <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 text-center">
+          <p className="text-xs text-slate-500 uppercase tracking-wide">{t('quantity', 'Total Bars')}</p>
+          <p className="text-2xl font-bold text-white mt-1">{totalBarCount}</p>
+          <p className="text-xs text-slate-600 mt-0.5">{allBars.length} {t('bars', 'bar types')}</p>
+        </div>
+        <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 text-center">
+          <p className="text-xs text-slate-500 uppercase tracking-wide">{t('element_type', 'Elements')}</p>
+          <p className="text-2xl font-bold text-white mt-1">{elements.length}</p>
+        </div>
+        <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 text-center">
+          <p className="text-xs text-slate-500 uppercase tracking-wide">{t('diameter', 'Diameters')}</p>
+          <p className="text-2xl font-bold text-white mt-1">{diaRows.length}</p>
+          <p className="text-xs text-slate-600 mt-0.5">{diaRows.map(([d]) => `T${d}`).join(', ')}</p>
+        </div>
+      </div>
+
+      {/* Weight by diameter bar chart */}
+      {diaRows.length > 0 && (
+        <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6">
+          <p className="text-xs text-slate-500 uppercase tracking-wide mb-3">{t('weight', 'Weight')} by {t('diameter', 'Diameter')}</p>
+          <div className="space-y-2">
+            {diaRows.map(([d, row]) => (
+              <div key={d} className="flex items-center gap-3 text-xs">
+                <span className="font-mono w-10 text-amber-300 shrink-0">T{d}</span>
+                <div className="flex-1 bg-slate-800 rounded-full h-5 overflow-hidden">
+                  <div
+                    className="h-full bg-amber-600 rounded-full flex items-center justify-end pr-2"
+                    style={{ width: `${Math.max(5, (row.weight / maxDiaWeight) * 100)}%` }}
+                  >
+                    <span className="text-[10px] text-white font-semibold">{row.weight.toFixed(1)} kg</span>
+                  </div>
+                </div>
+                <span className="text-slate-500 w-16 text-right shrink-0">{row.count} pcs</span>
+                <span className="text-slate-600 w-12 text-right shrink-0">{totalWeight > 0 ? ((row.weight / totalWeight) * 100).toFixed(0) : 0}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Summary bar */}
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-slate-400">
