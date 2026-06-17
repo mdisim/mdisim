@@ -35,7 +35,7 @@ const REBAR_RE = new RegExp(
   // optional cut length:  L=929  l=116  L =929
   `(?:\\s+[Ll]\\s*=\\s*(\\d+))?` +
   // optional position keyword:
-  `(?:\\s+(TOP|BOT(?:TOM)?|T(?=\\s)|B(?=\\s)|EF|EW|NS|FS|NEAR|FAR|FACE|MAIN|DIST|ADD))?`,
+  `(?:\\s+(TOP|BOT(?:TOM)?|T(?=\\s)|B(?=\\s)|EF|EW|NS|FS|NEAR|FAR|FACE|MAIN|DIST|ADD|LINK|STIR(?:RUP)?|LEG|HANGER))?`,
   'g'
 )
 
@@ -163,6 +163,10 @@ const MARK_PATTERNS = [
   /\b(BEAM[-\s]?\d+[A-Z]?)\b/i,
   /\b(SLAB[-\s]?\d+[A-Z]?)\b/i,
   /\b(GL\d+)\b/i,
+  /\b([KLMNOPQ]\d*)\b/,
+  /\b(ST\d+)\b/i,
+  /\b(PL\d+)\b/i,
+  /\b(RF\d+)\b/i,
 ]
 
 const LEVEL_PATTERNS = [

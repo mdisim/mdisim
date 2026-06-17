@@ -7,20 +7,30 @@ const VALID_DIAMETERS = new Set([6, 8, 10, 12, 14, 16, 20, 25, 32, 40])
 // ─── Phase 1: single-character symbol substitutions ──────────────────────────
 function phase1SymbolFix(text: string): string {
   return text
+    // Ø symbol variants: ∅, Φ, φ, ⌀ → Ø
+    .replace(/[∅ΦφΦ⌀]/g, 'Ø')
     // Letter O / digit 0 immediately before a 1–2 digit number (diameter context)
     .replace(/([^\dA-Za-z]|^)[Oo0](\d{1,2})(?=[@\s\-LlXx\/\n,]|$)/g, '$1Ø$2')
     // Letter D used as Ø prefix (common with certain font + OCR combo)
     .replace(/\bD(\d{1,2})\b/g, 'Ø$1')
     // Leading O/0 before diameter + spacing: O12@200 or 012@200 → Ø12@200
     .replace(/\b[O0](\d{1,2})\s*[@\-]\s*(\d{2,4})/g, 'Ø$1@$2')
-    // @ symbol alternatives: Tesseract sometimes reads @ as 'a', 'A)', '(a', 'o)'
-    .replace(/\s+[aAoO]\s*(\d{2,4})/g, ' @$1')
-    // L= spacing variants
-    .replace(/[Ll]\s*[=:]\s*(\d+)/g, 'L=$1')
+    // @ symbol alternatives: Tesseract sometimes reads @ as 'a', 'A)', '(a', 'o)', 'at'
+    .replace(/\s+(?:[aAoO]|at)\s*(\d{2,4})/g, ' @$1')
+    // L= spacing variants: L=, l=, L:, L ~, L—
+    .replace(/[Ll]\s*[=:~—]\s*(\d+)/g, 'L=$1')
     // nX prefix: × or x with spaces
     .replace(/(\d)\s*[×xX×]\s*(\d)/g, '$1X$2')
+    // Fix common T-diameter OCR errors: "T 12" → "T12", "T1 2" → "T12"
+    .replace(/\bT\s+(\d{1,2})\b/g, 'T$1')
+    .replace(/\bT(\d)\s+(\d)\b/g, (_, d1, d2) => {
+      const dia = parseInt(d1 + d2, 10)
+      return VALID_DIAMETERS.has(dia) ? `T${dia}` : `T${d1} ${d2}`
+    })
     // Stray artefacts
     .replace(/[|\\`~]/g, ' ')
+    // Fix "No." or "#" used as count prefix: "No.4T12" → "4T12"
+    .replace(/No\.?\s*(\d)/gi, '$1')
 }
 
 // ─── Phase 2: garbage-prefix before @spacing ─────────────────────────────────
@@ -102,8 +112,25 @@ function phase5LetterDiaFix(text: string): string {
   )
 }
 
-// ─── Phase 6: tidy up ─────────────────────────────────────────────────────────
-function phase6Tidy(text: string): string {
+// ─── Phase 6: quantity/spacing pattern recovery ──────────────────────────────
+// Common structural drawing patterns that Tesseract garbles:
+//   "4 T12 @ 200" → "4T12@200"
+//   "4-T12-200"   → "4T12@200"  (dash as separator)
+//   "4No T12@200" → "4T12@200"
+function phase6PatternRecovery(text: string): string {
+  return text
+    // "count No. dia" or "count no dia" → "countTdia"
+    .replace(/(\d+)\s*(?:No\.?|nos?\.?)\s*(?:T|Ø)(\d{1,2})/gi, '$1T$2')
+    // "count - T dia - spacing" → "countTdia@spacing"
+    .replace(/(\d+)\s*-\s*T(\d{1,2})\s*-\s*(\d{2,4})/g, '$1T$2@$3')
+    // "count T dia c/c spacing" or "count T dia @ spacing c/c"
+    .replace(/(\d+T\d{1,2})\s*(?:@\s*)?(\d{2,4})\s*c\/?c/gi, '$1@$2')
+    // "T dia - spacing c/c" (no count)
+    .replace(/\b(T\d{1,2})\s*-\s*(\d{2,4})\s*c\/?c/gi, '$1@$2')
+}
+
+// ─── Phase 7: tidy up ─────────────────────────────────────────────────────────
+function phase7Tidy(text: string): string {
   return text
     .replace(/\s{2,}/g, ' ')     // collapse multiple spaces
     .replace(/\n{3,}/g, '\n\n')  // collapse triple+ blank lines
@@ -117,7 +144,8 @@ export function normalizeOCRText(raw: string): string {
   t = phase3CountDiaFix(t)
   t = phase4LengthFix(t)
   t = phase5LetterDiaFix(t)
-  t = phase6Tidy(t)
+  t = phase6PatternRecovery(t)
+  t = phase7Tidy(t)
   return t
 }
 

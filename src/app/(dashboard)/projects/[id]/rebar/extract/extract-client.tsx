@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { FileText, Zap, Check, AlertCircle, Trash2, ChevronDown, ChevronRight, Plus } from 'lucide-react'
-import { createRebarElement, createRebarBar } from '@/app/actions/rebar'
+import { useTranslation } from '@/lib/i18n/use-translation'
+import { createRebarElement, createRebarBar, saveExtractionPage } from '@/app/actions/rebar'
 import { calloutToBarDraft, type DetectedElement, type RebarCallout } from '@/lib/rebar-extractor'
 import { REBAR_DIAMETERS } from '@/lib/rebar-calc'
 import { ShapeCodeSVG } from '../[elementId]/shape-code-svg'
@@ -38,6 +39,7 @@ interface EditableBar {
   keep: boolean
   confidence: number          // 0–100 per-bar OCR confidence
   confidenceReasons: string[] // why confidence was reduced
+  ocr_bbox?: { x0: number; y0: number; x1: number; y1: number; canvasW: number; canvasH: number; page: number } | null
 }
 
 interface EditableElement {
@@ -158,6 +160,7 @@ interface MatchedLine {
 }
 
 export function ExtractClient({ projectId, drawings }: Props) {
+  const { t } = useTranslation()
   const [selectedDrawingId, setSelectedDrawingId] = useState(drawings[0]?.id ?? '')
   const [status, setStatus] = useState<Status>('idle')
   const [errorMsg, setErrorMsg] = useState('')
@@ -484,13 +487,55 @@ export function ExtractClient({ projectId, drawings }: Props) {
     startTransition(async () => {
       setStatus('saving')
       let saved = 0
+
+      // Save page render images for marked drawing
+      if (pageRenders.length > 0 && selectedDrawingId) {
+        for (const pr of pageRenders) {
+          await saveExtractionPage({
+            project_id: projectId,
+            drawing_id: selectedDrawingId,
+            page_number: pr.page,
+            image_data_url: pr.dataUrl,
+            width: pr.width,
+            height: pr.height,
+          })
+        }
+      }
+
+      // Build bbox lookup from annotated callouts
+      const bboxByRaw = new Map<string, { x0: number; y0: number; x1: number; y1: number; canvasW: number; canvasH: number; page: number }>()
+      for (const ac of annotatedCallouts) {
+        if (!bboxByRaw.has(ac.raw)) {
+          bboxByRaw.set(ac.raw, { x0: ac.x0, y0: ac.y0, x1: ac.x1, y1: ac.y1, canvasW: ac.canvasW, canvasH: ac.canvasH, page: ac.page })
+        }
+      }
+
       for (const el of elements) {
         if (!el.keep) continue
-        const result = await createRebarElement({ project_id: projectId, element_type: el.elementType, element_mark: el.elementMark, floor_level: el.floorLevel || null })
+        const result = await createRebarElement({
+          project_id: projectId,
+          element_type: el.elementType,
+          element_mark: el.elementMark,
+          floor_level: el.floorLevel || null,
+          source_drawing_id: selectedDrawingId || null,
+          source_page: el.sourcePage ?? null,
+        })
         if (!result.success || !result.element) continue
         for (const bar of el.bars) {
           if (!bar.keep) continue
-          await createRebarBar({ element_id: result.element.id, bar_mark: bar.bar_mark, diameter_mm: bar.diameter_mm, shape_code: bar.shape_code, bending_dims: bar.bending_dims, quantity: bar.quantity, notes: bar.notes || null })
+          const rawKey = bar.notes.split(' ')[0]
+          const bbox = bboxByRaw.get(rawKey) ?? null
+          await createRebarBar({
+            element_id: result.element.id,
+            bar_mark: bar.bar_mark,
+            diameter_mm: bar.diameter_mm,
+            shape_code: bar.shape_code,
+            bending_dims: bar.bending_dims,
+            quantity: bar.quantity,
+            notes: bar.notes || null,
+            ocr_bbox: bbox,
+            ocr_confidence: bar.confidence < 100 ? bar.confidence : null,
+          })
         }
         saved++
       }
@@ -565,7 +610,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
           disabled={!selectedDrawingId || status === 'extracting' || status === 'saving'}
           className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
           <Zap size={15} />
-          {status === 'extracting' ? 'Extracting…' : 'Extract Rebar from Drawing'}
+          {status === 'extracting' ? `${t('extract_reinforcement', 'Extracting')}…` : t('extract_reinforcement', 'Extract Rebar from Drawing')}
         </button>
         <p className="text-xs text-slate-600 mt-2">
           Tries native PDF text layer first, then falls back to Tesseract OCR for scanned drawings.
@@ -788,7 +833,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
               <div className="flex items-center gap-2">
                 <button onClick={handleSave}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white font-semibold text-sm transition-colors">
-                  <Check size={14} /> Save to Rebar Schedule
+                  <Check size={14} /> {t('save', 'Save')} {t('rebar_schedule', 'Rebar Schedule')}
                 </button>
               </div>
             )}

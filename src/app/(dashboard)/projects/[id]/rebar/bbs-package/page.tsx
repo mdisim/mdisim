@@ -33,17 +33,32 @@ export default async function BBSPackagePage({
   const { id } = await params
   const supabase = await createClient()
 
-  const [{ data: project }, { data: rawElements }] = await Promise.all([
+  const [{ data: project }, { data: rawElements }, { data: extractionPages }] = await Promise.all([
     supabase.from('projects').select('id, name, location, client_name, start_date, end_date').eq('id', id).single(),
     supabase
       .from('rebar_elements')
-      .select('id, element_mark, element_type, floor_level, bars:rebar_bars(id, bar_mark, diameter_mm, shape_code, bending_dims, cut_length_mm, quantity, unit_weight_kg_m, total_weight_kg, notes)')
+      .select('id, element_mark, element_type, floor_level, bars:rebar_bars(id, bar_mark, diameter_mm, shape_code, bending_dims, cut_length_mm, quantity, unit_weight_kg_m, total_weight_kg, notes, ocr_bbox)')
       .eq('project_id', id)
       .order('sort_order'),
+    supabase
+      .from('rebar_extraction_pages')
+      .select('*')
+      .eq('project_id', id)
+      .order('page_number'),
   ])
 
   if (!project) notFound()
   const elements = (rawElements ?? []) as Element[]
+
+  // Get signed URLs for extraction page images (for marked drawing in package)
+  const markedDrawingPages = await Promise.all(
+    (extractionPages ?? []).map(async (p: { image_storage_path: string; page_number: number }) => {
+      const { data: signed } = await supabase.storage
+        .from('drawings')
+        .createSignedUrl(p.image_storage_path, 3600)
+      return { page: p.page_number, url: signed?.signedUrl ?? null }
+    })
+  )
 
   const diaMap = new Map<number, { bars: number; lengthMm: number; weightKg: number }>()
   let grandTotal = 0
@@ -233,6 +248,23 @@ export default async function BBSPackagePage({
             </div>
           )
         })}
+
+        {/* ═══════════════ MARKED DRAWING ═══════════════ */}
+        {markedDrawingPages.filter(p => p.url).length > 0 && (
+          <div className="mt-8 break-before-page">
+            <h2 className="text-lg font-bold border-b-2 border-gray-400 pb-2 mb-4">Marked Drawing</h2>
+            {markedDrawingPages.filter(p => p.url).map(p => (
+              <div key={p.page} className="mb-6 break-inside-avoid">
+                {markedDrawingPages.length > 1 && (
+                  <p className="text-sm text-gray-500 mb-2">Page {p.page}</p>
+                )}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={p.url!} alt={`Extraction page ${p.page}`} className="w-full border border-gray-300 rounded" />
+              </div>
+            ))}
+            <p className="text-xs text-gray-500 mt-2">Source drawing with detected rebar callout positions from OCR extraction.</p>
+          </div>
+        )}
 
         {/* ═══════════════ DRAWING REFERENCES ═══════════════ */}
         <div className="mt-8 break-before-page">

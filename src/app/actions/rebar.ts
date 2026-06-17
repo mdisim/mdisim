@@ -8,6 +8,8 @@ import { calcCutLength, calcBarWeight, type ShapeCode, type BendingDims, UNIT_WE
 export interface RebarElementInput {
   project_id: string
   drawing_id?: string | null
+  source_drawing_id?: string | null
+  source_page?: number | null
   element_type: string
   element_mark: string
   floor_level?: string | null
@@ -25,6 +27,8 @@ export interface RebarBarInput {
   quantity: number
   notes?: string | null
   sort_order?: number
+  ocr_bbox?: { x0: number; y0: number; x1: number; y1: number; canvasW: number; canvasH: number; page: number } | null
+  ocr_confidence?: number | null
 }
 
 // ─── Elements ────────────────────────────────────────────────────────────────
@@ -149,6 +153,78 @@ export async function deleteRebarBar(id: string) {
   const { error } = await supabase.from('rebar_bars').delete().eq('id', id)
   if (error) return { error: error.message }
   return { success: true }
+}
+
+// ─── Extraction page storage ────────────────────────────────────────────────
+export async function saveExtractionPage(input: {
+  project_id: string
+  drawing_id: string
+  page_number: number
+  image_data_url: string
+  width: number
+  height: number
+}) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Unauthorized' }
+
+  const base64 = input.image_data_url.replace(/^data:image\/\w+;base64,/, '')
+  const buffer = Buffer.from(base64, 'base64')
+  const path = `extractions/${input.project_id}/${input.drawing_id}/page_${input.page_number}.jpg`
+
+  const { error: uploadErr } = await supabase.storage
+    .from('drawings')
+    .upload(path, buffer, { contentType: 'image/jpeg', upsert: true })
+  if (uploadErr) return { error: uploadErr.message }
+
+  const { error: dbErr } = await supabase
+    .from('rebar_extraction_pages')
+    .upsert({
+      project_id: input.project_id,
+      drawing_id: input.drawing_id,
+      page_number: input.page_number,
+      image_storage_path: path,
+      width: input.width,
+      height: input.height,
+    }, { onConflict: 'project_id,drawing_id,page_number' })
+    .select()
+
+  if (dbErr) {
+    await supabase
+      .from('rebar_extraction_pages')
+      .insert({
+        project_id: input.project_id,
+        drawing_id: input.drawing_id,
+        page_number: input.page_number,
+        image_storage_path: path,
+        width: input.width,
+        height: input.height,
+      })
+  }
+
+  return { success: true, path }
+}
+
+export async function getExtractionPages(projectId: string, drawingId?: string) {
+  const supabase = await createClient()
+  let query = supabase
+    .from('rebar_extraction_pages')
+    .select('*')
+    .eq('project_id', projectId)
+    .order('page_number')
+  if (drawingId) query = query.eq('drawing_id', drawingId)
+  const { data, error } = await query
+  if (error) return { pages: [], error: error.message }
+
+  const pages = await Promise.all(
+    (data ?? []).map(async (p: { image_storage_path: string; page_number: number; width: number; height: number; drawing_id: string }) => {
+      const { data: signed } = await supabase.storage
+        .from('drawings')
+        .createSignedUrl(p.image_storage_path, 3600)
+      return { ...p, signedUrl: signed?.signedUrl ?? null }
+    })
+  )
+  return { pages }
 }
 
 // ─── DXF layer hints ─────────────────────────────────────────────────────────

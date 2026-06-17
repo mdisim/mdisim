@@ -77,25 +77,65 @@ export default async function FabricationPage({
           </div>
         </div>
 
-        {/* Bar shapes grid */}
-        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Bar Shapes</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-          {(bars ?? []).map((bar: Bar) => (
-            <div key={bar.id} className="bg-slate-900 border border-slate-700 rounded-lg p-3 print:border-gray-300 print:bg-white">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-mono font-bold text-white text-lg">Bar {bar.bar_mark}</span>
-                <span className="text-amber-300 text-sm">T{bar.diameter_mm}</span>
+        {/* Bar shapes grid — detailed fabrication cards */}
+        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Fabrication Drawings</h2>
+        <div className="grid grid-cols-2 gap-4 mb-8">
+          {(bars ?? []).map((bar: Bar) => {
+            const dims = bar.bending_dims ?? {}
+            const dimEntries = Object.entries(dims).filter(([, v]) => v > 0)
+            return (
+              <div key={bar.id} className="bg-slate-900 border border-slate-700 rounded-lg p-4 print:border-gray-300 print:bg-white">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-white text-xl">Bar {bar.bar_mark}</span>
+                    <span className="px-1.5 py-0.5 rounded bg-slate-800 text-amber-300 text-xs font-mono">T{bar.diameter_mm}</span>
+                    <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 text-xs">SC {bar.shape_code}</span>
+                  </div>
+                  <span className="text-xs text-slate-500">×{bar.quantity}</span>
+                </div>
+                <ShapeCodeSVG shapeCode={bar.shape_code} dims={dims} showDims />
+                <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                  <div className="bg-slate-800/50 rounded p-1.5">
+                    <span className="text-slate-500 block">Shape Code</span>
+                    <span className="text-white font-mono font-bold">{bar.shape_code}</span>
+                  </div>
+                  <div className="bg-slate-800/50 rounded p-1.5">
+                    <span className="text-slate-500 block">Diameter</span>
+                    <span className="text-amber-300 font-bold">T{bar.diameter_mm}</span>
+                  </div>
+                  <div className="bg-slate-800/50 rounded p-1.5">
+                    <span className="text-slate-500 block">Quantity</span>
+                    <span className="text-white font-bold">{bar.quantity}</span>
+                  </div>
+                  {dimEntries.map(([k, v]) => (
+                    <div key={k} className="bg-slate-800/50 rounded p-1.5">
+                      <span className="text-slate-500 block">Dim {k}</span>
+                      <span className="text-slate-200 font-mono">{v} mm</span>
+                    </div>
+                  ))}
+                  {bar.cut_length_mm && (
+                    <div className="bg-slate-800/50 rounded p-1.5">
+                      <span className="text-slate-500 block">Total Length</span>
+                      <span className="text-slate-200 font-mono">{bar.cut_length_mm.toFixed(0)} mm</span>
+                    </div>
+                  )}
+                  {bar.unit_weight_kg_m && (
+                    <div className="bg-slate-800/50 rounded p-1.5">
+                      <span className="text-slate-500 block">Unit Wt</span>
+                      <span className="text-slate-400 font-mono">{bar.unit_weight_kg_m.toFixed(4)} kg/m</span>
+                    </div>
+                  )}
+                  {bar.total_weight_kg && (
+                    <div className="bg-slate-800/50 rounded p-1.5">
+                      <span className="text-slate-500 block">Total Weight</span>
+                      <span className="text-green-400 font-bold">{bar.total_weight_kg.toFixed(3)} kg</span>
+                    </div>
+                  )}
+                </div>
+                {bar.notes && <p className="text-xs text-slate-600 mt-2 truncate">{bar.notes}</p>}
               </div>
-              <ShapeCodeSVG shapeCode={bar.shape_code} dims={bar.bending_dims ?? {}} showDims />
-              <div className="mt-2 grid grid-cols-2 gap-x-3 text-xs text-slate-400">
-                <span>Shape: <strong className="text-slate-200">{bar.shape_code}</strong></span>
-                <span>Qty: <strong className="text-slate-200">{bar.quantity}</strong></span>
-                {bar.cut_length_mm && <span>Cut L: <strong className="text-slate-200">{bar.cut_length_mm.toFixed(0)} mm</strong></span>}
-                {bar.total_weight_kg && <span>Wt: <strong className="text-green-400">{bar.total_weight_kg.toFixed(3)} kg</strong></span>}
-              </div>
-              {bar.notes && <p className="text-xs text-slate-600 mt-1 truncate">{bar.notes}</p>}
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {/* BBS Table */}
@@ -103,7 +143,7 @@ export default async function FabricationPage({
         <table className="w-full text-xs border-collapse border border-slate-700 print:border-gray-400">
           <thead>
             <tr className="bg-slate-800 print:bg-gray-100">
-              {['Mark','Dia.','Shape','A (mm)','B (mm)','C (mm)','Qty','Cut L (mm)','Unit Wt (kg/m)','Total Wt (kg)'].map(h => (
+              {['Mark','Dia.','Shape','A (mm)','B (mm)','C (mm)','D (mm)','Qty','Cut L (mm)','Unit Wt (kg/m)','Total Wt (kg)'].map(h => (
                 <th key={h} className="border border-slate-700 print:border-gray-400 px-2 py-1.5 text-left font-semibold text-slate-300 print:text-gray-800">{h}</th>
               ))}
             </tr>
@@ -117,6 +157,7 @@ export default async function FabricationPage({
                 <td className="border border-slate-700 print:border-gray-300 px-2 py-1.5 text-right text-slate-300 print:text-black">{bar.bending_dims?.A ?? '—'}</td>
                 <td className="border border-slate-700 print:border-gray-300 px-2 py-1.5 text-right text-slate-300 print:text-black">{bar.bending_dims?.B ?? '—'}</td>
                 <td className="border border-slate-700 print:border-gray-300 px-2 py-1.5 text-right text-slate-300 print:text-black">{bar.bending_dims?.C ?? '—'}</td>
+                <td className="border border-slate-700 print:border-gray-300 px-2 py-1.5 text-right text-slate-300 print:text-black">{bar.bending_dims?.D ?? '—'}</td>
                 <td className="border border-slate-700 print:border-gray-300 px-2 py-1.5 text-right text-slate-300 print:text-black">{bar.quantity}</td>
                 <td className="border border-slate-700 print:border-gray-300 px-2 py-1.5 text-right font-mono text-slate-200 print:text-black">{bar.cut_length_mm?.toFixed(0) ?? '—'}</td>
                 <td className="border border-slate-700 print:border-gray-300 px-2 py-1.5 text-right text-slate-400 print:text-black">{bar.unit_weight_kg_m?.toFixed(4) ?? '—'}</td>
@@ -124,7 +165,7 @@ export default async function FabricationPage({
               </tr>
             ))}
             <tr className="bg-slate-900 print:bg-gray-50 font-bold border-t-2 border-slate-600">
-              <td colSpan={9} className="px-2 py-2 text-right text-slate-400 print:text-gray-600">TOTAL</td>
+              <td colSpan={10} className="px-2 py-2 text-right text-slate-400 print:text-gray-600">TOTAL</td>
               <td className="px-2 py-2 text-right text-green-400 font-bold print:text-black">{totalWeight.toFixed(3)}</td>
             </tr>
           </tbody>
