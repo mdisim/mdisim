@@ -156,11 +156,13 @@ export async function deleteRebarBar(id: string) {
 }
 
 // ─── Extraction page storage ────────────────────────────────────────────────
-export async function saveExtractionPage(input: {
+// Image data is uploaded directly to Supabase Storage from the client.
+// This action only saves the metadata record.
+export async function saveExtractionPageMeta(input: {
   project_id: string
   drawing_id: string
   page_number: number
-  image_data_url: string
+  image_storage_path: string
   width: number
   height: number
 }) {
@@ -168,41 +170,34 @@ export async function saveExtractionPage(input: {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Unauthorized' }
 
-  const base64 = input.image_data_url.replace(/^data:image\/\w+;base64,/, '')
-  const buffer = Buffer.from(base64, 'base64')
-  const path = `extractions/${input.project_id}/${input.drawing_id}/page_${input.page_number}.jpg`
-
-  const { error: uploadErr } = await supabase.storage
-    .from('drawings')
-    .upload(path, buffer, { contentType: 'image/jpeg', upsert: true })
-  if (uploadErr) return { error: uploadErr.message }
-
   const { error: dbErr } = await supabase
     .from('rebar_extraction_pages')
     .upsert({
       project_id: input.project_id,
       drawing_id: input.drawing_id,
       page_number: input.page_number,
-      image_storage_path: path,
+      image_storage_path: input.image_storage_path,
       width: input.width,
       height: input.height,
     }, { onConflict: 'project_id,drawing_id,page_number' })
     .select()
 
   if (dbErr) {
-    await supabase
+    // Fallback: try insert if upsert fails (no unique constraint yet)
+    const { error: insertErr } = await supabase
       .from('rebar_extraction_pages')
       .insert({
         project_id: input.project_id,
         drawing_id: input.drawing_id,
         page_number: input.page_number,
-        image_storage_path: path,
+        image_storage_path: input.image_storage_path,
         width: input.width,
         height: input.height,
       })
+    if (insertErr) return { error: insertErr.message }
   }
 
-  return { success: true, path }
+  return { success: true, path: input.image_storage_path }
 }
 
 export async function getExtractionPages(projectId: string, drawingId?: string) {

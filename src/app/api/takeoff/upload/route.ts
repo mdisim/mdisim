@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+export const maxDuration = 60
+export const dynamic = 'force-dynamic'
+
 // In-memory rate limit: max 5 uploads/minute per user
 const uploadTracker = new Map<string, { count: number; windowStart: number }>()
 const RATE_LIMIT = 5
@@ -32,8 +35,8 @@ export async function POST(request: NextRequest) {
 
   // File size limit via Content-Length header (early rejection)
   const contentLength = request.headers.get('content-length')
-  if (contentLength && parseInt(contentLength, 10) > 50 * 1024 * 1024) {
-    return NextResponse.json({ error: 'File size must be under 50MB' }, { status: 413 })
+  if (contentLength && parseInt(contentLength, 10) > 100 * 1024 * 1024) {
+    return NextResponse.json({ error: 'File size must be under 100MB' }, { status: 413 })
   }
 
   // Rate limit
@@ -56,9 +59,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Only PDF and DXF files are supported' }, { status: 400 })
   }
 
-  if (file.size > 50 * 1024 * 1024) {
-    return NextResponse.json({ error: 'File size must be under 50MB' }, { status: 400 })
+  if (file.size > 100 * 1024 * 1024) {
+    const sizeMB = (file.size / (1024 * 1024)).toFixed(1)
+    console.error(`[Upload] Rejected: ${file.name} (${sizeMB} MB) exceeds 100 MB limit`)
+    return NextResponse.json({ error: `File size ${sizeMB} MB exceeds the 100 MB limit` }, { status: 413 })
   }
+
+  console.log(`[Upload] Processing: ${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB, ${file.type})`)
 
   const storagePath = `${user.id}/${projectId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
   const buffer = await file.arrayBuffer()
@@ -75,8 +82,8 @@ export async function POST(request: NextRequest) {
   if (uploadError && (uploadError.message.includes('Bucket not found') || uploadError.message.includes('bucket') || uploadError.message.includes('not found'))) {
     const { error: bucketErr } = await supabase.storage.createBucket('drawings', {
       public: false,
-      fileSizeLimit: 52428800,
-      allowedMimeTypes: ['application/pdf', 'application/octet-stream'],
+      fileSizeLimit: 104857600, // 100 MB
+      allowedMimeTypes: ['application/pdf', 'application/octet-stream', 'image/jpeg', 'image/png'],
     })
     if (!bucketErr || bucketErr.message.includes('already exists')) {
       const { error: retryErr } = await supabase.storage

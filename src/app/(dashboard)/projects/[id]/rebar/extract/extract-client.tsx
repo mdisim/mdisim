@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { FileText, Zap, Check, AlertCircle, Trash2, ChevronDown, ChevronRight, Plus } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n/use-translation'
-import { createRebarElement, createRebarBar, saveExtractionPage } from '@/app/actions/rebar'
+import { createRebarElement, createRebarBar, saveExtractionPageMeta } from '@/app/actions/rebar'
 import { calloutToBarDraft, type DetectedElement, type RebarCallout } from '@/lib/rebar-extractor'
 import { REBAR_DIAMETERS } from '@/lib/rebar-calc'
 import { ShapeCodeSVG } from '../[elementId]/shape-code-svg'
@@ -488,17 +488,29 @@ export function ExtractClient({ projectId, drawings }: Props) {
       setStatus('saving')
       let saved = 0
 
-      // Save page render images for marked drawing
+      // Upload page render images directly to storage, then save metadata
       if (pageRenders.length > 0 && selectedDrawingId) {
+        const { uploadExtractionPage } = await import('@/lib/upload-client')
         for (const pr of pageRenders) {
-          await saveExtractionPage({
+          const sizeMB = (pr.dataUrl.length * 0.75 / (1024 * 1024)).toFixed(1)
+          dbg(`Uploading page ${pr.page} render (≈${sizeMB} MB)…`)
+          const result = await uploadExtractionPage(
+            projectId, selectedDrawingId, pr.page,
+            pr.dataUrl, pr.width, pr.height,
+          )
+          if ('error' in result) {
+            dbg(`  ⚠ Upload failed: ${result.error}`)
+            continue
+          }
+          await saveExtractionPageMeta({
             project_id: projectId,
             drawing_id: selectedDrawingId,
             page_number: pr.page,
-            image_data_url: pr.dataUrl,
+            image_storage_path: result.path,
             width: pr.width,
             height: pr.height,
           })
+          dbg(`  ✓ Page ${pr.page} saved`)
         }
       }
 
