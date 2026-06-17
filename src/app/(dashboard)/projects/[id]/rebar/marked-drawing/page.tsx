@@ -11,7 +11,7 @@ export default async function MarkedDrawingPage({
   const { id } = await params
   const supabase = await createClient()
 
-  const [{ data: project }, elemResult, pagesResult] = await Promise.all([
+  const [{ data: project }, elemResult, pagesResult, { data: allDrawings }] = await Promise.all([
     supabase.from('projects').select('id, name').eq('id', id).single(),
     supabase
       .from('rebar_elements')
@@ -23,6 +23,11 @@ export default async function MarkedDrawingPage({
       .select('*')
       .eq('project_id', id)
       .order('page_number'),
+    supabase
+      .from('drawing_files')
+      .select('id, name, storage_path, file_type, page_count, created_at')
+      .eq('project_id', id)
+      .order('created_at', { ascending: false }),
   ])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,8 +54,17 @@ export default async function MarkedDrawingPage({
     ocr_confidence: number | null
     notes: string | null
   }
+  type ElemRow = {
+    id: string
+    element_mark: string
+    element_type: string
+    source_drawing_id?: string | null
+    source_page?: number | null
+    bars: BarRow[]
+  }
 
-  const barMarks = (elements ?? []).flatMap((el: { element_mark: string; bars: BarRow[] }) =>
+  // Build bar marks WITH source drawing info
+  const barMarks = (elements ?? []).flatMap((el: ElemRow) =>
     (el.bars ?? []).map((b: BarRow) => ({
       id: b.id,
       mark: b.bar_mark,
@@ -60,10 +74,12 @@ export default async function MarkedDrawingPage({
       bbox: b.ocr_bbox ?? null,
       confidence: b.ocr_confidence ?? null,
       notes: b.notes,
+      sourceDrawingId: el.source_drawing_id ?? null,
+      sourcePage: el.source_page ?? null,
     }))
   )
 
-  // ── Strategy 1: Use extraction page renders (already-rasterized OCR images) ──
+  // Extraction page images grouped by drawing
   const pageImages = await Promise.all(
     (extractionPages ?? []).map(async (p: { image_storage_path: string; page_number: number; width: number; height: number; drawing_id: string }) => {
       const { data: signed } = await supabase.storage
@@ -80,50 +96,38 @@ export default async function MarkedDrawingPage({
   )
   const validPageImages = pageImages.filter((p): p is typeof p & { url: string } => p.url !== null)
 
-  // ── Strategy 2: Fall back to source drawing PDF from drawing_files ───────────
-  let sourceDrawingUrl: string | null = null
-  let sourceDrawingType: string | null = null
-
-  if (validPageImages.length === 0) {
-    // Try source_drawing_id from elements first
-    const sourceDrawingIds = new Set(
-      (elements ?? [])
-        .map((el: { source_drawing_id?: string }) => el.source_drawing_id)
-        .filter(Boolean) as string[]
-    )
-
-    let drawingFile: { id: string; storage_path: string; file_type: string | null } | null = null
-
-    if (sourceDrawingIds.size > 0) {
-      const firstId = [...sourceDrawingIds][0]
-      const { data } = await supabase
-        .from('drawing_files')
-        .select('id, storage_path, file_type')
-        .eq('id', firstId)
-        .single()
-      drawingFile = data
-    }
-
-    // If no source_drawing_id, get any drawing in the project
-    if (!drawingFile) {
-      const { data } = await supabase
-        .from('drawing_files')
-        .select('id, storage_path, file_type')
-        .eq('project_id', id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
-      drawingFile = data
-    }
-
-    if (drawingFile?.storage_path) {
+  // Build drawing options with signed URLs for source PDF fallback
+  const drawings = await Promise.all(
+    (allDrawings ?? []).map(async (d: { id: string; name: string; storage_path: string; file_type: string | null; page_count: number; created_at: string }) => {
       const { data: signed } = await supabase.storage
         .from('drawings')
-        .createSignedUrl(drawingFile.storage_path, 3600)
-      sourceDrawingUrl = signed?.signedUrl ?? null
-      sourceDrawingType = drawingFile.file_type ?? 'pdf'
-    }
-  }
+        .createSignedUrl(d.storage_path, 3600)
+      const barCount = barMarks.filter(b => b.sourceDrawingId === d.id).length
+      const extractionPageCount = (extractionPages ?? []).filter(
+        (p: { drawing_id: string }) => p.drawing_id === d.id
+      ).length
+      return {
+        id: d.id,
+        name: d.name,
+        fileType: d.file_type ?? 'pdf',
+        pageCount: d.page_count,
+        createdAt: d.created_at,
+        signedUrl: signed?.signedUrl ?? null,
+        barCount,
+        hasExtractionImages: extractionPageCount > 0,
+      }
+    })
+  )
+
+  // Determine which drawing to show by default:
+  // 1. Drawing with most linked bars
+  // 2. Drawing with extraction images
+  // 3. Most recent drawing
+  const drawingWithMostBars = [...drawings].sort((a, b) => b.barCount - a.barCount)[0]
+  const drawingWithExtraction = drawings.find(d => d.hasExtractionImages)
+  const defaultDrawingId = drawingWithMostBars?.barCount > 0
+    ? drawingWithMostBars.id
+    : drawingWithExtraction?.id ?? drawings[0]?.id ?? null
 
   return (
     <div className="flex flex-col h-full bg-slate-950 text-slate-100">
@@ -137,8 +141,8 @@ export default async function MarkedDrawingPage({
       <MarkedDrawingClient
         barMarks={barMarks}
         pageImages={validPageImages}
-        sourceDrawingUrl={sourceDrawingUrl}
-        sourceDrawingType={sourceDrawingType}
+        drawings={drawings}
+        defaultDrawingId={defaultDrawingId}
       />
     </div>
   )
