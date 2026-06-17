@@ -5,6 +5,7 @@ import { Plus, Trash2, Download } from 'lucide-react'
 import { createRebarBar, updateRebarBar, deleteRebarBar } from '@/app/actions/rebar'
 import { ShapeCodeSVG } from './shape-code-svg'
 import { REBAR_DIAMETERS } from '@/lib/rebar-calc'
+import { useTranslation } from '@/lib/i18n/use-translation'
 
 interface RebarBar {
   id: string
@@ -47,6 +48,7 @@ interface Props {
 }
 
 export function BBSEditor({ elementId, initialBars }: Props) {
+  const { t } = useTranslation()
   const [bars, setBars] = useState<RebarBar[]>(initialBars)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draft, setDraft] = useState<typeof BLANK_BAR>(BLANK_BAR)
@@ -174,7 +176,7 @@ export function BBSEditor({ elementId, initialBars }: Props) {
             onClick={startAdd}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded bg-amber-600 hover:bg-amber-500 text-white transition-colors"
           >
-            <Plus size={13} /> Add Bar
+            <Plus size={13} /> {t('add', 'Add')} {t('bar_mark', 'Bar')}
           </button>
         </div>
       </div>
@@ -182,7 +184,7 @@ export function BBSEditor({ elementId, initialBars }: Props) {
       {/* Edit / Add form */}
       {editingId && (
         <div className="mb-5 p-4 bg-slate-800 rounded-lg border border-amber-500/30">
-          <h3 className="text-sm font-semibold text-amber-400 mb-3">{editingId === 'new' ? 'Add Bar' : 'Edit Bar'}</h3>
+          <h3 className="text-sm font-semibold text-amber-400 mb-3">{editingId === 'new' ? `${t('add', 'Add')} ${t('bar_mark', 'Bar')}` : `${t('edit', 'Edit')} ${t('bar_mark', 'Bar')}`}</h3>
           <div className="flex flex-wrap gap-3 items-end">
             <div>
               <label className="block text-xs text-slate-400 mb-1">Mark *</label>
