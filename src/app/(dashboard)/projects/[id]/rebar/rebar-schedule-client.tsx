@@ -7,6 +7,7 @@ import {
   createRebarElement,
   deleteRebarElement,
 } from '@/app/actions/rebar'
+import { useTranslation } from '@/lib/i18n/use-translation'
 
 interface RebarBar {
   id: string
@@ -35,6 +36,7 @@ interface Props {
 }
 
 export function RebarScheduleClient({ projectId, initialElements }: Props) {
+  const { t } = useTranslation()
   const [elements, setElements] = useState<RebarElement[]>(initialElements)
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [adding, setAdding] = useState(false)
@@ -83,14 +85,14 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
       {/* Summary bar */}
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-slate-400">
-          {elements.length} element{elements.length !== 1 ? 's' : ''} &nbsp;·&nbsp;
-          Total steel: <span className="text-amber-400 font-semibold">{totalWeight.toFixed(2)} kg</span>
+          {elements.length} {t('element_type', 'elements')} &nbsp;·&nbsp;
+          {t('total_steel', 'Total steel')}: <span className="text-amber-400 font-semibold">{totalWeight.toFixed(2)} kg</span>
         </p>
         <button
           onClick={() => setAdding(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded bg-amber-600 hover:bg-amber-500 text-white transition-colors"
         >
-          <Plus size={14} /> Add Element
+          <Plus size={14} /> {t('add_element', 'Add Element')}
         </button>
       </div>
 
@@ -98,7 +100,7 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
       {adding && (
         <div className="mb-4 p-4 bg-slate-800 rounded-lg border border-slate-700 flex flex-wrap gap-3 items-end">
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Type</label>
+            <label className="block text-xs text-slate-400 mb-1">{t('element_type', 'Type')}</label>
             <select
               value={form.element_type}
               onChange={e => setForm(f => ({ ...f, element_type: e.target.value }))}
@@ -108,7 +110,7 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Mark *</label>
+            <label className="block text-xs text-slate-400 mb-1">{t('element_mark', 'Mark')} *</label>
             <input
               value={form.element_mark}
               onChange={e => setForm(f => ({ ...f, element_mark: e.target.value }))}
@@ -117,7 +119,7 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
             />
           </div>
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Floor/Level</label>
+            <label className="block text-xs text-slate-400 mb-1">{t('floor_level', 'Floor/Level')}</label>
             <input
               value={form.floor_level}
               onChange={e => setForm(f => ({ ...f, floor_level: e.target.value }))}
@@ -129,11 +131,11 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
             <button
               onClick={handleAdd}
               className="px-3 py-1.5 text-sm rounded bg-amber-600 hover:bg-amber-500 text-white transition-colors"
-            >Save</button>
+            >{t('save', 'Save')}</button>
             <button
               onClick={() => setAdding(false)}
               className="px-3 py-1.5 text-sm rounded bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors"
-            >Cancel</button>
+            >{t('cancel', 'Cancel')}</button>
           </div>
         </div>
       )}
@@ -141,8 +143,8 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
       {/* Elements table */}
       {elements.length === 0 ? (
         <div className="text-center py-16 text-slate-500">
-          <p className="text-lg mb-2">No rebar elements yet</p>
-          <p className="text-sm">Add beams, columns, slabs, footings, and other structural elements</p>
+          <p className="text-lg mb-2">{t('no_elements', 'No rebar elements yet')}</p>
+          <p className="text-sm">{t('no_elements_hint', 'Add beams, columns, slabs, footings, and other structural elements')}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -160,14 +162,14 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
                   <span className="text-xs uppercase tracking-wider text-amber-400 w-16 shrink-0">{el.element_type}</span>
                   <span className="font-mono font-bold text-white w-20 shrink-0">{el.element_mark}</span>
                   {el.floor_level && <span className="text-xs text-slate-500 w-20 shrink-0">{el.floor_level}</span>}
-                  <span className="text-xs text-slate-500 flex-1">{el.bars.length} bar{el.bars.length !== 1 ? 's' : ''}</span>
+                  <span className="text-xs text-slate-500 flex-1">{el.bars.length} {t('bars', 'bars')}</span>
                   <span className="text-sm font-semibold text-green-400 w-28 text-right">{elWeight.toFixed(2)} kg</span>
                   <Link
                     href={`/projects/${projectId}/rebar/${el.id}`}
                     onClick={e => e.stopPropagation()}
                     className="px-2 py-1 text-xs rounded bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors shrink-0"
                   >
-                    Edit BBS
+                    {t('edit_bbs', 'Edit BBS')}
                   </Link>
                   <button
                     onClick={e => { e.stopPropagation(); handleDelete(el.id) }}
@@ -183,12 +185,12 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
                     <table className="w-full text-xs mt-2">
                       <thead>
                         <tr className="text-slate-500">
-                          <th className="text-left py-1 pr-3 font-medium">Mark</th>
-                          <th className="text-left py-1 pr-3 font-medium">Dia.</th>
-                          <th className="text-left py-1 pr-3 font-medium">Shape</th>
-                          <th className="text-right py-1 pr-3 font-medium">Qty</th>
-                          <th className="text-right py-1 pr-3 font-medium">Cut L (mm)</th>
-                          <th className="text-right py-1 font-medium">Weight (kg)</th>
+                          <th className="text-left py-1 pr-3 font-medium">{t('bar_mark', 'Mark')}</th>
+                          <th className="text-left py-1 pr-3 font-medium">{t('diameter', 'Dia.')}</th>
+                          <th className="text-left py-1 pr-3 font-medium">{t('shape_code', 'Shape')}</th>
+                          <th className="text-right py-1 pr-3 font-medium">{t('quantity', 'Qty')}</th>
+                          <th className="text-right py-1 pr-3 font-medium">{t('cut_length', 'Cut L')} (mm)</th>
+                          <th className="text-right py-1 font-medium">{t('weight', 'Weight')} (kg)</th>
                         </tr>
                       </thead>
                       <tbody>
