@@ -75,6 +75,7 @@ function elementToEditable(
   bboxLookup?: Map<string, BboxEntry[]>,
 ): EditableElement {
   const bboxUsed = new Map<string, number>()
+  console.log(`[elementToEditable] "${el.elementMark}" — ${el.callouts.length} callouts, bboxLookup has ${bboxLookup?.size ?? 0} keys: [${Array.from(bboxLookup?.keys() ?? []).join(', ')}]`)
   const bars = el.callouts.map((c: RebarCallout, i: number) => {
     const draft = calloutToBarDraft(c, i)
     const conf = (c as RebarCallout & { confidence?: number; confidenceReasons?: string[] }).confidence ?? 100
@@ -82,10 +83,12 @@ function elementToEditable(
     let bbox: EditableBar['ocr_bbox'] = null
     if (bboxLookup) {
       const bboxes = bboxLookup.get(c.raw)
+      console.log(`  [bbox lookup] raw="${c.raw}" → ${bboxes ? bboxes.length + ' entries' : 'NOT FOUND'}`)
       if (bboxes && bboxes.length > 0) {
         const idx = bboxUsed.get(c.raw) ?? 0
         bbox = bboxes[Math.min(idx, bboxes.length - 1)]
         bboxUsed.set(c.raw, idx + 1)
+        console.log(`  [bbox assigned] p${bbox.page} (${bbox.x0},${bbox.y0})→(${bbox.x1},${bbox.y1})`)
       }
     }
     return {
@@ -225,12 +228,24 @@ export function ExtractClient({ projectId, drawings }: Props) {
 
     // ── Step 1: try native text layer ──────────────────────────────────────
     const pageTexts: Array<{ text: string; page: number }> = []
+    type TextItem = { str: string; transform: number[]; width: number; height: number }
+    const pageTextItems: Array<{ items: TextItem[]; page: number; vpHeight: number }> = []
     for (let p = 1; p <= pdf.numPages; p++) {
       const page = await pdf.getPage(p)
+      const viewport = page.getViewport({ scale: 4.0 })
       const content = await page.getTextContent()
-      const strings = content.items.map(item => ('str' in item ? (item as { str: string }).str : ''))
+      const items: TextItem[] = []
+      const strings: string[] = []
+      for (const item of content.items) {
+        if ('str' in item) {
+          const ti = item as TextItem
+          items.push(ti)
+          strings.push(ti.str)
+        }
+      }
       const text = strings.join('\n')
       pageTexts.push({ text, page: p })
+      pageTextItems.push({ items, page: p, vpHeight: viewport.height })
       dbg(`Page ${p}: ${strings.length} text items, ${text.length} chars`)
     }
 
@@ -250,11 +265,70 @@ export function ExtractClient({ projectId, drawings }: Props) {
       }
       dbg(`Native text regex matches: ${rawCount}`)
       if (rawCount > 0) {
+        // Build bbox map from PDF text item positions
+        const nativeBboxMap = new Map<string, BboxEntry[]>()
+        for (const { items, page: p, vpHeight } of pageTextItems) {
+          for (const ti of items) {
+            if (!ti.str.trim()) continue
+            const normText = normalizeOCRText(ti.str)
+            const callouts = parseRebarText(normText)
+            if (callouts.length === 0) continue
+            // PDF transform: [scaleX, skewY, skewX, scaleY, translateX, translateY]
+            // At 4x scale, coords are already in canvas pixels
+            const scale = 4.0
+            const tx = ti.transform[4] * scale
+            const ty = ti.transform[5] * scale
+            const w = ti.width * scale
+            const fontSize = Math.abs(ti.transform[3]) * scale
+            // PDF Y is bottom-up; canvas Y is top-down
+            const canvasY = vpHeight - ty
+            const x0 = Math.round(tx)
+            const y0 = Math.round(canvasY - fontSize)
+            const x1 = Math.round(tx + w)
+            const y1 = Math.round(canvasY)
+            // Estimate canvas size from viewport at 4x
+            const canvasW = Math.round(vpHeight * 1.414) // A-series aspect
+            const canvasH = Math.round(vpHeight)
+            for (const c of callouts) {
+              const list = nativeBboxMap.get(c.raw) ?? []
+              list.push({ x0, y0, x1, y1, canvasW, canvasH, page: p })
+              nativeBboxMap.set(c.raw, list)
+            }
+          }
+        }
+        dbg(`Native text bboxMap: ${nativeBboxMap.size} keys`)
+        for (const [raw, entries] of nativeBboxMap) {
+          dbg(`  native["${raw}"] = p${entries[0].page} (${entries[0].x0},${entries[0].y0})→(${entries[0].x1},${entries[0].y1}) canvas=${entries[0].canvasW}x${entries[0].canvasH}`)
+        }
+        // Render page images for marked drawing overlay
+        dbg('Rendering page images for native text extraction...')
+        const nativePageRenders: PageRender[] = []
+        for (let p = 1; p <= pdf.numPages; p++) {
+          const page = await pdf.getPage(p)
+          const canvas = await renderPageToCanvas(page, 4.0)
+          nativePageRenders.push({
+            page: p,
+            dataUrl: canvas.toDataURL('image/jpeg', 0.82),
+            width: canvas.width,
+            height: canvas.height,
+          })
+          // Update bbox canvasW/canvasH to actual rendered size
+          for (const [, entries] of nativeBboxMap) {
+            for (const entry of entries) {
+              if (entry.page === p) {
+                entry.canvasW = canvas.width
+                entry.canvasH = canvas.height
+              }
+            }
+          }
+          dbg(`  Page ${p} rendered: ${canvas.width}x${canvas.height}`)
+        }
+        setPageRenders(nativePageRenders)
         const elems = extractFromPageText(pageTexts)
         const total = elems.flatMap(e => e.callouts).length
         setDebug(d => ({ ...d, calloutCount: total, usedOCR: false }))
         dbg(`Done (native text): ${elems.length} elements, ${total} bars`)
-        return { elements: elems, bboxMap: new Map() }
+        return { elements: elems, bboxMap: nativeBboxMap }
       }
       dbg('Native text found but 0 rebar matches — falling through to OCR')
     } else {
@@ -322,7 +396,18 @@ export function ExtractClient({ projectId, drawings }: Props) {
       const ocrText = normalizeOCRText(rawOCR)
 
       // Collect Tesseract line bboxes for annotation overlay
-      const tLines = (data as { lines?: TLine[] }).lines ?? []
+      // Tesseract.js v7: data.blocks[].paragraphs[].lines[]
+      type TBlock = { paragraphs?: { lines?: TLine[] }[] }
+      const blocks = (data as { blocks?: TBlock[] | null }).blocks ?? []
+      const tLines: TLine[] = []
+      for (const block of blocks) {
+        for (const para of (block.paragraphs ?? [])) {
+          for (const line of (para.lines ?? [])) {
+            tLines.push(line)
+          }
+        }
+      }
+      dbg(`  Tesseract lines extracted: ${tLines.length}`)
       for (const tl of tLines) {
         const normLineText = normalizeOCRText(tl.text ?? '')
         const lineCallouts = parseRebarText(normLineText)
@@ -342,6 +427,8 @@ export function ExtractClient({ projectId, drawings }: Props) {
           })
         }
       }
+      const pageCalloutCount = localAnnotatedCallouts.filter(ac => ac.page === p).length
+      dbg(`  Page ${p} bbox callouts captured: ${pageCalloutCount}`)
       const confidence = data.confidence ?? 0
       sumConfidence += confidence
       totalOcrChars += ocrText.length
@@ -393,6 +480,11 @@ export function ExtractClient({ projectId, drawings }: Props) {
       const list = multiMap.get(ac.raw) ?? []
       list.push({ x0: ac.x0, y0: ac.y0, x1: ac.x1, y1: ac.y1, canvasW: ac.canvasW, canvasH: ac.canvasH, page: ac.page })
       multiMap.set(ac.raw, list)
+    }
+
+    dbg(`bboxMap built: ${multiMap.size} unique raw keys, ${Array.from(multiMap.values()).reduce((s, v) => s + v.length, 0)} total entries`)
+    for (const [raw, entries] of multiMap) {
+      dbg(`  bboxMap["${raw}"] = ${entries.length} entries, first: p${entries[0].page} (${entries[0].x0},${entries[0].y0})→(${entries[0].x1},${entries[0].y1})`)
     }
 
     const avgConfidence = allOcrTexts.length > 0 ? sumConfidence / allOcrTexts.length : 0
@@ -469,6 +561,12 @@ export function ExtractClient({ projectId, drawings }: Props) {
       }
 
       const editable = detectedElements.map(el => elementToEditable(el, confidenceThreshold, extractedBboxMap))
+      const allBarsFlat = editable.flatMap(e => e.bars)
+      const withBbox = allBarsFlat.filter(b => b.ocr_bbox)
+      dbg(`Post-extraction: ${allBarsFlat.length} bars total, ${withBbox.length} with bbox, bboxMap had ${extractedBboxMap.size} keys`)
+      for (const bar of allBarsFlat) {
+        dbg(`  ${bar.bar_mark} T${bar.diameter_mm} x${bar.quantity} bbox=${bar.ocr_bbox ? `p${bar.ocr_bbox.page}(${bar.ocr_bbox.x0},${bar.ocr_bbox.y0})` : 'null'} notes="${bar.notes}"`)
+      }
       setElements(editable.length > 0 ? editable : [])
       setStatus(editable.length > 0 ? 'review' : 'error')
       if (editable.length === 0) {
@@ -621,6 +719,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
             labelX = ((bbox.x0 + bbox.x1) / 2 / bbox.canvasW) * 100
             labelY = ((bbox.y0 + bbox.y1) / 2 / bbox.canvasH) * 100
           }
+          dbg(`  Saving bar "${bar.bar_mark}" bbox=${bbox ? `p${bbox.page}(${bbox.x0},${bbox.y0})→(${bbox.x1},${bbox.y1})` : 'null'} label=(${labelX?.toFixed(1) ?? 'null'},${labelY?.toFixed(1) ?? 'null'}) src_drawing=${selectedDrawingId}`)
           const barResult = await createRebarBar({
             element_id: result.element.id,
             bar_mark: bar.bar_mark,

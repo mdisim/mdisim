@@ -71,6 +71,7 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
   const [panStart, setPanStart] = useState({ x: 0, y: 0 })
   const [dragLabel, setDragLabel] = useState<string | null>(null)
   const [activeBarId, setActiveBarId] = useState<string | null>(null)
+  const [placingBarId, setPlacingBarId] = useState<string | null>(null)
   const [showDiag, setShowDiag] = useState(false)
   const [confidenceFilter, setConfidenceFilter] = useState(0)
   const [renderingPdf, setRenderingPdf] = useState(false)
@@ -86,6 +87,14 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
   const linkedBars = barMarks.filter(b => b.sourceDrawingId === selectedDrawingId)
   const unlinkedBars = barMarks.filter(b => !b.sourceDrawingId)
   const allDisplayBars = [...linkedBars, ...unlinkedBars]
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && placingBarId) setPlacingBarId(null)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [placingBarId])
 
   const [diagLog, setDiagLog] = useState<string[]>([])
 
@@ -305,8 +314,33 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
     setZoom(z => Math.max(0.2, Math.min(5, z - e.deltaY * 0.001)))
   }, [])
 
+  const handleCanvasClick = (e: React.MouseEvent) => {
+    if (placingBarId && imgRef.current && e.button === 0 && !e.altKey) {
+      const bm = barMarks.find(b => b.id === placingBarId)
+      if (!bm) return
+      const rect = imgRef.current.getBoundingClientRect()
+      const x = ((e.clientX - rect.left) / rect.width) * 100
+      const y = ((e.clientY - rect.top) / rect.height) * 100
+      const clampX = Math.max(0, Math.min(100, x))
+      const clampY = Math.max(0, Math.min(100, y))
+      setLabels(prev => {
+        const existing = prev.filter(l => l.barId !== placingBarId)
+        return [...existing, {
+          barId: bm.id, mark: bm.mark, diameter: bm.diameter,
+          quantity: bm.quantity, element: bm.element,
+          x: clampX, y: clampY, page: currentPage, confidence: bm.confidence,
+        }]
+      })
+      persistLabelPosition(bm.id, clampX, clampY)
+      flashLabel(bm.id)
+      setPlacingBarId(null)
+      setActiveBarId(bm.id)
+    }
+  }
+
   const handleMouseDown = (e: React.MouseEvent) => {
     if (dragLabel) return
+    if (placingBarId && e.button === 0 && !e.altKey) return
     if (e.button === 1 || (e.button === 0 && e.altKey)) {
       setIsPanning(true)
       setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y })
@@ -679,7 +713,7 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
             </p>
             <div className="space-y-0.5 overflow-y-auto">
               {linkedBars.map(bm => <BarButton key={bm.id} bm={bm} labels={labels} activeBarId={activeBarId}
-                onHighlight={highlightBar} onAdd={addLabel} />)}
+                onHighlight={highlightBar} onStartPlace={id => setPlacingBarId(id)} isPlacing={placingBarId === bm.id} />)}
             </div>
           </>
         )}
@@ -695,7 +729,7 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
             </div>
             <div className="space-y-0.5 overflow-y-auto">
               {unlinkedBars.map(bm => <BarButton key={bm.id} bm={bm} labels={labels} activeBarId={activeBarId}
-                onHighlight={highlightBar} onAdd={addLabel} />)}
+                onHighlight={highlightBar} onStartPlace={id => setPlacingBarId(id)} isPlacing={placingBarId === bm.id} />)}
             </div>
           </>
         )}
@@ -706,13 +740,22 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
       {/* Canvas area */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-hidden relative bg-slate-900 cursor-grab active:cursor-grabbing"
+        className={`flex-1 overflow-hidden relative bg-slate-900 ${placingBarId ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'}`}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
       >
+        {placingBarId && (() => {
+          const bm = barMarks.find(b => b.id === placingBarId)
+          return bm ? (
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 px-4 py-2 rounded-lg bg-cyan-600 text-white text-sm font-semibold shadow-lg flex items-center gap-3">
+              Click on the drawing to place: <span className="font-mono">{bm.mark} T{bm.diameter} x{bm.quantity}</span>
+              <button onClick={() => setPlacingBarId(null)} className="text-cyan-200 hover:text-white ml-2">Cancel</button>
+            </div>
+          ) : null
+        })()}
         {renderingPdf && !imageUrl ? (
           <div className="flex items-center justify-center h-full text-slate-500">
             <div className="text-center">
@@ -746,8 +789,10 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
             style={{
               transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
               transformOrigin: '0 0',
+              cursor: placingBarId ? 'crosshair' : undefined,
             }}
             className="relative inline-block"
+            onClick={handleCanvasClick}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -810,45 +855,51 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
   )
 }
 
-function BarButton({ bm, labels, activeBarId, onHighlight, onAdd }: {
+function BarButton({ bm, labels, activeBarId, isPlacing, onHighlight, onStartPlace }: {
   bm: BarMark
   labels: PlacedLabel[]
   activeBarId: string | null
+  isPlacing: boolean
   onHighlight: (id: string) => void
-  onAdd: (bm: BarMark) => void
+  onStartPlace: (id: string) => void
 }) {
   const placed = labels.some(l => l.barId === bm.id)
   const isActive = activeBarId === bm.id
   const isLinked = !!bm.sourceDrawingId
   const hasBbox = !!bm.bbox
   return (
-    <button
-      id={`bar-btn-${bm.id}`}
-      onClick={() => onHighlight(bm.id)}
-      className={`w-full text-left px-2 py-1.5 text-xs rounded flex items-center gap-2 transition-colors ${
-        isActive ? 'bg-amber-600/30 ring-1 ring-amber-500 text-amber-200' :
-        placed ? 'bg-slate-800/80 hover:bg-slate-700' : 'bg-slate-800/30 hover:bg-slate-700 opacity-60'
-      }`}
-    >
-      {/* Link status indicator */}
-      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-        placed ? 'bg-green-500' : hasBbox ? 'bg-blue-500' : isLinked ? 'bg-amber-500' : 'bg-slate-600'
-      }`} title={placed ? 'Placed on drawing' : hasBbox ? 'Has OCR position' : isLinked ? 'Linked to drawing' : 'No position data'} />
-      <span className="font-mono font-bold text-amber-400">{bm.mark}</span>
-      <span className="text-slate-500">T{bm.diameter}</span>
-      <span className="text-slate-600">x{bm.quantity}</span>
-      <span className="text-slate-700 text-[10px] ml-auto">{bm.element}</span>
-      {bm.confidence != null && bm.confidence < 80 && (
-        <span className={`text-[10px] px-1 rounded ${
-          bm.confidence >= 60 ? 'bg-amber-900/50 text-amber-400' : 'bg-red-900/50 text-red-400'
-        }`}>{bm.confidence}%</span>
+    <div id={`bar-btn-${bm.id}`} className="flex items-center gap-1">
+      <button
+        onClick={() => placed ? onHighlight(bm.id) : onStartPlace(bm.id)}
+        className={`flex-1 text-left px-2 py-1.5 text-xs rounded flex items-center gap-2 transition-colors ${
+          isPlacing ? 'bg-cyan-600/30 ring-1 ring-cyan-500 text-cyan-200 animate-pulse' :
+          isActive ? 'bg-amber-600/30 ring-1 ring-amber-500 text-amber-200' :
+          placed ? 'bg-slate-800/80 hover:bg-slate-700' : 'bg-slate-800/30 hover:bg-slate-700 opacity-60'
+        }`}
+      >
+        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+          placed ? 'bg-green-500' : hasBbox ? 'bg-blue-500' : isLinked ? 'bg-amber-500' : 'bg-slate-600'
+        }`} title={placed ? 'Placed on drawing' : hasBbox ? 'Has OCR position' : isLinked ? 'Linked to drawing' : 'No position data'} />
+        <span className="font-mono font-bold text-amber-400">{bm.mark}</span>
+        <span className="text-slate-500">T{bm.diameter}</span>
+        <span className="text-slate-600">x{bm.quantity}</span>
+        <span className="text-slate-700 text-[10px] ml-auto">{bm.element}</span>
+        {bm.confidence != null && bm.confidence < 80 && (
+          <span className={`text-[10px] px-1 rounded ${
+            bm.confidence >= 60 ? 'bg-amber-900/50 text-amber-400' : 'bg-red-900/50 text-red-400'
+          }`}>{bm.confidence}%</span>
+        )}
+        {placed ? (
+          <span className="text-green-500 text-[10px]">&#9679;</span>
+        ) : isPlacing ? (
+          <span className="text-cyan-400 text-[10px]">click drawing</span>
+        ) : (
+          <span className="text-[10px] text-slate-600">&#9768;</span>
+        )}
+      </button>
+      {placed && (
+        <button onClick={() => onHighlight(bm.id)} className="text-[10px] text-slate-600 hover:text-amber-400 px-1" title="Zoom to marker">&#8982;</button>
       )}
-      {placed ? (
-        <span className="text-green-500 text-[10px]">&#9679;</span>
-      ) : (
-        <button onClick={e => { e.stopPropagation(); onAdd(bm) }}
-          className="text-[10px] text-slate-600 hover:text-amber-400">+</button>
-      )}
-    </button>
+    </div>
   )
 }
