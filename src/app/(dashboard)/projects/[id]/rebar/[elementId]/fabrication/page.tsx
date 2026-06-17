@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { PrintButton } from '../../fabrication-all/print-button'
 
 // ─── SVG bar shape renderers ──────────────────────────────────────────────────
 function BarShapeSVG({
@@ -122,10 +123,7 @@ export default async function FabricationPage({
         <div className="w-px h-4 bg-slate-700" />
         <h1 className="text-lg font-bold text-white">Fabrication Drawing</h1>
         <div className="ml-auto flex gap-2">
-          <button onClick={() => window.print()}
-            className="px-3 py-1.5 text-sm rounded bg-amber-600 hover:bg-amber-500 text-white transition-colors">
-            Print / Export PDF
-          </button>
+          <PrintButton />
         </div>
       </div>
 
@@ -141,7 +139,7 @@ export default async function FabricationPage({
             <div>
               <p className="text-slate-500 text-xs">ELEMENT</p>
               <p className="font-bold text-amber-400 text-xl">
-                {element.element_type.toUpperCase()} {element.element_mark}
+                {(element.element_type ?? 'ELEMENT').toUpperCase()} {element.element_mark}
               </p>
             </div>
             <div>
