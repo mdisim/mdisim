@@ -57,35 +57,59 @@ export function MarkedDrawingClient({ barMarks, pageImages, sourceDrawingUrl, so
   const [activeBarId, setActiveBarId] = useState<string | null>(null)
   const [confidenceFilter, setConfidenceFilter] = useState(0)
   const [renderingPdf, setRenderingPdf] = useState(false)
+  const [renderError, setRenderError] = useState<string | null>(null)
   const [pdfRenderedPages, setPdfRenderedPages] = useState<Map<number, string>>(new Map())
   const containerRef = useRef<HTMLDivElement>(null)
   const imgRef = useRef<HTMLImageElement>(null)
+  const renderStartedRef = useRef(false)
 
   const hasAutoImage = pageImages.length > 0
   const hasPdfFallback = !hasAutoImage && !!sourceDrawingUrl && sourceDrawingType !== 'dxf'
 
-  // Render source PDF pages when no extraction page images exist
+  // Render source PDF pages when no extraction page images exist.
+  // Uses a ref to prevent the effect from re-triggering on its own state changes.
   useEffect(() => {
-    if (!hasPdfFallback || renderingPdf || pdfRenderedPages.size > 0) return
+    if (!hasPdfFallback) return
+    if (renderStartedRef.current) return
+    renderStartedRef.current = true
 
     let cancelled = false
     setRenderingPdf(true)
+    setRenderError(null)
+
+    const TIMEOUT_MS = 30_000
 
     ;(async () => {
       try {
+        console.log('[MarkedDrawing] Starting PDF render, URL:', sourceDrawingUrl!.slice(0, 120) + '…')
+
         const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist')
         GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+        console.log('[MarkedDrawing] pdf.js loaded')
 
-        const res = await fetch(sourceDrawingUrl!)
-        if (!res.ok) throw new Error(`Failed to fetch drawing: ${res.status}`)
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)
+
+        const res = await fetch(sourceDrawingUrl!, { signal: controller.signal })
+        clearTimeout(timeoutId)
+
+        if (!res.ok) throw new Error(`Failed to fetch drawing: HTTP ${res.status} ${res.statusText}`)
         const buf = await res.arrayBuffer()
+        console.log(`[MarkedDrawing] PDF fetched — ${(buf.byteLength / 1024).toFixed(0)} KB`)
+
+        if (cancelled) return
+
         const pdf = await getDocument({ data: new Uint8Array(buf) }).promise
+        console.log(`[MarkedDrawing] PDF opened — ${pdf.numPages} page(s)`)
 
         if (cancelled) return
         setTotalPages(pdf.numPages)
 
         const rendered = new Map<number, string>()
         for (let p = 1; p <= pdf.numPages; p++) {
+          if (cancelled) return
+          console.log(`[MarkedDrawing] Rendering page ${p}/${pdf.numPages}…`)
+
           const page = await pdf.getPage(p)
           const scale = 3.0
           const viewport = page.getViewport({ scale })
@@ -95,23 +119,29 @@ export function MarkedDrawingClient({ barMarks, pageImages, sourceDrawingUrl, so
           const ctx = canvas.getContext('2d')!
           ctx.fillStyle = '#ffffff'
           ctx.fillRect(0, 0, canvas.width, canvas.height)
-          await page.render({ canvasContext: ctx, viewport, canvas } as Parameters<typeof page.render>[0]).promise
+
+          await page.render({ canvasContext: ctx, viewport } as Parameters<typeof page.render>[0]).promise
+          console.log(`[MarkedDrawing] Page ${p} rendered — ${canvas.width}×${canvas.height}`)
+
           const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
           rendered.set(p, dataUrl)
 
-          if (cancelled) return
-
-          if (p === 1) {
+          // Show first page immediately
+          if (p === 1 && !cancelled) {
             setImageUrl(dataUrl)
             setImageSize({ w: canvas.width, h: canvas.height })
             setCurrentPage(1)
+            // Stop showing spinner once first page is visible
+            setRenderingPdf(false)
           }
         }
 
         await pdf.cleanup()
+        console.log(`[MarkedDrawing] All ${pdf.numPages} pages rendered`)
+
         if (!cancelled) {
           setPdfRenderedPages(rendered)
-          // Place labels that have bbox data (even without extraction page images)
+          // Place labels from stored bbox coordinates
           if (barMarks.some(bm => bm.bbox)) {
             setLabels(barMarks.filter(bm => bm.bbox).map(bm => {
               const bbox = bm.bbox!
@@ -132,14 +162,17 @@ export function MarkedDrawingClient({ barMarks, pageImages, sourceDrawingUrl, so
           }
         }
       } catch (err) {
-        console.error('[MarkedDrawing] PDF render failed:', err)
-      } finally {
-        if (!cancelled) setRenderingPdf(false)
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error('[MarkedDrawing] PDF render failed:', msg)
+        if (!cancelled) {
+          setRenderError(msg)
+          setRenderingPdf(false)
+        }
       }
     })()
 
     return () => { cancelled = true }
-  }, [hasPdfFallback, sourceDrawingUrl, renderingPdf, pdfRenderedPages.size, barMarks])
+  }, [hasPdfFallback, sourceDrawingUrl, sourceDrawingType, barMarks])
 
   function switchPage(page: number) {
     // From extraction page images
@@ -323,6 +356,13 @@ export function MarkedDrawingClient({ barMarks, pageImages, sourceDrawingUrl, so
           </div>
         )}
 
+        {renderError && (
+          <div className="bg-red-900/20 border border-red-800 rounded p-2 text-xs text-red-400">
+            <p className="font-semibold mb-1">Drawing render failed</p>
+            <p className="text-red-500">{renderError}</p>
+          </div>
+        )}
+
         {showUploadFallback && (
           <label className="block">
             <span className="text-xs text-slate-400 uppercase tracking-wide">Upload Drawing</span>
@@ -412,12 +452,23 @@ export function MarkedDrawingClient({ barMarks, pageImages, sourceDrawingUrl, so
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
       >
-        {renderingPdf ? (
+        {renderingPdf && !imageUrl ? (
           <div className="flex items-center justify-center h-full text-slate-500">
             <div className="text-center">
               <Loader2 size={32} className="animate-spin mx-auto mb-3 text-amber-500" />
               <p className="text-lg mb-1">Rendering drawing…</p>
               <p className="text-sm text-slate-600">Loading source PDF for marking</p>
+            </div>
+          </div>
+        ) : renderError && !imageUrl ? (
+          <div className="flex items-center justify-center h-full text-red-500">
+            <div className="text-center max-w-md">
+              <p className="text-lg mb-2">Drawing render failed</p>
+              <p className="text-sm text-red-400 mb-4">{renderError}</p>
+              <label className="inline-block">
+                <span className="px-4 py-2 rounded bg-amber-600 text-white text-sm cursor-pointer hover:bg-amber-500">Upload drawing manually</span>
+                <input type="file" accept="image/*,.pdf" onChange={handleFileUpload} className="hidden" />
+              </label>
             </div>
           </div>
         ) : !imageUrl ? (
