@@ -62,7 +62,7 @@ export default function I18nAuditPage() {
             onClick={() => setFilter(mode)}
             className={`px-4 py-1.5 rounded-lg text-sm font-medium capitalize transition-colors ${
               filter === mode
-                ? 'bg-amber-500 text-white'
+                ? 'bg-blue-600 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >

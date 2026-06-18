@@ -288,11 +288,11 @@ export function CompareClient({ tenders, tenderItems }: CompareClientProps) {
                 </td>
               </tr>
               {/* Select winner row */}
-              <tr className="bg-amber-50 border-t border-amber-200">
+              <tr className="bg-blue-50 border-t border-blue-200">
                 <td className="px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide" colSpan={3}>Select Winner</td>
                 {tenders.map(t => (
                   <>
-                    <td key={`sw-rate-${t.id}`} className="border-l border-amber-100" />
+                    <td key={`sw-rate-${t.id}`} className="border-l border-blue-100" />
                     <td key={`sw-total-${t.id}`} className="px-3 py-3 text-center">
                       <button
                         onClick={() => handleSelectWinner(t.id)}
@@ -308,7 +308,7 @@ export function CompareClient({ tenders, tenderItems }: CompareClientProps) {
                     </td>
                   </>
                 ))}
-                <td className="border-l border-amber-100" />
+                <td className="border-l border-blue-100" />
                 <td />
               </tr>
             </tfoot>
@@ -318,17 +318,17 @@ export function CompareClient({ tenders, tenderItems }: CompareClientProps) {
 
       {/* Award action */}
       {winnerId && (
-        <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-5 py-4">
+        <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl px-5 py-4">
           <div>
-            <p className="font-semibold text-amber-900">
+            <p className="font-semibold text-blue-900">
               Award: {tenders.find(t => t.id === winnerId)?.title}
             </p>
-            <p className="text-xs text-amber-700 mt-0.5">This will mark the tender as Awarded and update its status.</p>
+            <p className="text-xs text-blue-700 mt-0.5">This will mark the tender as Awarded and update its status.</p>
           </div>
           <button
             onClick={handleAward}
             disabled={isPending}
-            className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-white font-semibold rounded-lg text-sm transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold rounded-lg text-sm transition-colors"
           >
             <Trophy size={15} />
             {isPending ? 'Awarding…' : 'Confirm Award'}
