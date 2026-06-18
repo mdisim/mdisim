@@ -35,7 +35,7 @@ export default async function ProjectLayout({
         </Link>
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-slate-900 truncate">{project.name}</h1>
+            <h1 className="text-2xl font-bold text-slate-900 truncate">{project.name}</h1>
             {project.client_name && (
               <p className="text-sm text-slate-500 mt-0.5">{project.client_name}</p>
             )}

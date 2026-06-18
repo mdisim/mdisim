@@ -44,7 +44,7 @@ export default async function RebarSchedulePage({
           <div className="flex items-center gap-2">
             <Link
               href={`/projects/${id}/rebar/extract`}
-              className="px-3 py-1.5 text-sm rounded bg-blue-600 hover:bg-blue-500 text-white transition-colors font-medium"
+              className="px-3 py-1.5 text-sm rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors font-medium shadow-sm"
             >
               ⚡ Extract from Drawing
             </Link>

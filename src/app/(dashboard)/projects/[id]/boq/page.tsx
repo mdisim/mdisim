@@ -23,7 +23,7 @@ export default async function BOQPage({
   if (!project) notFound()
 
   return (
-    <div className="flex flex-col h-full space-y-4">
+    <div className="flex flex-col h-full space-y-8">
       <div>
         <Link href={`/projects/${id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4">
           <ArrowLeft size={15} /> {project.name}

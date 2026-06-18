@@ -27,7 +27,7 @@ export default async function TakeoffPage({ params }: { params: Promise<{ id: st
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <Link href={`/projects/${id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4">
           <ArrowLeft size={15} /> Back to {project.name}
@@ -39,7 +39,7 @@ export default async function TakeoffPage({ params }: { params: Promise<{ id: st
           </div>
           <Link
             href={`/projects/${id}/takeoff/upload`}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-colors shadow-sm"
           >
             <Upload size={16} /> Upload Drawing
           </Link>
@@ -47,7 +47,7 @@ export default async function TakeoffPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* Info banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3">
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3 shadow-md">
         <Ruler size={20} className="text-blue-500 shrink-0 mt-0.5" />
         <div className="text-sm text-blue-800">
           <p className="font-medium mb-1">PlanSwift-style measurement tools</p>
@@ -62,13 +62,13 @@ export default async function TakeoffPage({ params }: { params: Promise<{ id: st
           <p className="text-sm mt-1 mb-6">Upload a PDF drawing to start measuring quantities</p>
           <Link
             href={`/projects/${id}/takeoff/upload`}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-colors shadow-sm"
           >
             <Upload size={16} /> Upload First Drawing
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {drawings.map(drawing => (
             <DrawingCard
               key={drawing.id}

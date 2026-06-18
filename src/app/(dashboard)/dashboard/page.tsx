@@ -86,7 +86,7 @@ export default async function DashboardPage() {
   const pName = (p: ProjectRow | ProjectRow[] | null) => p && !Array.isArray(p) ? p.name : ''
 
   return (
-    <div className="space-y-8 max-w-[1400px] mx-auto">
+    <div className="space-y-10 max-w-[1400px] mx-auto">
 
       {/* ═══════════════════════════════════════════════════════════════
           ROW 1 — Welcome + KPIs + Continue Working
@@ -96,7 +96,7 @@ export default async function DashboardPage() {
           {/* Welcome */}
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
                 <T k="welcome_back" fallback="Welcome back" />, {companyName}
               </h1>
               <p className="text-sm text-slate-500 mt-1">
@@ -112,21 +112,21 @@ export default async function DashboardPage() {
           </div>
 
           {/* KPIs — 4 large metric cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
             {[
               { icon: FolderKanban, label: 'Projects', value: String(projects?.length ?? 0), sub: `${activeProjects.length} active`, subColor: 'text-green-600', iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
               { icon: BarChart3, label: 'Total Budget', value: ils(totalBudget), sub: `${budgetPct.toFixed(0)}% spent`, subColor: budgetPct > 90 ? 'text-red-600' : budgetPct > 70 ? 'text-amber-600' : 'text-green-600', iconBg: 'bg-green-50', iconColor: 'text-green-600' },
               { icon: Wrench, label: 'Steel Weight', value: totalSteelWeight > 0 ? `${(totalSteelWeight / 1000).toFixed(1)}t` : '—', sub: `${totalBarCount} bars`, subColor: 'text-purple-600', iconBg: 'bg-purple-50', iconColor: 'text-purple-600' },
               { icon: CreditCard, label: 'Pending', value: ils(pendingPayments), sub: 'awaiting payment', subColor: 'text-amber-600', iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
             ].map((kpi) => (
-              <div key={kpi.label} className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm hover:shadow-md transition-shadow">
+              <div key={kpi.label} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-md hover:shadow-xl transition-shadow">
                 <div className="flex items-center gap-2.5 mb-3">
                   <div className={`w-9 h-9 rounded-xl ${kpi.iconBg} flex items-center justify-center`}>
                     <kpi.icon size={17} className={kpi.iconColor} />
                   </div>
                   <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{kpi.label}</span>
                 </div>
-                <p className="text-3xl font-extrabold text-slate-900 tabular-nums leading-none">{kpi.value}</p>
+                <p className="text-4xl font-extrabold text-slate-900 tabular-nums leading-none">{kpi.value}</p>
                 <p className={`text-xs font-medium mt-1.5 ${kpi.subColor}`}>{kpi.sub}</p>
               </div>
             ))}
@@ -134,7 +134,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Continue Working — dark card */}
-        <div className="xl:w-[400px] bg-gradient-to-br from-[#0F172A] to-slate-800 rounded-2xl p-6 text-white flex flex-col shadow-lg shadow-slate-900/10">
+        <div className="xl:w-[400px] bg-gradient-to-br from-[#0F172A] to-slate-800 rounded-2xl p-6 text-white flex flex-col shadow-xl shadow-slate-900/10 hover:-translate-y-0.5 transition-transform">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-bold flex items-center gap-2.5">
               <CircleDot size={16} className="text-green-400" />
@@ -210,29 +210,29 @@ export default async function DashboardPage() {
       {/* ═══════════════════════════════════════════════════════════════
           ROW 2 — Core Modules Feature Cards (large, prominent)
           ═══════════════════════════════════════════════════════════════ */}
-      <div>
-        <h2 className="text-lg font-bold text-slate-900 mb-4">Core Modules</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="bg-slate-50/50 -mx-4 px-4 py-6 rounded-2xl">
+        <h2 className="text-xl font-bold text-slate-900 mb-4">Core Modules</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
           {/* Drawings & Takeoff */}
-          <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm hover:shadow-lg hover:border-blue-200 transition-all group">
+          <div className="bg-white rounded-2xl border border-slate-200 p-7 shadow-md hover:shadow-xl hover:border-blue-200 hover:-translate-y-1 transition-all duration-300 group">
             <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                <Image size={24} className="text-blue-600" />
+              <div className="w-14 h-14 rounded-xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                <Image size={28} className="text-blue-600" />
               </div>
               <Link href={lastProject ? `/projects/${lastProject.id}/takeoff` : '/projects'}>
                 <ArrowUpRight size={18} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
               </Link>
             </div>
-            <h3 className="text-base font-bold text-slate-900 mb-1">Drawings & Takeoff</h3>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">Drawings & Takeoff</h3>
             <p className="text-sm text-slate-500 mb-4 leading-relaxed">Upload drawings, measure quantities, and extract data from construction documents.</p>
             <div className="flex items-center gap-4 mb-4">
               <div>
-                <p className="text-2xl font-extrabold text-slate-900 tabular-nums">{totalDrawingCount ?? 0}</p>
+                <p className="text-3xl font-extrabold text-slate-900 tabular-nums">{totalDrawingCount ?? 0}</p>
                 <p className="text-[11px] text-slate-400 font-medium">Drawings</p>
               </div>
               <div className="w-px h-8 bg-slate-100" />
               <div>
-                <p className="text-2xl font-extrabold text-slate-900 tabular-nums">{recentDrawings?.reduce((s, d: DrawingRow) => s + (d.page_count || 1), 0) ?? 0}</p>
+                <p className="text-3xl font-extrabold text-slate-900 tabular-nums">{recentDrawings?.reduce((s, d: DrawingRow) => s + (d.page_count || 1), 0) ?? 0}</p>
                 <p className="text-[11px] text-slate-400 font-medium">Pages</p>
               </div>
             </div>
@@ -247,25 +247,25 @@ export default async function DashboardPage() {
           </div>
 
           {/* BOQ */}
-          <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm hover:shadow-lg hover:border-green-200 transition-all group">
+          <div className="bg-white rounded-2xl border border-slate-200 p-7 shadow-md hover:shadow-xl hover:border-green-200 hover:-translate-y-1 transition-all duration-300 group">
             <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center group-hover:bg-green-100 transition-colors">
-                <FileText size={24} className="text-green-600" />
+              <div className="w-14 h-14 rounded-xl bg-green-50 flex items-center justify-center group-hover:bg-green-100 transition-colors">
+                <FileText size={28} className="text-green-600" />
               </div>
               <Link href={lastProject ? `/projects/${lastProject.id}/boq` : '/projects'}>
                 <ArrowUpRight size={18} className="text-slate-300 group-hover:text-green-500 transition-colors" />
               </Link>
             </div>
-            <h3 className="text-base font-bold text-slate-900 mb-1">Bill of Quantities</h3>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">Bill of Quantities</h3>
             <p className="text-sm text-slate-500 mb-4 leading-relaxed">Manage BOQ items, track quantities, rates, and total project values.</p>
             <div className="flex items-center gap-4 mb-4">
               <div>
-                <p className="text-2xl font-extrabold text-slate-900 tabular-nums">{totalBoqCount ?? 0}</p>
+                <p className="text-3xl font-extrabold text-slate-900 tabular-nums">{totalBoqCount ?? 0}</p>
                 <p className="text-[11px] text-slate-400 font-medium">Items</p>
               </div>
               <div className="w-px h-8 bg-slate-100" />
               <div>
-                <p className="text-2xl font-extrabold text-green-700 tabular-nums">{ils(totalBoqValue)}</p>
+                <p className="text-3xl font-extrabold text-green-700 tabular-nums">{ils(totalBoqValue)}</p>
                 <p className="text-[11px] text-slate-400 font-medium">Total Value</p>
               </div>
             </div>
@@ -280,30 +280,30 @@ export default async function DashboardPage() {
           </div>
 
           {/* Rebar */}
-          <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm hover:shadow-lg hover:border-purple-200 transition-all group">
+          <div className="bg-white rounded-2xl border border-slate-200 p-7 shadow-md hover:shadow-xl hover:border-purple-200 hover:-translate-y-1 transition-all duration-300 group">
             <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
-                <Wrench size={24} className="text-purple-600" />
+              <div className="w-14 h-14 rounded-xl bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+                <Wrench size={28} className="text-purple-600" />
               </div>
               <Link href={lastProject ? `/projects/${lastProject.id}/rebar` : '/projects'}>
                 <ArrowUpRight size={18} className="text-slate-300 group-hover:text-purple-500 transition-colors" />
               </Link>
             </div>
-            <h3 className="text-base font-bold text-slate-900 mb-1">Rebar Schedule</h3>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">Rebar Schedule</h3>
             <p className="text-sm text-slate-500 mb-4 leading-relaxed">Extract rebar from drawings, generate bar bending schedules and procurement lists.</p>
             <div className="flex items-center gap-4 mb-4">
               <div>
-                <p className="text-2xl font-extrabold text-slate-900 tabular-nums">{totalBarCount}</p>
+                <p className="text-3xl font-extrabold text-slate-900 tabular-nums">{totalBarCount}</p>
                 <p className="text-[11px] text-slate-400 font-medium">Bars</p>
               </div>
               <div className="w-px h-8 bg-slate-100" />
               <div>
-                <p className="text-2xl font-extrabold text-purple-700 tabular-nums">{totalSteelWeight > 0 ? `${(totalSteelWeight / 1000).toFixed(1)}t` : '—'}</p>
+                <p className="text-3xl font-extrabold text-purple-700 tabular-nums">{totalSteelWeight > 0 ? `${(totalSteelWeight / 1000).toFixed(1)}t` : '—'}</p>
                 <p className="text-[11px] text-slate-400 font-medium">Weight</p>
               </div>
               <div className="w-px h-8 bg-slate-100" />
               <div>
-                <p className="text-2xl font-extrabold text-slate-900 tabular-nums">{uniqueDiameters || '—'}</p>
+                <p className="text-3xl font-extrabold text-slate-900 tabular-nums">{uniqueDiameters || '—'}</p>
                 <p className="text-[11px] text-slate-400 font-medium">Sizes</p>
               </div>
             </div>
@@ -318,25 +318,25 @@ export default async function DashboardPage() {
           </div>
 
           {/* Payments */}
-          <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-sm hover:shadow-lg hover:border-amber-200 transition-all group">
+          <div className="bg-white rounded-2xl border border-slate-200 p-7 shadow-md hover:shadow-xl hover:border-amber-200 hover:-translate-y-1 transition-all duration-300 group">
             <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
-                <CreditCard size={24} className="text-amber-600" />
+              <div className="w-14 h-14 rounded-xl bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
+                <CreditCard size={28} className="text-amber-600" />
               </div>
               <Link href={lastProject ? `/projects/${lastProject.id}/contractors` : '/projects'}>
                 <ArrowUpRight size={18} className="text-slate-300 group-hover:text-amber-500 transition-colors" />
               </Link>
             </div>
-            <h3 className="text-base font-bold text-slate-900 mb-1">Payments</h3>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">Payments</h3>
             <p className="text-sm text-slate-500 mb-4 leading-relaxed">Track contractor payments, certificates, and financial progress across projects.</p>
             <div className="flex items-center gap-4 mb-4">
               <div>
-                <p className="text-2xl font-extrabold text-amber-600 tabular-nums">{ils(pendingPayments)}</p>
+                <p className="text-3xl font-extrabold text-amber-600 tabular-nums">{ils(pendingPayments)}</p>
                 <p className="text-[11px] text-slate-400 font-medium">Pending</p>
               </div>
               <div className="w-px h-8 bg-slate-100" />
               <div>
-                <p className="text-2xl font-extrabold text-green-600 tabular-nums">{ils(completedPayments)}</p>
+                <p className="text-3xl font-extrabold text-green-600 tabular-nums">{ils(completedPayments)}</p>
                 <p className="text-[11px] text-slate-400 font-medium">Paid</p>
               </div>
             </div>
@@ -353,7 +353,7 @@ export default async function DashboardPage() {
           ROW 3 — Budget Progress (compact inline)
           ═══════════════════════════════════════════════════════════════ */}
       {totalBudget > 0 && (
-        <div className="bg-white rounded-2xl border border-slate-200/60 px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 shadow-md">
           <span className="text-sm font-bold text-slate-700 shrink-0">Overall Budget</span>
           <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
             <div
@@ -376,7 +376,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
 
         {/* Recent Drawings */}
-        <div className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-md">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2.5">
               <Image size={16} className="text-blue-600" />
@@ -409,7 +409,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Active BOQ Items */}
-        <div className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-md">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2.5">
               <FileText size={16} className="text-green-600" />
@@ -441,7 +441,7 @@ export default async function DashboardPage() {
         {/* Stacked: Reports + Payment summary */}
         <div className="flex flex-col gap-4">
           {/* Recent Reports */}
-          <div className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden shadow-sm">
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-md">
             <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
               <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2.5">
                 <ClipboardList size={16} className="text-indigo-600" />
@@ -472,7 +472,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* Payment Summary */}
-          <div className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-sm">
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-md">
             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2.5 mb-4">
               <CreditCard size={16} className="text-amber-600" />
               Payment Summary
@@ -500,9 +500,9 @@ export default async function DashboardPage() {
           ROW 5 — Active Projects Table
           ═══════════════════════════════════════════════════════════════ */}
       {activeProjects.length > 0 && (
-        <div className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-md">
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-            <h3 className="text-base font-bold text-slate-800">Active Projects</h3>
+            <h3 className="text-xl font-bold text-slate-800">Active Projects</h3>
             <Link href="/projects" className="text-sm text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1.5">
               View all <ArrowRight size={14} />
             </Link>

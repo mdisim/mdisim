@@ -136,14 +136,14 @@ export default async function ProjectDetailPage({
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Description */}
       {project.description && (
         <p className="text-slate-500 text-sm max-w-xl">{project.description}</p>
       )}
 
       {/* Meta info */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
         {project.client_name && (
           <div className="flex items-center gap-2 text-sm text-slate-600">
             <User size={15} className="text-slate-400" />
@@ -169,23 +169,23 @@ export default async function ProjectDetailPage({
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-md">
           <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">BOQ Total</p>
           <p className="text-2xl font-bold text-slate-900 mt-1">{ils(boqTotal)}</p>
           <p className="text-xs text-slate-400 mt-1">{boqItems?.length ?? 0} line items</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-md">
           <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Total Costs</p>
           <p className="text-2xl font-bold text-slate-900 mt-1">{ils(costTotal)}</p>
           <p className="text-xs text-slate-400 mt-1">{costEntries?.length ?? 0} entries</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-md">
           <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Paid to Contractors</p>
           <p className="text-2xl font-bold text-slate-900 mt-1">{ils(paidPayments)}</p>
           <p className="text-xs text-slate-400 mt-1">{payments?.length ?? 0} payments</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-md">
           <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Budget Used</p>
           <p className={`text-2xl font-bold mt-1 ${budgetUsed > 90 ? 'text-red-600' : budgetUsed > 70 ? 'text-amber-600' : 'text-green-600'}`}>
             {budgetUsed.toFixed(1)}%
@@ -215,12 +215,12 @@ export default async function ProjectDetailPage({
       </div>
 
       {/* Module navigation */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {navLinks.map(({ href, label, icon: Icon, count }) => (
           <Link
             key={href}
             href={href}
-            className="bg-white border border-slate-200/60 rounded-xl p-5 hover:border-blue-300 hover:shadow-md transition-all group"
+            className="bg-white border border-slate-200 rounded-xl p-5 shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">

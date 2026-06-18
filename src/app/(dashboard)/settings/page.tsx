@@ -53,14 +53,14 @@ export default async function SettingsPage() {
   const userRole = (profile?.role as UserRole | null) ?? 'viewer'
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-8 max-w-5xl">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
         <p className="text-slate-500 text-sm mt-1">Manage your company profile and account details</p>
       </div>
 
       {/* Account Info bar */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap items-center gap-6">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap items-center gap-6 shadow-md">
         <div>
           <label className="block text-xs text-slate-400 uppercase tracking-wide mb-0.5">Email</label>
           <p className="text-slate-800 text-sm font-medium">{user?.email}</p>

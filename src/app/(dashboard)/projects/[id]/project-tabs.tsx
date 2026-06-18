@@ -43,9 +43,9 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
               key={tab.segment}
               href={href}
               className={cn(
-                'flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-all shrink-0 border-b-2 -mb-px',
+                'flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-all shrink-0 border-b-[3px] -mb-px',
                 active
-                  ? 'border-blue-600 text-blue-700'
+                  ? 'border-blue-600 text-blue-700 font-semibold'
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
               )}
             >

@@ -30,7 +30,7 @@ export default async function ReportsListPage({
   const approvedCount = reports?.filter(r => r.status === 'approved').length ?? 0
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <Link href={`/projects/${id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4">
           <ArrowLeft size={15} /> Back to {project.name}
@@ -42,7 +42,7 @@ export default async function ReportsListPage({
           </div>
           <Link
             href={`/projects/${id}/reports/new`}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-colors shadow-sm"
           >
             <Plus size={16} />
             New Report
@@ -51,16 +51,16 @@ export default async function ReportsListPage({
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white border border-slate-200 rounded-xl p-4 text-center">
+      <div className="grid grid-cols-3 gap-5">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 text-center shadow-md">
           <p className="text-2xl font-bold text-slate-900">{reports?.length ?? 0}</p>
           <p className="text-xs text-slate-400 mt-1">Total Reports</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 text-center">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 text-center shadow-md">
           <p className="text-2xl font-bold text-amber-600">{submittedCount}</p>
           <p className="text-xs text-slate-400 mt-1">Awaiting Approval</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 text-center">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 text-center shadow-md">
           <p className="text-2xl font-bold text-green-600">{approvedCount}</p>
           <p className="text-xs text-slate-400 mt-1">Approved</p>
         </div>
@@ -74,16 +74,16 @@ export default async function ReportsListPage({
           <p className="text-sm mt-1">Create the first site daily report for this project</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-md">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
-                  <th className="text-left text-xs text-slate-500 px-5 py-3 font-medium">Date</th>
-                  <th className="text-left text-xs text-slate-500 px-5 py-3 font-medium">Weather</th>
-                  <th className="text-left text-xs text-slate-500 px-5 py-3 font-medium">Work Status</th>
-                  <th className="text-left text-xs text-slate-500 px-5 py-3 font-medium">Status</th>
-                  <th className="text-right text-xs text-slate-500 px-5 py-3 font-medium">Action</th>
+                  <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">Date</th>
+                  <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">Weather</th>
+                  <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">Work Status</th>
+                  <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">Status</th>
+                  <th className="text-right text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">

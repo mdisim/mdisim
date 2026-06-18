@@ -44,7 +44,7 @@ export function StatsCard({
     ? colorMap[color]
     : { iconColor: propIconColor || 'text-blue-600', iconBg: propIconBg || 'bg-blue-50', borderColor: 'border-l-blue-500' }
   return (
-    <div className={cn('bg-white rounded-2xl border border-slate-200/60 border-l-[3px] p-5 shadow-sm hover:shadow-md transition-shadow duration-200', borderColor, className)}>
+    <div className={cn('bg-white rounded-2xl border border-slate-200 border-l-[3px] p-5 shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200', borderColor, className)}>
       <div className="flex items-center gap-2.5 mb-3">
         <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center', iconBg)}>
           <Icon size={17} className={iconColor} />
@@ -62,7 +62,7 @@ export function StatsCard({
           </span>
         )}
       </div>
-      <p className="text-3xl font-extrabold text-slate-900 tabular-nums leading-none">{value}</p>
+      <p className="text-4xl font-extrabold text-slate-900 tabular-nums leading-none">{value}</p>
       <p className="text-sm text-slate-500 mt-1.5 font-medium">{title}</p>
       {subtitle && <p className="text-xs text-slate-400 mt-1">{subtitle}</p>}
     </div>
