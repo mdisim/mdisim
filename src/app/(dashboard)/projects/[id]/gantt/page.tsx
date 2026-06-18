@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, BarChart2 } from 'lucide-react'
+import { BarChart2 } from 'lucide-react'
 
 function addDays(date: Date, days: number): Date {
   const d = new Date(date)
@@ -79,11 +79,8 @@ export default async function GanttPage({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <Link href={`/projects/${id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4">
-          <ArrowLeft size={15} /> Back to {project.name}
-        </Link>
         <div className="flex items-center gap-3">
           <BarChart2 size={22} className="text-amber-600" />
           <h1 className="text-2xl font-bold text-slate-900">Gantt Chart</h1>

@@ -31,19 +31,19 @@ export function SearchableProjectsList({ projects }: SearchableProjectsListProps
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t('search', 'Search') + '...'}
-          className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+          className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-md"
         />
       </div>
 
       {filtered.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {filtered.map((project) => (
             <ProjectCard key={project.id} project={project} />
           ))}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-          <FolderKanban size={48} className="mb-4 opacity-30" />
+          <FolderKanban size={48} className="mb-4 text-slate-300" />
           {query ? (
             <>
               <p className="text-lg font-medium">{t('no_data', 'No results found')}</p>

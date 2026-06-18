@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft, TrendingDown } from 'lucide-react'
+import { TrendingDown } from 'lucide-react'
 import { ils } from '@/lib/server-currency'
 
 function monthKey(dateStr: string): string {
@@ -71,11 +70,8 @@ export default async function CashFlowPage({
   const budgetVariance = project.budget > 0 ? project.budget - totalSpent : null
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <Link href={`/projects/${id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4">
-          <ArrowLeft size={15} /> Back to {project.name}
-        </Link>
         <div className="flex items-center gap-3">
           <TrendingDown size={22} className="text-amber-600" />
           <h1 className="text-2xl font-bold text-slate-900">Cash Flow</h1>
@@ -84,23 +80,23 @@ export default async function CashFlowPage({
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-md">
           <p className="text-xs text-slate-400 uppercase tracking-wide">Total Outflow</p>
-          <p className="text-xl font-bold text-slate-900 mt-1">{ils(totalSpent)}</p>
+          <p className="text-3xl font-bold text-slate-900 mt-1">{ils(totalSpent)}</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-md">
           <p className="text-xs text-slate-400 uppercase tracking-wide">Cost Entries</p>
-          <p className="text-xl font-bold text-slate-900 mt-1">{ils(totalCosts)}</p>
+          <p className="text-3xl font-bold text-slate-900 mt-1">{ils(totalCosts)}</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-md">
           <p className="text-xs text-slate-400 uppercase tracking-wide">Contractor Payments</p>
-          <p className="text-xl font-bold text-slate-900 mt-1">{ils(totalPayments)}</p>
+          <p className="text-3xl font-bold text-slate-900 mt-1">{ils(totalPayments)}</p>
         </div>
         {project.budget > 0 && budgetVariance !== null && (
-          <div className="bg-white border border-slate-200 rounded-xl p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-md">
             <p className="text-xs text-slate-400 uppercase tracking-wide">Budget Remaining</p>
-            <p className={`text-xl font-bold mt-1 ${budgetVariance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <p className={`text-3xl font-bold mt-1 ${budgetVariance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {ils(Math.abs(budgetVariance))}
               <span className="text-xs ml-1 font-normal">{budgetVariance >= 0 ? 'under' : 'over'}</span>
             </p>

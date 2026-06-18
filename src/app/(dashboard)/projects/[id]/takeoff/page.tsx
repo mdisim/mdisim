@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Upload, Ruler } from 'lucide-react'
+import { Upload, Ruler } from 'lucide-react'
 import { DrawingCard } from '@/components/takeoff/drawing-card'
 
 export default async function TakeoffPage({ params }: { params: Promise<{ id: string }> }) {
@@ -29,9 +29,6 @@ export default async function TakeoffPage({ params }: { params: Promise<{ id: st
   return (
     <div className="space-y-8">
       <div>
-        <Link href={`/projects/${id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4">
-          <ArrowLeft size={15} /> Back to {project.name}
-        </Link>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Quantity Takeoff</h1>
@@ -47,7 +44,7 @@ export default async function TakeoffPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* Info banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3 shadow-md">
+      <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex gap-3 shadow-md">
         <Ruler size={20} className="text-blue-500 shrink-0 mt-0.5" />
         <div className="text-sm text-blue-800">
           <p className="font-medium mb-1">PlanSwift-style measurement tools</p>
@@ -56,7 +53,7 @@ export default async function TakeoffPage({ params }: { params: Promise<{ id: st
       </div>
 
       {!drawings || drawings.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+        <div className="flex flex-col items-center justify-center py-20 text-slate-400 border-2 border-dashed border-slate-300 bg-white rounded-2xl shadow-md">
           <Ruler size={48} className="mb-4 opacity-30" />
           <p className="text-lg font-medium">No drawings uploaded yet</p>
           <p className="text-sm mt-1 mb-6">Upload a PDF drawing to start measuring quantities</p>

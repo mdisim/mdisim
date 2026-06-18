@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+
 import { T } from '@/components/ui/translated-label'
 import { getLibraryItems } from '@/app/actions/boq-library'
 import BOQPageWithLibrary from './boq-page-with-library'
@@ -25,10 +24,7 @@ export default async function BOQPage({
   return (
     <div className="flex flex-col h-full space-y-8">
       <div>
-        <Link href={`/projects/${id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4">
-          <ArrowLeft size={15} /> {project.name}
-        </Link>
-        <div className="flex items-center justify-between">
+<div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">
               <T k="bill_of_quantities" fallback="Bill of Quantities" />

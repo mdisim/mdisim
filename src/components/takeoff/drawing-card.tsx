@@ -33,34 +33,34 @@ export function DrawingCard({ drawing, projectId, measurementCount }: Props) {
     : ''
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-5 hover:shadow-sm transition-shadow">
+    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center shrink-0">
-            <FileText size={18} className="text-red-500" />
+          <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
+            <FileText size={18} className="text-blue-600" />
           </div>
           <div className="min-w-0">
-            <p className="font-semibold text-slate-800 truncate">{drawing.name}</p>
+            <p className="text-lg font-semibold text-slate-800 truncate">{drawing.name}</p>
             <p className="text-xs text-slate-400 truncate">{drawing.original_filename}</p>
           </div>
         </div>
         <button
           onClick={handleDelete}
           disabled={isPending}
-          className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-2"
+          className="p-1.5 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-2"
         >
           {isPending ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
         </button>
       </div>
 
-      <div className="flex items-center gap-4 text-xs text-slate-500 mb-4">
-        <span>{drawing.page_count} page{drawing.page_count !== 1 ? 's' : ''}</span>
-        {sizeLabel && <span>{sizeLabel}</span>}
-        <span>{formatDate(drawing.created_at)}</span>
+      <div className="flex items-center gap-2 flex-wrap text-xs text-slate-500 mb-4">
+        <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg text-xs font-medium">{drawing.page_count} page{drawing.page_count !== 1 ? 's' : ''}</span>
+        {sizeLabel && <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg text-xs font-medium">{sizeLabel}</span>}
+        <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg text-xs font-medium">{formatDate(drawing.created_at)}</span>
       </div>
 
       <div className="flex items-center gap-2 mb-4">
-        <div className="flex items-center gap-1.5 bg-amber-50 text-amber-700 text-xs px-2.5 py-1 rounded-full">
+        <div className="flex items-center gap-1.5 bg-blue-50 text-blue-700 text-xs px-2.5 py-1 rounded-full">
           <Ruler size={11} />
           {measurementCount} measurement{measurementCount !== 1 ? 's' : ''}
         </div>
@@ -68,7 +68,7 @@ export function DrawingCard({ drawing, projectId, measurementCount }: Props) {
 
       <Link
         href={`/projects/${projectId}/takeoff/${drawing.id}`}
-        className="flex items-center justify-center gap-2 w-full py-2 px-4 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 transition-all"
+        className="flex items-center justify-center gap-2 w-full py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm transition-all"
       >
         Open in Viewer <ExternalLink size={13} />
       </Link>

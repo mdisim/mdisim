@@ -93,37 +93,37 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
   return (
     <div className="flex-1 overflow-auto p-4 sm:p-6">
       {/* Dashboard */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 text-center">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 text-center">
           <p className="text-xs text-slate-500 uppercase tracking-wide">{t('total_weight', 'Total Weight')}</p>
-          <p className="text-2xl font-bold text-blue-400 mt-1">{totalWeight.toFixed(2)} kg</p>
+          <p className="text-3xl font-bold text-blue-400 mt-1">{totalWeight.toFixed(2)} kg</p>
           <p className="text-xs text-slate-600 mt-0.5">{(totalWeight / 1000).toFixed(3)} t</p>
         </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 text-center">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 text-center">
           <p className="text-xs text-slate-500 uppercase tracking-wide">{t('quantity', 'Total Bars')}</p>
-          <p className="text-2xl font-bold text-white mt-1">{totalBarCount}</p>
+          <p className="text-3xl font-bold text-white mt-1">{totalBarCount}</p>
           <p className="text-xs text-slate-600 mt-0.5">{allBars.length} {t('bars', 'bar types')}</p>
         </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 text-center">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 text-center">
           <p className="text-xs text-slate-500 uppercase tracking-wide">{t('element_type', 'Elements')}</p>
-          <p className="text-2xl font-bold text-white mt-1">{elements.length}</p>
+          <p className="text-3xl font-bold text-white mt-1">{elements.length}</p>
         </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 text-center">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 text-center">
           <p className="text-xs text-slate-500 uppercase tracking-wide">{t('diameter', 'Diameters')}</p>
-          <p className="text-2xl font-bold text-white mt-1">{diaRows.length}</p>
+          <p className="text-3xl font-bold text-white mt-1">{diaRows.length}</p>
           <p className="text-xs text-slate-600 mt-0.5">{diaRows.map(([d]) => `T${d}`).join(', ')}</p>
         </div>
       </div>
 
       {/* Weight by diameter bar chart */}
       {diaRows.length > 0 && (
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-8">
           <p className="text-xs text-slate-500 uppercase tracking-wide mb-3">{t('weight', 'Weight')} by {t('diameter', 'Diameter')}</p>
           <div className="space-y-2">
             {diaRows.map(([d, row]) => (
               <div key={d} className="flex items-center gap-3 text-xs">
                 <span className="font-mono w-10 text-blue-300 shrink-0">T{d}</span>
-                <div className="flex-1 bg-slate-800 rounded-full h-5 overflow-hidden">
+                <div className="flex-1 bg-slate-800 rounded-full h-6 overflow-hidden">
                   <div
                     className="h-full bg-blue-600 rounded-full flex items-center justify-end pr-2"
                     style={{ width: `${Math.max(5, (row.weight / maxDiaWeight) * 100)}%` }}
@@ -147,7 +147,7 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
         </p>
         <button
           onClick={() => setAdding(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-colors font-semibold"
         >
           <Plus size={14} /> {t('add_element', 'Add Element')}
         </button>
@@ -155,13 +155,13 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
 
       {/* Add element form */}
       {adding && (
-        <div className="mb-4 p-4 bg-slate-800 rounded-lg border border-slate-700 flex flex-wrap gap-3 items-end">
+        <div className="mb-4 p-4 bg-slate-800 rounded-xl border border-slate-700 flex flex-wrap gap-3 items-end">
           <div>
             <label className="block text-xs text-slate-400 mb-1">{t('element_type', 'Type')}</label>
             <select
               value={form.element_type}
               onChange={e => setForm(f => ({ ...f, element_type: e.target.value }))}
-              className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded px-2 py-1.5 focus:outline-none focus:border-blue-500"
+              className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded-lg px-2 py-1.5 focus:outline-none focus:border-blue-500"
             >
               {ELEMENT_TYPES.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
             </select>
@@ -172,7 +172,7 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
               value={form.element_mark}
               onChange={e => setForm(f => ({ ...f, element_mark: e.target.value }))}
               placeholder="e.g. B1, C2, F3"
-              className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded px-2 py-1.5 focus:outline-none focus:border-blue-500 w-32"
+              className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded-lg px-2 py-1.5 focus:outline-none focus:border-blue-500 w-32"
             />
           </div>
           <div>
@@ -181,17 +181,17 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
               value={form.floor_level}
               onChange={e => setForm(f => ({ ...f, floor_level: e.target.value }))}
               placeholder="e.g. GF, 1F, Roof"
-              className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded px-2 py-1.5 focus:outline-none focus:border-blue-500 w-28"
+              className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded-lg px-2 py-1.5 focus:outline-none focus:border-blue-500 w-28"
             />
           </div>
           <div className="flex gap-2">
             <button
               onClick={handleAdd}
-              className="px-3 py-1.5 text-sm rounded bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+              className="px-3 py-1.5 text-sm rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-colors"
             >{t('save', 'Save')}</button>
             <button
               onClick={() => setAdding(false)}
-              className="px-3 py-1.5 text-sm rounded bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors"
+              className="px-3 py-1.5 text-sm rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors"
             >{t('cancel', 'Cancel')}</button>
           </div>
         </div>

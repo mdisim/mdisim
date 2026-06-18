@@ -1,7 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
 import { CostsPageClient } from '@/components/costs/costs-page-client'
 
 export default async function CostsPage({
@@ -25,11 +23,8 @@ export default async function CostsPage({
   const pending = costEntries?.filter(c => c.status === 'pending').reduce((s, c) => s + c.amount, 0) ?? 0
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <Link href={`/projects/${id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4">
-          <ArrowLeft size={15} /> Back to {project.name}
-        </Link>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Cost Tracking</h1>
@@ -39,18 +34,18 @@ export default async function CostsPage({
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-md">
           <p className="text-xs text-slate-400 uppercase tracking-wide">Total Costs</p>
-          <p className="text-xl font-bold text-slate-900 mt-1">${total.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-slate-900 mt-1">${total.toLocaleString()}</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-md">
           <p className="text-xs text-slate-400 uppercase tracking-wide">Approved</p>
-          <p className="text-xl font-bold text-green-600 mt-1">${approved.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-green-600 mt-1">${approved.toLocaleString()}</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-md">
           <p className="text-xs text-slate-400 uppercase tracking-wide">Pending Review</p>
-          <p className="text-xl font-bold text-amber-600 mt-1">${pending.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-amber-600 mt-1">${pending.toLocaleString()}</p>
         </div>
       </div>
 

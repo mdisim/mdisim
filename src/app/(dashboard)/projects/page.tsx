@@ -23,7 +23,7 @@ export default async function ProjectsPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-[1400px] mx-auto space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900"><T k="projects" fallback="Projects" /></h1>
@@ -40,7 +40,7 @@ export default async function ProjectsPage() {
           { label: 'Planning', count: counts.planning, color: 'bg-slate-100 text-slate-600' },
           { label: 'Completed', count: counts.completed, color: 'bg-green-50 text-green-700' },
         ].map(f => (
-          <span key={f.label} className={`px-3.5 py-1.5 rounded-full text-sm font-medium ${f.color}`}>
+          <span key={f.label} className={`px-4 py-2 rounded-xl text-sm font-semibold shadow-sm ${f.color}`}>
             {f.label} <span className="ml-1 font-semibold">{f.count}</span>
           </span>
         ))}

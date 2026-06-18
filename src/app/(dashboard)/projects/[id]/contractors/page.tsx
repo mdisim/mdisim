@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { DollarSign, CheckCircle, Clock } from 'lucide-react'
 import { PaymentsTable } from '@/components/contractors/payments-table'
 
 export default async function ProjectContractorsPage({
@@ -31,25 +30,37 @@ export default async function ProjectContractorsPage({
   return (
     <div className="space-y-8">
       <div>
-        <Link href={`/projects/${id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4">
-          <ArrowLeft size={15} /> Back to {project.name}
-        </Link>
         <h1 className="text-2xl font-bold text-slate-900">Contractor Payments</h1>
         <p className="text-slate-500 text-sm mt-1">{project.name}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-md">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Payments</p>
-          <p className="text-xl font-bold text-slate-900 mt-1">${(totalPaid + totalPending).toLocaleString()}</p>
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-50 p-2 rounded-xl"><DollarSign size={20} className="text-blue-600" /></div>
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Payments</p>
+              <p className="text-3xl font-bold text-slate-900 mt-1">${(totalPaid + totalPending).toLocaleString()}</p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-md">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Paid</p>
-          <p className="text-xl font-bold text-green-600 mt-1">${totalPaid.toLocaleString()}</p>
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="bg-green-50 p-2 rounded-xl"><CheckCircle size={20} className="text-green-600" /></div>
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Paid</p>
+              <p className="text-3xl font-bold text-green-600 mt-1">${totalPaid.toLocaleString()}</p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-md">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending</p>
-          <p className="text-xl font-bold text-amber-600 mt-1">${totalPending.toLocaleString()}</p>
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="bg-amber-50 p-2 rounded-xl"><Clock size={20} className="text-amber-600" /></div>
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending</p>
+              <p className="text-3xl font-bold text-amber-600 mt-1">${totalPending.toLocaleString()}</p>
+            </div>
+          </div>
         </div>
       </div>
 

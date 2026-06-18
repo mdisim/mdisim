@@ -38,19 +38,19 @@ export default async function RebarSchedulePage({
       <div className="px-4 sm:px-6 py-4 border-b border-slate-800 shrink-0">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-bold text-white">Rebar Schedule</h1>
+            <h1 className="text-2xl font-bold text-white">Rebar Schedule</h1>
             <p className="text-sm text-slate-400">{project.name}</p>
           </div>
           <div className="flex items-center gap-2">
             <Link
               href={`/projects/${id}/rebar/extract`}
-              className="px-3 py-1.5 text-sm rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors font-medium shadow-sm"
+              className="px-4 py-2 text-sm rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors font-semibold shadow-sm"
             >
               ⚡ Extract from Drawing
             </Link>
             <a
               href={`/api/rebar/export?projectId=${id}`}
-              className="px-3 py-1.5 text-sm rounded bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors hidden sm:inline-flex"
+              className="px-3 py-1.5 text-sm rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors hidden sm:inline-flex"
             >
               Export Excel
             </a>
@@ -70,7 +70,7 @@ export default async function RebarSchedulePage({
                   aria-selected={isActive}
                   className={`snap-start px-4 py-2 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${
                     isActive
-                      ? 'bg-slate-800 text-white border-b-2 border-blue-500'
+                      ? 'bg-slate-800 text-white border-b-[3px] border-blue-500 font-semibold'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                   }`}
                 >

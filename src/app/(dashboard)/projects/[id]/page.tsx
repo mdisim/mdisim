@@ -110,84 +110,96 @@ export default async function ProjectDetailPage({
   const healthColor = healthScore >= 70 ? '#22c55e' : healthScore >= 40 ? '#f59e0b' : '#ef4444'
   const healthLabel = healthScore >= 70 ? 'On Track' : healthScore >= 40 ? 'Needs Attention' : 'At Risk'
 
-  const navLinks = [
-    { href: `/projects/${id}/boq`, label: 'BOQ', icon: FileText, count: boqItems?.length ?? 0 },
-    { href: `/projects/${id}/costs`, label: 'Cost Tracking', icon: TrendingUp, count: costEntries?.length ?? 0 },
-    { href: `/projects/${id}/contractors`, label: 'Contractor Payments', icon: Users, count: payments?.length ?? 0 },
+  const coreModules = [
+    { href: `/projects/${id}/boq`, label: 'BOQ', icon: FileText, count: boqItems?.length ?? 0, iconBg: 'bg-blue-50', iconColor: 'text-blue-600', hoverBg: 'group-hover:bg-blue-100' },
+    { href: `/projects/${id}/costs`, label: 'Cost Tracking', icon: TrendingUp, count: costEntries?.length ?? 0, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600', hoverBg: 'group-hover:bg-emerald-100' },
+    { href: `/projects/${id}/takeoff`, label: 'Quantity Takeoff', icon: Ruler, count: (drawingsCount as unknown as { count: number } | null)?.count ?? 0, iconBg: 'bg-violet-50', iconColor: 'text-violet-600', hoverBg: 'group-hover:bg-violet-100' },
+    { href: `/projects/${id}/rebar`, label: 'Rebar Schedule', icon: Wrench, count: 0, iconBg: 'bg-orange-50', iconColor: 'text-orange-600', hoverBg: 'group-hover:bg-orange-100' },
+    { href: `/projects/${id}/contractors`, label: 'Contractor Payments', icon: Users, count: payments?.length ?? 0, iconBg: 'bg-amber-50', iconColor: 'text-amber-600', hoverBg: 'group-hover:bg-amber-100' },
+  ]
+
+  const planningModules = [
+    { href: `/projects/${id}/phases`, label: 'Phases & Milestones', icon: GitBranch },
+    { href: `/projects/${id}/gantt`, label: 'Gantt Chart', icon: BarChart2 },
+    { href: `/projects/${id}/cashflow`, label: 'Cash Flow', icon: TrendingDown },
+    { href: `/projects/${id}/budget-report`, label: 'Budget Report', icon: FileBarChart },
+    { href: `/projects/${id}/evm`, label: 'EVM', icon: TrendingUp },
+  ]
+
+  const documentsModules = [
     { href: `/projects/${id}/reports`, label: 'Site Daily Reports', icon: ClipboardList, count: (reportsCount as unknown as { count: number } | null)?.count ?? 0 },
-    { href: `/projects/${id}/takeoff`, label: 'Quantity Takeoff', icon: Ruler, count: (drawingsCount as unknown as { count: number } | null)?.count ?? 0 },
-    { href: `/projects/${id}/phases`, label: 'Phases & Milestones', icon: GitBranch, count: 0 },
-    { href: `/projects/${id}/certificates`, label: 'Payment Certificates', icon: Award, count: 0 },
-    { href: `/projects/${id}/variations`, label: 'Variations', icon: GitMerge, count: 0 },
-    { href: `/projects/${id}/materials`, label: 'Materials', icon: Package, count: 0 },
-    { href: `/projects/${id}/concrete`, label: 'Concrete & Rebar', icon: Layers, count: 0 },
-    { href: `/projects/${id}/gantt`, label: 'Gantt Chart', icon: BarChart2, count: 0 },
-    { href: `/projects/${id}/cashflow`, label: 'Cash Flow', icon: TrendingDown, count: 0 },
-    { href: `/projects/${id}/documents`, label: 'Documents', icon: FolderOpen, count: 0 },
-    { href: `/projects/${id}/contracts`, label: 'Contracts', icon: FileSignature, count: 0 },
-    { href: `/projects/${id}/procurement`, label: 'Procurement', icon: ShoppingCart, count: 0 },
-    { href: `/projects/${id}/budget-report`, label: 'Budget Report', icon: FileBarChart, count: 0 },
-    { href: `/projects/${id}/risks`, label: 'Risk Register', icon: ShieldAlert, count: 0 },
-    { href: `/projects/${id}/issues`, label: 'Issues Register', icon: AlertCircle, count: 0 },
-    { href: `/projects/${id}/meetings`, label: 'Meeting Minutes', icon: Users2, count: 0 },
-    { href: `/projects/${id}/correspondence`, label: 'Correspondence', icon: Mail, count: 0 },
-    { href: `/projects/${id}/boq-comparison`, label: 'BOQ Comparison', icon: GitCompare, count: 0 },
-    { href: `/projects/${id}/rebar`, label: 'Rebar Schedule', icon: Wrench, count: 0 },
+    { href: `/projects/${id}/documents`, label: 'Documents', icon: FolderOpen },
+    { href: `/projects/${id}/contracts`, label: 'Contracts', icon: FileSignature },
+    { href: `/projects/${id}/correspondence`, label: 'Correspondence', icon: Mail },
+    { href: `/projects/${id}/meetings`, label: 'Meeting Minutes', icon: Users2 },
+    { href: `/projects/${id}/procurement`, label: 'Procurement', icon: ShoppingCart },
+    { href: `/projects/${id}/materials`, label: 'Materials', icon: Package },
+  ]
+
+  const advancedModules = [
+    { href: `/projects/${id}/variations`, label: 'Variations', icon: GitMerge },
+    { href: `/projects/${id}/boq-comparison`, label: 'BOQ Comparison', icon: GitCompare },
+    { href: `/projects/${id}/risks`, label: 'Risk Register', icon: ShieldAlert },
+    { href: `/projects/${id}/issues`, label: 'Issues Register', icon: AlertCircle },
+    { href: `/projects/${id}/certificates`, label: 'Payment Certificates', icon: Award },
+    { href: `/projects/${id}/concrete`, label: 'Concrete & Rebar', icon: Layers },
   ]
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-[1400px] mx-auto">
       {/* Description */}
       {project.description && (
         <p className="text-slate-500 text-sm max-w-xl">{project.description}</p>
       )}
 
       {/* Meta info */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-        {project.client_name && (
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-md">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+          {project.client_name && (
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <User size={15} className="text-blue-500" />
+              <span>{project.client_name}</span>
+            </div>
+          )}
+          {project.location && (
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <MapPin size={15} className="text-green-500" />
+              <span>{project.location}</span>
+            </div>
+          )}
+          {project.start_date && (
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <Calendar size={15} className="text-purple-500" />
+              <span>{new Date(project.start_date).toLocaleDateString()}</span>
+            </div>
+          )}
           <div className="flex items-center gap-2 text-sm text-slate-600">
-            <User size={15} className="text-slate-400" />
-            <span>{project.client_name}</span>
+            <DollarSign size={15} className="text-amber-500" />
+            <span>Budget: {ils(project.budget ?? 0)}</span>
           </div>
-        )}
-        {project.location && (
-          <div className="flex items-center gap-2 text-sm text-slate-600">
-            <MapPin size={15} className="text-slate-400" />
-            <span>{project.location}</span>
-          </div>
-        )}
-        {project.start_date && (
-          <div className="flex items-center gap-2 text-sm text-slate-600">
-            <Calendar size={15} className="text-slate-400" />
-            <span>{new Date(project.start_date).toLocaleDateString()}</span>
-          </div>
-        )}
-        <div className="flex items-center gap-2 text-sm text-slate-600">
-          <DollarSign size={15} className="text-slate-400" />
-          <span>Budget: {ils(project.budget ?? 0)}</span>
         </div>
       </div>
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-md">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">BOQ Total</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">{ils(boqTotal)}</p>
+          <p className="text-3xl font-bold text-slate-900 mt-1">{ils(boqTotal)}</p>
           <p className="text-xs text-slate-400 mt-1">{boqItems?.length ?? 0} line items</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-md">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Total Costs</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">{ils(costTotal)}</p>
+          <p className="text-3xl font-bold text-slate-900 mt-1">{ils(costTotal)}</p>
           <p className="text-xs text-slate-400 mt-1">{costEntries?.length ?? 0} entries</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-md">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Paid to Contractors</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">{ils(paidPayments)}</p>
+          <p className="text-3xl font-bold text-slate-900 mt-1">{ils(paidPayments)}</p>
           <p className="text-xs text-slate-400 mt-1">{payments?.length ?? 0} payments</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-md">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Budget Used</p>
-          <p className={`text-2xl font-bold mt-1 ${budgetUsed > 90 ? 'text-red-600' : budgetUsed > 70 ? 'text-amber-600' : 'text-green-600'}`}>
+          <p className={`text-3xl font-bold mt-1 ${budgetUsed > 90 ? 'text-red-600' : budgetUsed > 70 ? 'text-amber-600' : 'text-green-600'}`}>
             {budgetUsed.toFixed(1)}%
           </p>
           <div className="mt-2 h-1.5 bg-slate-100 rounded-full">
@@ -198,7 +210,7 @@ export default async function ProjectDetailPage({
           </div>
         </div>
         {/* Health Score */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col items-center justify-center">
           <p className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-2">Health Score</p>
           <div
             className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-lg"
@@ -215,8 +227,36 @@ export default async function ProjectDetailPage({
       </div>
 
       {/* Module navigation */}
+
+      {/* Core */}
+      <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mt-8 mb-4">Core</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {navLinks.map(({ href, label, icon: Icon, count }) => (
+        {coreModules.map(({ href, label, icon: Icon, count, iconBg, iconColor, hoverBg }) => (
+          <Link
+            key={href}
+            href={href}
+            className="bg-white border border-slate-200 rounded-xl p-6 shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-11 h-11 ${iconBg} rounded-lg flex items-center justify-center ${hoverBg} transition-colors`}>
+                  <Icon size={22} className={iconColor} />
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-800">{label}</p>
+                  <p className="text-xs text-slate-400">{count} record{count !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
+              <ArrowLeft size={16} className="text-slate-300 rotate-180 group-hover:text-blue-500 transition-colors" />
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* Planning & Scheduling */}
+      <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mt-8 mb-4">Planning & Scheduling</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {planningModules.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
             href={href}
@@ -229,7 +269,57 @@ export default async function ProjectDetailPage({
                 </div>
                 <div>
                   <p className="font-semibold text-slate-800">{label}</p>
-                  <p className="text-xs text-slate-400">{count} record{count !== 1 ? 's' : ''}</p>
+                  <p className="text-xs text-slate-400">0 records</p>
+                </div>
+              </div>
+              <ArrowLeft size={16} className="text-slate-300 rotate-180 group-hover:text-blue-500 transition-colors" />
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* Documents & Compliance */}
+      <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mt-8 mb-4">Documents & Compliance</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {documentsModules.map(({ href, label, icon: Icon, count }) => (
+          <Link
+            key={href}
+            href={href}
+            className="bg-white border border-slate-200 rounded-xl p-5 shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                  <Icon size={18} className="text-blue-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-800">{label}</p>
+                  <p className="text-xs text-slate-400">{count ?? 0} record{(count ?? 0) !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
+              <ArrowLeft size={16} className="text-slate-300 rotate-180 group-hover:text-blue-500 transition-colors" />
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* Advanced */}
+      <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mt-8 mb-4">Advanced</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {advancedModules.map(({ href, label, icon: Icon }) => (
+          <Link
+            key={href}
+            href={href}
+            className="bg-white border border-slate-200 rounded-xl p-5 shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 group"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                  <Icon size={18} className="text-blue-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-800">{label}</p>
+                  <p className="text-xs text-slate-400">0 records</p>
                 </div>
               </div>
               <ArrowLeft size={16} className="text-slate-300 rotate-180 group-hover:text-blue-500 transition-colors" />

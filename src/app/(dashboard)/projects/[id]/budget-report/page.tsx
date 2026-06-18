@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft, FileBarChart } from 'lucide-react'
+import { FileBarChart } from 'lucide-react'
 import BudgetReportClient from './client'
 
 export default async function BudgetReportPage({
@@ -29,11 +28,8 @@ export default async function BudgetReportPage({
   if (!project) notFound()
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <Link href={`/projects/${id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4">
-          <ArrowLeft size={15} /> Back to Project
-        </Link>
         <div className="flex items-center gap-3">
           <FileBarChart size={22} className="text-amber-500" />
           <h1 className="text-2xl font-bold text-slate-900">Budget vs Actual Report</h1>

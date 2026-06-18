@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Plus, FileText } from 'lucide-react'
+import { Plus, FileText, Clock, CheckCircle } from 'lucide-react'
 import { ReportStatusBadge, WeatherIcon, WorkStatusBadge } from '@/components/reports/report-status-badge'
 import { SiteDailyReport } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
@@ -32,9 +32,6 @@ export default async function ReportsListPage({
   return (
     <div className="space-y-8">
       <div>
-        <Link href={`/projects/${id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4">
-          <ArrowLeft size={15} /> Back to {project.name}
-        </Link>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Site Daily Reports</h1>
@@ -52,17 +49,32 @@ export default async function ReportsListPage({
 
       {/* Summary */}
       <div className="grid grid-cols-3 gap-5">
-        <div className="bg-white border border-slate-200 rounded-xl p-4 text-center shadow-md">
-          <p className="text-2xl font-bold text-slate-900">{reports?.length ?? 0}</p>
-          <p className="text-xs text-slate-400 mt-1">Total Reports</p>
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 text-center shadow-md">
+          <div className="flex items-center justify-center gap-3">
+            <div className="bg-blue-50 p-2 rounded-xl"><FileText size={20} className="text-blue-600" /></div>
+            <div>
+              <p className="text-3xl font-bold text-slate-900">{reports?.length ?? 0}</p>
+              <p className="text-xs text-slate-400 mt-1">Total Reports</p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 text-center shadow-md">
-          <p className="text-2xl font-bold text-amber-600">{submittedCount}</p>
-          <p className="text-xs text-slate-400 mt-1">Awaiting Approval</p>
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 text-center shadow-md">
+          <div className="flex items-center justify-center gap-3">
+            <div className="bg-amber-50 p-2 rounded-xl"><Clock size={20} className="text-amber-600" /></div>
+            <div>
+              <p className="text-3xl font-bold text-amber-600">{submittedCount}</p>
+              <p className="text-xs text-slate-400 mt-1">Awaiting Approval</p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 text-center shadow-md">
-          <p className="text-2xl font-bold text-green-600">{approvedCount}</p>
-          <p className="text-xs text-slate-400 mt-1">Approved</p>
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 text-center shadow-md">
+          <div className="flex items-center justify-center gap-3">
+            <div className="bg-green-50 p-2 rounded-xl"><CheckCircle size={20} className="text-green-600" /></div>
+            <div>
+              <p className="text-3xl font-bold text-green-600">{approvedCount}</p>
+              <p className="text-xs text-slate-400 mt-1">Approved</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -74,7 +86,7 @@ export default async function ReportsListPage({
           <p className="text-sm mt-1">Create the first site daily report for this project</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-md">
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-md">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-100">
