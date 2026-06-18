@@ -13,18 +13,17 @@ import {
   Wrench,
   ShoppingCart,
   BarChart2,
+  Image,
 } from 'lucide-react'
 
 const tabs = [
   { segment: '', label: 'Overview', icon: LayoutDashboard },
+  { segment: '/takeoff', label: 'Drawings', icon: Image },
   { segment: '/boq', label: 'BOQ', icon: FileText },
-  { segment: '/takeoff', label: 'Takeoff', icon: Ruler },
   { segment: '/rebar', label: 'Rebar', icon: Wrench },
   { segment: '/costs', label: 'Costs', icon: TrendingUp },
   { segment: '/contractors', label: 'Payments', icon: Users },
   { segment: '/reports', label: 'Reports', icon: ClipboardList },
-  { segment: '/procurement', label: 'Procurement', icon: ShoppingCart },
-  { segment: '/budget-report', label: 'Budget', icon: BarChart2 },
 ]
 
 export function ProjectTabs({ projectId }: { projectId: string }) {
