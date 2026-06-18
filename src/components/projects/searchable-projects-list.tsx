@@ -31,7 +31,7 @@ export function SearchableProjectsList({ projects }: SearchableProjectsListProps
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t('search', 'Search') + '...'}
-          className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+          className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
         />
       </div>
 

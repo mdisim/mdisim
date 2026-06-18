@@ -25,8 +25,8 @@ export function NavItem({ href, icon: Icon, label, collapsed, onNavigate, badge 
       className={cn(
         'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
         isActive
-          ? 'bg-white/10 text-amber-400 border-l-4 border-amber-400 pl-2'
-          : 'text-white/70 hover:bg-white/10 hover:text-white border-l-4 border-transparent',
+          ? 'bg-blue-500/10 text-white border-l-[3px] border-[#2563EB] pl-2'
+          : 'text-slate-400 hover:bg-white/5 hover:text-slate-200 border-l-[3px] border-transparent',
         collapsed && 'justify-center px-2'
       )}
       title={collapsed ? label : undefined}

@@ -74,7 +74,7 @@ export function MeasurementsList({
                 key={m.id}
                 onClick={() => onSelect(m.id)}
                 className={`px-3 py-2 cursor-pointer transition-colors ${
-                  m.id === selectedId ? 'bg-amber-500/10' : 'hover:bg-slate-800/40'
+                  m.id === selectedId ? 'bg-blue-600/10' : 'hover:bg-slate-800/40'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -82,7 +82,7 @@ export function MeasurementsList({
                     <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: m.color }} />
                     <span className="text-xs text-slate-300 truncate">{m.label || groupLabel}</span>
                     {savingId === m.id && (
-                      <div className="w-3 h-3 border border-amber-400 border-t-transparent rounded-full animate-spin shrink-0" />
+                      <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin shrink-0" />
                     )}
                   </div>
                   <button
@@ -106,7 +106,7 @@ export function MeasurementsList({
                     value={m.boqItemId ?? ''}
                     onChange={e => { e.stopPropagation(); onLinkBOQ(m.id, e.target.value) }}
                     onClick={e => e.stopPropagation()}
-                    className="flex-1 text-xs bg-slate-800 border border-slate-700 text-slate-400 rounded px-1.5 py-0.5 focus:outline-none focus:border-amber-500 min-w-0"
+                    className="flex-1 text-xs bg-slate-800 border border-slate-700 text-slate-400 rounded px-1.5 py-0.5 focus:outline-none focus:border-blue-500 min-w-0"
                   >
                     <option value="">— Link to BOQ item —</option>
                     {boqItems.map(b => (

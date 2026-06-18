@@ -92,13 +92,13 @@ export function ConcreteClient({ pours, rebarRecords, projectId }: Props) {
       <div className="flex border-b border-slate-200 mb-4">
         <button
           onClick={() => setTab('concrete')}
-          className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${tab === 'concrete' ? 'border-amber-500 text-amber-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+          className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${tab === 'concrete' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
         >
           Concrete Pours ({pours.length})
         </button>
         <button
           onClick={() => setTab('reinforcement')}
-          className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${tab === 'reinforcement' ? 'border-amber-500 text-amber-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+          className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${tab === 'reinforcement' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
         >
           Reinforcement ({rebarRecords.length})
         </button>
@@ -217,58 +217,58 @@ export function ConcreteClient({ pours, rebarRecords, projectId }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Pour Date *</label>
-              <input name="pour_date" type="date" required defaultValue={new Date().toISOString().split('T')[0]} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="pour_date" type="date" required defaultValue={new Date().toISOString().split('T')[0]} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Element Type *</label>
-              <input name="element_type" required placeholder="e.g. Foundation, Column, Slab" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="element_type" required placeholder="e.g. Foundation, Column, Slab" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Location</label>
-              <input name="location" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="location" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Mix Design</label>
-              <input name="mix_design" placeholder="e.g. C25/30" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="mix_design" placeholder="e.g. C25/30" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Volume (m³) *</label>
-              <input name="volume_m3" type="number" step="0.01" min="0" required className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="volume_m3" type="number" step="0.01" min="0" required className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Strength (MPa)</label>
-              <input name="strength_mpa" type="number" min="0" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="strength_mpa" type="number" min="0" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Slump (mm)</label>
-              <input name="slump_mm" type="number" min="0" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="slump_mm" type="number" min="0" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Temp (°C)</label>
-              <input name="temp_celsius" type="number" step="0.1" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="temp_celsius" type="number" step="0.1" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Test Cubes</label>
-              <input name="test_cubes" type="number" min="0" defaultValue="0" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="test_cubes" type="number" min="0" defaultValue="0" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Supplier</label>
-              <input name="supplier" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="supplier" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Batch Numbers</label>
-            <input name="batch_numbers" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <input name="batch_numbers" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
-            <textarea name="notes" rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <textarea name="notes" rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => setShowAddPour(false)} className="px-4 py-2 text-sm border border-slate-300 rounded-lg hover:bg-slate-50">Cancel</button>
@@ -284,44 +284,44 @@ export function ConcreteClient({ pours, rebarRecords, projectId }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Record Date *</label>
-              <input name="record_date" type="date" required defaultValue={new Date().toISOString().split('T')[0]} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="record_date" type="date" required defaultValue={new Date().toISOString().split('T')[0]} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Element Type *</label>
-              <input name="element_type" required placeholder="e.g. Column, Beam, Slab" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="element_type" required placeholder="e.g. Column, Beam, Slab" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Location</label>
-              <input name="location" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="location" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Bar Diameter (mm)</label>
-              <input name="bar_diameter_mm" type="number" min="0" placeholder="e.g. 16" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="bar_diameter_mm" type="number" min="0" placeholder="e.g. 16" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Steel Grade</label>
-              <input name="steel_grade" placeholder="e.g. B500B" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="steel_grade" placeholder="e.g. B500B" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Quantity (kg)</label>
-              <input name="quantity_kg" type="number" step="0.01" min="0" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="quantity_kg" type="number" step="0.01" min="0" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Supplier</label>
-              <input name="supplier" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="supplier" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Heat Number</label>
-            <input name="heat_number" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <input name="heat_number" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
-            <textarea name="notes" rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <textarea name="notes" rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => setShowAddRebar(false)} className="px-4 py-2 text-sm border border-slate-300 rounded-lg hover:bg-slate-50">Cancel</button>

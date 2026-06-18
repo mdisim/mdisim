@@ -65,7 +65,7 @@ export function IssuesSection({ reportId, projectId, issues, readonly }: Props) 
           )}
         </div>
         {!readonly && (
-          <button onClick={() => setShowAdd(true)} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-amber-50 hover:border-amber-300 text-slate-600 transition-colors">
+          <button onClick={() => setShowAdd(true)} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-blue-50 hover:border-blue-300 text-slate-600 transition-colors">
             <Plus size={12} /> Log Issue
           </button>
         )}
@@ -128,7 +128,7 @@ export function IssuesSection({ reportId, projectId, issues, readonly }: Props) 
             <div>
               <label className="block text-xs text-slate-500 mb-1">Issue Type</label>
               <select value={form.issue_type} onChange={e => setForm(f => ({ ...f, issue_type: e.target.value }))}
-                className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">— Select —</option>
                 {ISSUE_TYPES.map(t => <option key={t} value={t} className="capitalize">{t}</option>)}
               </select>
@@ -136,7 +136,7 @@ export function IssuesSection({ reportId, projectId, issues, readonly }: Props) 
             <div>
               <label className="block text-xs text-slate-500 mb-1">Severity</label>
               <select value={form.severity} onChange={e => setForm(f => ({ ...f, severity: e.target.value }))}
-                className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                 {SEVERITIES.map(s => <option key={s} value={s} className="capitalize">{s}</option>)}
               </select>
             </div>
@@ -145,17 +145,17 @@ export function IssuesSection({ reportId, projectId, issues, readonly }: Props) 
             <label className="block text-xs text-slate-500 mb-1">Description *</label>
             <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               rows={3} placeholder="Describe the issue or observation..."
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none" />
+              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
           </div>
           <div>
             <label className="block text-xs text-slate-500 mb-1">Raised By</label>
             <input value={form.raised_by} onChange={e => setForm(f => ({ ...f, raised_by: e.target.value }))}
               placeholder="Name / role"
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div className="flex gap-3 pt-2">
             <button onClick={handleCreate} disabled={!form.description || isPending}
-              className="flex-1 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-white font-semibold rounded-lg py-2.5 text-sm transition-colors">
+              className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold rounded-lg py-2.5 text-sm transition-colors">
               Log Issue
             </button>
             <button onClick={() => setShowAdd(false)}

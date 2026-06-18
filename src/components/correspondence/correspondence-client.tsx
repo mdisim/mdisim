@@ -74,7 +74,7 @@ export function CorrespondenceClient({ items, projectId }: CorrespondenceClientP
     setTimeout(() => setToast(''), 3000)
   }
 
-  const inputClass = 'w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500'
+  const inputClass = 'w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500'
 
   return (
     <div className="space-y-6">
@@ -120,7 +120,7 @@ export function CorrespondenceClient({ items, projectId }: CorrespondenceClientP
         <div className="ml-auto">
           <button
             onClick={() => setShowModal(true)}
-            className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-white text-sm font-semibold rounded-lg"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg"
           >
             + Add Correspondence
           </button>
@@ -261,7 +261,7 @@ export function CorrespondenceClient({ items, projectId }: CorrespondenceClientP
               </div>
               <div className="flex gap-3 justify-end pt-2">
                 <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800">Cancel</button>
-                <button type="submit" disabled={saving} className="px-6 py-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-white text-sm font-semibold rounded-lg">
+                <button type="submit" disabled={saving} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white text-sm font-semibold rounded-lg">
                   {saving ? 'Saving...' : 'Add Correspondence'}
                 </button>
               </div>

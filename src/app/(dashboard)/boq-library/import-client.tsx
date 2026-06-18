@@ -169,7 +169,7 @@ export default function ImportLibraryClient() {
         {(['upload', 'mapping', 'category', 'preview'] as Step[]).map((s, i) => (
           <div key={s} className="flex items-center gap-2">
             {i > 0 && <ChevronRight size={14} className="text-slate-300" />}
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${step === s ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-500'}`}>
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${step === s ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
               {i + 1}. {s.charAt(0).toUpperCase() + s.slice(1)}
             </span>
           </div>
@@ -186,12 +186,12 @@ export default function ImportLibraryClient() {
           onDragOver={e => { e.preventDefault(); setDraggingOver(true) }}
           onDragLeave={() => setDraggingOver(false)}
           onDrop={handleDrop}
-          className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors ${draggingOver ? 'border-amber-400 bg-amber-50' : 'border-slate-300 hover:border-slate-400 bg-slate-50'}`}
+          className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors ${draggingOver ? 'border-blue-400 bg-blue-50' : 'border-slate-300 hover:border-slate-400 bg-slate-50'}`}
         >
           <Upload size={32} className="mx-auto text-slate-400 mb-3" />
           <p className="text-slate-600 font-medium mb-1">Drop your file here</p>
           <p className="text-slate-400 text-sm mb-4">or click to browse — .xlsx, .xls, .csv accepted</p>
-          <label className="cursor-pointer px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm rounded-lg inline-block">
+          <label className="cursor-pointer px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg inline-block">
             Browse file
             <input
               type="file"
@@ -274,7 +274,7 @@ export default function ImportLibraryClient() {
 
           <div className="flex justify-between">
             <button onClick={() => setStep('upload')} className="px-4 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50">Back</button>
-            <button onClick={() => setStep('category')} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm">Next: Category</button>
+            <button onClick={() => setStep('category')} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">Next: Category</button>
           </div>
         </div>
       )}
@@ -290,12 +290,12 @@ export default function ImportLibraryClient() {
               value={defaultCategory}
               onChange={e => setDefaultCategory(e.target.value)}
               placeholder="e.g. Earthworks, Concrete, Finishes..."
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-400"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
             />
           </div>
           <div className="flex justify-between">
             <button onClick={() => setStep('mapping')} className="px-4 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50">Back</button>
-            <button onClick={goToPreview} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm">Next: Preview</button>
+            <button onClick={goToPreview} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">Next: Preview</button>
           </div>
         </div>
       )}
@@ -346,7 +346,7 @@ export default function ImportLibraryClient() {
             <button
               onClick={doImport}
               disabled={importing || parsedRows.length === 0}
-              className="px-6 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white rounded-lg text-sm font-medium"
+              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium"
             >
               {importing ? 'Importing...' : `Import ${parsedRows.length} items`}
             </button>

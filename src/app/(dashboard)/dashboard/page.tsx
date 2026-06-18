@@ -79,10 +79,10 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Professional gradient banner */}
-      <div className="bg-gradient-to-r from-[#1e3a5f] to-[#2d5282] rounded-xl p-6 text-white">
+      <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-6 text-white">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-amber-400 text-xs font-semibold uppercase tracking-widest mb-1">ANGEL D.C. Platform</p>
+            <p className="text-blue-400 text-xs font-semibold uppercase tracking-widest mb-1">ANGEL D.C. Platform</p>
             <h1 className="text-2xl font-bold"><T k="welcome_back" fallback="Welcome back" />, {companyName}</h1>
             <p className="text-blue-200 text-sm mt-1"><T k="dashboard_subtitle" fallback="Overview of your construction projects" /></p>
           </div>
@@ -93,9 +93,9 @@ export default async function DashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Link href="/projects" className="flex items-center gap-3 p-4 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl transition-colors group">
-          <div className="w-9 h-9 bg-amber-500 rounded-lg flex items-center justify-center shrink-0">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <Link href="/projects" className="flex items-center gap-3 p-4 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition-colors group">
+          <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
             <Plus size={18} className="text-white" />
           </div>
           <div>
@@ -169,7 +169,7 @@ export default async function DashboardPage() {
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-slate-800">Recent Projects</h3>
-            <a href="/projects" className="text-amber-500 hover:text-amber-600 text-sm font-medium">View all</a>
+            <Link href="/projects" className="text-blue-600 hover:text-blue-700 text-sm font-medium">View all</Link>
           </div>
           {recentProjects.length === 0 ? (
             <div className="text-center py-8 text-slate-400">
@@ -179,10 +179,10 @@ export default async function DashboardPage() {
           ) : (
             <div className="space-y-3">
               {recentProjects.map((project) => (
-                <a
+                <Link
                   key={project.id}
                   href={`/projects/${project.id}`}
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors"
+                  className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-all duration-200 hover:translate-x-0.5"
                 >
                   <div>
                     <p className="text-sm font-medium text-slate-800">{project.name}</p>
@@ -196,7 +196,7 @@ export default async function DashboardPage() {
                   }`}>
                     {project.status.replace('_', ' ')}
                   </span>
-                </a>
+                </Link>
               ))}
             </div>
           )}

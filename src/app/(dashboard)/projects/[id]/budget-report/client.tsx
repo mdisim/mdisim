@@ -111,7 +111,7 @@ export default function BudgetReportClient({ project, boqItems, costEntries, pay
           <h2 className="font-semibold text-slate-800">BOQ Category Breakdown</h2>
           <button
             onClick={exportCSV}
-            className="text-sm font-medium text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition-colors"
+            className="text-sm font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
           >
             Export CSV
           </button>

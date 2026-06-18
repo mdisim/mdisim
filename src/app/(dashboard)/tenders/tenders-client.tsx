@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Tender } from '@/lib/types'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
-import { Plus, Trash2, Gavel, GitCompare } from 'lucide-react'
+import { Plus, Trash2, Gavel, GitCompare, Search } from 'lucide-react'
 import { createTender, deleteTender, advanceTenderStatus } from '@/app/actions/tenders'
 
 interface Props {
@@ -87,37 +87,40 @@ export function TendersClient({ tenders: initialTenders }: Props) {
     <div>
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <p className="text-xs text-slate-400 uppercase tracking-wide">Total Tenders</p>
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-xs text-slate-400 uppercase tracking-wide font-medium">Total Tenders</p>
           <p className="text-2xl font-bold text-slate-900 mt-1">{total}</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <p className="text-xs text-slate-400 uppercase tracking-wide">Submitted</p>
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-xs text-slate-400 uppercase tracking-wide font-medium">Submitted</p>
           <p className="text-2xl font-bold text-blue-600 mt-1">{submitted}</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <p className="text-xs text-slate-400 uppercase tracking-wide">Awarded</p>
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-xs text-slate-400 uppercase tracking-wide font-medium">Awarded</p>
           <p className="text-2xl font-bold text-green-600 mt-1">{awarded}</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <p className="text-xs text-slate-400 uppercase tracking-wide">Win Rate</p>
-          <p className="text-2xl font-bold text-amber-600 mt-1">{winRate}%</p>
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-xs text-slate-400 uppercase tracking-wide font-medium">Win Rate</p>
+          <p className="text-2xl font-bold text-blue-600 mt-1">{winRate}%</p>
         </div>
       </div>
 
       {/* Toolbar */}
       <div className="flex items-center gap-3 mb-4">
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search tenders..."
-          className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-        />
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search tenders..."
+            className="w-full pl-9 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
         {selectedIds.size >= 2 && (
           <button
             onClick={handleCompare}
-            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
           >
             <GitCompare size={15} />
             Compare ({selectedIds.size})
@@ -131,6 +134,7 @@ export function TendersClient({ tenders: initialTenders }: Props) {
 
       {/* Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
@@ -153,17 +157,17 @@ export function TendersClient({ tenders: initialTenders }: Props) {
               </tr>
             ) : (
               filtered.map(t => (
-                <tr key={t.id} className="hover:bg-slate-50">
+                <tr key={t.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="px-4 py-3">
                     <input
                       type="checkbox"
                       checked={selectedIds.has(t.id)}
                       onChange={() => toggleSelect(t.id)}
-                      className="rounded border-slate-300 text-amber-500 focus:ring-amber-500"
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                     />
                   </td>
                   <td className="px-4 py-3">
-                    <a href={`/tenders/${t.id}`} className="font-medium text-slate-900 hover:text-amber-600 transition-colors">
+                    <a href={`/tenders/${t.id}`} className="font-medium text-slate-900 hover:text-blue-600 transition-colors">
                       {t.title}
                     </a>
                   </td>
@@ -173,25 +177,25 @@ export function TendersClient({ tenders: initialTenders }: Props) {
                     {t.submission_deadline ? new Date(t.submission_deadline).toLocaleDateString() : '—'}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[t.status] ?? 'bg-slate-100 text-slate-600'}`}>
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[t.status] ?? 'bg-slate-100 text-slate-600'}`}>
                       {t.status.charAt(0).toUpperCase() + t.status.slice(1)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right">${(t.estimated_value ?? 0).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-right font-semibold text-slate-800">${(t.estimated_value ?? 0).toLocaleString()}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1">
                       {(NEXT_STATUS[t.status] ?? []).map(s => (
                         <button
                           key={s}
                           onClick={() => handleAdvance(t.id, s)}
-                          className="px-2 py-0.5 text-xs border border-slate-300 rounded hover:bg-slate-100 transition-colors"
+                          className="px-2.5 py-1 text-xs border border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors"
                         >
-                          → {s.charAt(0).toUpperCase() + s.slice(1)}
+                          {s.charAt(0).toUpperCase() + s.slice(1)}
                         </button>
                       ))}
                       <button
                         onClick={() => handleDelete(t.id)}
-                        className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -202,40 +206,41 @@ export function TendersClient({ tenders: initialTenders }: Props) {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Add Modal */}
       <Modal isOpen={showAdd} onClose={() => setShowAdd(false)} title="Add New Tender" size="lg">
         <form onSubmit={handleCreate} className="space-y-4">
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-1">Title *</label>
-              <input name="title" required className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="title" required className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Client Name</label>
-              <input name="client_name" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="client_name" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Tender Number</label>
-              <input name="tender_number" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="tender_number" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Issue Date</label>
-              <input name="issue_date" type="date" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="issue_date" type="date" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Submission Deadline</label>
-              <input name="submission_deadline" type="date" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="submission_deadline" type="date" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Estimated Value</label>
-              <input name="estimated_value" type="number" step="0.01" min="0" defaultValue="0" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="estimated_value" type="number" step="0.01" min="0" defaultValue="0" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
-              <select name="status" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+              <select name="status" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 <option value="draft">Draft</option>
                 <option value="submitted">Submitted</option>
                 <option value="awarded">Awarded</option>
@@ -246,15 +251,15 @@ export function TendersClient({ tenders: initialTenders }: Props) {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
-            <textarea name="description" rows={3} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <textarea name="description" rows={3} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
-            <textarea name="notes" rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <textarea name="notes" rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
           </div>
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setShowAdd(false)} className="px-4 py-2 text-sm border border-slate-300 rounded-lg hover:bg-slate-50">Cancel</button>
-            <Button type="submit" disabled={isPending}>{isPending ? 'Saving…' : 'Create Tender'}</Button>
+            <button type="button" onClick={() => setShowAdd(false)} className="px-4 py-2 text-sm border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">Cancel</button>
+            <Button type="submit" disabled={isPending}>{isPending ? 'Saving...' : 'Create Tender'}</Button>
           </div>
         </form>
       </Modal>

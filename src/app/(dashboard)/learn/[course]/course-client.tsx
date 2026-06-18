@@ -66,7 +66,7 @@ export default function CourseClient({ course }: Props) {
           </div>
           <div className="h-2 bg-slate-100 rounded-full">
             <div
-              className="h-full bg-amber-500 rounded-full transition-all duration-500"
+              className="h-full bg-blue-600 rounded-full transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -99,7 +99,7 @@ export default function CourseClient({ course }: Props) {
                         <ul className="space-y-1">
                           {lesson.takeaways.map((t, i) => (
                             <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
-                              <span className="text-amber-500 shrink-0 mt-0.5">•</span>
+                              <span className="text-blue-600 shrink-0 mt-0.5">•</span>
                               {t}
                             </li>
                           ))}
@@ -110,7 +110,7 @@ export default function CourseClient({ course }: Props) {
                         className={`inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-all ${
                           done
                             ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                            : 'bg-slate-100 text-slate-600 hover:bg-amber-100 hover:text-amber-700'
+                            : 'bg-slate-100 text-slate-600 hover:bg-blue-100 hover:text-blue-700'
                         }`}
                       >
                         {done ? <CheckCircle size={15} /> : <Circle size={15} />}

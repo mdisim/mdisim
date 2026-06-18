@@ -34,7 +34,7 @@ export function LocaleSwitcher() {
               <button
                 key={l}
                 onClick={() => { setLang(l); setOpen(false) }}
-                className={`w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors ${lang === l ? 'text-amber-600 font-semibold bg-amber-50' : 'text-slate-700'}`}
+                className={`w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors ${lang === l ? 'text-blue-600 font-semibold bg-blue-50' : 'text-slate-700'}`}
               >
                 <span>{LANG_META[l].nativeName}</span>
                 <span className="text-xs text-slate-400">{LANG_META[l].dir.toUpperCase()}</span>
@@ -49,7 +49,7 @@ export function LocaleSwitcher() {
               <button
                 key={c}
                 onClick={() => { setCurrency(c); setOpen(false) }}
-                className={`w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors ${currency === c ? 'text-amber-600 font-semibold bg-amber-50' : 'text-slate-700'}`}
+                className={`w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors ${currency === c ? 'text-blue-600 font-semibold bg-blue-50' : 'text-slate-700'}`}
               >
                 <span>{CURRENCIES[c].name}</span>
                 <span className="font-bold">{CURRENCIES[c].symbol}</span>

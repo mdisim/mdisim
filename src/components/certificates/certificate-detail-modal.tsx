@@ -18,7 +18,7 @@ interface Props {
   onClose: () => void
 }
 
-const inputClass = 'w-full px-2 py-1.5 text-xs rounded border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-1 focus:ring-amber-500'
+const inputClass = 'w-full px-2 py-1.5 text-xs rounded border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500'
 
 export function CertificateDetailModal({ certificate, projectId, onClose }: Props) {
   const router = useRouter()
@@ -113,7 +113,7 @@ export function CertificateDetailModal({ certificate, projectId, onClose }: Prop
           </button>
           <button
             onClick={() => setShowAddForm(v => !v)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-amber-500 hover:bg-amber-400 text-white rounded-lg font-semibold transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold transition-colors"
           >
             <Plus size={12} />
             Add Line Item
@@ -122,7 +122,7 @@ export function CertificateDetailModal({ certificate, projectId, onClose }: Prop
 
         {/* Add form */}
         {showAddForm && (
-          <form onSubmit={handleAddSubmit} className="px-6 py-3 bg-amber-50 border-b border-amber-100 shrink-0">
+          <form onSubmit={handleAddSubmit} className="px-6 py-3 bg-blue-50 border-b border-blue-100 shrink-0">
             <div className="grid grid-cols-6 gap-2 items-end">
               <div className="col-span-2">
                 <label className="block text-xs text-slate-500 mb-1">Description *</label>
@@ -147,7 +147,7 @@ export function CertificateDetailModal({ certificate, projectId, onClose }: Prop
             </div>
             {addError && <p className="text-xs text-red-600 mt-2">{addError}</p>}
             <div className="flex gap-2 mt-3">
-              <button type="submit" className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-white text-xs font-semibold rounded-lg">Save</button>
+              <button type="submit" className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg">Save</button>
               <button type="button" onClick={() => setShowAddForm(false)} className="px-3 py-1.5 text-xs border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50">Cancel</button>
             </div>
           </form>

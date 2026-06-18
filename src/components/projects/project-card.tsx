@@ -9,11 +9,18 @@ interface ProjectCardProps {
   spent?: number
 }
 
+const statusBorderColor: Record<string, string> = {
+  active: 'border-l-blue-500',
+  completed: 'border-l-green-500',
+  on_hold: 'border-l-amber-500',
+  planning: 'border-l-slate-400',
+}
+
 export function ProjectCard({ project, spent = 0 }: ProjectCardProps) {
   const percentage = calculatePercentage(spent, project.budget)
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-5">
+    <div className={`bg-white rounded-xl border border-slate-200 border-l-4 ${statusBorderColor[project.status] || 'border-l-slate-300'} shadow-sm hover:shadow-lg transition-all duration-200 p-5`}>
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
           <h3 className="text-base font-semibold text-slate-900 truncate">{project.name}</h3>
@@ -53,12 +60,12 @@ export function ProjectCard({ project, spent = 0 }: ProjectCardProps) {
           <span className="text-slate-500">Budget used</span>
           <span className="font-medium text-slate-700">{percentage}%</span>
         </div>
-        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all ${
-              percentage > 90 ? 'bg-red-500' : percentage > 70 ? 'bg-amber-500' : 'bg-green-500'
+              percentage > 90 ? 'bg-red-500' : percentage > 70 ? 'bg-amber-500' : 'bg-blue-500'
             }`}
-            style={{ width: `${percentage}%` }}
+            style={{ width: `${Math.min(percentage, 100)}%` }}
           />
         </div>
         <div className="flex justify-between text-xs mt-1.5">
@@ -69,7 +76,7 @@ export function ProjectCard({ project, spent = 0 }: ProjectCardProps) {
 
       <Link
         href={`/projects/${project.id}`}
-        className="flex items-center justify-center gap-2 w-full py-2 px-4 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:border-amber-300 hover:text-amber-600 transition-all"
+        className="flex items-center justify-center gap-2 w-full py-2 px-4 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all"
       >
         View Project <ArrowRight size={14} />
       </Link>

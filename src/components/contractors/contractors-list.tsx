@@ -44,7 +44,7 @@ export function ContractorsList({ contractors }: ContractorsListProps) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name or specialty..."
-          className="w-full pl-9 pr-4 py-2.5 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+          className="w-full pl-9 pr-4 py-2.5 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
 

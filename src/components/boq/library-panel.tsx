@@ -55,23 +55,23 @@ function ItemRow({
     <div
       draggable
       onDragStart={handleDragStart}
-      className="group flex items-center gap-1 px-2 py-1.5 rounded hover:bg-slate-100 cursor-grab active:cursor-grabbing text-sm border border-transparent hover:border-slate-200"
+      className="group flex items-center gap-1.5 px-2 py-2 rounded-md hover:bg-blue-50/50 cursor-grab active:cursor-grabbing text-sm border border-transparent hover:border-blue-100 transition-colors"
     >
       <GripVertical size={12} className="text-slate-300 shrink-0 group-hover:text-slate-400" />
       <button
         onClick={() => onToggleFavorite(item.id)}
-        className="shrink-0 text-slate-300 hover:text-amber-400 transition-colors"
+        className="shrink-0 text-slate-300 hover:text-blue-500 transition-colors"
         title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
       >
-        <Star size={12} fill={isFavorite ? 'currentColor' : 'none'} className={isFavorite ? 'text-amber-400' : ''} />
+        <Star size={12} fill={isFavorite ? 'currentColor' : 'none'} className={isFavorite ? 'text-blue-500' : ''} />
       </button>
       <span className="text-slate-400 font-mono text-xs shrink-0 min-w-[60px]">{item.item_code}</span>
       <span className="flex-1 truncate text-slate-700 text-xs">{getDesc(item)}</span>
       <span className="shrink-0 text-slate-400 text-xs">{item.unit}</span>
-      <span className="shrink-0 text-slate-600 text-xs font-medium min-w-[48px] text-right">₪{rate}</span>
+      <span className="shrink-0 text-slate-600 text-xs font-medium min-w-[48px] text-right tabular-nums">{'₪'}{rate}</span>
       <button
         onClick={() => onInsert(item)}
-        className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ml-1 p-0.5 rounded bg-amber-500 hover:bg-amber-600 text-white"
+        className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ml-1 p-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white"
         title="Add to BOQ"
       >
         <Plus size={10} />
@@ -95,11 +95,11 @@ function CategoryGroup({ category, items, favorites, onToggleFavorite, onInsert 
     <div>
       <button
         onClick={() => setExpanded(p => !p)}
-        className="w-full flex items-center gap-1 px-2 py-1 text-xs font-semibold text-slate-500 uppercase tracking-wide hover:text-slate-700 hover:bg-slate-50 rounded"
+        className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wide hover:text-slate-700 hover:bg-slate-50 rounded-md transition-colors"
       >
         {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         {category || 'Uncategorized'}
-        <span className="ml-auto font-normal text-slate-400">{items.length}</span>
+        <span className="ml-auto font-normal text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full text-[10px]">{items.length}</span>
       </button>
       {expanded && (
         <div className="ml-1">
@@ -190,17 +190,17 @@ export function LibraryPanel({ projectId: _projectId, items, onInsertItem }: Lib
   return (
     <div className="flex flex-col h-full overflow-hidden bg-white border-l border-slate-200">
       {/* Header */}
-      <div className="shrink-0 px-3 py-2 border-b border-slate-200 bg-slate-50">
-        <div className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">BOQ Library</div>
+      <div className="shrink-0 px-3 py-3 border-b border-slate-200 bg-slate-50/50">
+        <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">BOQ Library</div>
         {/* Search */}
         <div className="relative">
-          <Search size={13} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search items..."
-            className="w-full pl-7 pr-2 py-1.5 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-amber-400"
+            className="w-full pl-8 pr-3 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-shadow"
           />
         </div>
         {/* Category filter pills */}
@@ -208,7 +208,7 @@ export function LibraryPanel({ projectId: _projectId, items, onInsertItem }: Lib
           <div className="flex gap-1 mt-2 flex-wrap">
             <button
               onClick={() => setCategoryFilter(null)}
-              className={`px-2 py-0.5 rounded-full text-xs transition-colors ${!categoryFilter ? 'bg-amber-500 text-white' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'}`}
+              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${!categoryFilter ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
             >
               All
             </button>
@@ -216,7 +216,7 @@ export function LibraryPanel({ projectId: _projectId, items, onInsertItem }: Lib
               <button
                 key={cat}
                 onClick={() => setCategoryFilter(p => p === cat ? null : cat)}
-                className={`px-2 py-0.5 rounded-full text-xs transition-colors ${categoryFilter === cat ? 'bg-amber-500 text-white' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'}`}
+                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${categoryFilter === cat ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
               >
                 {cat}
               </button>
@@ -226,11 +226,11 @@ export function LibraryPanel({ projectId: _projectId, items, onInsertItem }: Lib
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto px-1 py-1 space-y-1">
+      <div className="flex-1 overflow-y-auto px-1.5 py-2 space-y-1">
         {/* Favorites */}
         {favoriteItems.length > 0 && !search && !categoryFilter && (
           <CategoryGroup
-            category="⭐ Favorites"
+            category="Favorites"
             items={favoriteItems}
             favorites={favorites}
             onToggleFavorite={toggleFavorite}
@@ -241,7 +241,7 @@ export function LibraryPanel({ projectId: _projectId, items, onInsertItem }: Lib
         {/* Recently used */}
         {recent.length > 0 && !search && !categoryFilter && (
           <CategoryGroup
-            category="🕐 Recently Used"
+            category="Recently Used"
             items={recent}
             favorites={favorites}
             onToggleFavorite={toggleFavorite}
@@ -262,12 +262,12 @@ export function LibraryPanel({ projectId: _projectId, items, onInsertItem }: Lib
         ))}
 
         {filtered.length === 0 && (
-          <div className="text-center text-slate-400 text-xs py-8">No items found</div>
+          <div className="text-center text-slate-400 text-xs py-12">No items found</div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="shrink-0 px-3 py-1.5 border-t border-slate-200 bg-slate-50 text-xs text-slate-400">
+      <div className="shrink-0 px-3 py-2 border-t border-slate-200 bg-slate-50/50 text-xs text-slate-400">
         {filtered.length} of {items.length} items · Drag to BOQ
       </div>
     </div>

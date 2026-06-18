@@ -11,7 +11,7 @@ export function NewProjectButton() {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>
+      <Button onClick={() => setOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
         <Plus size={16} />
         New Project
       </Button>

@@ -39,7 +39,7 @@ export default async function TakeoffPage({ params }: { params: Promise<{ id: st
           </div>
           <Link
             href={`/projects/${id}/takeoff/upload`}
-            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
           >
             <Upload size={16} /> Upload Drawing
           </Link>
@@ -62,7 +62,7 @@ export default async function TakeoffPage({ params }: { params: Promise<{ id: st
           <p className="text-sm mt-1 mb-6">Upload a PDF drawing to start measuring quantities</p>
           <Link
             href={`/projects/${id}/takeoff/upload`}
-            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
           >
             <Upload size={16} /> Upload First Drawing
           </Link>

@@ -15,7 +15,7 @@ export default async function BOQLibraryPage() {
         </div>
         <Link
           href="/boq-library/import"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
         >
           <Upload size={15} />
           Import Library

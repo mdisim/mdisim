@@ -3,6 +3,14 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { summarizeByDiameter } from '@/lib/rebar-calc'
 
+const TABS = [
+  { label: 'Schedule', href: '' },
+  { label: 'Fabrication', href: '/fabrication-all' },
+  { label: 'Marked Drawing', href: '/marked-drawing' },
+  { label: 'Procurement', href: '/procurement' },
+  { label: 'BBS Package', href: '/bbs-package' },
+] as const
+
 export default async function RebarProcurementPage({
   params,
 }: {
@@ -34,18 +42,44 @@ export default async function RebarProcurementPage({
     weight: (el.bars ?? []).reduce((s: number, b: Bar) => s + (b.total_weight_kg ?? 0), 0),
   })).sort((a, b) => b.weight - a.weight)
 
+  const basePath = `/projects/${id}/rebar`
+
   return (
     <div className="flex flex-col h-full bg-slate-950 text-slate-100">
-      <div className="flex items-center gap-4 px-6 py-4 border-b border-slate-800 shrink-0">
-        <Link href={`/projects/${id}/rebar`} className="text-slate-500 hover:text-slate-300 text-sm transition-colors">
-          ← Rebar Schedule
-        </Link>
-        <div className="w-px h-4 bg-slate-700" />
-        <h1 className="text-lg font-bold text-white">Steel Procurement Summary</h1>
-        <div className="ml-auto text-sm text-slate-400">{project.name}</div>
+      <div className="px-4 sm:px-6 py-4 border-b border-slate-800 shrink-0">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-xl font-bold text-white">Steel Procurement Summary</h1>
+            <p className="text-sm text-slate-400">{project.name}</p>
+          </div>
+        </div>
+
+        {/* Tab bar */}
+        <div className="overflow-x-auto scrollbar-none -mx-4 sm:-mx-6 px-4 sm:px-6">
+          <nav className="flex gap-1 min-w-max snap-x snap-mandatory" role="tablist">
+            {TABS.map((tab) => {
+              const isActive = tab.href === '/procurement'
+              return (
+                <Link
+                  key={tab.label}
+                  href={`${basePath}${tab.href}`}
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`snap-start px-4 py-2 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${
+                    isActive
+                      ? 'bg-slate-800 text-white border-b-2 border-blue-500'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  }`}
+                >
+                  {tab.label}
+                </Link>
+              )
+            })}
+          </nav>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-6 space-y-8">
+      <div className="flex-1 overflow-auto p-4 sm:p-6 space-y-8">
         {/* Summary by diameter */}
         <section>
           <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Summary by Diameter</h2>
@@ -67,7 +101,7 @@ export default async function RebarProcurementPage({
                 <tbody>
                   {summary.map(row => (
                     <tr key={row.diameterMm} className="border-t border-slate-800">
-                      <td className="px-4 py-2 text-amber-300 font-bold">T{row.diameterMm}</td>
+                      <td className="px-4 py-2 text-blue-300 font-bold">T{row.diameterMm}</td>
                       <td className="px-4 py-2 text-right text-slate-300">{row.totalBars}</td>
                       <td className="px-4 py-2 text-right text-slate-300">{(row.totalLengthMm / 1000).toFixed(2)}</td>
                       <td className="px-4 py-2 text-right text-green-400 font-semibold">{row.totalWeightKg.toFixed(2)}</td>
@@ -112,11 +146,11 @@ export default async function RebarProcurementPage({
                   {elementRows.map(el => (
                     <tr key={el.id} className="border-t border-slate-800">
                       <td className="px-4 py-2 font-mono font-bold text-white">
-                        <Link href={`/projects/${id}/rebar/${el.id}`} className="hover:text-amber-400 transition-colors">
+                        <Link href={`/projects/${id}/rebar/${el.id}`} className="hover:text-blue-400 transition-colors">
                           {el.element_mark}
                         </Link>
                       </td>
-                      <td className="px-4 py-2 text-amber-400 capitalize">{el.element_type}</td>
+                      <td className="px-4 py-2 text-blue-400 capitalize">{el.element_type}</td>
                       <td className="px-4 py-2 text-slate-400">{el.floor_level ?? '—'}</td>
                       <td className="px-4 py-2 text-right text-green-400">{el.weight.toFixed(3)}</td>
                       <td className="px-4 py-2 text-right text-slate-400">

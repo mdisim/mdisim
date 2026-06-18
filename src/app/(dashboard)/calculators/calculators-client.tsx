@@ -13,7 +13,7 @@ const CONCRETE_MIX: Record<string, { cement: number; sand: number; aggregate: nu
   C40: { cement: 480, sand: 0.30, aggregate: 0.60, water: 170 },
 }
 
-const inputClass = 'w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500'
+const inputClass = 'w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
 const labelClass = 'block text-sm font-medium text-slate-700 mb-1'
 const resultBox = 'bg-amber-50 border border-amber-200 rounded-xl p-4 mt-4'
 
@@ -57,7 +57,7 @@ function ConcreteCalc() {
           <input type="number" min="0" step="0.1" value={volume} onChange={e => setVolume(e.target.value)} placeholder="e.g. 10" className={inputClass} />
         </div>
       </div>
-      <button onClick={calculate} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors">
+      <button onClick={calculate} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
         Calculate
       </button>
       {result && (
@@ -107,7 +107,7 @@ function SteelCalc() {
           <input type="number" min="1" step="1" value={quantity} onChange={e => setQuantity(e.target.value)} placeholder="e.g. 100" className={inputClass} />
         </div>
       </div>
-      <button onClick={calculate} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors">
+      <button onClick={calculate} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
         Calculate
       </button>
       {result && (
@@ -158,7 +158,7 @@ function EarthworkCalc() {
           <input type="number" min="0" step="0.01" value={A2} onChange={e => setA2(e.target.value)} placeholder="e.g. 14" className={inputClass} />
         </div>
       </div>
-      <button onClick={calculate} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors">
+      <button onClick={calculate} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
         Calculate
       </button>
       {result !== null && (
@@ -215,7 +215,7 @@ function BrickCalc() {
           </select>
         </div>
       </div>
-      <button onClick={calculate} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors">
+      <button onClick={calculate} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
         Calculate
       </button>
       {result && (
@@ -262,7 +262,7 @@ function LoadCalc() {
           <input type="number" min="1" step="0.1" value={fos} onChange={e => setFos(e.target.value)} placeholder="e.g. 3" className={inputClass} />
         </div>
       </div>
-      <button onClick={calculate} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors">
+      <button onClick={calculate} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
         Calculate
       </button>
       {result && (
@@ -310,7 +310,7 @@ function PlasterCalc() {
           <input type="number" min="0" step="1" value={waste} onChange={e => setWaste(e.target.value)} placeholder="e.g. 10" className={inputClass} />
         </div>
       </div>
-      <button onClick={calculate} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors">
+      <button onClick={calculate} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
         Calculate
       </button>
       {result && (
@@ -362,7 +362,7 @@ function PaintCalc() {
           <input type="number" min="0.1" step="0.5" value={coverage} onChange={e => setCoverage(e.target.value)} placeholder="e.g. 10" className={inputClass} />
         </div>
       </div>
-      <button onClick={calculate} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors">
+      <button onClick={calculate} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
         Calculate
       </button>
       {result && (
@@ -420,7 +420,7 @@ function FlooringCalc() {
           </select>
         </div>
       </div>
-      <button onClick={calculate} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors">
+      <button onClick={calculate} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
         Calculate
       </button>
       {result && (
@@ -458,7 +458,7 @@ export function CalculatorsClient() {
             onClick={() => setActiveTab(tab.id)}
             className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
               activeTab === tab.id
-                ? 'border-b-2 border-amber-500 text-amber-600 bg-amber-50'
+                ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50'
                 : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
             }`}
           >

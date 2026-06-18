@@ -55,7 +55,7 @@ export default function NewReportPage({
             value={date}
             onChange={e => setDate(e.target.value)}
             max={new Date().toISOString().split('T')[0]}
-            className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -68,7 +68,7 @@ export default function NewReportPage({
         <button
           onClick={handleCreate}
           disabled={isPending || !date}
-          className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-white font-semibold rounded-lg py-2.5 text-sm transition-colors flex items-center justify-center gap-2"
+          className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white font-semibold rounded-lg py-2.5 text-sm transition-colors flex items-center justify-center gap-2"
         >
           {isPending && <Loader2 size={15} className="animate-spin" />}
           Create Report

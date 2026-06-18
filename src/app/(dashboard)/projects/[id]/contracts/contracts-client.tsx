@@ -79,22 +79,22 @@ export function ContractsClient({ contracts, projectId, contractors }: Props) {
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
             <label className="block text-sm font-medium text-slate-700 mb-1">Title *</label>
-            <input name="title" required defaultValue={defaultValues?.title ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <input name="title" required defaultValue={defaultValues?.title ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Contract Number</label>
-            <input name="contract_number" defaultValue={defaultValues?.contract_number ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <input name="contract_number" defaultValue={defaultValues?.contract_number ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Contractor</label>
-            <select name="contractor_id" defaultValue={defaultValues?.contractor_id ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+            <select name="contractor_id" defaultValue={defaultValues?.contractor_id ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="">— None —</option>
               {contractorOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Contract Type</label>
-            <select name="contract_type" defaultValue={defaultValues?.contract_type ?? 'lump_sum'} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+            <select name="contract_type" defaultValue={defaultValues?.contract_type ?? 'lump_sum'} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="lump_sum">Lump Sum</option>
               <option value="remeasured">Remeasured</option>
               <option value="cost_plus">Cost Plus</option>
@@ -103,7 +103,7 @@ export function ContractsClient({ contracts, projectId, contractors }: Props) {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
-            <select name="status" defaultValue={defaultValues?.status ?? 'draft'} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+            <select name="status" defaultValue={defaultValues?.status ?? 'draft'} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="draft">Draft</option>
               <option value="active">Active</option>
               <option value="completed">Completed</option>
@@ -113,24 +113,24 @@ export function ContractsClient({ contracts, projectId, contractors }: Props) {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Contract Value</label>
-            <input name="value" type="number" step="0.01" min="0" defaultValue={defaultValues?.value ?? 0} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <input name="value" type="number" step="0.01" min="0" defaultValue={defaultValues?.value ?? 0} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Retention %</label>
-            <input name="retention_percent" type="number" step="0.01" min="0" max="100" defaultValue={defaultValues?.retention_percent ?? 0} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <input name="retention_percent" type="number" step="0.01" min="0" max="100" defaultValue={defaultValues?.retention_percent ?? 0} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
-            <input name="start_date" type="date" defaultValue={defaultValues?.start_date ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <input name="start_date" type="date" defaultValue={defaultValues?.start_date ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">End Date</label>
-            <input name="end_date" type="date" defaultValue={defaultValues?.end_date ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <input name="end_date" type="date" defaultValue={defaultValues?.end_date ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
-          <textarea name="notes" rows={2} defaultValue={defaultValues?.notes ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+          <textarea name="notes" rows={2} defaultValue={defaultValues?.notes ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
       </>
     )
@@ -199,7 +199,7 @@ export function ContractsClient({ contracts, projectId, contractors }: Props) {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1">
-                      <button onClick={() => { setEditItem(c); setError('') }} className="p-1 rounded text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors">
+                      <button onClick={() => { setEditItem(c); setError('') }} className="p-1 rounded text-slate-400 hover:text-blue-700 hover:bg-blue-50 transition-colors">
                         <Pencil size={13} />
                       </button>
                       <button onClick={() => handleDelete(c.id)} className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors">

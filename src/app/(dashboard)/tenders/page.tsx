@@ -25,7 +25,7 @@ export default async function TendersPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <Gavel size={24} className="text-amber-600" />
+            <Gavel size={24} className="text-blue-600" />
             <h1 className="text-2xl font-bold text-slate-900">Tenders</h1>
           </div>
           <p className="text-slate-500 text-sm mt-1">{tenders.length} tender{tenders.length !== 1 ? 's' : ''} tracked</p>

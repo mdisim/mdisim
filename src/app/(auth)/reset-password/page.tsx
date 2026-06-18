@@ -69,7 +69,7 @@ function ResetPasswordForm() {
         </div>
         <h2 className="text-white text-xl font-semibold mb-2">Password updated!</h2>
         <p className="text-slate-400 text-sm mb-4">Your password has been changed. Redirecting to login…</p>
-        <Link href="/login" className="text-amber-400 hover:text-amber-300 text-sm flex items-center justify-center gap-1">
+        <Link href="/login" className="text-blue-400 hover:text-blue-300 text-sm flex items-center justify-center gap-1">
           <ArrowLeft size={14} /> Go to login
         </Link>
       </div>
@@ -79,7 +79,7 @@ function ResetPasswordForm() {
   if (!sessionReady && !error) {
     return (
       <div className="text-center py-8">
-        <Loader2 size={32} className="animate-spin text-amber-500 mx-auto mb-4" />
+        <Loader2 size={32} className="animate-spin text-blue-500 mx-auto mb-4" />
         <p className="text-slate-400 text-sm">Verifying reset link…</p>
       </div>
     )
@@ -89,7 +89,7 @@ function ResetPasswordForm() {
     return (
       <div className="space-y-4">
         <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-red-400 text-sm">{error}</div>
-        <Link href="/forgot-password" className="text-amber-400 hover:text-amber-300 text-sm flex items-center gap-1">
+        <Link href="/forgot-password" className="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1">
           <ArrowLeft size={14} /> Request a new reset link
         </Link>
       </div>
@@ -112,7 +112,7 @@ function ResetPasswordForm() {
               placeholder="••••••••"
               required
               minLength={8}
-              className="w-full bg-slate-800 border border-slate-700 text-white placeholder-slate-500 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+              className="w-full bg-slate-800 border border-slate-700 text-white placeholder-slate-500 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             />
           </div>
         </div>
@@ -127,7 +127,7 @@ function ResetPasswordForm() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="w-full bg-slate-800 border border-slate-700 text-white placeholder-slate-500 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+              className="w-full bg-slate-800 border border-slate-700 text-white placeholder-slate-500 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             />
           </div>
         </div>
@@ -141,7 +141,7 @@ function ResetPasswordForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-white font-semibold rounded-lg py-2.5 text-sm transition-colors flex items-center justify-center gap-2"
+          className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white font-semibold rounded-lg py-2.5 text-sm transition-colors flex items-center justify-center gap-2"
         >
           {loading && <Loader2 size={16} className="animate-spin" />}
           {loading ? 'Updating…' : 'Update Password'}
@@ -166,7 +166,7 @@ export default function ResetPasswordPage() {
         <div className="bg-slate-900 rounded-2xl p-8 border border-slate-800">
           <Suspense fallback={
             <div className="text-center py-8">
-              <Loader2 size={32} className="animate-spin text-amber-500 mx-auto mb-4" />
+              <Loader2 size={32} className="animate-spin text-blue-500 mx-auto mb-4" />
               <p className="text-slate-400 text-sm">Loading…</p>
             </div>
           }>

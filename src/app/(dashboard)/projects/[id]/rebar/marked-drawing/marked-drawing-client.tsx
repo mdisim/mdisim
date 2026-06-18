@@ -497,12 +497,12 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
                     onClick={() => selectDrawing(d.id)}
                     className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${
                       isSelected
-                        ? 'bg-amber-600/20 border border-amber-600 text-amber-200'
+                        ? 'bg-blue-600/20 border border-blue-600 text-blue-200'
                         : 'bg-slate-800/50 border border-slate-700 text-slate-400 hover:border-slate-600'
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <FileText size={12} className={isSelected ? 'text-amber-400' : 'text-slate-600'} />
+                      <FileText size={12} className={isSelected ? 'text-blue-400' : 'text-slate-600'} />
                       <span className="font-medium truncate">{d.name}</span>
                       <span className="text-[10px] uppercase text-slate-600 ml-auto">{d.fileType}</span>
                     </div>
@@ -528,7 +528,7 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
         {drawings.length === 0 && (
           <label className="block">
             <span className="text-xs text-slate-400 uppercase tracking-wide">Upload Drawing</span>
-            <input type="file" accept="image/*,.pdf" onChange={handleFileUpload} className="mt-1 block w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:bg-amber-600 file:text-white file:text-xs file:cursor-pointer" />
+            <input type="file" accept="image/*,.pdf" onChange={handleFileUpload} className="mt-1 block w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:bg-blue-600 file:text-white file:text-xs file:cursor-pointer" />
           </label>
         )}
 
@@ -536,11 +536,11 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
         {selectedDrawingId && (linkedBars.length > 0 || unlinkedBars.length > 0) && (
           <div className="flex items-center gap-2 text-[10px]">
             <span className="text-slate-600">Placed:</span>
-            <span className={placedCount === allDisplayBars.length ? 'text-green-400' : 'text-amber-400'}>
+            <span className={placedCount === allDisplayBars.length ? 'text-green-400' : 'text-blue-400'}>
               {placedCount}/{allDisplayBars.length}
             </span>
             <div className="flex-1 bg-slate-800 rounded-full h-1.5 overflow-hidden">
-              <div className="bg-amber-500 h-full rounded-full transition-all" style={{ width: `${(placedCount / Math.max(1, allDisplayBars.length)) * 100}%` }} />
+              <div className="bg-blue-500 h-full rounded-full transition-all" style={{ width: `${(placedCount / Math.max(1, allDisplayBars.length)) * 100}%` }} />
             </div>
           </div>
         )}
@@ -558,7 +558,7 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
           <div className="flex gap-1 flex-wrap">
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
               <button key={p} onClick={() => switchPage(p)}
-                className={`px-2 py-1 text-xs rounded ${currentPage === p ? 'bg-amber-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
+                className={`px-2 py-1 text-xs rounded ${currentPage === p ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
                 P{p}
               </button>
             ))}
@@ -576,16 +576,16 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
         {/* Confidence filter */}
         <div>
           <label className="text-xs text-slate-500 block mb-1">
-            Min confidence: <strong className="text-amber-400">{confidenceFilter}%</strong>
+            Min confidence: <strong className="text-blue-400">{confidenceFilter}%</strong>
           </label>
           <input type="range" min={0} max={100} step={5} value={confidenceFilter}
             onChange={e => setConfidenceFilter(Number(e.target.value))}
-            className="w-full accent-amber-500" />
+            className="w-full accent-blue-500" />
         </div>
 
         {imageUrl && selectedDrawingId && (
           <div className="flex flex-col gap-1.5">
-            <button onClick={() => placeLabelsForDrawing(selectedDrawingId)} className="w-full px-3 py-2 text-sm rounded bg-amber-700 hover:bg-amber-600 text-white font-medium">
+            <button onClick={() => placeLabelsForDrawing(selectedDrawingId)} className="w-full px-3 py-2 text-sm rounded bg-blue-700 hover:bg-blue-600 text-white font-medium">
               Auto Place Markers Again
             </button>
             <button onClick={exportPDF} className="w-full px-3 py-2 text-sm rounded bg-green-700 hover:bg-green-600 text-white font-medium">
@@ -621,11 +621,11 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
               </div>
               <div className="px-1.5 py-1 bg-slate-800 rounded">
                 <span className="text-slate-500">Labels placed</span>
-                <span className="block text-amber-400 font-bold">{labels.length}</span>
+                <span className="block text-blue-400 font-bold">{labels.length}</span>
               </div>
               <div className="px-1.5 py-1 bg-slate-800 rounded">
                 <span className="text-slate-500">Visible (p{currentPage})</span>
-                <span className="block text-amber-400 font-bold">{visibleLabels.length}</span>
+                <span className="block text-blue-400 font-bold">{visibleLabels.length}</span>
               </div>
               <div className="px-1.5 py-1 bg-slate-800 rounded">
                 <span className="text-slate-500">Linked</span>
@@ -656,7 +656,7 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
                   const isPlaced = labels.some(l => l.barId === bm.id)
                   return (
                     <tr key={bm.id} className="border-t border-slate-800/50">
-                      <td className="py-0.5 text-amber-400 font-bold">{bm.mark}</td>
+                      <td className="py-0.5 text-blue-400 font-bold">{bm.mark}</td>
                       <td className="py-0.5 text-slate-400">T{bm.diameter}</td>
                       <td className="py-0.5">
                         {bm.sourceDrawingId ? (
@@ -694,7 +694,7 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
                 <p className="text-slate-500 mb-0.5">Last placement log:</p>
                 {diagLog.map((line, i) => (
                   <p key={i} className={
-                    line.startsWith('===') ? 'text-amber-400 font-bold' :
+                    line.startsWith('===') ? 'text-blue-400 font-bold' :
                     line.includes('LABEL:') ? 'text-green-400' :
                     line.includes('NEITHER') || line.includes('null') ? 'text-red-400' :
                     'text-slate-400'
@@ -759,7 +759,7 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
         {renderingPdf && !imageUrl ? (
           <div className="flex items-center justify-center h-full text-slate-500">
             <div className="text-center">
-              <Loader2 size={32} className="animate-spin mx-auto mb-3 text-amber-500" />
+              <Loader2 size={32} className="animate-spin mx-auto mb-3 text-blue-500" />
               <p className="text-lg mb-1">Rendering drawing...</p>
               <p className="text-sm text-slate-600">
                 {selectedDrawing ? selectedDrawing.name : 'Loading source PDF'}
@@ -772,7 +772,7 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
               <p className="text-lg mb-2">Drawing render failed</p>
               <p className="text-sm text-red-400 mb-4">{renderError}</p>
               <label className="inline-block">
-                <span className="px-4 py-2 rounded bg-amber-600 text-white text-sm cursor-pointer hover:bg-amber-500">Upload drawing manually</span>
+                <span className="px-4 py-2 rounded bg-blue-600 text-white text-sm cursor-pointer hover:bg-blue-500">Upload drawing manually</span>
                 <input type="file" accept="image/*,.pdf" onChange={handleFileUpload} className="hidden" />
               </label>
             </div>
@@ -825,9 +825,9 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
                 >
                   <div className={`px-2 py-0.5 rounded text-xs font-mono font-bold whitespace-nowrap cursor-move shadow-lg transition-all ${
                     isFlashing
-                      ? 'bg-white text-slate-900 ring-2 ring-amber-400 shadow-amber-500/50 scale-125'
+                      ? 'bg-white text-slate-900 ring-2 ring-blue-400 shadow-blue-500/50 scale-125'
                       : isActive
-                      ? 'bg-white text-slate-900 ring-2 ring-amber-400 shadow-amber-500/50'
+                      ? 'bg-white text-slate-900 ring-2 ring-blue-400 shadow-blue-500/50'
                       : conf >= 80
                       ? 'bg-amber-500 text-black'
                       : conf >= 60
@@ -843,7 +843,7 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
                   </div>
                   {/* Pointer line from label to exact bbox position */}
                   {isActive && (
-                    <div className="absolute left-1/2 top-full w-0.5 h-4 bg-amber-400 -translate-x-1/2" />
+                    <div className="absolute left-1/2 top-full w-0.5 h-4 bg-blue-400 -translate-x-1/2" />
                   )}
                 </div>
               )
@@ -873,14 +873,14 @@ function BarButton({ bm, labels, activeBarId, isPlacing, onHighlight, onStartPla
         onClick={() => placed ? onHighlight(bm.id) : onStartPlace(bm.id)}
         className={`flex-1 text-left px-2 py-1.5 text-xs rounded flex items-center gap-2 transition-colors ${
           isPlacing ? 'bg-cyan-600/30 ring-1 ring-cyan-500 text-cyan-200 animate-pulse' :
-          isActive ? 'bg-amber-600/30 ring-1 ring-amber-500 text-amber-200' :
+          isActive ? 'bg-blue-600/30 ring-1 ring-blue-500 text-blue-200' :
           placed ? 'bg-slate-800/80 hover:bg-slate-700' : 'bg-slate-800/30 hover:bg-slate-700 opacity-60'
         }`}
       >
         <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
           placed ? 'bg-green-500' : hasBbox ? 'bg-blue-500' : isLinked ? 'bg-amber-500' : 'bg-slate-600'
         }`} title={placed ? 'Placed on drawing' : hasBbox ? 'Has OCR position' : isLinked ? 'Linked to drawing' : 'No position data'} />
-        <span className="font-mono font-bold text-amber-400">{bm.mark}</span>
+        <span className="font-mono font-bold text-blue-400">{bm.mark}</span>
         <span className="text-slate-500">T{bm.diameter}</span>
         <span className="text-slate-600">x{bm.quantity}</span>
         <span className="text-slate-700 text-[10px] ml-auto">{bm.element}</span>
@@ -898,7 +898,7 @@ function BarButton({ bm, labels, activeBarId, isPlacing, onHighlight, onStartPla
         )}
       </button>
       {placed && (
-        <button onClick={() => onHighlight(bm.id)} className="text-[10px] text-slate-600 hover:text-amber-400 px-1" title="Zoom to marker">&#8982;</button>
+        <button onClick={() => onHighlight(bm.id)} className="text-[10px] text-slate-600 hover:text-blue-400 px-1" title="Zoom to marker">&#8982;</button>
       )}
     </div>
   )

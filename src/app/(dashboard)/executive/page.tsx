@@ -256,7 +256,7 @@ export default async function ExecutiveDashboardPage() {
                 return (
                   <div key={p.id} className="text-xs space-y-1">
                     <div className="flex items-center justify-between">
-                      <Link href={`/projects/${p.id}`} className="font-medium text-slate-800 hover:text-amber-600 flex-1 truncate">{p.name}</Link>
+                      <Link href={`/projects/${p.id}`} className="font-medium text-slate-800 hover:text-blue-600 flex-1 truncate">{p.name}</Link>
                       <div className="flex items-center gap-2 ml-2 flex-shrink-0">
                         <span className={`px-1.5 py-0.5 rounded text-xs capitalize ${p.status === 'active' ? 'bg-green-100 text-green-700' : p.status === 'completed' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>{p.status}</span>
                         <span className={`w-2.5 h-2.5 rounded-full ${health === 'green' ? 'bg-green-500' : health === 'amber' ? 'bg-amber-500' : 'bg-red-500'}`}></span>
@@ -343,7 +343,7 @@ export default async function ExecutiveDashboardPage() {
                 return (
                   <div key={p.id} className="flex items-center gap-2 text-sm">
                     <span className="px-1.5 py-0.5 rounded text-xs bg-red-100 text-red-700 shrink-0">Project</span>
-                    <Link href={`/projects/${p.id}`} className="flex-1 text-slate-700 hover:text-amber-600 truncate">{p.name}</Link>
+                    <Link href={`/projects/${p.id}`} className="flex-1 text-slate-700 hover:text-blue-600 truncate">{p.name}</Link>
                     <span className="text-red-600 font-semibold text-xs shrink-0">{days}d overdue</span>
                   </div>
                 )

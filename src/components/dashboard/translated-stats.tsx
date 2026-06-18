@@ -19,7 +19,7 @@ export function TranslatedStats({
 }: Props) {
   const { t } = useTranslation()
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
       <StatsCard title={t('total_projects', 'Total Projects')} value={String(totalProjects)} icon={FolderKanban} color="blue" />
       <StatsCard title={t('active', 'Active')} value={String(activeProjects)} icon={TrendingUp} color="green" />
       <StatsCard title={t('completed', 'Completed')} value={String(completedProjects)} icon={CheckCircle} color="green" />

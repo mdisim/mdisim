@@ -42,7 +42,7 @@ export default async function ReportsListPage({
           </div>
           <Link
             href={`/projects/${id}/reports/new`}
-            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
           >
             <Plus size={16} />
             New Report
@@ -114,7 +114,7 @@ export default async function ReportsListPage({
                     <td className="px-5 py-3 text-right">
                       <Link
                         href={`/projects/${id}/reports/${report.id}`}
-                        className="text-xs font-medium text-amber-600 hover:text-amber-700"
+                        className="text-xs font-medium text-blue-600 hover:text-blue-700"
                       >
                         View →
                       </Link>

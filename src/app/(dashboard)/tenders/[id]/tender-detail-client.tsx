@@ -62,7 +62,7 @@ export function TenderDetailClient({ tender }: Props) {
               <button
                 key={s}
                 onClick={() => handleAdvance(s)}
-                className="px-3 py-1.5 text-xs border border-amber-400 text-amber-700 rounded-lg hover:bg-amber-50 transition-colors"
+                className="px-3 py-1.5 text-xs border border-blue-400 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors"
               >
                 → {s.charAt(0).toUpperCase() + s.slice(1)}
               </button>
@@ -131,35 +131,35 @@ export function TenderDetailClient({ tender }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-1">Title *</label>
-              <input name="title" required defaultValue={tender.title} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="title" required defaultValue={tender.title} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Client Name</label>
-              <input name="client_name" defaultValue={tender.client_name ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="client_name" defaultValue={tender.client_name ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Tender Number</label>
-              <input name="tender_number" defaultValue={tender.tender_number ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="tender_number" defaultValue={tender.tender_number ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Issue Date</label>
-              <input name="issue_date" type="date" defaultValue={tender.issue_date ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="issue_date" type="date" defaultValue={tender.issue_date ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Submission Deadline</label>
-              <input name="submission_deadline" type="date" defaultValue={tender.submission_deadline ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="submission_deadline" type="date" defaultValue={tender.submission_deadline ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Estimated Value</label>
-              <input name="estimated_value" type="number" step="0.01" min="0" defaultValue={tender.estimated_value ?? 0} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="estimated_value" type="number" step="0.01" min="0" defaultValue={tender.estimated_value ?? 0} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Submitted Value</label>
-              <input name="submitted_value" type="number" step="0.01" min="0" defaultValue={tender.submitted_value ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="submitted_value" type="number" step="0.01" min="0" defaultValue={tender.submitted_value ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
-              <select name="status" defaultValue={tender.status} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+              <select name="status" defaultValue={tender.status} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="draft">Draft</option>
                 <option value="submitted">Submitted</option>
                 <option value="awarded">Awarded</option>
@@ -170,11 +170,11 @@ export function TenderDetailClient({ tender }: Props) {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
-            <textarea name="description" rows={3} defaultValue={tender.description ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <textarea name="description" rows={3} defaultValue={tender.description ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
-            <textarea name="notes" rows={2} defaultValue={tender.notes ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <textarea name="notes" rows={2} defaultValue={tender.notes ?? ''} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => setShowEdit(false)} className="px-4 py-2 text-sm border border-slate-300 rounded-lg hover:bg-slate-50">Cancel</button>

@@ -135,7 +135,7 @@ export function ContractorForm({ contractor, onSuccess, onCancel }: ContractorFo
           value={form.address}
           onChange={handleChange}
           rows={2}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Street address, city, state"
         />
       </div>

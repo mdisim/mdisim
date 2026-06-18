@@ -109,8 +109,8 @@ export function UploadForm({ projectId }: Props) {
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
         className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
-          dragging ? 'border-amber-400 bg-amber-50' :
-          file ? 'border-green-400 bg-green-50 cursor-default' : 'border-slate-300 hover:border-amber-400 hover:bg-amber-50/30'
+          dragging ? 'border-blue-400 bg-blue-50' :
+          file ? 'border-green-400 bg-green-50 cursor-default' : 'border-slate-300 hover:border-blue-400 hover:bg-blue-50/30'
         }`}
       >
         <input ref={inputRef} type="file" accept=".pdf,.dxf,.jpg,.jpeg,.png" className="hidden" onChange={onFileChange} />
@@ -155,7 +155,7 @@ export function UploadForm({ projectId }: Props) {
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="e.g. Ground Floor Plan - Rev C"
-            className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       )}
@@ -168,7 +168,7 @@ export function UploadForm({ projectId }: Props) {
             <span className="text-slate-500">{progress}%</span>
           </div>
           <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-            <div className="h-full bg-amber-500 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+            <div className="h-full bg-blue-600 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
           </div>
         </div>
       )}
@@ -180,7 +180,7 @@ export function UploadForm({ projectId }: Props) {
       <button
         onClick={handleUpload}
         disabled={!file || uploading}
-        className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-white font-semibold rounded-lg py-2.5 text-sm transition-colors flex items-center justify-center gap-2"
+        className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold rounded-lg py-2.5 text-sm transition-colors flex items-center justify-center gap-2"
       >
         {uploading ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
         {uploading ? 'Uploading…' : 'Upload & Open'}

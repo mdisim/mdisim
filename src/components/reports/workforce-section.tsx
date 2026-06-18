@@ -68,10 +68,10 @@ export function WorkforceSection({ reportId, projectId, workforce, contractors, 
         </div>
         {!readonly && (
           <div className="flex gap-2">
-            <button onClick={addRow} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-amber-50 hover:border-amber-300 text-slate-600 transition-colors">
+            <button onClick={addRow} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-blue-50 hover:border-blue-300 text-slate-600 transition-colors">
               <Plus size={12} /> Add Row
             </button>
-            <button onClick={save} disabled={isPending} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-white transition-colors disabled:opacity-50">
+            <button onClick={save} disabled={isPending} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors disabled:opacity-50">
               {isPending ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
               {saved ? 'Saved!' : 'Save'}
             </button>
@@ -102,7 +102,7 @@ export function WorkforceSection({ reportId, projectId, workforce, contractors, 
                   <td className="px-4 py-2">
                     {readonly ? <span>{row.trade}</span> : (
                       <select value={row.trade} onChange={e => update(idx, 'trade', e.target.value)}
-                        className="w-full text-xs border border-slate-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-amber-400">
+                        className="w-full text-xs border border-slate-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400">
                         <option value="">— Select —</option>
                         {TRADES.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
@@ -111,7 +111,7 @@ export function WorkforceSection({ reportId, projectId, workforce, contractors, 
                   <td className="px-4 py-2">
                     {readonly ? <span>{row.contractor_id ?? '—'}</span> : (
                       <select value={row.contractor_id ?? ''} onChange={e => update(idx, 'contractor_id', e.target.value || null)}
-                        className="w-full text-xs border border-slate-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-amber-400">
+                        className="w-full text-xs border border-slate-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400">
                         <option value="">— None —</option>
                         {contractors.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                       </select>
@@ -120,19 +120,19 @@ export function WorkforceSection({ reportId, projectId, workforce, contractors, 
                   <td className="px-4 py-2">
                     {readonly ? <span className="block text-right">{row.planned_count}</span> : (
                       <input type="number" min="0" value={row.planned_count} onChange={e => update(idx, 'planned_count', parseInt(e.target.value) || 0)}
-                        className="w-20 text-xs border border-slate-200 rounded px-2 py-1 text-right focus:outline-none focus:ring-1 focus:ring-amber-400 ml-auto block" />
+                        className="w-20 text-xs border border-slate-200 rounded px-2 py-1 text-right focus:outline-none focus:ring-1 focus:ring-blue-400 ml-auto block" />
                     )}
                   </td>
                   <td className="px-4 py-2">
                     {readonly ? <span className="block text-right">{row.actual_count}</span> : (
                       <input type="number" min="0" value={row.actual_count} onChange={e => update(idx, 'actual_count', parseInt(e.target.value) || 0)}
-                        className="w-20 text-xs border border-slate-200 rounded px-2 py-1 text-right focus:outline-none focus:ring-1 focus:ring-amber-400 ml-auto block" />
+                        className="w-20 text-xs border border-slate-200 rounded px-2 py-1 text-right focus:outline-none focus:ring-1 focus:ring-blue-400 ml-auto block" />
                     )}
                   </td>
                   <td className="px-4 py-2">
                     {readonly ? <span className="block text-right">{row.overtime_hours}</span> : (
                       <input type="number" min="0" step="0.5" value={row.overtime_hours} onChange={e => update(idx, 'overtime_hours', parseFloat(e.target.value) || 0)}
-                        className="w-20 text-xs border border-slate-200 rounded px-2 py-1 text-right focus:outline-none focus:ring-1 focus:ring-amber-400 ml-auto block" />
+                        className="w-20 text-xs border border-slate-200 rounded px-2 py-1 text-right focus:outline-none focus:ring-1 focus:ring-blue-400 ml-auto block" />
                     )}
                   </td>
                   {!readonly && (

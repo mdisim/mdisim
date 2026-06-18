@@ -135,7 +135,7 @@ export function TeamClient({ members, invitations, currentUserId, currentRole }:
           {isAdmin && (
             <button
               onClick={() => setShowInviteModal(true)}
-              className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-white text-sm font-semibold rounded-lg transition-colors"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition-colors"
             >
               + Invite Member
             </button>
@@ -204,7 +204,7 @@ export function TeamClient({ members, invitations, currentUserId, currentRole }:
                         <select
                           defaultValue={member.role ?? 'viewer'}
                           onChange={e => handleRoleChange(member.id, e.target.value)}
-                          className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                          className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           {allRoles.map(r => (
                             <option key={r} value={r}>{roleLabel[r]}</option>
@@ -295,7 +295,7 @@ export function TeamClient({ members, invitations, currentUserId, currentRole }:
                   value={inviteEmail}
                   onChange={e => setInviteEmail(e.target.value)}
                   placeholder="colleague@company.com"
-                  className="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -303,7 +303,7 @@ export function TeamClient({ members, invitations, currentUserId, currentRole }:
                 <select
                   value={inviteRole}
                   onChange={e => setInviteRole(e.target.value)}
-                  className="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {allRoles.map(r => (
                     <option key={r} value={r}>{roleLabel[r]}</option>
@@ -317,7 +317,7 @@ export function TeamClient({ members, invitations, currentUserId, currentRole }:
               )}
               <div className="flex gap-3 justify-end pt-2">
                 <button type="button" onClick={() => { setShowInviteModal(false); setMessage(null) }} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800">Cancel</button>
-                <button type="submit" disabled={inviting} className="px-6 py-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors">
+                <button type="submit" disabled={inviting} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors">
                   {inviting ? 'Sending...' : 'Send Invitation'}
                 </button>
               </div>

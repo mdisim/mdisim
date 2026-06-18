@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { saveSettings } from '@/app/actions/profile'
 import { Company, Profile } from '@/lib/types'
 import { useTranslation } from '@/lib/i18n/use-translation'
+import { useAdminMode } from '@/components/admin-mode-context'
 
 interface DangerZoneProps {
   companyName: string
@@ -39,7 +40,7 @@ function DangerZone({ companyName }: DangerZoneProps) {
             <p className="text-slate-600 text-sm mb-4">Data export will be emailed to you. This may take a few minutes to process.</p>
             <div className="flex justify-end gap-3">
               <button onClick={() => setShowExportModal(false)} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800">Cancel</button>
-              <button onClick={() => setShowExportModal(false)} className="px-6 py-2 bg-amber-500 hover:bg-amber-400 text-white text-sm font-semibold rounded-lg">Confirm</button>
+              <button onClick={() => setShowExportModal(false)} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg">Confirm</button>
             </div>
           </div>
         </div>
@@ -85,8 +86,47 @@ function InlineMessage({ type, text }: { type: 'success' | 'error'; text: string
   )
 }
 
+function DeveloperModeToggle() {
+  const { isAdmin: isDevMode, setIsAdmin: setDevMode } = useAdminMode()
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 p-6 col-span-full">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-semibold text-slate-800 text-base">Developer Mode</h2>
+          <p className="text-slate-500 text-sm mt-0.5">
+            Show OCR diagnostics, extraction details, bounding boxes, and database IDs
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {isDevMode && (
+            <span className="text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+              Active
+            </span>
+          )}
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isDevMode}
+            onClick={() => setDevMode(!isDevMode)}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+              isDevMode ? 'bg-blue-600' : 'bg-slate-300'
+            }`}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition-transform duration-200 ease-in-out ${
+                isDevMode ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const inputClass =
-  'w-full px-3 py-2.5 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent'
+  'w-full px-3 py-2.5 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
 const labelClass = 'block text-xs text-slate-500 uppercase tracking-wide mb-1.5'
 
 export function SettingsForm({ profile, company }: SettingsFormProps) {
@@ -231,7 +271,7 @@ export function SettingsForm({ profile, company }: SettingsFormProps) {
         <button
           type="submit"
           disabled={companySaving}
-          className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
+          className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
         >
           {companySaving ? (t('loading') || 'Saving...') : (t('save') || 'Save')}
         </button>
@@ -271,11 +311,14 @@ export function SettingsForm({ profile, company }: SettingsFormProps) {
         <button
           type="submit"
           disabled={profileSaving}
-          className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
+          className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
         >
           {profileSaving ? (t('loading') || 'Saving...') : (t('save') || 'Save')}
         </button>
       </form>
+
+      {/* Developer Mode Toggle */}
+      <DeveloperModeToggle />
 
       {/* Danger Zone (admin only) */}
       {isAdmin && <DangerZone companyName={company?.name ?? 'My Company'} />}

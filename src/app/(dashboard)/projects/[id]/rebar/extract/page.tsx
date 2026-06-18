@@ -25,7 +25,7 @@ export default async function RebarExtractPage({
   return (
     <div className="flex flex-col h-full bg-slate-950 text-slate-100">
       <div className="flex items-center gap-4 px-6 py-4 border-b border-slate-800 shrink-0">
-        <Link href={`/projects/${id}/rebar`} className="text-slate-500 hover:text-slate-300 text-sm transition-colors">
+        <Link href={`/projects/${id}/rebar`} className="text-slate-500 hover:text-blue-400 text-sm transition-colors">
           ← Rebar Schedule
         </Link>
         <div className="w-px h-4 bg-slate-700" />

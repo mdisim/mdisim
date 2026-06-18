@@ -60,7 +60,7 @@ export function ToolPanel({ activeTool, materialSpec, onSelectTool, onMaterialSp
                 onClick={() => onSelectTool(type)}
                 className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-all mb-0.5 ${
                   isActive
-                    ? 'bg-amber-500 text-white'
+                    ? 'bg-blue-600 text-white'
                     : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 }`}
               >
@@ -92,7 +92,7 @@ export function ToolPanel({ activeTool, materialSpec, onSelectTool, onMaterialSp
                 <select
                   value={String(materialSpec[input.key] ?? input.defaultValue)}
                   onChange={e => onMaterialSpecChange(input.key, e.target.value)}
-                  className="w-full text-xs bg-slate-700 border border-slate-600 text-white rounded px-2 py-1 focus:outline-none focus:border-amber-500"
+                  className="w-full text-xs bg-slate-700 border border-slate-600 text-white rounded px-2 py-1 focus:outline-none focus:border-blue-500"
                 >
                   {input.options?.map(opt => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -103,7 +103,7 @@ export function ToolPanel({ activeTool, materialSpec, onSelectTool, onMaterialSp
                   type="number"
                   value={Number(materialSpec[input.key] ?? input.defaultValue)}
                   onChange={e => onMaterialSpecChange(input.key, parseFloat(e.target.value) || 0)}
-                  className="w-full text-xs bg-slate-700 border border-slate-600 text-white rounded px-2 py-1 focus:outline-none focus:border-amber-500"
+                  className="w-full text-xs bg-slate-700 border border-slate-600 text-white rounded px-2 py-1 focus:outline-none focus:border-blue-500"
                   step="any"
                 />
               )}

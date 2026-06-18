@@ -63,10 +63,10 @@ export function ActivitiesSection({ reportId, projectId, activities, boqItems, r
         </div>
         {!readonly && (
           <div className="flex gap-2">
-            <button onClick={addRow} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-amber-50 hover:border-amber-300 text-slate-600 transition-colors">
+            <button onClick={addRow} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-blue-50 hover:border-blue-300 text-slate-600 transition-colors">
               <Plus size={12} /> Add Row
             </button>
-            <button onClick={save} disabled={isPending} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-white transition-colors disabled:opacity-50">
+            <button onClick={save} disabled={isPending} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors disabled:opacity-50">
               {isPending ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
               {saved ? 'Saved!' : 'Save'}
             </button>
@@ -97,7 +97,7 @@ export function ActivitiesSection({ reportId, projectId, activities, boqItems, r
                   <td className="px-4 py-2">
                     {readonly ? <span>{row.description}</span> : (
                       <input value={row.description} onChange={e => update(idx, 'description', e.target.value)} placeholder="Work activity description"
-                        className="w-full text-xs border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-400" />
+                        className="w-full text-xs border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-400" />
                     )}
                   </td>
                   <td className="px-4 py-2">
@@ -105,7 +105,7 @@ export function ActivitiesSection({ reportId, projectId, activities, boqItems, r
                       <span className="text-xs text-slate-500">{row.boq_item_id ? boqItems.find(b => b.id === row.boq_item_id)?.item_code ?? '—' : '—'}</span>
                     ) : (
                       <select value={row.boq_item_id ?? ''} onChange={e => handleBoqSelect(idx, e.target.value)}
-                        className="text-xs border border-slate-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-amber-400 max-w-[180px]">
+                        className="text-xs border border-slate-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 max-w-[180px]">
                         <option value="">— Link BOQ —</option>
                         {boqItems.map(b => <option key={b.id} value={b.id}>{b.item_code} — {b.description.slice(0, 30)}</option>)}
                       </select>
@@ -114,19 +114,19 @@ export function ActivitiesSection({ reportId, projectId, activities, boqItems, r
                   <td className="px-4 py-2">
                     {readonly ? <span>{row.location_on_site ?? '—'}</span> : (
                       <input value={row.location_on_site ?? ''} onChange={e => update(idx, 'location_on_site', e.target.value || null)} placeholder="Grid ref / level"
-                        className="w-full text-xs border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-400" />
+                        className="w-full text-xs border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-400" />
                     )}
                   </td>
                   <td className="px-4 py-2">
                     {readonly ? <span className="block text-right">{row.quantity_done}</span> : (
                       <input type="number" min="0" step="0.01" value={row.quantity_done} onChange={e => update(idx, 'quantity_done', parseFloat(e.target.value) || 0)}
-                        className="w-24 text-xs border border-slate-200 rounded px-2 py-1 text-right focus:outline-none focus:ring-1 focus:ring-amber-400 ml-auto block" />
+                        className="w-24 text-xs border border-slate-200 rounded px-2 py-1 text-right focus:outline-none focus:ring-1 focus:ring-blue-400 ml-auto block" />
                     )}
                   </td>
                   <td className="px-4 py-2 text-xs text-slate-500">
                     {readonly ? row.unit ?? '—' : (
                       <input value={row.unit ?? ''} onChange={e => update(idx, 'unit', e.target.value || null)} placeholder="m², m³"
-                        className="w-16 text-xs border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-400" />
+                        className="w-16 text-xs border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-400" />
                     )}
                   </td>
                   {!readonly && (

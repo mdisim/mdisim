@@ -81,7 +81,7 @@ export function BOQItemForm({ projectId, item, onSuccess, onCancel }: BOQItemFor
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
           label="Item Code"
           name="item_code"
@@ -96,7 +96,7 @@ export function BOQItemForm({ projectId, item, onSuccess, onCancel }: BOQItemFor
             name="category"
             value={form.category}
             onChange={handleChange}
-            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
           >
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>{c}</option>
@@ -113,12 +113,12 @@ export function BOQItemForm({ projectId, item, onSuccess, onCancel }: BOQItemFor
           onChange={handleChange}
           required
           rows={2}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
           placeholder="Detailed description of the work item..."
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Input
           label="Unit"
           name="unit"
@@ -151,9 +151,9 @@ export function BOQItemForm({ projectId, item, onSuccess, onCancel }: BOQItemFor
         />
       </div>
 
-      <div className="bg-amber-50 rounded-lg px-4 py-3 flex justify-between items-center">
-        <span className="text-sm text-amber-700 font-medium">Calculated Total</span>
-        <span className="text-lg font-bold text-amber-800">
+      <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 flex justify-between items-center">
+        <span className="text-sm text-blue-700 font-medium">Calculated Total</span>
+        <span className="text-lg font-bold text-blue-800 tabular-nums">
           ${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </span>
       </div>
@@ -165,7 +165,7 @@ export function BOQItemForm({ projectId, item, onSuccess, onCancel }: BOQItemFor
           value={form.notes}
           onChange={handleChange}
           rows={2}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
           placeholder="Additional notes..."
         />
       </div>

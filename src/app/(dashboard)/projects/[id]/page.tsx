@@ -137,21 +137,10 @@ export default async function ProjectDetailPage({
 
   return (
     <div className="space-y-6">
-      {/* Back + Header */}
-      <div>
-        <Link href="/projects" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4">
-          <ArrowLeft size={15} /> Back to Projects
-        </Link>
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">{project.name}</h1>
-            {project.description && (
-              <p className="text-slate-500 text-sm mt-1 max-w-xl">{project.description}</p>
-            )}
-          </div>
-          <StatusBadge status={project.status} />
-        </div>
-      </div>
+      {/* Description */}
+      {project.description && (
+        <p className="text-slate-500 text-sm max-w-xl">{project.description}</p>
+      )}
 
       {/* Meta info */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -226,24 +215,24 @@ export default async function ProjectDetailPage({
       </div>
 
       {/* Module navigation */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {navLinks.map(({ href, label, icon: Icon, count }) => (
           <Link
             key={href}
             href={href}
-            className="bg-white border border-slate-200 rounded-xl p-5 hover:border-amber-300 hover:shadow-sm transition-all group"
+            className="bg-white border border-slate-200/60 rounded-xl p-5 hover:border-blue-300 hover:shadow-md transition-all group"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center group-hover:bg-amber-100 transition-colors">
-                  <Icon size={18} className="text-amber-600" />
+                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                  <Icon size={18} className="text-blue-600" />
                 </div>
                 <div>
                   <p className="font-semibold text-slate-800">{label}</p>
                   <p className="text-xs text-slate-400">{count} record{count !== 1 ? 's' : ''}</p>
                 </div>
               </div>
-              <ArrowLeft size={16} className="text-slate-300 rotate-180 group-hover:text-amber-500 transition-colors" />
+              <ArrowLeft size={16} className="text-slate-300 rotate-180 group-hover:text-blue-500 transition-colors" />
             </div>
           </Link>
         ))}

@@ -22,7 +22,7 @@ const MILESTONE_STATUS_COLORS: Record<string, string> = {
 }
 
 const inputClass =
-  'w-full px-3 py-2.5 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent'
+  'w-full px-3 py-2.5 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
 const labelClass = 'block text-xs text-slate-500 uppercase tracking-wide mb-1.5'
 
 function PhaseForm({
@@ -219,7 +219,7 @@ export function PhasesClient({ phases, milestones, projectId }: PhasesClientProp
           <p className="text-sm mt-1">Break your project into phases to track progress</p>
           <button
             onClick={() => setShowAddPhase(true)}
-            className="mt-4 px-4 py-2 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-400 transition-colors"
+            className="mt-4 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-500 transition-colors"
           >
             Add Phase
           </button>
@@ -275,7 +275,7 @@ export function PhasesClient({ phases, milestones, projectId }: PhasesClientProp
                           <div className="flex items-center gap-1 ml-3 shrink-0">
                             <button
                               onClick={() => setEditPhase(phase)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-blue-700 hover:bg-blue-50 transition-colors"
                             >
                               <Pencil size={14} />
                             </button>
@@ -325,7 +325,7 @@ export function PhasesClient({ phases, milestones, projectId }: PhasesClientProp
                             </p>
                             <button
                               onClick={() => setAddMilestonePhaseId(phase.id)}
-                              className="text-xs text-amber-600 hover:text-amber-700 font-medium flex items-center gap-1"
+                              className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
                             >
                               <Plus size={12} /> Add
                             </button>

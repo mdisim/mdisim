@@ -121,7 +121,7 @@ export function DocumentsClient({
             <button
               key={t}
               onClick={() => setFilterType(t)}
-              className={`px-3 py-1.5 text-xs rounded-full border transition-all ${filterType === t ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-slate-600 border-slate-200 hover:border-amber-300'}`}
+              className={`px-3 py-1.5 text-xs rounded-full border transition-all ${filterType === t ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'}`}
             >
               {t === 'all' ? 'All Types' : t.charAt(0).toUpperCase() + t.slice(1)}
             </button>
@@ -129,7 +129,7 @@ export function DocumentsClient({
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
         >
           <Plus size={16} /> Add Document
         </button>
@@ -171,7 +171,7 @@ export function DocumentsClient({
                     </td>
                     <td className="px-4 py-3 font-medium text-slate-800">
                       {doc.file_url ? (
-                        <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-amber-600 hover:underline">
+                        <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-blue-600 hover:underline">
                           {doc.title} <ExternalLink size={12} />
                         </a>
                       ) : (
@@ -197,7 +197,7 @@ export function DocumentsClient({
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => { setShowRevModal(doc.id); setRevError(null) }}
-                          className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded transition-colors text-xs"
+                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors text-xs"
                           title="Add revision"
                         >
                           <Plus size={13} />
@@ -274,11 +274,11 @@ export function DocumentsClient({
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
                                   <label className="block text-xs text-slate-500 uppercase tracking-wide mb-1.5">Revision *</label>
-                                  <input name="revision" required className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="Rev A" />
+                                  <input name="revision" required className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Rev A" />
                                 </div>
                                 <div>
                                   <label className="block text-xs text-slate-500 uppercase tracking-wide mb-1.5">Status</label>
-                                  <select name="status" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                  <select name="status" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     {REV_STATUSES.map(s => <option key={s} value={s}>{s.replace('_', ' ').charAt(0).toUpperCase() + s.replace('_', ' ').slice(1)}</option>)}
                                   </select>
                                 </div>
@@ -286,24 +286,24 @@ export function DocumentsClient({
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
                                   <label className="block text-xs text-slate-500 uppercase tracking-wide mb-1.5">Reviewed By</label>
-                                  <input name="reviewed_by" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                                  <input name="reviewed_by" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                                 </div>
                                 <div>
                                   <label className="block text-xs text-slate-500 uppercase tracking-wide mb-1.5">Approved By</label>
-                                  <input name="approved_by" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                                  <input name="approved_by" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                                 </div>
                               </div>
                               <div>
                                 <label className="block text-xs text-slate-500 uppercase tracking-wide mb-1.5">Approved Date</label>
-                                <input name="approved_date" type="date" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                                <input name="approved_date" type="date" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                               </div>
                               <div>
                                 <label className="block text-xs text-slate-500 uppercase tracking-wide mb-1.5">Notes</label>
-                                <textarea name="notes" rows={2} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none" />
+                                <textarea name="notes" rows={2} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
                               </div>
                               <div className="flex justify-end gap-3 pt-2">
                                 <button type="button" onClick={() => setShowRevModal(null)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
-                                <button type="submit" disabled={revSaving} className="px-4 py-2 text-sm bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium disabled:opacity-50">
+                                <button type="submit" disabled={revSaving} className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50">
                                   {revSaving ? 'Saving...' : 'Add Revision'}
                                 </button>
                               </div>
@@ -325,37 +325,37 @@ export function DocumentsClient({
           {error && <p className="text-sm text-red-600 bg-red-50 rounded p-2">{error}</p>}
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1">Title *</label>
-            <input name="title" required className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <input name="title" required className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">Type</label>
-              <select name="document_type" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+              <select name="document_type" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 {DOC_TYPES.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">Status</label>
-              <select name="status" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+              <select name="status" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 {DOC_STATUSES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
               </select>
             </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1">Revision</label>
-            <input name="revision" placeholder="e.g. Rev A, v1.2" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <input name="revision" placeholder="e.g. Rev A, v1.2" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1">File URL (optional)</label>
-            <input name="file_url" type="url" placeholder="https://..." className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <input name="file_url" type="url" placeholder="https://..." className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1">Notes</label>
-            <textarea name="notes" rows={2} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none" />
+            <textarea name="notes" rows={2} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
-            <button type="submit" disabled={isPending} className="px-4 py-2 text-sm bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50">
+            <button type="submit" disabled={isPending} className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50">
               {isPending ? 'Saving…' : 'Add Document'}
             </button>
           </div>

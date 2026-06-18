@@ -114,7 +114,7 @@ export function ReportHeaderForm({ report, projectId }: Props) {
             value={form.weather}
             onChange={e => set('weather', e.target.value)}
             disabled={isReadonly}
-            className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:bg-slate-50"
+            className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
           >
             <option value="">— Select —</option>
             {WEATHER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -124,13 +124,13 @@ export function ReportHeaderForm({ report, projectId }: Props) {
           <label className="block text-xs text-slate-500 mb-1">High Temp (°C)</label>
           <input type="number" value={form.temperature_high} onChange={e => set('temperature_high', e.target.value)}
             disabled={isReadonly} placeholder="e.g. 32"
-            className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:bg-slate-50" />
+            className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50" />
         </div>
         <div>
           <label className="block text-xs text-slate-500 mb-1">Low Temp (°C)</label>
           <input type="number" value={form.temperature_low} onChange={e => set('temperature_low', e.target.value)}
             disabled={isReadonly} placeholder="e.g. 18"
-            className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:bg-slate-50" />
+            className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50" />
         </div>
         <div>
           <label className="block text-xs text-slate-500 mb-1">Work Status</label>
@@ -138,7 +138,7 @@ export function ReportHeaderForm({ report, projectId }: Props) {
             value={form.work_status}
             onChange={e => set('work_status', e.target.value)}
             disabled={isReadonly}
-            className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:bg-slate-50"
+            className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
           >
             {WORK_STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
@@ -150,7 +150,7 @@ export function ReportHeaderForm({ report, projectId }: Props) {
           <label className="block text-xs text-slate-500 mb-1">Delay / Reason</label>
           <input type="text" value={form.delay_reason} onChange={e => set('delay_reason', e.target.value)}
             disabled={isReadonly} placeholder="Reason for delay or suspension..."
-            className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:bg-slate-50" />
+            className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50" />
         </div>
       )}
 
@@ -158,7 +158,7 @@ export function ReportHeaderForm({ report, projectId }: Props) {
         <label className="block text-xs text-slate-500 mb-1">General Notes</label>
         <textarea value={form.general_notes} onChange={e => set('general_notes', e.target.value)}
           disabled={isReadonly} rows={3} placeholder="General observations, instructions received, visitors on site..."
-          className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:bg-slate-50 resize-none" />
+          className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50 resize-none" />
       </div>
     </div>
   )

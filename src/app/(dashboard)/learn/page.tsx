@@ -21,7 +21,7 @@ export default function LearnPage() {
         {courses.map((course) => (
           <div
             key={course.slug}
-            className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col hover:border-amber-300 hover:shadow-sm transition-all"
+            className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col hover:border-blue-300 hover:shadow-sm transition-all"
           >
             <div className="text-3xl mb-3">{course.icon}</div>
             <div className="flex items-center gap-2 mb-2">
@@ -36,7 +36,7 @@ export default function LearnPage() {
             <p className="text-sm text-slate-500 flex-1 mb-4">{course.description}</p>
             <Link
               href={`/learn/${course.slug}`}
-              className="block w-full text-center bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold py-2 rounded-lg transition-colors"
+              className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 rounded-lg transition-colors"
             >
               Start Learning
             </Link>

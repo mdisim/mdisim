@@ -54,7 +54,7 @@ function CertificateForm({
   }
 
   const inputClass =
-    'w-full px-3 py-2.5 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent'
+    'w-full px-3 py-2.5 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
   const labelClass = 'block text-xs text-slate-500 uppercase tracking-wide mb-1.5'
 
   return (
@@ -191,7 +191,7 @@ export function CertificatesClient({ certificates, projectId }: CertificatesClie
           <p className="text-sm mt-1">Create payment certificates to track certified amounts</p>
           <button
             onClick={() => setShowAdd(true)}
-            className="mt-4 px-4 py-2 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-400 transition-colors"
+            className="mt-4 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-500 transition-colors"
           >
             New Certificate
           </button>

@@ -609,7 +609,7 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
         <button
           onClick={handleGenerateBOQ}
           disabled={generatingBOQ}
-          className="hidden sm:flex items-center gap-1.5 text-xs px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="hidden sm:flex items-center gap-1.5 text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           <Link2 size={12} />
           {generatingBOQ ? 'Generating…' : 'Push to BOQ'}
@@ -704,7 +704,7 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
               {pdfLoading && (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center text-slate-400">
-                    <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                    <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
                     <p className="text-sm">Loading PDF…</p>
                   </div>
                 </div>
@@ -742,7 +742,7 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
             <button
               title="Select tool"
               onClick={() => setActiveTool(null)}
-              className={`p-1.5 rounded transition-colors ${activeTool === null ? 'bg-amber-500 text-white' : 'text-slate-400 hover:bg-slate-800'}`}
+              className={`p-1.5 rounded transition-colors ${activeTool === null ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}
             >
               <MousePointer size={13} />
             </button>
@@ -789,12 +789,12 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
                 onChange={e => setCalibInput(e.target.value)}
                 autoFocus
                 placeholder="e.g. 5"
-                className="flex-1 bg-slate-800 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
+                className="flex-1 bg-slate-800 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
               />
               <select
                 value={calibUnit}
                 onChange={e => setCalibUnit(e.target.value)}
-                className="bg-slate-800 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
+                className="bg-slate-800 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
               >
                 {['mm', 'cm', 'm', 'ft', 'in'].map(u => <option key={u} value={u}>{u}</option>)}
               </select>
@@ -803,7 +803,7 @@ export function TakeoffViewer({ drawing, projectId, pdfUrl, initialCalibrations,
               <button
                 onClick={handleSaveCalibration}
                 disabled={!calibInput || parseFloat(calibInput) <= 0}
-                className="flex-1 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-white font-semibold rounded-lg py-2 text-sm transition-colors"
+                className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold rounded-lg py-2 text-sm transition-colors"
               >
                 Set Scale
               </button>

@@ -23,7 +23,7 @@ export default async function ProjectsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900"><T k="projects" fallback="Projects" /></h1>
@@ -33,15 +33,15 @@ export default async function ProjectsPage() {
       </div>
 
       {/* Status summary badges */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-3 flex-wrap">
         {[
           { label: 'All', count: counts.all, color: 'bg-slate-100 text-slate-700' },
-          { label: 'Active', count: counts.active, color: 'bg-green-100 text-green-700' },
-          { label: 'Planning', count: counts.planning, color: 'bg-blue-100 text-blue-700' },
-          { label: 'Completed', count: counts.completed, color: 'bg-slate-100 text-slate-500' },
+          { label: 'Active', count: counts.active, color: 'bg-blue-50 text-blue-700' },
+          { label: 'Planning', count: counts.planning, color: 'bg-slate-100 text-slate-600' },
+          { label: 'Completed', count: counts.completed, color: 'bg-green-50 text-green-700' },
         ].map(f => (
-          <span key={f.label} className={`px-3 py-1.5 rounded-full text-sm font-medium ${f.color}`}>
-            {f.label} <span className="ml-1 opacity-70">{f.count}</span>
+          <span key={f.label} className={`px-3.5 py-1.5 rounded-full text-sm font-medium ${f.color}`}>
+            {f.label} <span className="ml-1 font-semibold">{f.count}</span>
           </span>
         ))}
       </div>

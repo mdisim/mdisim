@@ -105,7 +105,7 @@ export function IssuesClient({ issues, projectId }: Props) {
         <select
           value={statusFilter}
           onChange={e => setStatusFilter(e.target.value)}
-          className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="all">All Statuses</option>
           <option value="open">Open</option>
@@ -116,7 +116,7 @@ export function IssuesClient({ issues, projectId }: Props) {
         <select
           value={priorityFilter}
           onChange={e => setPriorityFilter(e.target.value)}
-          className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="all">All Priorities</option>
           <option value="critical">Critical</option>
@@ -174,7 +174,7 @@ export function IssuesClient({ issues, projectId }: Props) {
                       <button
                         onClick={() => handleAdvance(issue.id, issue.status)}
                         disabled={isPending}
-                        className="px-2 py-1 rounded text-xs bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 flex items-center gap-0.5"
+                        className="px-2 py-1 rounded text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 flex items-center gap-0.5"
                       >
                         {nextStatus[issue.status].replace('_', ' ')} <ChevronRight size={10} />
                       </button>
@@ -196,16 +196,16 @@ export function IssuesClient({ issues, projectId }: Props) {
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Title *</label>
-            <input name="title" required className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <input name="title" required className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
-            <textarea name="description" rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <textarea name="description" rows={2} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
-              <select name="category" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+              <select name="category" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="general">General</option>
                 <option value="safety">Safety</option>
                 <option value="quality">Quality</option>
@@ -216,7 +216,7 @@ export function IssuesClient({ issues, projectId }: Props) {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
-              <select name="priority" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+              <select name="priority" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
@@ -227,16 +227,16 @@ export function IssuesClient({ issues, projectId }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Raised By</label>
-              <input name="raised_by" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="raised_by" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Assigned To</label>
-              <input name="assigned_to" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              <input name="assigned_to" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Due Date</label>
-            <input name="due_date" type="date" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <input name="due_date" type="date" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => setShowAdd(false)} className="px-4 py-2 text-sm border border-slate-300 rounded-lg hover:bg-slate-50">Cancel</button>

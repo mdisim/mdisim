@@ -44,7 +44,7 @@ export function StatsCard({
     ? colorMap[color]
     : { iconColor: propIconColor || 'text-amber-600', iconBg: propIconBg || 'bg-amber-50', borderColor: 'border-l-amber-500' }
   return (
-    <div className={cn('bg-white rounded-xl border border-slate-200 border-l-4 shadow-sm p-5 hover:shadow-md transition-shadow duration-200', borderColor, className)}>
+    <div className={cn('bg-white rounded-xl border border-slate-200 border-l-[3px] shadow-none p-5 hover:shadow-sm transition-shadow duration-200', borderColor, className)}>
       <div className="flex items-start justify-between mb-3">
         <div className={cn('p-2.5 rounded-lg', iconBg)}>
           <Icon size={20} className={iconColor} />

@@ -102,7 +102,7 @@ export function CostForm({ projectId, cost, boqItems = [], onSuccess, onCancel }
           onChange={handleChange}
           required
           rows={2}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Cost description..."
         />
       </div>
@@ -170,7 +170,7 @@ export function CostForm({ projectId, cost, boqItems = [], onSuccess, onCancel }
             name="boq_item_id"
             value={form.boq_item_id}
             onChange={handleChange}
-            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">None</option>
             {boqOptions.map((opt) => (
@@ -187,7 +187,7 @@ export function CostForm({ projectId, cost, boqItems = [], onSuccess, onCancel }
           value={form.notes}
           onChange={handleChange}
           rows={2}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Additional notes..."
         />
       </div>

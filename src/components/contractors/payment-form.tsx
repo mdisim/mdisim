@@ -101,7 +101,7 @@ export function PaymentForm({ projectId, payment, contractors, onSuccess, onCanc
           value={form.contractor_id}
           onChange={handleChange}
           required
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">Select a contractor...</option>
           {contractorOptions.map((opt) => (
@@ -164,7 +164,7 @@ export function PaymentForm({ projectId, payment, contractors, onSuccess, onCanc
           value={form.description}
           onChange={handleChange}
           rows={2}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Payment description or notes..."
         />
       </div>

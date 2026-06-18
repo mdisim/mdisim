@@ -91,12 +91,12 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
   const maxDiaWeight = Math.max(...diaRows.map(([, r]) => r.weight), 1)
 
   return (
-    <div className="flex-1 overflow-auto p-6">
+    <div className="flex-1 overflow-auto p-4 sm:p-6">
       {/* Dashboard */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 text-center">
           <p className="text-xs text-slate-500 uppercase tracking-wide">{t('total_weight', 'Total Weight')}</p>
-          <p className="text-2xl font-bold text-amber-400 mt-1">{totalWeight.toFixed(2)} kg</p>
+          <p className="text-2xl font-bold text-blue-400 mt-1">{totalWeight.toFixed(2)} kg</p>
           <p className="text-xs text-slate-600 mt-0.5">{(totalWeight / 1000).toFixed(3)} t</p>
         </div>
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 text-center">
@@ -122,10 +122,10 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
           <div className="space-y-2">
             {diaRows.map(([d, row]) => (
               <div key={d} className="flex items-center gap-3 text-xs">
-                <span className="font-mono w-10 text-amber-300 shrink-0">T{d}</span>
+                <span className="font-mono w-10 text-blue-300 shrink-0">T{d}</span>
                 <div className="flex-1 bg-slate-800 rounded-full h-5 overflow-hidden">
                   <div
-                    className="h-full bg-amber-600 rounded-full flex items-center justify-end pr-2"
+                    className="h-full bg-blue-600 rounded-full flex items-center justify-end pr-2"
                     style={{ width: `${Math.max(5, (row.weight / maxDiaWeight) * 100)}%` }}
                   >
                     <span className="text-[10px] text-white font-semibold">{row.weight.toFixed(1)} kg</span>
@@ -143,11 +143,11 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-slate-400">
           {elements.length} {t('element_type', 'elements')} &nbsp;·&nbsp;
-          {t('total_steel', 'Total steel')}: <span className="text-amber-400 font-semibold">{totalWeight.toFixed(2)} kg</span>
+          {t('total_steel', 'Total steel')}: <span className="text-blue-400 font-semibold">{totalWeight.toFixed(2)} kg</span>
         </p>
         <button
           onClick={() => setAdding(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded bg-amber-600 hover:bg-amber-500 text-white transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded bg-blue-600 hover:bg-blue-500 text-white transition-colors"
         >
           <Plus size={14} /> {t('add_element', 'Add Element')}
         </button>
@@ -161,7 +161,7 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
             <select
               value={form.element_type}
               onChange={e => setForm(f => ({ ...f, element_type: e.target.value }))}
-              className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded px-2 py-1.5 focus:outline-none focus:border-amber-500"
+              className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded px-2 py-1.5 focus:outline-none focus:border-blue-500"
             >
               {ELEMENT_TYPES.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
             </select>
@@ -172,7 +172,7 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
               value={form.element_mark}
               onChange={e => setForm(f => ({ ...f, element_mark: e.target.value }))}
               placeholder="e.g. B1, C2, F3"
-              className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded px-2 py-1.5 focus:outline-none focus:border-amber-500 w-32"
+              className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded px-2 py-1.5 focus:outline-none focus:border-blue-500 w-32"
             />
           </div>
           <div>
@@ -181,13 +181,13 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
               value={form.floor_level}
               onChange={e => setForm(f => ({ ...f, floor_level: e.target.value }))}
               placeholder="e.g. GF, 1F, Roof"
-              className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded px-2 py-1.5 focus:outline-none focus:border-amber-500 w-28"
+              className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded px-2 py-1.5 focus:outline-none focus:border-blue-500 w-28"
             />
           </div>
           <div className="flex gap-2">
             <button
               onClick={handleAdd}
-              className="px-3 py-1.5 text-sm rounded bg-amber-600 hover:bg-amber-500 text-white transition-colors"
+              className="px-3 py-1.5 text-sm rounded bg-blue-600 hover:bg-blue-500 text-white transition-colors"
             >{t('save', 'Save')}</button>
             <button
               onClick={() => setAdding(false)}
@@ -197,7 +197,7 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
         </div>
       )}
 
-      {/* Elements table */}
+      {/* Elements list */}
       {elements.length === 0 ? (
         <div className="text-center py-16 text-slate-500">
           <p className="text-lg mb-2">{t('no_elements', 'No rebar elements yet')}</p>
@@ -210,13 +210,13 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
             const isExpanded = expanded.has(el.id)
             return (
               <div key={el.id} className="bg-slate-900 rounded-lg border border-slate-800">
-                {/* Element header */}
+                {/* Element header - desktop */}
                 <div
-                  className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-800/50 rounded-lg transition-colors"
+                  className="hidden sm:flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-800/50 rounded-lg transition-colors"
                   onClick={() => toggleExpand(el.id)}
                 >
                   {isExpanded ? <ChevronDown size={14} className="text-slate-500 shrink-0" /> : <ChevronRight size={14} className="text-slate-500 shrink-0" />}
-                  <span className="text-xs uppercase tracking-wider text-amber-400 w-16 shrink-0">{el.element_type}</span>
+                  <span className="text-xs uppercase tracking-wider text-blue-400 w-16 shrink-0">{el.element_type}</span>
                   <span className="font-mono font-bold text-white w-20 shrink-0">{el.element_mark}</span>
                   {el.floor_level && <span className="text-xs text-slate-500 w-20 shrink-0">{el.floor_level}</span>}
                   <span className="text-xs text-slate-500 flex-1">{el.bars.length} {t('bars', 'bars')}</span>
@@ -236,10 +236,47 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
                   </button>
                 </div>
 
-                {/* Bars preview */}
+                {/* Element card - mobile */}
+                <div
+                  className="sm:hidden p-4 cursor-pointer"
+                  onClick={() => toggleExpand(el.id)}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      {isExpanded ? <ChevronDown size={14} className="text-slate-500" /> : <ChevronRight size={14} className="text-slate-500" />}
+                      <span className="font-mono font-bold text-white text-lg">{el.element_mark}</span>
+                      <span className="text-xs uppercase tracking-wider text-blue-400 bg-blue-950 px-2 py-0.5 rounded">{el.element_type}</span>
+                    </div>
+                    <button
+                      onClick={e => { e.stopPropagation(); handleDelete(el.id) }}
+                      className="p-1.5 rounded hover:bg-red-900/50 text-slate-600 hover:text-red-400 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-3">
+                      {el.floor_level && <span className="text-xs text-slate-500">{el.floor_level}</span>}
+                      <span className="text-xs text-slate-500">{el.bars.length} {t('bars', 'bars')}</span>
+                    </div>
+                    <span className="font-semibold text-green-400">{elWeight.toFixed(2)} kg</span>
+                  </div>
+                  <div className="mt-2">
+                    <Link
+                      href={`/projects/${projectId}/rebar/${el.id}`}
+                      onClick={e => e.stopPropagation()}
+                      className="inline-block px-3 py-1.5 text-xs rounded bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors"
+                    >
+                      {t('edit_bbs', 'Edit BBS')}
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Bars preview - desktop table */}
                 {isExpanded && el.bars.length > 0 && (
                   <div className="px-4 pb-3 border-t border-slate-800">
-                    <table className="w-full text-xs mt-2">
+                    {/* Desktop table */}
+                    <table className="hidden sm:table w-full text-xs mt-2">
                       <thead>
                         <tr className="text-slate-500">
                           <th className="text-left py-1 pr-3 font-medium">{t('bar_mark', 'Mark')}</th>
@@ -254,7 +291,7 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
                         {el.bars.map(bar => (
                           <tr key={bar.id} className="border-t border-slate-800/50">
                             <td className="py-1 pr-3 font-mono text-white">{bar.bar_mark}</td>
-                            <td className="py-1 pr-3 text-amber-300">T{bar.diameter_mm}</td>
+                            <td className="py-1 pr-3 text-blue-300">T{bar.diameter_mm}</td>
                             <td className="py-1 pr-3 text-slate-400">{bar.shape_code}</td>
                             <td className="py-1 pr-3 text-right text-slate-300">{bar.quantity}</td>
                             <td className="py-1 pr-3 text-right text-slate-300">{bar.cut_length_mm?.toFixed(0) ?? '—'}</td>
@@ -263,6 +300,24 @@ export function RebarScheduleClient({ projectId, initialElements }: Props) {
                         ))}
                       </tbody>
                     </table>
+
+                    {/* Mobile cards */}
+                    <div className="sm:hidden grid gap-2 mt-3">
+                      {el.bars.map(bar => (
+                        <div key={bar.id} className="bg-slate-800 rounded-lg p-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-mono font-bold text-white">{bar.bar_mark}</span>
+                            <span className="text-green-400 font-semibold text-sm">{bar.total_weight_kg?.toFixed(3) ?? '—'} kg</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-slate-400">
+                            <span className="text-blue-300">T{bar.diameter_mm}</span>
+                            <span>Shape {bar.shape_code}</span>
+                            <span>Qty {bar.quantity}</span>
+                            <span>{bar.cut_length_mm?.toFixed(0) ?? '—'} mm</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

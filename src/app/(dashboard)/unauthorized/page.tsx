@@ -10,7 +10,7 @@ export default function UnauthorizedPage() {
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mb-2">Access Restricted</h1>
         <p className="text-slate-500 mb-6">You don&apos;t have permission to view this page. Contact your administrator to request access.</p>
-        <Link href="/dashboard" className="inline-flex items-center gap-2 px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg transition-colors">
+        <Link href="/dashboard" className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors">
           Back to Dashboard
         </Link>
       </div>

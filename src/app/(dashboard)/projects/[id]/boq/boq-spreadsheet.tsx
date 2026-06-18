@@ -910,7 +910,7 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
         <button onClick={() => void addRow(false)} className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 flex items-center gap-1">
           + {t('add_row', 'Add Row')}
         </button>
-        <button onClick={() => void addRow(true)} className="px-3 py-1.5 bg-amber-500 text-white text-sm rounded-lg hover:bg-amber-600 flex items-center gap-1">
+        <button onClick={() => void addRow(true)} className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 flex items-center gap-1">
           + {t('add_section', 'Add Section')}
         </button>
         <div className="h-4 w-px bg-gray-300 mx-1" />

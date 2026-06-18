@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
               <p className="text-slate-500 text-sm mb-6">
                 We sent a password reset link to <strong>{email}</strong>. Check your inbox and follow the instructions.
               </p>
-              <Link href="/login" className="text-amber-600 hover:text-amber-700 text-sm font-medium">
+              <Link href="/login" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
                 Back to login
               </Link>
             </div>
@@ -73,7 +73,7 @@ export default function ForgotPasswordPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       placeholder="you@company.com"
-                      className="w-full pl-9 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full pl-9 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </div>
@@ -81,7 +81,7 @@ export default function ForgotPasswordPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
                 >
                   {loading ? 'Sending...' : 'Send reset link'}
                 </button>

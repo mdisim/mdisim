@@ -29,7 +29,7 @@ export function BudgetChart({ projects, costsByProject }: BudgetChartProps) {
               </div>
               <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden flex">
                 <div
-                  className={`h-full rounded-full transition-all ${overBudget ? 'bg-red-500' : spentPct > 70 ? 'bg-amber-500' : 'bg-green-500'}`}
+                  className={`h-full rounded-full transition-all ${overBudget ? 'bg-red-500' : spentPct > 70 ? 'bg-amber-500' : 'bg-blue-500'}`}
                   style={{ width: `${spentPct}%` }}
                 />
               </div>
@@ -53,7 +53,7 @@ export function StatusDonut({ counts }: StatusChartProps) {
     { label: 'Active', count: counts.active, color: '#22c55e' },
     { label: 'Planning', count: counts.planning, color: '#94a3b8' },
     { label: 'On Hold', count: counts.on_hold, color: '#f59e0b' },
-    { label: 'Completed', count: counts.completed, color: '#3b82f6' },
+    { label: 'Completed', count: counts.completed, color: '#2563EB' },
   ]
 
   // Build conic-gradient

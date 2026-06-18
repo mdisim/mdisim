@@ -15,7 +15,7 @@ export function RecentActivity({ projects }: RecentActivityProps) {
         <h3 className="text-base font-semibold text-slate-900">Recent Projects</h3>
         <Link
           href="/projects"
-          className="flex items-center gap-1 text-sm text-amber-600 hover:text-amber-700 font-medium"
+          className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
         >
           View all <ArrowRight size={14} />
         </Link>

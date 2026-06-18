@@ -870,7 +870,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
             {drawings.map(d => (
               <button key={d.id} onClick={() => setSelectedDrawingId(d.id)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
-                  selectedDrawingId === d.id ? 'border-amber-500 bg-amber-500/10 text-amber-300' : 'border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-600'
+                  selectedDrawingId === d.id ? 'border-blue-500 bg-blue-500/10 text-blue-300' : 'border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-600'
                 }`}>
                 <FileText size={14} />
                 <span>{d.name}</span>
@@ -887,7 +887,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
         <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Step 2 — Extract Reinforcement</h2>
         <button onClick={handleExtract}
           disabled={!selectedDrawingId || status === 'extracting' || status === 'saving'}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
           <Zap size={15} />
           {status === 'extracting' ? `${t('extract_reinforcement', 'Extracting')}…` : t('extract_reinforcement', 'Extract Rebar from Drawing')}
         </button>
@@ -997,7 +997,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
             <button onClick={() => setShowDrawingView(v => !v)}
               className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded border transition-colors ${
                 showDrawingView
-                  ? 'border-amber-500 bg-amber-500/10 text-amber-300'
+                  ? 'border-blue-500 bg-blue-500/10 text-blue-300'
                   : 'border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-600'
               }`}>
               {showDrawingView ? '▲' : '▼'} Annotated Drawing View
@@ -1005,7 +1005,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
             </button>
             {pageRenders.length > 0 && (
               <button onClick={handleExportAnnotatedDrawing}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm rounded border border-slate-700 bg-slate-800 text-slate-400 hover:border-amber-600 hover:text-amber-400 transition-colors">
+                className="flex items-center gap-2 px-3 py-1.5 text-sm rounded border border-slate-700 bg-slate-800 text-slate-400 hover:border-blue-600 hover:text-blue-400 transition-colors">
                 ↓ Export Annotated Drawing PDF
               </button>
             )}
@@ -1036,7 +1036,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
           </label>
           <input type="range" min={0} max={100} step={5} value={confidenceThreshold}
             onChange={e => setConfidenceThreshold(Number(e.target.value))}
-            className="flex-1 min-w-[120px] accent-amber-500" />
+            className="flex-1 min-w-[120px] accent-blue-500" />
           <span className="text-xs text-slate-600">Bars below this threshold are unchecked automatically</span>
         </div>
       )}
@@ -1133,18 +1133,18 @@ export function ExtractClient({ projectId, drawings }: Props) {
               return (
                 <div key={el.id} className={`rounded-lg border ${el.keep ? 'border-slate-700 bg-slate-900' : 'border-slate-800 bg-slate-900/40 opacity-50'}`}>
                   <div className="flex items-center gap-3 px-4 py-3">
-                    <input type="checkbox" checked={el.keep} onChange={e => updateElement(el.id, 'keep', e.target.checked)} className="w-4 h-4 accent-amber-500" />
+                    <input type="checkbox" checked={el.keep} onChange={e => updateElement(el.id, 'keep', e.target.checked)} className="w-4 h-4 accent-blue-500" />
                     <button onClick={() => toggleElement(el.id)} className="text-slate-500 hover:text-slate-300">
                       {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                     </button>
                     <select value={el.elementType} onChange={e => updateElement(el.id, 'elementType', e.target.value)}
-                      className="bg-slate-800 border border-slate-600 text-amber-400 text-xs rounded px-2 py-1 focus:outline-none focus:border-amber-500">
+                      className="bg-slate-800 border border-slate-600 text-blue-400 text-xs rounded px-2 py-1 focus:outline-none focus:border-blue-500">
                       {ELEMENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                     <input value={el.elementMark} onChange={e => updateElement(el.id, 'elementMark', e.target.value)}
-                      className="font-mono font-bold text-white bg-transparent border-b border-slate-700 focus:outline-none focus:border-amber-500 w-24 text-sm" />
+                      className="font-mono font-bold text-white bg-transparent border-b border-slate-700 focus:outline-none focus:border-blue-500 w-24 text-sm" />
                     <input value={el.floorLevel} onChange={e => updateElement(el.id, 'floorLevel', e.target.value)}
-                      placeholder="level" className="text-slate-400 text-xs bg-transparent border-b border-slate-800 focus:outline-none focus:border-amber-500 w-20" />
+                      placeholder="level" className="text-slate-400 text-xs bg-transparent border-b border-slate-800 focus:outline-none focus:border-blue-500 w-20" />
                     <span className="text-xs text-slate-600 ml-auto">
                       {el.sourceLayer ? `Layer: ${el.sourceLayer}` : el.sourcePage ? `Page ${el.sourcePage}` : ''}
                     </span>
@@ -1177,11 +1177,11 @@ export function ExtractClient({ projectId, drawings }: Props) {
                             const isBarActive = activeRaw === rawOfBar
                             return (
                             <tr key={bar.id}
-                              className={`border-t border-slate-800/50 cursor-pointer transition-colors ${bar.keep ? '' : 'opacity-40'} ${isBarActive ? 'bg-amber-900/30 ring-1 ring-inset ring-amber-600' : 'hover:bg-slate-800/30'}`}
+                              className={`border-t border-slate-800/50 cursor-pointer transition-colors ${bar.keep ? '' : 'opacity-40'} ${isBarActive ? 'bg-blue-900/30 ring-1 ring-inset ring-blue-600' : 'hover:bg-slate-800/30'}`}
                               onClick={() => setActiveRaw(isBarActive ? null : rawOfBar)}
                             >
                               <td className="py-1 pr-1">
-                                <input type="checkbox" checked={bar.keep} onChange={e => updateBar(el.id, bar.id, 'keep', e.target.checked)} className="w-3 h-3 accent-amber-500" />
+                                <input type="checkbox" checked={bar.keep} onChange={e => updateBar(el.id, bar.id, 'keep', e.target.checked)} className="w-3 h-3 accent-blue-500" />
                               </td>
                               <td className="py-1 pr-2">
                                 <input value={bar.bar_mark} onChange={e => updateBar(el.id, bar.id, 'bar_mark', e.target.value)}
@@ -1189,14 +1189,14 @@ export function ExtractClient({ projectId, drawings }: Props) {
                               </td>
                               <td className="py-1 pr-2">
                                 <select value={bar.diameter_mm} onChange={e => updateBar(el.id, bar.id, 'diameter_mm', Number(e.target.value))}
-                                  className="bg-slate-800 border border-slate-700 text-amber-300 rounded px-1 py-0.5 focus:outline-none focus:border-amber-500">
+                                  className="bg-slate-800 border border-slate-700 text-blue-300 rounded px-1 py-0.5 focus:outline-none focus:border-blue-500">
                                   {REBAR_DIAMETERS.map(d => <option key={d} value={d}>T{d}</option>)}
                                 </select>
                               </td>
                               <td className="py-1 pr-2 text-center">
                                 <div className="flex items-center gap-1">
                                   <select value={bar.shape_code} onChange={e => updateBar(el.id, bar.id, 'shape_code', e.target.value)}
-                                    className="bg-slate-800 border border-slate-700 text-slate-300 rounded px-1 py-0.5 focus:outline-none focus:border-amber-500 text-xs">
+                                    className="bg-slate-800 border border-slate-700 text-slate-300 rounded px-1 py-0.5 focus:outline-none focus:border-blue-500 text-xs">
                                     {SHAPE_CODES.map(sc => <option key={sc} value={sc}>{sc}</option>)}
                                   </select>
                                   <ShapeCodeSVG shapeCode={bar.shape_code} dims={bar.bending_dims} size={24} />
@@ -1207,13 +1207,13 @@ export function ExtractClient({ projectId, drawings }: Props) {
                                   <input type="number" value={bar.bending_dims[key] ?? ''}
                                     onChange={e => updateBarDim(el.id, bar.id, key, Number(e.target.value))}
                                     placeholder="—"
-                                    className="bg-slate-800 border border-slate-700 text-slate-200 rounded px-1.5 py-0.5 w-20 text-right focus:outline-none focus:border-amber-500" />
+                                    className="bg-slate-800 border border-slate-700 text-slate-200 rounded px-1.5 py-0.5 w-20 text-right focus:outline-none focus:border-blue-500" />
                                 </td>
                               ))}
                               <td className="py-1 pr-2 text-right">
                                 <input type="number" value={bar.quantity} min={1}
                                   onChange={e => updateBar(el.id, bar.id, 'quantity', Number(e.target.value))}
-                                  className="bg-slate-800 border border-slate-700 text-slate-200 rounded px-1 py-0.5 w-14 text-right focus:outline-none focus:border-amber-500" />
+                                  className="bg-slate-800 border border-slate-700 text-slate-200 rounded px-1 py-0.5 w-14 text-right focus:outline-none focus:border-blue-500" />
                               </td>
                               <td className="py-1 pr-2 text-right">
                                 {(() => {
@@ -1256,7 +1256,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
                         </tbody>
                       </table>
                       <button onClick={() => addBar(el.id)}
-                        className="mt-2 flex items-center gap-1 text-xs text-slate-600 hover:text-amber-400 transition-colors">
+                        className="mt-2 flex items-center gap-1 text-xs text-slate-600 hover:text-blue-400 transition-colors">
                         <Plus size={11} /> Add bar manually
                       </button>
                     </div>
@@ -1299,7 +1299,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
                     </div>
                     <div className="bg-slate-800 rounded px-3 py-2">
                       <span className="text-slate-500">Selected</span>
-                      <span className="block text-amber-300 font-mono font-bold">{saveDiagnostics.selected} bars</span>
+                      <span className="block text-blue-300 font-mono font-bold">{saveDiagnostics.selected} bars</span>
                     </div>
                     <div className="bg-slate-800 rounded px-3 py-2">
                       <span className="text-slate-500">Saved</span>

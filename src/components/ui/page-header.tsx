@@ -14,7 +14,7 @@ export function PageHeader({ titleKey, subtitleKey, titleFallback, subtitleFallb
   return (
     <div className="flex items-start justify-between">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">{t(titleKey) || titleFallback}</h1>
+        <h1 className="text-2xl font-bold text-[#0F172A]">{t(titleKey) || titleFallback}</h1>
         {(subtitleKey || subtitleFallback) && (
           <p className="text-slate-500 text-sm mt-1">{subtitleKey ? t(subtitleKey) : subtitleFallback}</p>
         )}

@@ -174,7 +174,7 @@ export function BBSEditor({ elementId, initialBars }: Props) {
           </button>
           <button
             onClick={startAdd}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded bg-amber-600 hover:bg-amber-500 text-white transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded bg-blue-600 hover:bg-blue-500 text-white transition-colors"
           >
             <Plus size={13} /> {t('add', 'Add')} {t('bar_mark', 'Bar')}
           </button>
@@ -243,7 +243,7 @@ export function BBSEditor({ elementId, initialBars }: Props) {
               />
             </div>
             <div className="flex gap-2">
-              <button onClick={handleSave} className="px-3 py-1.5 text-sm rounded bg-amber-600 hover:bg-amber-500 text-white transition-colors">Save</button>
+              <button onClick={handleSave} className="px-3 py-1.5 text-sm rounded bg-blue-600 hover:bg-blue-500 text-white transition-colors">Save</button>
               <button onClick={() => setEditingId(null)} className="px-3 py-1.5 text-sm rounded bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors">Cancel</button>
             </div>
           </div>
