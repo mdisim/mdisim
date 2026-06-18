@@ -183,8 +183,8 @@ export function BBSEditor({ elementId, initialBars }: Props) {
 
       {/* Edit / Add form */}
       {editingId && (
-        <div className="mb-5 p-4 bg-slate-800 rounded-lg border border-amber-500/30">
-          <h3 className="text-sm font-semibold text-amber-400 mb-3">{editingId === 'new' ? `${t('add', 'Add')} ${t('bar_mark', 'Bar')}` : `${t('edit', 'Edit')} ${t('bar_mark', 'Bar')}`}</h3>
+        <div className="mb-5 p-4 bg-slate-800 rounded-lg border border-blue-500/30">
+          <h3 className="text-sm font-semibold text-blue-400 mb-3">{editingId === 'new' ? `${t('add', 'Add')} ${t('bar_mark', 'Bar')}` : `${t('edit', 'Edit')} ${t('bar_mark', 'Bar')}`}</h3>
           <div className="flex flex-wrap gap-3 items-end">
             <div>
               <label className="block text-xs text-slate-400 mb-1">Mark *</label>
@@ -192,7 +192,7 @@ export function BBSEditor({ elementId, initialBars }: Props) {
                 value={draft.bar_mark}
                 onChange={e => setDraft(d => ({ ...d, bar_mark: e.target.value }))}
                 placeholder="01"
-                className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded px-2 py-1.5 w-20 focus:outline-none focus:border-amber-500"
+                className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded px-2 py-1.5 w-20 focus:outline-none focus:border-blue-500"
               />
             </div>
             <div>
@@ -200,7 +200,7 @@ export function BBSEditor({ elementId, initialBars }: Props) {
               <select
                 value={draft.diameter_mm}
                 onChange={e => setDraft(d => ({ ...d, diameter_mm: Number(e.target.value) }))}
-                className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded px-2 py-1.5 focus:outline-none focus:border-amber-500"
+                className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded px-2 py-1.5 focus:outline-none focus:border-blue-500"
               >
                 {REBAR_DIAMETERS.map(d => <option key={d} value={d}>T{d}</option>)}
               </select>
@@ -216,7 +216,7 @@ export function BBSEditor({ elementId, initialBars }: Props) {
                   for (const k of keys) freshDims[k] = (draft.bending_dims[k] ?? 0)
                   setDraft(d => ({ ...d, shape_code: sc, bending_dims: freshDims }))
                 }}
-                className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded px-2 py-1.5 focus:outline-none focus:border-amber-500"
+                className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded px-2 py-1.5 focus:outline-none focus:border-blue-500"
               >
                 {SHAPE_CODES.map(sc => <option key={sc} value={sc}>{sc}</option>)}
               </select>
@@ -228,7 +228,7 @@ export function BBSEditor({ elementId, initialBars }: Props) {
                   type="number"
                   value={draft.bending_dims[key] ?? 0}
                   onChange={e => setDim(key, Number(e.target.value))}
-                  className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded px-2 py-1.5 w-24 focus:outline-none focus:border-amber-500"
+                  className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded px-2 py-1.5 w-24 focus:outline-none focus:border-blue-500"
                 />
               </div>
             ))}
@@ -239,7 +239,7 @@ export function BBSEditor({ elementId, initialBars }: Props) {
                 value={draft.quantity}
                 min={1}
                 onChange={e => setDraft(d => ({ ...d, quantity: Number(e.target.value) }))}
-                className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded px-2 py-1.5 w-20 focus:outline-none focus:border-amber-500"
+                className="bg-slate-900 border border-slate-600 text-slate-200 text-sm rounded px-2 py-1.5 w-20 focus:outline-none focus:border-blue-500"
               />
             </div>
             <div className="flex gap-2">
@@ -287,7 +287,7 @@ export function BBSEditor({ elementId, initialBars }: Props) {
                   onClick={() => startEdit(bar)}
                 >
                   <td className="px-3 py-2 font-mono text-white font-bold">{bar.bar_mark}</td>
-                  <td className="px-3 py-2 text-amber-300">T{bar.diameter_mm}</td>
+                  <td className="px-3 py-2 text-blue-300">T{bar.diameter_mm}</td>
                   <td className="px-3 py-2 text-center">
                     <ShapeCodeSVG shapeCode={bar.shape_code} dims={bar.bending_dims} size={32} />
                   </td>

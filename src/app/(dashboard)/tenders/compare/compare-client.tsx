@@ -155,7 +155,7 @@ export function CompareClient({ tenders, tenderItems }: CompareClientProps) {
             <p className="text-xs text-slate-400 mt-1 mb-4">Add items to each tender to enable detailed line-item comparison</p>
             <a
               href="/tenders"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-white hover:bg-amber-400 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-500 transition-colors"
             >
               Add Items
             </a>
@@ -298,8 +298,8 @@ export function CompareClient({ tenders, tenderItems }: CompareClientProps) {
                         onClick={() => handleSelectWinner(t.id)}
                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                           winnerId === t.id
-                            ? 'bg-amber-500 text-white'
-                            : 'border border-slate-300 text-slate-600 hover:bg-amber-50 hover:border-amber-400'
+                            ? 'bg-blue-600 text-white'
+                            : 'border border-slate-300 text-slate-600 hover:bg-blue-50 hover:border-blue-400'
                         }`}
                       >
                         <Trophy size={12} />

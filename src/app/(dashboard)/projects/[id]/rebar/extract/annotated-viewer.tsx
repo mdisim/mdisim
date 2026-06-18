@@ -63,7 +63,7 @@ export function AnnotatedViewer({
             <button key={r.page} onClick={() => setCurrentPage(r.page)}
               className={`px-3 py-1 text-xs rounded transition-colors ${
                 currentPage === r.page
-                  ? 'bg-amber-600 text-white'
+                  ? 'bg-blue-600 text-white'
                   : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
               }`}>
               Page {r.page}
@@ -102,7 +102,7 @@ export function AnnotatedViewer({
               style={{ position: 'absolute', left, top, userSelect: 'none', zIndex: isActive ? 20 : 10 }}
               className={`group flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-mono font-semibold cursor-grab whitespace-nowrap transition-all ${
                 isActive
-                  ? 'bg-amber-400 text-slate-900 ring-2 ring-white shadow-xl'
+                  ? 'bg-blue-400 text-slate-900 ring-2 ring-white shadow-xl'
                   : ac.confidence >= 80
                   ? 'bg-amber-700/90 text-white hover:bg-amber-500'
                   : ac.confidence >= 60
