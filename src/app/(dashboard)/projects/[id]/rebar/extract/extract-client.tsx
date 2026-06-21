@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { FileText, Zap, Check, AlertCircle, Trash2, ChevronDown, ChevronRight, Plus } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n/use-translation'
 import { createRebarElement, createRebarBar, saveExtractionPageMeta } from '@/app/actions/rebar'
-import { calloutToBarDraft, type DetectedElement, type RebarCallout } from '@/lib/rebar-extractor'
+import { calloutToBarDraft, parseRebarText, type DetectedElement, type RebarCallout } from '@/lib/rebar-extractor'
 import { REBAR_DIAMETERS, UNIT_WEIGHT, type RebarDiameter, calcCutLength, type ShapeCode, type BendingDims } from '@/lib/rebar-calc'
 import { ShapeCodeSVG } from '../[elementId]/shape-code-svg'
 import { normalizeOCRText, scoreCallout } from '@/lib/ocr-normalize'
@@ -76,20 +76,70 @@ function elementToEditable(
   bboxLookup?: Map<string, BboxEntry[]>,
 ): EditableElement {
   const bboxUsed = new Map<string, number>()
-  console.log(`[elementToEditable] "${el.elementMark}" — ${el.callouts.length} callouts, bboxLookup has ${bboxLookup?.size ?? 0} keys: [${Array.from(bboxLookup?.keys() ?? []).join(', ')}]`)
+
+  // Build a secondary index by semantic key for fuzzy matching
+  // when exact raw string doesn't match
+  const semanticIndex = new Map<string, BboxEntry[]>()
+  if (bboxLookup) {
+    for (const [, entries] of bboxLookup) {
+      // Parse the raw to get semantic key — the entries already have the bbox
+      // We just need any entry to associate the key
+      if (entries.length > 0) {
+        // We don't have the parsed callout here, so we build semantic keys
+        // when doing lookups below
+      }
+    }
+    // Build from annotated callouts stored alongside bboxMap
+    // Store raw→entries AND semantic→entries
+    for (const [raw, entries] of bboxLookup) {
+      // Parse the raw string to get its semantic meaning
+      const parsed = parseRebarText(raw)
+      for (const c of parsed) {
+        const semKey = `${c.diameterMm}:${c.count}:${c.spacingMm ?? 'none'}`
+        if (!semanticIndex.has(semKey)) {
+          semanticIndex.set(semKey, entries)
+        }
+      }
+    }
+  }
+
   const bars = el.callouts.map((c: RebarCallout, i: number) => {
     const draft = calloutToBarDraft(c, i)
     const conf = (c as RebarCallout & { confidence?: number; confidenceReasons?: string[] }).confidence ?? 100
     const reasons = (c as RebarCallout & { confidence?: number; confidenceReasons?: string[] }).confidenceReasons ?? []
     let bbox: EditableBar['ocr_bbox'] = null
     if (bboxLookup) {
-      const bboxes = bboxLookup.get(c.raw)
-      console.log(`  [bbox lookup] raw="${c.raw}" → ${bboxes ? bboxes.length + ' entries' : 'NOT FOUND'}`)
+      // Tier 1: exact raw match
+      let bboxes = bboxLookup.get(c.raw)
+      let matchTier = 'exact'
+
+      // Tier 2: normalized raw match (strip whitespace differences)
+      if (!bboxes) {
+        const normRaw = c.raw.replace(/\s+/g, '')
+        for (const [key, entries] of bboxLookup) {
+          if (key.replace(/\s+/g, '') === normRaw) {
+            bboxes = entries
+            matchTier = 'normalized'
+            break
+          }
+        }
+      }
+
+      // Tier 3: semantic match by (diameter, count, spacing)
+      if (!bboxes) {
+        const semKey = `${c.diameterMm}:${c.count}:${c.spacingMm ?? 'none'}`
+        bboxes = semanticIndex.get(semKey)
+        if (bboxes) matchTier = 'semantic'
+      }
+
       if (bboxes && bboxes.length > 0) {
-        const idx = bboxUsed.get(c.raw) ?? 0
+        const lookupKey = `${matchTier}:${c.raw}`
+        const idx = bboxUsed.get(lookupKey) ?? 0
         bbox = bboxes[Math.min(idx, bboxes.length - 1)]
-        bboxUsed.set(c.raw, idx + 1)
-        console.log(`  [bbox assigned] p${bbox.page} (${bbox.x0},${bbox.y0})→(${bbox.x1},${bbox.y1})`)
+        bboxUsed.set(lookupKey, idx + 1)
+        console.log(`  [bbox ${matchTier}] "${c.raw}" → p${bbox.page} (${bbox.x0},${bbox.y0})→(${bbox.x1},${bbox.y1})`)
+      } else {
+        console.log(`  [bbox MISS] "${c.raw}" — no match in ${bboxLookup.size} keys`)
       }
     }
     return {
@@ -338,7 +388,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
     setDebug(d => ({ ...d, pdfChars: totalPdfChars }))
     dbg(`Native text layer: ${totalPdfChars} total chars`)
 
-    const { extractFromPageText, parseRebarText } = await import('@/lib/rebar-extractor')
+    const { extractFromPageText } = await import('@/lib/rebar-extractor')
 
     // If we got text, try regex first
     if (totalPdfChars > 50) {
