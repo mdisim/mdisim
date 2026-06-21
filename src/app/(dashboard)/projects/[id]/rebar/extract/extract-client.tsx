@@ -117,16 +117,32 @@ function elementToEditable(
 // ─── Image pipeline ────────────────────────────────────────────────────────────
 
 // Render PDF page to canvas at high resolution
+// Caps dimensions to 8192px per side to avoid browser canvas limits
 async function renderPageToCanvas(
   pdfPage: Awaited<ReturnType<import('pdfjs-dist').PDFDocumentProxy['getPage']>>,
-  scale = 4.0   // 4× = ~300 dpi for A1 structural drawings
+  scale = 4.0
 ): Promise<HTMLCanvasElement> {
-  const viewport = pdfPage.getViewport({ scale })
+  const MAX_DIM = 8192
+  let viewport = pdfPage.getViewport({ scale })
+  if (viewport.width > MAX_DIM || viewport.height > MAX_DIM) {
+    const downscale = Math.min(MAX_DIM / viewport.width, MAX_DIM / viewport.height)
+    viewport = pdfPage.getViewport({ scale: scale * downscale })
+  }
   const canvas = document.createElement('canvas')
   canvas.width = Math.floor(viewport.width)
   canvas.height = Math.floor(viewport.height)
-  const ctx = canvas.getContext('2d')!
-  // White background before rendering (some PDFs have transparent bg → black on black)
+  const ctx = canvas.getContext('2d')
+  if (!ctx) {
+    console.warn(`[renderPageToCanvas] getContext('2d') returned null for ${canvas.width}x${canvas.height} — retrying at 2× scale`)
+    const fallbackVp = pdfPage.getViewport({ scale: 2.0 })
+    canvas.width = Math.floor(fallbackVp.width)
+    canvas.height = Math.floor(fallbackVp.height)
+    const ctx2 = canvas.getContext('2d')!
+    ctx2.fillStyle = '#ffffff'
+    ctx2.fillRect(0, 0, canvas.width, canvas.height)
+    await pdfPage.render({ canvasContext: ctx2, viewport: fallbackVp, canvas } as Parameters<typeof pdfPage.render>[0]).promise
+    return canvas
+  }
   ctx.fillStyle = '#ffffff'
   ctx.fillRect(0, 0, canvas.width, canvas.height)
   await pdfPage.render({ canvasContext: ctx, viewport, canvas } as Parameters<typeof pdfPage.render>[0]).promise
@@ -243,10 +259,43 @@ export function ExtractClient({ projectId, drawings }: Props) {
           strings.push(ti.str)
         }
       }
-      const text = strings.join('\n')
+      // Join text items spatially: items at similar Y → same line, sorted by X
+      const scale = 4.0
+      type PosStr = { str: string; x: number; y: number }
+      const positioned: PosStr[] = items.map(ti => ({
+        str: ti.str,
+        x: ti.transform[4] * scale,
+        y: ti.transform[5] * scale,
+      }))
+      positioned.sort((a, b) => b.y - a.y || a.x - b.x)
+      const groupedLines: string[] = []
+      let curLine: PosStr[] = []
+      let curY = -Infinity
+      for (const ps of positioned) {
+        if (Math.abs(ps.y - curY) > 8) {
+          if (curLine.length > 0) {
+            curLine.sort((a, b) => a.x - b.x)
+            groupedLines.push(curLine.map(i => i.str).join(' '))
+          }
+          curLine = [ps]
+          curY = ps.y
+        } else {
+          curLine.push(ps)
+        }
+      }
+      if (curLine.length > 0) {
+        curLine.sort((a, b) => a.x - b.x)
+        groupedLines.push(curLine.map(i => i.str).join(' '))
+      }
+      const text = groupedLines.join('\n')
       pageTexts.push({ text, page: p })
       pageTextItems.push({ items, page: p, vpHeight: viewport.height })
-      dbg(`Page ${p}: ${strings.length} text items, ${text.length} chars`)
+      dbg(`Page ${p}: ${strings.length} text items → ${groupedLines.length} spatial lines, ${text.length} chars`)
+      if (groupedLines.length > 0) {
+        const preview = groupedLines.filter(s => s.trim()).slice(0, 15).join(' | ')
+        dbg(`  Lines preview: ${preview}`)
+        console.log(`[Native text p${p}]:\n${text.slice(0, 2000)}`)
+      }
     }
 
     const totalPdfChars = pageTexts.reduce((s, p) => s + p.text.length, 0)
@@ -258,12 +307,16 @@ export function ExtractClient({ projectId, drawings }: Props) {
     // If we got text, try regex first
     if (totalPdfChars > 50) {
       let rawCount = 0
-      for (const { text } of pageTexts) {
+      const allRawMatches: string[] = []
+      for (const { text, page: p } of pageTexts) {
         const c = parseRebarText(text)
         rawCount += c.length
-        if (c.length > 0) dbg(`  ✓ Page regex: ${c.slice(0, 5).map(x => x.raw).join(', ')}`)
+        if (c.length > 0) {
+          dbg(`  ✓ Page ${p} regex: ${c.map(x => `"${x.raw}" (Ø${x.diameterMm}×${x.count})`).join(', ')}`)
+          allRawMatches.push(...c.map(x => x.raw))
+        }
       }
-      dbg(`Native text regex matches: ${rawCount}`)
+      dbg(`Native text regex matches: ${rawCount}${rawCount > 0 ? ` — [${allRawMatches.join(', ')}]` : ''}`)
       if (rawCount > 0) {
         // Build bbox map by grouping text items into lines (same Y),
         // concatenating their text, parsing rebar callouts, and using
@@ -360,24 +413,42 @@ export function ExtractClient({ projectId, drawings }: Props) {
           dbg(`  bbox["${raw}"] = p${entries[0].page} (${entries[0].x0},${entries[0].y0})→(${entries[0].x1},${entries[0].y1}) canvas=${entries[0].canvasW}x${entries[0].canvasH}`)
         }
 
-        // Also log what extractFromPageText will produce, so we can compare keys
-        const elems = extractFromPageText(pageTexts)
+        // Try extracting elements from raw text first, then normalized text
+        let elems = extractFromPageText(pageTexts)
+        dbg(`extractFromPageText (raw) produced ${elems.length} elements, ${elems.flatMap(e => e.callouts).length} callouts`)
+
+        if (elems.flatMap(e => e.callouts).length === 0) {
+          dbg('Raw text produced 0 callouts — retrying with normalized text…')
+          const normalizedPageTexts = pageTexts.map(pt => ({
+            text: normalizeOCRText(pt.text),
+            page: pt.page,
+          }))
+          elems = extractFromPageText(normalizedPageTexts)
+          dbg(`extractFromPageText (normalized) produced ${elems.length} elements, ${elems.flatMap(e => e.callouts).length} callouts`)
+        }
+
         const allCalloutRaws = elems.flatMap(e => e.callouts.map(c => c.raw))
-        dbg(`extractFromPageText produced ${allCalloutRaws.length} callout raws: [${allCalloutRaws.join(', ')}]`)
-        const matched = allCalloutRaws.filter(r => nativeBboxMap.has(r))
-        const unmatched = allCalloutRaws.filter(r => !nativeBboxMap.has(r))
-        dbg(`  Matched to bboxMap: ${matched.length}`)
-        if (unmatched.length > 0) {
-          dbg(`  UNMATCHED: [${unmatched.join(', ')}]`)
-          dbg(`  bboxMap keys: [${Array.from(nativeBboxMap.keys()).join(', ')}]`)
+        if (allCalloutRaws.length > 0) {
+          dbg(`Callout raws: [${allCalloutRaws.join(', ')}]`)
+          const matched = allCalloutRaws.filter(r => nativeBboxMap.has(r))
+          const unmatched = allCalloutRaws.filter(r => !nativeBboxMap.has(r))
+          dbg(`  Matched to bboxMap: ${matched.length}`)
+          if (unmatched.length > 0) {
+            dbg(`  UNMATCHED: [${unmatched.join(', ')}]`)
+            dbg(`  bboxMap keys: [${Array.from(nativeBboxMap.keys()).join(', ')}]`)
+          }
         }
 
         const total = elems.flatMap(e => e.callouts).length
-        setDebug(d => ({ ...d, calloutCount: total, usedOCR: false }))
-        dbg(`Done (native text): ${elems.length} elements, ${total} bars`)
-        return { elements: elems, bboxMap: nativeBboxMap }
+        if (total > 0) {
+          setDebug(d => ({ ...d, calloutCount: total, usedOCR: false }))
+          dbg(`Done (native text): ${elems.length} elements, ${total} bars`)
+          return { elements: elems, bboxMap: nativeBboxMap }
+        }
+        dbg(`Native text regex matched ${rawCount} raw callouts but extractFromPageText produced 0 usable elements — falling through to OCR`)
+      } else {
+        dbg('Native text found but 0 rebar regex matches — falling through to OCR')
       }
-      dbg('Native text found but 0 rebar matches — falling through to OCR')
     } else {
       dbg('No native text layer detected — switching to OCR')
     }
@@ -429,7 +500,9 @@ export function ExtractClient({ projectId, drawings }: Props) {
       const processedCanvas = preprocessForOCR(rawCanvas)
       dbg(`  preprocessing done — running OCR…`)
 
-      const { data } = await worker.recognize(processedCanvas)
+      const recognizeResult = await worker.recognize(processedCanvas)
+      const data = recognizeResult.data
+      dbg(`  OCR result: ${(data.text ?? '').length} chars, confidence=${data.confidence ?? 'null'}, blocks=${(data as { blocks?: unknown[] }).blocks?.length ?? 0}`)
 
       // Store page render for annotated drawing overlay
       localPageRenders.push({
@@ -617,11 +690,15 @@ export function ExtractClient({ projectId, drawings }: Props) {
       setElements(editable.length > 0 ? editable : [])
       setStatus(editable.length > 0 ? 'review' : 'error')
       if (editable.length === 0) {
-        setErrorMsg(
-          debug.usedOCR
-            ? `OCR ran but found 0 rebar callouts (confidence: ${debug.ocrConfidence.toFixed(0)}%). Check the OCR preview below — the text may need different whitelist characters.`
-            : 'No rebar callouts detected and OCR could not be attempted. Check the extraction log.'
-        )
+        setDebug(d => {
+          const ocrRan = d.usedOCR || d.ocrChars > 0
+          setErrorMsg(
+            ocrRan
+              ? `OCR ran but found 0 rebar callouts (confidence: ${d.ocrConfidence.toFixed(0)}%, ${d.ocrChars} chars). The drawing text may not contain standard rebar notation (e.g. 4Ø12, T16@200). Check the extraction log below.`
+              : `No rebar callouts detected. Native PDF text had ${d.pdfChars} chars but no standard rebar notation found (e.g. 4Ø12, T16@200). Check the extraction log below.`
+          )
+          return d
+        })
       }
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : String(e))
