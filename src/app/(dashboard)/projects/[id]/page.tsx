@@ -137,6 +137,9 @@ export default async function ProjectDetailPage({
   ]
 
   const advancedModules = [
+    { href: `/projects/${id}/measurements`, label: 'Measurement Sheet', icon: Ruler },
+    { href: `/projects/${id}/rate-analysis`, label: 'Rate Analysis', icon: DollarSign },
+    { href: `/projects/${id}/boq-report`, label: 'BOQ Reports', icon: FileBarChart },
     { href: `/projects/${id}/variations`, label: 'Variations', icon: GitMerge },
     { href: `/projects/${id}/boq-comparison`, label: 'BOQ Comparison', icon: GitCompare },
     { href: `/projects/${id}/risks`, label: 'Risk Register', icon: ShieldAlert },
