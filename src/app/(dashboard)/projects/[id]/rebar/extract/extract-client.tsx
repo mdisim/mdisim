@@ -118,18 +118,17 @@ function elementToEditable(
 // ─── Image pipeline ────────────────────────────────────────────────────────────
 
 // Render PDF page to canvas at high resolution
-// Caps dimensions to 16384px per side (Chrome/Firefox limit) to avoid browser canvas limits
+// Limits total pixel count to ~67M (8192×8192) to stay within browser memory
 async function renderPageToCanvas(
   pdfPage: Awaited<ReturnType<import('pdfjs-dist').PDFDocumentProxy['getPage']>>,
   scale = 4.0
 ): Promise<HTMLCanvasElement> {
-  const MAX_DIM = 16384
+  const MAX_PIXELS = 67_108_864 // 8192² — safe for all browsers
   let viewport = pdfPage.getViewport({ scale })
-  let actualScale = scale
-  if (viewport.width > MAX_DIM || viewport.height > MAX_DIM) {
-    const downscale = Math.min(MAX_DIM / viewport.width, MAX_DIM / viewport.height)
-    actualScale = scale * downscale
-    viewport = pdfPage.getViewport({ scale: actualScale })
+  const pixels = viewport.width * viewport.height
+  if (pixels > MAX_PIXELS) {
+    const downscale = Math.sqrt(MAX_PIXELS / pixels)
+    viewport = pdfPage.getViewport({ scale: scale * downscale })
   }
   const canvas = document.createElement('canvas')
   canvas.width = Math.floor(viewport.width)
@@ -534,11 +533,15 @@ export function ExtractClient({ projectId, drawings }: Props) {
       const pageWidthInches = basePtW / 72
       const pageHeightInches = basePtH / 72
 
-      // Target 300 DPI for OCR — compute scale needed
-      const targetDPI = 300
-      const scaleForDPI = targetDPI * Math.max(pageWidthInches, pageHeightInches) > 16384
-        ? 16384 / Math.max(basePtW, basePtH) // cap to 16384px max dim
-        : (targetDPI / 72)                     // normal: 300/72 ≈ 4.17
+      // Target 300 DPI for OCR, capped by pixel budget
+      const targetScale = 300 / 72 // ≈ 4.17
+      const targetW = basePtW * targetScale
+      const targetH = basePtH * targetScale
+      const MAX_PIXELS = 67_108_864 // 8192² — safe for toBlob
+      const targetPixels = targetW * targetH
+      const scaleForDPI = targetPixels > MAX_PIXELS
+        ? targetScale * Math.sqrt(MAX_PIXELS / targetPixels)
+        : targetScale
       const effectiveDPI = Math.round(scaleForDPI * 72)
       dbg(`Rendering page ${p}: ${pageWidthInches.toFixed(1)}×${pageHeightInches.toFixed(1)} in, scale=${scaleForDPI.toFixed(2)}×, effective ${effectiveDPI} DPI`)
 
@@ -546,32 +549,54 @@ export function ExtractClient({ projectId, drawings }: Props) {
       dbg(`  canvas: ${rawCanvas.width}×${rawCanvas.height}px`)
 
       // Store the COLOR render for annotated drawing overlay
+      let pageDataUrl: string
+      try {
+        pageDataUrl = rawCanvas.toDataURL('image/jpeg', 0.82)
+        dbg(`  page render data URL: ${(pageDataUrl.length / 1024).toFixed(0)} KB`)
+      } catch (e) {
+        dbg(`  ⚠ toDataURL failed for color render: ${e instanceof Error ? e.message : e}`)
+        pageDataUrl = ''
+      }
       localPageRenders.push({
         page: p,
-        dataUrl: rawCanvas.toDataURL('image/jpeg', 0.82),
+        dataUrl: pageDataUrl,
         width: rawCanvas.width,
         height: rawCanvas.height,
       })
 
       // Binarize for OCR — black text on white background
       const processedCanvas = preprocessForOCR(rawCanvas)
-      dbg(`  Otsu binarization done — sending to Tesseract…`)
+      dbg(`  Otsu binarization done (${processedCanvas.width}×${processedCanvas.height}px, ${(processedCanvas.width * processedCanvas.height * 4 / 1024 / 1024).toFixed(0)} MB pixel data)`)
 
       // Save a small crop of the processed image for debug display
-      const debugCropW = Math.min(800, processedCanvas.width)
-      const debugCropH = Math.min(400, processedCanvas.height)
-      const debugCanvas = document.createElement('canvas')
-      debugCanvas.width = debugCropW
-      debugCanvas.height = debugCropH
-      const debugCtx = debugCanvas.getContext('2d')!
-      // Crop from center-ish area where annotations are likely
-      const srcX = Math.floor((processedCanvas.width - debugCropW) / 2)
-      const srcY = Math.floor(processedCanvas.height * 0.3)
-      debugCtx.drawImage(processedCanvas, srcX, srcY, debugCropW, debugCropH, 0, 0, debugCropW, debugCropH)
-      setDebug(d => ({ ...d, ocrPreviewImage: debugCanvas.toDataURL('image/png') }))
-      dbg(`  Debug crop: ${debugCropW}×${debugCropH}px from (${srcX},${srcY})`)
+      try {
+        const debugCropW = Math.min(800, processedCanvas.width)
+        const debugCropH = Math.min(400, processedCanvas.height)
+        const debugCanvas = document.createElement('canvas')
+        debugCanvas.width = debugCropW
+        debugCanvas.height = debugCropH
+        const debugCtx = debugCanvas.getContext('2d')!
+        const srcX = Math.floor((processedCanvas.width - debugCropW) / 2)
+        const srcY = Math.floor(processedCanvas.height * 0.3)
+        debugCtx.drawImage(processedCanvas, srcX, srcY, debugCropW, debugCropH, 0, 0, debugCropW, debugCropH)
+        setDebug(d => ({ ...d, ocrPreviewImage: debugCanvas.toDataURL('image/png') }))
+        dbg(`  Debug crop: ${debugCropW}×${debugCropH}px from (${srcX},${srcY})`)
+      } catch (e) {
+        dbg(`  ⚠ Debug crop failed: ${e instanceof Error ? e.message : e}`)
+      }
 
-      let recognizeResult = await worker.recognize(processedCanvas)
+      // Convert canvas → PNG blob before passing to Tesseract.
+      // Tesseract.js calls canvas.toBlob internally, which can return null
+      // on large canvases — by converting ourselves we get a clear error.
+      const ocrBlob = await new Promise<Blob>((resolve, reject) => {
+        processedCanvas.toBlob(
+          (blob) => blob ? resolve(blob) : reject(new Error(`toBlob returned null for ${processedCanvas.width}×${processedCanvas.height} canvas (${(processedCanvas.width * processedCanvas.height * 4 / 1024 / 1024).toFixed(0)} MB pixel data)`)),
+          'image/png'
+        )
+      })
+      dbg(`  PNG blob: ${(ocrBlob.size / 1024).toFixed(0)} KB`)
+
+      let recognizeResult = await worker.recognize(ocrBlob)
       let data = recognizeResult.data
       dbg(`  PSM 11 (sparse): ${(data.text ?? '').length} chars, confidence=${(data.confidence ?? 0).toFixed(0)}%, blocks=${(data as { blocks?: unknown[] }).blocks?.length ?? 0}`)
 
@@ -581,18 +606,16 @@ export function ExtractClient({ projectId, drawings }: Props) {
         await worker.setParameters({
           tessedit_pageseg_mode: '3' as Parameters<typeof worker.setParameters>[0]['tessedit_pageseg_mode'],
         })
-        const retryResult = await worker.recognize(processedCanvas)
+        const retryResult = await worker.recognize(ocrBlob)
         const retryData = retryResult.data
         dbg(`  PSM 3 (auto): ${(retryData.text ?? '').length} chars, confidence=${(retryData.confidence ?? 0).toFixed(0)}%`)
 
-        // Use whichever gave better results
         if ((retryData.confidence ?? 0) > (data.confidence ?? 0) || (retryData.text ?? '').length > (data.text ?? '').length * 1.5) {
           dbg(`  → Using PSM 3 result (better confidence/text)`)
           data = retryData
         } else {
           dbg(`  → Keeping PSM 11 result`)
         }
-        // Reset to PSM 11 for next page
         await worker.setParameters({
           tessedit_pageseg_mode: '11' as Parameters<typeof worker.setParameters>[0]['tessedit_pageseg_mode'],
         })
