@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useRef, useCallback, useEffect } from 'react'
-import { Loader2, FileText, Link2Off } from 'lucide-react'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import { Loader2, FileText, Link2Off, Search, Filter, Eye, EyeOff, ChevronDown } from 'lucide-react'
 import { updateBarLabel } from '@/app/actions/rebar'
 
 interface BarMark {
@@ -9,6 +9,7 @@ interface BarMark {
   mark: string
   diameter: number
   quantity: number
+  weight: number | null
   element: string
   bbox: { x0: number; y0: number; x1: number; y1: number; canvasW: number; canvasH: number; page: number } | null
   confidence: number | null
@@ -43,6 +44,7 @@ interface PlacedLabel {
   mark: string
   diameter: number
   quantity: number
+  weight: number | null
   element: string
   x: number
   y: number
@@ -58,6 +60,25 @@ interface Props {
   defaultDrawingId: string | null
 }
 
+// Color map for diameter sizes
+const DIAMETER_COLORS: Record<number, { bg: string; text: string; ring: string; glow: string; badge: string }> = {
+  8:  { bg: 'bg-emerald-500',  text: 'text-black',  ring: 'ring-emerald-400',  glow: 'shadow-emerald-500/60',  badge: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+  10: { bg: 'bg-cyan-500',     text: 'text-black',  ring: 'ring-cyan-400',     glow: 'shadow-cyan-500/60',     badge: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' },
+  12: { bg: 'bg-blue-500',     text: 'text-white',  ring: 'ring-blue-400',     glow: 'shadow-blue-500/60',     badge: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+  16: { bg: 'bg-violet-500',   text: 'text-white',  ring: 'ring-violet-400',   glow: 'shadow-violet-500/60',   badge: 'bg-violet-500/20 text-violet-400 border-violet-500/30' },
+  20: { bg: 'bg-amber-500',    text: 'text-black',  ring: 'ring-amber-400',    glow: 'shadow-amber-500/60',    badge: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
+  25: { bg: 'bg-orange-500',   text: 'text-black',  ring: 'ring-orange-400',   glow: 'shadow-orange-500/60',   badge: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+  32: { bg: 'bg-red-500',      text: 'text-white',  ring: 'ring-red-400',      glow: 'shadow-red-500/60',      badge: 'bg-red-500/20 text-red-400 border-red-500/30' },
+}
+
+const DEFAULT_COLOR = { bg: 'bg-slate-500', text: 'text-white', ring: 'ring-slate-400', glow: 'shadow-slate-500/60', badge: 'bg-slate-500/20 text-slate-400 border-slate-500/30' }
+
+function getDiameterColor(diameter: number) {
+  return DIAMETER_COLORS[diameter] ?? DEFAULT_COLOR
+}
+
+const ALL_DIAMETERS = [8, 10, 12, 16, 20, 25, 32]
+
 export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDrawingId }: Props) {
   const [selectedDrawingId, setSelectedDrawingId] = useState<string | null>(defaultDrawingId)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
@@ -72,7 +93,6 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
   const [dragLabel, setDragLabel] = useState<string | null>(null)
   const [activeBarId, setActiveBarId] = useState<string | null>(null)
   const [placingBarId, setPlacingBarId] = useState<string | null>(null)
-  const [showDiag, setShowDiag] = useState(false)
   const [confidenceFilter, setConfidenceFilter] = useState(0)
   const [renderingPdf, setRenderingPdf] = useState(false)
   const [renderError, setRenderError] = useState<string | null>(null)
@@ -82,11 +102,43 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
   const currentRenderIdRef = useRef<string | null>(null)
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Filter state
+  const [diameterFilter, setDiameterFilter] = useState<number | null>(null)
+  const [markSearch, setMarkSearch] = useState('')
+  const [elementFilter, setElementFilter] = useState<string | null>(null)
+  const [showLabels, setShowLabels] = useState(true)
+  const [sidebarTab, setSidebarTab] = useState<'drawings' | 'bars'>('bars')
+
   const selectedDrawing = drawings.find(d => d.id === selectedDrawingId) ?? null
 
   const linkedBars = barMarks.filter(b => b.sourceDrawingId === selectedDrawingId)
   const unlinkedBars = barMarks.filter(b => !b.sourceDrawingId)
   const allDisplayBars = [...linkedBars, ...unlinkedBars]
+
+  // Unique elements for filter dropdown
+  const uniqueElements = useMemo(() => {
+    const set = new Set(allDisplayBars.map(b => b.element))
+    return Array.from(set).sort()
+  }, [allDisplayBars])
+
+  // Unique diameters present in data
+  const presentDiameters = useMemo(() => {
+    const set = new Set(allDisplayBars.map(b => b.diameter))
+    return ALL_DIAMETERS.filter(d => set.has(d))
+  }, [allDisplayBars])
+
+  // Filtered bars
+  const filteredBars = useMemo(() => {
+    return allDisplayBars.filter(b => {
+      if (diameterFilter !== null && b.diameter !== diameterFilter) return false
+      if (markSearch && !b.mark.toLowerCase().includes(markSearch.toLowerCase())) return false
+      if (elementFilter !== null && b.element !== elementFilter) return false
+      return true
+    })
+  }, [allDisplayBars, diameterFilter, markSearch, elementFilter])
+
+  // Filtered bar IDs for label visibility
+  const filteredBarIds = useMemo(() => new Set(filteredBars.map(b => b.id)), [filteredBars])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -96,56 +148,10 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
     return () => window.removeEventListener('keydown', handler)
   }, [placingBarId])
 
-  const [diagLog, setDiagLog] = useState<string[]>([])
-
   function placeLabelsForDrawing(drawingId: string) {
-    const log: string[] = []
-    log.push(`=== placeLabelsForDrawing("${drawingId}") ===`)
-    log.push(`Total barMarks from server: ${barMarks.length}`)
-
     const linked = barMarks.filter(b => b.sourceDrawingId === drawingId)
     const unlinked = barMarks.filter(b => !b.sourceDrawingId)
-    const otherDrawing = barMarks.filter(b => b.sourceDrawingId && b.sourceDrawingId !== drawingId)
-    log.push(`Linked to this drawing: ${linked.length}`)
-    log.push(`Unlinked (no sourceDrawingId): ${unlinked.length}`)
-    log.push(`Linked to OTHER drawing: ${otherDrawing.length}`)
-
     const candidates = linked.length > 0 ? [...linked, ...unlinked] : unlinked
-    log.push(`Candidates for placement: ${candidates.length}`)
-
-    const withBbox = candidates.filter(b => b.bbox)
-    const withLabelXY = candidates.filter(b => b.labelX != null && b.labelY != null)
-    const withEither = candidates.filter(b => b.labelX != null || b.bbox)
-    const withNeither = candidates.filter(b => b.labelX == null && !b.bbox)
-    log.push(`  with bbox: ${withBbox.length}`)
-    log.push(`  with label_x/label_y: ${withLabelXY.length}`)
-    log.push(`  with either (placeable): ${withEither.length}`)
-    log.push(`  with NEITHER (no position): ${withNeither.length}`)
-
-    for (const bm of candidates) {
-      const hasBbox = !!bm.bbox
-      const hasLabel = bm.labelX != null && bm.labelY != null
-      let computedX = '—', computedY = '—', computedPage = '—', source = 'NONE'
-      if (hasLabel) {
-        computedX = String(bm.labelX)
-        computedY = String(bm.labelY)
-        computedPage = String(bm.bbox?.page ?? bm.sourcePage ?? 1)
-        source = 'label_xy'
-      } else if (hasBbox) {
-        const bbox = bm.bbox!
-        computedX = (((bbox.x0 + bbox.x1) / 2 / bbox.canvasW) * 100).toFixed(2)
-        computedY = (((bbox.y0 + bbox.y1) / 2 / bbox.canvasH) * 100).toFixed(2)
-        computedPage = String(bbox.page)
-        source = 'bbox'
-      }
-      log.push(
-        `  ${bm.mark} T${bm.diameter} x${bm.quantity} | ` +
-        `srcDwg=${bm.sourceDrawingId ? bm.sourceDrawingId.slice(0, 8) : 'null'} | ` +
-        `bbox=${hasBbox ? `p${bm.bbox!.page}(${bm.bbox!.x0},${bm.bbox!.y0})→(${bm.bbox!.x1},${bm.bbox!.y1}) canvas=${bm.bbox!.canvasW}x${bm.bbox!.canvasH}` : 'null'} | ` +
-        `label=(${bm.labelX ?? 'null'},${bm.labelY ?? 'null'}) | ` +
-        `→ source=${source} x=${computedX}% y=${computedY}% page=${computedPage}`
-      )
-    }
 
     const placeable = candidates.filter(b => b.labelX != null || b.bbox)
     const newLabels = placeable.map(bm => {
@@ -163,23 +169,13 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
       }
       return {
         barId: bm.id, mark: bm.mark, diameter: bm.diameter,
-        quantity: bm.quantity, element: bm.element,
+        quantity: bm.quantity, weight: bm.weight, element: bm.element,
         x: Math.max(0, Math.min(100, x)),
         y: Math.max(0, Math.min(100, y)),
         page, confidence: bm.confidence,
       }
     }).filter((l): l is PlacedLabel => l !== null)
 
-    log.push(`Labels created: ${newLabels.length}`)
-    log.push(`Current page: ${currentPage}`)
-    const onCurrentPage = newLabels.filter(l => l.page === currentPage)
-    log.push(`Labels on current page ${currentPage}: ${onCurrentPage.length}`)
-    for (const l of newLabels) {
-      log.push(`  LABEL: ${l.mark} T${l.diameter} x=${l.x.toFixed(2)}% y=${l.y.toFixed(2)}% page=${l.page}`)
-    }
-
-    console.log('[MarkedDrawing] Diagnostics:\n' + log.join('\n'))
-    setDiagLog(log)
     setLabels(newLabels)
   }
 
@@ -327,7 +323,7 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
         const existing = prev.filter(l => l.barId !== placingBarId)
         return [...existing, {
           barId: bm.id, mark: bm.mark, diameter: bm.diameter,
-          quantity: bm.quantity, element: bm.element,
+          quantity: bm.quantity, weight: bm.weight, element: bm.element,
           x: clampX, y: clampY, page: currentPage, confidence: bm.confidence,
         }]
       })
@@ -389,16 +385,6 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
     setLabels(prev => prev.filter(l => l.barId !== barId))
   }
 
-  const addLabel = (bm: BarMark) => {
-    const newLabel: PlacedLabel = {
-      barId: bm.id, mark: bm.mark, diameter: bm.diameter,
-      quantity: bm.quantity, element: bm.element,
-      x: 50, y: 50, page: currentPage, confidence: bm.confidence,
-    }
-    setLabels(prev => [...prev, newLabel])
-    persistLabelPosition(bm.id, 50, 50)
-  }
-
   function flashLabel(barId: string) {
     setLabels(prev => prev.map(l =>
       l.barId === barId ? { ...l, flashing: true } : l
@@ -407,7 +393,7 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
       setLabels(prev => prev.map(l =>
         l.barId === barId ? { ...l, flashing: false } : l
       ))
-    }, 800)
+    }, 1200)
   }
 
   const highlightBar = (barId: string) => {
@@ -436,6 +422,7 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
   const visibleLabels = labels
     .filter(l => l.page === currentPage)
     .filter(l => (l.confidence ?? 100) >= confidenceFilter)
+    .filter(l => filteredBarIds.has(l.barId))
 
   const barsWithLabels = new Set(labels.map(l => l.barId))
   const placedCount = allDisplayBars.filter(b => barsWithLabels.has(b.id)).length
@@ -453,7 +440,7 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
       const lx = (label.x / 100) * canvas.width
       const ly = (label.y / 100) * canvas.height
       const fontSize = Math.max(14, canvas.width * 0.012)
-      const text = `${label.mark} T${label.diameter} ×${label.quantity}`
+      const text = `${label.mark} T${label.diameter} x${label.quantity}`
       ctx.font = `bold ${fontSize}px monospace`
       const tw = ctx.measureText(text).width
       const pad = fontSize * 0.3
@@ -478,428 +465,435 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
     URL.revokeObjectURL(url)
   }
 
-  return (
-    <div className="flex flex-1 overflow-hidden">
-      {/* Sidebar */}
-      <div className="w-80 border-r border-slate-800 p-4 overflow-y-auto shrink-0 flex flex-col gap-3">
+  // Summary stats for sidebar
+  const totalWeight = filteredBars.reduce((sum, b) => sum + (b.weight ?? 0), 0)
+  const totalQty = filteredBars.reduce((sum, b) => sum + b.quantity, 0)
 
-        {/* Drawing selector */}
-        {drawings.length > 0 && (
-          <div>
-            <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Source Drawing</p>
-            <div className="space-y-1">
-              {drawings.map(d => {
-                const isSelected = d.id === selectedDrawingId
-                const linkedCount = barMarks.filter(b => b.sourceDrawingId === d.id).length
+  return (
+    <div className="flex flex-col flex-1 overflow-hidden">
+      {/* Filter toolbar */}
+      <div className="flex items-center gap-3 px-4 py-2 border-b border-slate-800 bg-slate-900/80 shrink-0">
+        <Filter size={14} className="text-slate-500" />
+
+        {/* Diameter filter */}
+        <div className="relative">
+          <select
+            value={diameterFilter ?? ''}
+            onChange={e => setDiameterFilter(e.target.value ? Number(e.target.value) : null)}
+            className="appearance-none bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-3 py-1.5 pr-7 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          >
+            <option value="">All Diameters</option>
+            {presentDiameters.map(d => (
+              <option key={d} value={d}>T{d}</option>
+            ))}
+          </select>
+          <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+        </div>
+
+        {/* Bar mark search */}
+        <div className="relative">
+          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
+          <input
+            type="text"
+            placeholder="Search bar mark..."
+            value={markSearch}
+            onChange={e => setMarkSearch(e.target.value)}
+            className="bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg pl-7 pr-3 py-1.5 w-40 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-slate-600"
+          />
+        </div>
+
+        {/* Element filter */}
+        <div className="relative">
+          <select
+            value={elementFilter ?? ''}
+            onChange={e => setElementFilter(e.target.value || null)}
+            className="appearance-none bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-3 py-1.5 pr-7 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          >
+            <option value="">All Elements</option>
+            {uniqueElements.map(el => (
+              <option key={el} value={el}>{el}</option>
+            ))}
+          </select>
+          <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+        </div>
+
+        {/* Show/hide labels */}
+        <button
+          onClick={() => setShowLabels(v => !v)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+            showLabels
+              ? 'bg-blue-600/20 border-blue-600 text-blue-300'
+              : 'bg-slate-800 border-slate-700 text-slate-500'
+          }`}
+        >
+          {showLabels ? <Eye size={12} /> : <EyeOff size={12} />}
+          Labels
+        </button>
+
+        {/* Active filters indicator */}
+        {(diameterFilter !== null || markSearch || elementFilter !== null) && (
+          <button
+            onClick={() => { setDiameterFilter(null); setMarkSearch(''); setElementFilter(null) }}
+            className="text-[10px] text-slate-500 hover:text-slate-300 px-2 py-1 rounded bg-slate-800 border border-slate-700"
+          >
+            Clear filters ({filteredBars.length}/{allDisplayBars.length})
+          </button>
+        )}
+
+        {/* Diameter color legend */}
+        <div className="ml-auto flex items-center gap-1.5">
+          {presentDiameters.map(d => {
+            const color = getDiameterColor(d)
+            return (
+              <button
+                key={d}
+                onClick={() => setDiameterFilter(prev => prev === d ? null : d)}
+                className={`px-1.5 py-0.5 text-[10px] font-mono rounded border transition-colors ${
+                  diameterFilter === d ? color.badge + ' ring-1 ' + color.ring : color.badge
+                }`}
+              >
+                T{d}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <div className="w-80 border-r border-slate-800 overflow-hidden shrink-0 flex flex-col">
+          {/* Sidebar tabs */}
+          <div className="flex border-b border-slate-800 shrink-0">
+            <button
+              onClick={() => setSidebarTab('bars')}
+              className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+                sidebarTab === 'bars' ? 'bg-slate-800 text-white border-b-2 border-blue-500' : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              Bar Marks ({filteredBars.length})
+            </button>
+            <button
+              onClick={() => setSidebarTab('drawings')}
+              className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+                sidebarTab === 'drawings' ? 'bg-slate-800 text-white border-b-2 border-blue-500' : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              Drawings ({drawings.length})
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            {sidebarTab === 'drawings' && (
+              <>
+                {/* Drawing selector */}
+                {drawings.length > 0 && (
+                  <div className="space-y-1">
+                    {drawings.map(d => {
+                      const isSelected = d.id === selectedDrawingId
+                      const linkedCount = barMarks.filter(b => b.sourceDrawingId === d.id).length
+                      return (
+                        <button
+                          key={d.id}
+                          onClick={() => selectDrawing(d.id)}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${
+                            isSelected
+                              ? 'bg-blue-600/20 border border-blue-600 text-blue-200'
+                              : 'bg-slate-800/50 border border-slate-700 text-slate-400 hover:border-slate-600'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <FileText size={12} className={isSelected ? 'text-blue-400' : 'text-slate-600'} />
+                            <span className="font-medium truncate">{d.name}</span>
+                            <span className="text-[10px] uppercase text-slate-600 ml-auto">{d.fileType}</span>
+                          </div>
+                          <div className="flex items-center gap-3 mt-1 text-[10px]">
+                            <span className={linkedCount > 0 ? 'text-green-400' : 'text-slate-600'}>
+                              {linkedCount} bars
+                            </span>
+                            <span className="text-slate-700">{d.pageCount}pp</span>
+                            {d.hasExtractionImages && (
+                              <span className="text-blue-400">OCR cached</span>
+                            )}
+                            <span className="text-slate-700 ml-auto">
+                              {new Date(d.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {drawings.length === 0 && (
+                  <label className="block">
+                    <span className="text-xs text-slate-400 uppercase tracking-wide">Upload Drawing</span>
+                    <input type="file" accept="image/*,.pdf" onChange={handleFileUpload} className="mt-1 block w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:bg-blue-600 file:text-white file:text-xs file:cursor-pointer" />
+                  </label>
+                )}
+
+                {/* Page selector */}
+                {totalPages > 1 && (
+                  <div className="flex gap-1 flex-wrap">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                      <button key={p} onClick={() => switchPage(p)}
+                        className={`px-2 py-1 text-xs rounded ${currentPage === p ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
+                        P{p}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Zoom controls */}
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setZoom(z => Math.min(5, z + 0.25))} className="px-2 py-1 text-xs bg-slate-800 rounded hover:bg-slate-700">+</button>
+                  <span className="text-xs text-slate-400">{(zoom * 100).toFixed(0)}%</span>
+                  <button onClick={() => setZoom(z => Math.max(0.2, z - 0.25))} className="px-2 py-1 text-xs bg-slate-800 rounded hover:bg-slate-700">-</button>
+                  <button onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }) }} className="px-2 py-1 text-xs bg-slate-800 rounded hover:bg-slate-700 ml-auto">Reset</button>
+                </div>
+
+                {/* Confidence filter */}
+                <div>
+                  <label className="text-xs text-slate-500 block mb-1">
+                    Min confidence: <strong className="text-blue-400">{confidenceFilter}%</strong>
+                  </label>
+                  <input type="range" min={0} max={100} step={5} value={confidenceFilter}
+                    onChange={e => setConfidenceFilter(Number(e.target.value))}
+                    className="w-full accent-blue-500" />
+                </div>
+
+                {imageUrl && selectedDrawingId && (
+                  <div className="flex flex-col gap-1.5">
+                    <button onClick={() => placeLabelsForDrawing(selectedDrawingId)} className="w-full px-3 py-2 text-sm rounded bg-blue-700 hover:bg-blue-600 text-white font-medium">
+                      Auto Place Markers Again
+                    </button>
+                    <button onClick={exportPDF} className="w-full px-3 py-2 text-sm rounded bg-green-700 hover:bg-green-600 text-white font-medium">
+                      Export Marked Drawing PDF
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {sidebarTab === 'bars' && (
+              <>
+                {/* Summary stats */}
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-slate-800/60 rounded-lg px-3 py-2 text-center">
+                    <div className="text-lg font-bold text-white">{filteredBars.length}</div>
+                    <div className="text-[10px] text-slate-500 uppercase">Marks</div>
+                  </div>
+                  <div className="bg-slate-800/60 rounded-lg px-3 py-2 text-center">
+                    <div className="text-lg font-bold text-blue-400">{totalQty}</div>
+                    <div className="text-[10px] text-slate-500 uppercase">Qty</div>
+                  </div>
+                  <div className="bg-slate-800/60 rounded-lg px-3 py-2 text-center">
+                    <div className="text-lg font-bold text-amber-400">{totalWeight > 0 ? totalWeight.toFixed(0) : '--'}</div>
+                    <div className="text-[10px] text-slate-500 uppercase">kg</div>
+                  </div>
+                </div>
+
+                {/* Placement progress */}
+                {selectedDrawingId && (
+                  <div className="flex items-center gap-2 text-[10px]">
+                    <span className="text-slate-600">Placed:</span>
+                    <span className={placedCount === allDisplayBars.length ? 'text-green-400' : 'text-blue-400'}>
+                      {placedCount}/{allDisplayBars.length}
+                    </span>
+                    <div className="flex-1 bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                      <div className="bg-blue-500 h-full rounded-full transition-all" style={{ width: `${(placedCount / Math.max(1, allDisplayBars.length)) * 100}%` }} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Bar list */}
+                <div className="space-y-0.5">
+                  {filteredBars.map(bm => {
+                    const placed = barsWithLabels.has(bm.id)
+                    const isActive = activeBarId === bm.id
+                    const isLinked = !!bm.sourceDrawingId
+                    const hasBbox = !!bm.bbox
+                    const color = getDiameterColor(bm.diameter)
+                    const isCurrentlyPlacing = placingBarId === bm.id
+
+                    return (
+                      <div key={bm.id} id={`bar-btn-${bm.id}`} className="flex items-center gap-1">
+                        <button
+                          onClick={() => placed ? highlightBar(bm.id) : setPlacingBarId(bm.id)}
+                          className={`flex-1 text-left px-2 py-2 text-xs rounded-lg flex items-center gap-2 transition-all ${
+                            isCurrentlyPlacing ? 'bg-cyan-600/30 ring-1 ring-cyan-500 text-cyan-200 animate-pulse' :
+                            isActive ? 'bg-blue-600/20 ring-1 ring-blue-500 text-blue-200 shadow-lg shadow-blue-500/20' :
+                            placed ? 'bg-slate-800/80 hover:bg-slate-700/80' : 'bg-slate-800/30 hover:bg-slate-700/50 opacity-60'
+                          }`}
+                        >
+                          {/* Diameter color dot */}
+                          <span className={`w-2 h-2 rounded-full shrink-0 ${color.bg}`} />
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono font-bold text-blue-400">{bm.mark}</span>
+                              <span className={`text-[10px] font-mono px-1 rounded border ${color.badge}`}>T{bm.diameter}</span>
+                              <span className="text-slate-600 text-[10px] ml-auto">{bm.element}</span>
+                            </div>
+                            <div className="flex items-center gap-3 mt-0.5 text-[10px]">
+                              <span className="text-slate-500">Qty: <span className="text-slate-300">{bm.quantity}</span></span>
+                              {bm.weight != null && bm.weight > 0 && (
+                                <span className="text-slate-500">Wt: <span className="text-amber-400">{bm.weight.toFixed(1)}kg</span></span>
+                              )}
+                              {bm.confidence != null && bm.confidence < 80 && (
+                                <span className={`px-1 rounded ${
+                                  bm.confidence >= 60 ? 'bg-amber-900/50 text-amber-400' : 'bg-red-900/50 text-red-400'
+                                }`}>{bm.confidence}%</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {placed ? (
+                            <span className="text-green-500 text-xs shrink-0">&#9679;</span>
+                          ) : isCurrentlyPlacing ? (
+                            <span className="text-cyan-400 text-[10px] shrink-0">click drawing</span>
+                          ) : (
+                            <span className="text-[10px] text-slate-600 shrink-0">&#9768;</span>
+                          )}
+                        </button>
+                        {placed && (
+                          <button onClick={() => highlightBar(bm.id)} className="text-[10px] text-slate-600 hover:text-blue-400 px-1" title="Zoom to marker">&#8982;</button>
+                        )}
+                      </div>
+                    )
+                  })}
+
+                  {filteredBars.length === 0 && (
+                    <div className="text-center py-8 text-slate-600 text-sm">
+                      No bars match the current filters
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="px-3 py-2 border-t border-slate-800 text-[10px] text-slate-600 shrink-0">
+            Click bar to zoom. Alt+drag to pan. Scroll to zoom. Drag labels to reposition.
+          </div>
+        </div>
+
+        {/* Canvas area */}
+        <div
+          ref={containerRef}
+          className={`flex-1 overflow-hidden relative bg-slate-900 ${placingBarId ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'}`}
+          onWheel={handleWheel}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
+          {placingBarId && (() => {
+            const bm = barMarks.find(b => b.id === placingBarId)
+            return bm ? (
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 px-4 py-2 rounded-lg bg-cyan-600 text-white text-sm font-semibold shadow-lg flex items-center gap-3">
+                Click on the drawing to place: <span className="font-mono">{bm.mark} T{bm.diameter} x{bm.quantity}</span>
+                <button onClick={() => setPlacingBarId(null)} className="text-cyan-200 hover:text-white ml-2">Cancel</button>
+              </div>
+            ) : null
+          })()}
+          {renderingPdf && !imageUrl ? (
+            <div className="flex items-center justify-center h-full text-slate-500">
+              <div className="text-center">
+                <Loader2 size={32} className="animate-spin mx-auto mb-3 text-blue-500" />
+                <p className="text-lg mb-1">Rendering drawing...</p>
+                <p className="text-sm text-slate-600">
+                  {selectedDrawing ? selectedDrawing.name : 'Loading source PDF'}
+                </p>
+              </div>
+            </div>
+          ) : renderError && !imageUrl ? (
+            <div className="flex items-center justify-center h-full text-red-500">
+              <div className="text-center max-w-md">
+                <p className="text-lg mb-2">Drawing render failed</p>
+                <p className="text-sm text-red-400 mb-4">{renderError}</p>
+                <label className="inline-block">
+                  <span className="px-4 py-2 rounded bg-blue-600 text-white text-sm cursor-pointer hover:bg-blue-500">Upload drawing manually</span>
+                  <input type="file" accept="image/*,.pdf" onChange={handleFileUpload} className="hidden" />
+                </label>
+              </div>
+            </div>
+          ) : !imageUrl ? (
+            <div className="flex items-center justify-center h-full text-slate-600">
+              <div className="text-center">
+                <p className="text-lg mb-2">No drawing selected</p>
+                <p className="text-sm">Select a source drawing from the sidebar, or upload one manually</p>
+              </div>
+            </div>
+          ) : (
+            <div
+              style={{
+                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                transformOrigin: '0 0',
+                cursor: placingBarId ? 'crosshair' : undefined,
+              }}
+              className="relative inline-block"
+              onClick={handleCanvasClick}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                ref={imgRef}
+                src={imageUrl}
+                alt="Structural drawing"
+                className="max-w-none select-none"
+                draggable={false}
+                onLoad={() => {
+                  const el = imgRef.current
+                  if (el) setImageSize({ w: el.naturalWidth, h: el.naturalHeight })
+                }}
+              />
+              {showLabels && visibleLabels.map(label => {
+                const isActive = activeBarId === label.barId
+                const isFlashing = label.flashing
+                const color = getDiameterColor(label.diameter)
                 return (
-                  <button
-                    key={d.id}
-                    onClick={() => selectDrawing(d.id)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${
-                      isSelected
-                        ? 'bg-blue-600/20 border border-blue-600 text-blue-200'
-                        : 'bg-slate-800/50 border border-slate-700 text-slate-400 hover:border-slate-600'
-                    }`}
+                  <div
+                    key={label.barId}
+                    className={`absolute select-none group`}
+                    style={{
+                      left: `${label.x}%`,
+                      top: `${label.y}%`,
+                      transform: `translate(-50%, -50%) scale(${1 / zoom})`,
+                      zIndex: isActive ? 20 : 10,
+                    }}
+                    onMouseDown={e => startLabelDrag(e, label.barId)}
+                    onClick={(e) => { e.stopPropagation(); handleMarkerClick(label.barId) }}
                   >
-                    <div className="flex items-center gap-2">
-                      <FileText size={12} className={isSelected ? 'text-blue-400' : 'text-slate-600'} />
-                      <span className="font-medium truncate">{d.name}</span>
-                      <span className="text-[10px] uppercase text-slate-600 ml-auto">{d.fileType}</span>
+                    {/* Glow ring for active/flashing */}
+                    {(isActive || isFlashing) && (
+                      <div
+                        className={`absolute inset-0 -m-2 rounded-lg ${isFlashing ? 'animate-ping' : 'animate-pulse'} opacity-40 ${color.bg}`}
+                        style={{ zIndex: -1 }}
+                      />
+                    )}
+                    <div className={`px-2 py-0.5 rounded text-xs font-mono font-bold whitespace-nowrap cursor-move transition-all ${
+                      isFlashing
+                        ? `${color.bg} ${color.text} ring-2 ${color.ring} shadow-lg ${color.glow} scale-125`
+                        : isActive
+                        ? `${color.bg} ${color.text} ring-2 ${color.ring} shadow-lg ${color.glow}`
+                        : `${color.bg} ${color.text} shadow-md`
+                    }`}>
+                      {label.mark} T{label.diameter} x{label.quantity}
+                      <button
+                        onClick={e => { e.stopPropagation(); removeLabel(label.barId) }}
+                        className="ml-1.5 opacity-0 group-hover:opacity-100 hover:opacity-80"
+                      >x</button>
                     </div>
-                    <div className="flex items-center gap-3 mt-1 text-[10px]">
-                      <span className={linkedCount > 0 ? 'text-green-400' : 'text-slate-600'}>
-                        {linkedCount} bars
-                      </span>
-                      <span className="text-slate-700">{d.pageCount}pp</span>
-                      {d.hasExtractionImages && (
-                        <span className="text-blue-400">OCR cached</span>
-                      )}
-                      <span className="text-slate-700 ml-auto">
-                        {new Date(d.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </button>
+                    {/* Pointer line from label to exact position */}
+                    {isActive && (
+                      <div className={`absolute left-1/2 top-full w-0.5 h-4 -translate-x-1/2 ${color.bg}`} />
+                    )}
+                  </div>
                 )
               })}
             </div>
-          </div>
-        )}
-
-        {drawings.length === 0 && (
-          <label className="block">
-            <span className="text-xs text-slate-400 uppercase tracking-wide">Upload Drawing</span>
-            <input type="file" accept="image/*,.pdf" onChange={handleFileUpload} className="mt-1 block w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:bg-blue-600 file:text-white file:text-xs file:cursor-pointer" />
-          </label>
-        )}
-
-        {/* Placement stats */}
-        {selectedDrawingId && (linkedBars.length > 0 || unlinkedBars.length > 0) && (
-          <div className="flex items-center gap-2 text-[10px]">
-            <span className="text-slate-600">Placed:</span>
-            <span className={placedCount === allDisplayBars.length ? 'text-green-400' : 'text-blue-400'}>
-              {placedCount}/{allDisplayBars.length}
-            </span>
-            <div className="flex-1 bg-slate-800 rounded-full h-1.5 overflow-hidden">
-              <div className="bg-blue-500 h-full rounded-full transition-all" style={{ width: `${(placedCount / Math.max(1, allDisplayBars.length)) * 100}%` }} />
-            </div>
-          </div>
-        )}
-
-        {/* Legend */}
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500">
-          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" /> Placed</span>
-          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block" /> Has OCR pos</span>
-          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" /> Linked</span>
-          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-slate-600 inline-block" /> No position</span>
+          )}
         </div>
-
-        {/* Page selector */}
-        {totalPages > 1 && (
-          <div className="flex gap-1 flex-wrap">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-              <button key={p} onClick={() => switchPage(p)}
-                className={`px-2 py-1 text-xs rounded ${currentPage === p ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>
-                P{p}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Zoom controls */}
-        <div className="flex items-center gap-2">
-          <button onClick={() => setZoom(z => Math.min(5, z + 0.25))} className="px-2 py-1 text-xs bg-slate-800 rounded hover:bg-slate-700">+</button>
-          <span className="text-xs text-slate-400">{(zoom * 100).toFixed(0)}%</span>
-          <button onClick={() => setZoom(z => Math.max(0.2, z - 0.25))} className="px-2 py-1 text-xs bg-slate-800 rounded hover:bg-slate-700">-</button>
-          <button onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }) }} className="px-2 py-1 text-xs bg-slate-800 rounded hover:bg-slate-700 ml-auto">Reset</button>
-        </div>
-
-        {/* Confidence filter */}
-        <div>
-          <label className="text-xs text-slate-500 block mb-1">
-            Min confidence: <strong className="text-blue-400">{confidenceFilter}%</strong>
-          </label>
-          <input type="range" min={0} max={100} step={5} value={confidenceFilter}
-            onChange={e => setConfidenceFilter(Number(e.target.value))}
-            className="w-full accent-blue-500" />
-        </div>
-
-        {imageUrl && selectedDrawingId && (
-          <div className="flex flex-col gap-1.5">
-            <button onClick={() => placeLabelsForDrawing(selectedDrawingId)} className="w-full px-3 py-2 text-sm rounded bg-blue-700 hover:bg-blue-600 text-white font-medium">
-              Auto Place Markers Again
-            </button>
-            <button onClick={exportPDF} className="w-full px-3 py-2 text-sm rounded bg-green-700 hover:bg-green-600 text-white font-medium">
-              Export Marked Drawing PDF
-            </button>
-          </div>
-        )}
-
-        {/* Diagnostics toggle */}
-        <button onClick={() => setShowDiag(d => !d)} className="text-[10px] text-slate-600 hover:text-slate-400 text-left">
-          {showDiag ? '▼' : '▶'} Diagnostics ({barMarks.length} bars, {labels.length} labels, {visibleLabels.length} visible)
-        </button>
-
-        {showDiag && (
-          <div className="rounded border border-slate-700 bg-slate-900 p-2 text-[10px] font-mono max-h-60 overflow-y-auto space-y-2">
-            {/* Summary stats */}
-            <div className="grid grid-cols-2 gap-1">
-              <div className="px-1.5 py-1 bg-slate-800 rounded">
-                <span className="text-slate-500">Total bars</span>
-                <span className="block text-white font-bold">{barMarks.length}</span>
-              </div>
-              <div className="px-1.5 py-1 bg-slate-800 rounded">
-                <span className="text-slate-500">With bbox</span>
-                <span className="block text-blue-400 font-bold">{barMarks.filter(b => b.bbox).length}</span>
-              </div>
-              <div className="px-1.5 py-1 bg-slate-800 rounded">
-                <span className="text-slate-500">With label_xy</span>
-                <span className="block text-green-400 font-bold">{barMarks.filter(b => b.labelX != null).length}</span>
-              </div>
-              <div className="px-1.5 py-1 bg-slate-800 rounded">
-                <span className="text-slate-500">No position</span>
-                <span className="block text-red-400 font-bold">{barMarks.filter(b => !b.bbox && b.labelX == null).length}</span>
-              </div>
-              <div className="px-1.5 py-1 bg-slate-800 rounded">
-                <span className="text-slate-500">Labels placed</span>
-                <span className="block text-blue-400 font-bold">{labels.length}</span>
-              </div>
-              <div className="px-1.5 py-1 bg-slate-800 rounded">
-                <span className="text-slate-500">Visible (p{currentPage})</span>
-                <span className="block text-blue-400 font-bold">{visibleLabels.length}</span>
-              </div>
-              <div className="px-1.5 py-1 bg-slate-800 rounded">
-                <span className="text-slate-500">Linked</span>
-                <span className="block text-green-400 font-bold">{linkedBars.length}</span>
-              </div>
-              <div className="px-1.5 py-1 bg-slate-800 rounded">
-                <span className="text-slate-500">Unlinked</span>
-                <span className="block text-slate-400 font-bold">{unlinkedBars.length}</span>
-              </div>
-            </div>
-
-            {/* Per-bar detail table */}
-            <table className="w-full text-[9px]">
-              <thead>
-                <tr className="text-slate-500">
-                  <th className="text-left py-0.5">Mark</th>
-                  <th className="text-left py-0.5">Dia</th>
-                  <th className="text-left py-0.5">srcDwg</th>
-                  <th className="text-left py-0.5">bbox</th>
-                  <th className="text-left py-0.5">label_xy</th>
-                  <th className="text-left py-0.5">placed?</th>
-                </tr>
-              </thead>
-              <tbody>
-                {barMarks.map(bm => {
-                  const hasBbox = !!bm.bbox
-                  const hasLabel = bm.labelX != null && bm.labelY != null
-                  const isPlaced = labels.some(l => l.barId === bm.id)
-                  return (
-                    <tr key={bm.id} className="border-t border-slate-800/50">
-                      <td className="py-0.5 text-blue-400 font-bold">{bm.mark}</td>
-                      <td className="py-0.5 text-slate-400">T{bm.diameter}</td>
-                      <td className="py-0.5">
-                        {bm.sourceDrawingId ? (
-                          <span className={bm.sourceDrawingId === selectedDrawingId ? 'text-green-400' : 'text-orange-400'}>
-                            {bm.sourceDrawingId.slice(0, 6)}
-                          </span>
-                        ) : <span className="text-red-500">null</span>}
-                      </td>
-                      <td className="py-0.5">
-                        {hasBbox ? (
-                          <span className="text-blue-400" title={JSON.stringify(bm.bbox)}>
-                            p{bm.bbox!.page} ({bm.bbox!.x0},{bm.bbox!.y0})
-                          </span>
-                        ) : <span className="text-red-500">null</span>}
-                      </td>
-                      <td className="py-0.5">
-                        {hasLabel ? (
-                          <span className="text-green-400">
-                            ({bm.labelX!.toFixed(1)},{bm.labelY!.toFixed(1)})
-                          </span>
-                        ) : <span className="text-red-500">null</span>}
-                      </td>
-                      <td className="py-0.5">
-                        {isPlaced ? <span className="text-green-500">YES</span> : <span className="text-red-500">NO</span>}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-
-            {/* Placement log */}
-            {diagLog.length > 0 && (
-              <div className="mt-1 border-t border-slate-700 pt-1">
-                <p className="text-slate-500 mb-0.5">Last placement log:</p>
-                {diagLog.map((line, i) => (
-                  <p key={i} className={
-                    line.startsWith('===') ? 'text-blue-400 font-bold' :
-                    line.includes('LABEL:') ? 'text-green-400' :
-                    line.includes('NEITHER') || line.includes('null') ? 'text-red-400' :
-                    'text-slate-400'
-                  }>{line}</p>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Bar list — linked bars */}
-        {linkedBars.length > 0 && (
-          <>
-            <p className="text-xs text-slate-500 uppercase tracking-wide">
-              Linked Bars ({linkedBars.length})
-            </p>
-            <div className="space-y-0.5 overflow-y-auto">
-              {linkedBars.map(bm => <BarButton key={bm.id} bm={bm} labels={labels} activeBarId={activeBarId}
-                onHighlight={highlightBar} onStartPlace={id => setPlacingBarId(id)} isPlacing={placingBarId === bm.id} />)}
-            </div>
-          </>
-        )}
-
-        {/* Unlinked bars */}
-        {unlinkedBars.length > 0 && (
-          <>
-            <div className="flex items-center gap-2 mt-1">
-              <Link2Off size={10} className="text-slate-600" />
-              <p className="text-xs text-slate-600 uppercase tracking-wide">
-                Unlinked ({unlinkedBars.length})
-              </p>
-            </div>
-            <div className="space-y-0.5 overflow-y-auto">
-              {unlinkedBars.map(bm => <BarButton key={bm.id} bm={bm} labels={labels} activeBarId={activeBarId}
-                onHighlight={highlightBar} onStartPlace={id => setPlacingBarId(id)} isPlacing={placingBarId === bm.id} />)}
-            </div>
-          </>
-        )}
-
-        <p className="text-[10px] text-slate-600 mt-auto pt-2">Click bar to zoom. Alt+drag to pan. Scroll to zoom. Drag labels to reposition.</p>
       </div>
-
-      {/* Canvas area */}
-      <div
-        ref={containerRef}
-        className={`flex-1 overflow-hidden relative bg-slate-900 ${placingBarId ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'}`}
-        onWheel={handleWheel}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-      >
-        {placingBarId && (() => {
-          const bm = barMarks.find(b => b.id === placingBarId)
-          return bm ? (
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 px-4 py-2 rounded-lg bg-cyan-600 text-white text-sm font-semibold shadow-lg flex items-center gap-3">
-              Click on the drawing to place: <span className="font-mono">{bm.mark} T{bm.diameter} x{bm.quantity}</span>
-              <button onClick={() => setPlacingBarId(null)} className="text-cyan-200 hover:text-white ml-2">Cancel</button>
-            </div>
-          ) : null
-        })()}
-        {renderingPdf && !imageUrl ? (
-          <div className="flex items-center justify-center h-full text-slate-500">
-            <div className="text-center">
-              <Loader2 size={32} className="animate-spin mx-auto mb-3 text-blue-500" />
-              <p className="text-lg mb-1">Rendering drawing...</p>
-              <p className="text-sm text-slate-600">
-                {selectedDrawing ? selectedDrawing.name : 'Loading source PDF'}
-              </p>
-            </div>
-          </div>
-        ) : renderError && !imageUrl ? (
-          <div className="flex items-center justify-center h-full text-red-500">
-            <div className="text-center max-w-md">
-              <p className="text-lg mb-2">Drawing render failed</p>
-              <p className="text-sm text-red-400 mb-4">{renderError}</p>
-              <label className="inline-block">
-                <span className="px-4 py-2 rounded bg-blue-600 text-white text-sm cursor-pointer hover:bg-blue-500">Upload drawing manually</span>
-                <input type="file" accept="image/*,.pdf" onChange={handleFileUpload} className="hidden" />
-              </label>
-            </div>
-          </div>
-        ) : !imageUrl ? (
-          <div className="flex items-center justify-center h-full text-slate-600">
-            <div className="text-center">
-              <p className="text-lg mb-2">No drawing selected</p>
-              <p className="text-sm">Select a source drawing from the sidebar, or upload one manually</p>
-            </div>
-          </div>
-        ) : (
-          <div
-            style={{
-              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-              transformOrigin: '0 0',
-              cursor: placingBarId ? 'crosshair' : undefined,
-            }}
-            className="relative inline-block"
-            onClick={handleCanvasClick}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              ref={imgRef}
-              src={imageUrl}
-              alt="Structural drawing"
-              className="max-w-none select-none"
-              draggable={false}
-              onLoad={() => {
-                const el = imgRef.current
-                if (el) setImageSize({ w: el.naturalWidth, h: el.naturalHeight })
-              }}
-            />
-            {visibleLabels.map(label => {
-              const isActive = activeBarId === label.barId
-              const conf = label.confidence ?? 100
-              const isFlashing = label.flashing
-              return (
-                <div
-                  key={label.barId}
-                  className={`absolute select-none group ${isFlashing ? 'animate-pulse' : ''}`}
-                  style={{
-                    left: `${label.x}%`,
-                    top: `${label.y}%`,
-                    transform: `translate(-50%, -50%) scale(${1 / zoom})`,
-                    zIndex: isActive ? 20 : 10,
-                  }}
-                  onMouseDown={e => startLabelDrag(e, label.barId)}
-                  onClick={(e) => { e.stopPropagation(); handleMarkerClick(label.barId) }}
-                >
-                  <div className={`px-2 py-0.5 rounded text-xs font-mono font-bold whitespace-nowrap cursor-move shadow-lg transition-all ${
-                    isFlashing
-                      ? 'bg-white text-slate-900 ring-2 ring-blue-400 shadow-blue-500/50 scale-125'
-                      : isActive
-                      ? 'bg-white text-slate-900 ring-2 ring-blue-400 shadow-blue-500/50'
-                      : conf >= 80
-                      ? 'bg-amber-500 text-black'
-                      : conf >= 60
-                      ? 'bg-orange-500 text-black'
-                      : 'bg-red-500 text-white'
-                  }`}>
-                    {label.mark} T{label.diameter} x{label.quantity}
-                    {conf < 80 && <span className="ml-1 opacity-70">{conf}%</span>}
-                    <button
-                      onClick={e => { e.stopPropagation(); removeLabel(label.barId) }}
-                      className="ml-1.5 opacity-0 group-hover:opacity-100 hover:text-red-700"
-                    >x</button>
-                  </div>
-                  {/* Pointer line from label to exact bbox position */}
-                  {isActive && (
-                    <div className="absolute left-1/2 top-full w-0.5 h-4 bg-blue-400 -translate-x-1/2" />
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function BarButton({ bm, labels, activeBarId, isPlacing, onHighlight, onStartPlace }: {
-  bm: BarMark
-  labels: PlacedLabel[]
-  activeBarId: string | null
-  isPlacing: boolean
-  onHighlight: (id: string) => void
-  onStartPlace: (id: string) => void
-}) {
-  const placed = labels.some(l => l.barId === bm.id)
-  const isActive = activeBarId === bm.id
-  const isLinked = !!bm.sourceDrawingId
-  const hasBbox = !!bm.bbox
-  return (
-    <div id={`bar-btn-${bm.id}`} className="flex items-center gap-1">
-      <button
-        onClick={() => placed ? onHighlight(bm.id) : onStartPlace(bm.id)}
-        className={`flex-1 text-left px-2 py-1.5 text-xs rounded flex items-center gap-2 transition-colors ${
-          isPlacing ? 'bg-cyan-600/30 ring-1 ring-cyan-500 text-cyan-200 animate-pulse' :
-          isActive ? 'bg-blue-600/30 ring-1 ring-blue-500 text-blue-200' :
-          placed ? 'bg-slate-800/80 hover:bg-slate-700' : 'bg-slate-800/30 hover:bg-slate-700 opacity-60'
-        }`}
-      >
-        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-          placed ? 'bg-green-500' : hasBbox ? 'bg-blue-500' : isLinked ? 'bg-amber-500' : 'bg-slate-600'
-        }`} title={placed ? 'Placed on drawing' : hasBbox ? 'Has OCR position' : isLinked ? 'Linked to drawing' : 'No position data'} />
-        <span className="font-mono font-bold text-blue-400">{bm.mark}</span>
-        <span className="text-slate-500">T{bm.diameter}</span>
-        <span className="text-slate-600">x{bm.quantity}</span>
-        <span className="text-slate-700 text-[10px] ml-auto">{bm.element}</span>
-        {bm.confidence != null && bm.confidence < 80 && (
-          <span className={`text-[10px] px-1 rounded ${
-            bm.confidence >= 60 ? 'bg-amber-900/50 text-amber-400' : 'bg-red-900/50 text-red-400'
-          }`}>{bm.confidence}%</span>
-        )}
-        {placed ? (
-          <span className="text-green-500 text-[10px]">&#9679;</span>
-        ) : isPlacing ? (
-          <span className="text-cyan-400 text-[10px]">click drawing</span>
-        ) : (
-          <span className="text-[10px] text-slate-600">&#9768;</span>
-        )}
-      </button>
-      {placed && (
-        <button onClick={() => onHighlight(bm.id)} className="text-[10px] text-slate-600 hover:text-blue-400 px-1" title="Zoom to marker">&#8982;</button>
-      )}
     </div>
   )
 }
