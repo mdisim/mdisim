@@ -216,7 +216,7 @@ export async function deleteRebarBar(id: string) {
   return { success: true }
 }
 
-export async function updateBarLabel(barId: string, labelX: number, labelY: number) {
+export async function updateBarLabel(barId: string, labelX: number | null, labelY: number | null) {
   const supabase = await createClient()
   const { error } = await supabase
     .from('rebar_bars')

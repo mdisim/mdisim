@@ -897,22 +897,39 @@ export function ExtractClient({ projectId, drawings }: Props) {
       for (const bar of allBarsFlat) {
         dbg(`  ${bar.bar_mark} T${bar.diameter_mm} x${bar.quantity} bbox=${bar.ocr_bbox ? `p${bar.ocr_bbox.page}(${bar.ocr_bbox.x0},${bar.ocr_bbox.y0})` : 'null'} notes="${bar.notes}"`)
       }
-      setElements(editable.length > 0 ? editable : [])
-      setStatus(editable.length > 0 ? 'review' : 'error')
-      if (editable.length === 0) {
-        setDebug(d => {
-          const ocrRan = d.usedOCR || d.ocrChars > 0
-          setErrorMsg(
-            ocrRan
-              ? `OCR ran but found 0 rebar callouts (confidence: ${d.ocrConfidence.toFixed(0)}%, ${d.ocrChars} chars). The drawing text may not contain standard rebar notation (e.g. 4Ø12, T16@200). Check the extraction log below.`
-              : `No rebar callouts detected. Native PDF text had ${d.pdfChars} chars but no standard rebar notation found (e.g. 4Ø12, T16@200). Check the extraction log below.`
-          )
-          return d
-        })
+      if (editable.length > 0) {
+        setElements(editable)
+        setStatus('review')
+      } else {
+        // No bars detected — create a single empty element so user can add bars manually
+        const emptyElement: EditableElement = {
+          id: makeId(),
+          elementType: 'beam',
+          elementMark: 'E1',
+          floorLevel: '',
+          bars: [],
+          keep: true,
+          expanded: true,
+        }
+        setElements([emptyElement])
+        setStatus('review')
+        setErrorMsg('No rebar callouts were detected automatically. You can add bars manually below, or try a different drawing.')
       }
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : String(e))
-      setStatus('error')
+      console.error('[RebarExtract] Extraction error:', e)
+      // Don't block the user — show manual entry fallback
+      const emptyElement: EditableElement = {
+        id: makeId(),
+        elementType: 'beam',
+        elementMark: 'E1',
+        floorLevel: '',
+        bars: [],
+        keep: true,
+        expanded: true,
+      }
+      setElements([emptyElement])
+      setStatus('review')
+      setErrorMsg('Automatic extraction encountered an issue. You can add bars manually below.')
     }
   }
 
@@ -1183,16 +1200,28 @@ export function ExtractClient({ projectId, drawings }: Props) {
           Supports: 2Ø12 · 4Ø12@20 · 2X3Ø12 · 2X3Ø12 L=929 · Ø12@20 L=116 · 6T16 · T12-200
         </p>
 
-        {status === 'error' && (
+        {status === 'error' && errorMsg && (
           <div className="mt-3 flex items-start gap-2 text-red-400 text-sm bg-red-900/20 border border-red-800 rounded-lg p-3">
             <AlertCircle size={15} className="mt-0.5 shrink-0" />
             {errorMsg}
           </div>
         )}
 
-        {/* Debug / status panel */}
+        {status === 'review' && errorMsg && (
+          <div className="mt-3 flex items-start gap-2 text-amber-400 text-sm bg-amber-900/20 border border-amber-800 rounded-lg p-3">
+            <AlertCircle size={15} className="mt-0.5 shrink-0" />
+            {errorMsg}
+          </div>
+        )}
+
+        {/* Extraction progress — collapsed by default */}
         {debug.lines.length > 0 && (
-          <div className="mt-4 space-y-2">
+          <details className="mt-4">
+          <summary className="cursor-pointer text-xs text-slate-500 hover:text-slate-300 py-1">
+            Extraction details
+            {debug.calloutCount > 0 && <span className="ml-2 text-green-400">{debug.calloutCount} callouts found</span>}
+          </summary>
+          <div className="mt-2 space-y-2">
             {/* Stats row */}
             <div className="flex flex-wrap gap-3 text-xs">
               <span className="px-2 py-1 rounded bg-slate-800 text-slate-400">
@@ -1293,6 +1322,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
               </div>
             )}
           </div>
+          </details>
         )}
       </div>
 
@@ -1572,6 +1602,24 @@ export function ExtractClient({ projectId, drawings }: Props) {
             })}
           </div>
 
+          {status === 'review' && (
+            <button onClick={() => {
+              const newEl: EditableElement = {
+                id: makeId(),
+                elementType: 'beam',
+                elementMark: `E${elements.length + 1}`,
+                floorLevel: '',
+                bars: [],
+                keep: true,
+                expanded: true,
+              }
+              setElements(prev => [...prev, newEl])
+            }}
+              className="mt-3 flex items-center gap-1.5 text-xs text-slate-500 hover:text-blue-400 transition-colors">
+              <Plus size={12} /> Add element
+            </button>
+          )}
+
           {status === 'review' && keptElements.length > 0 && (
             <div className="mt-6 flex items-center justify-between flex-wrap gap-3">
               <button onClick={handleFactoryPackage}
@@ -1645,6 +1693,10 @@ export function ExtractClient({ projectId, drawings }: Props) {
                   className="flex items-center gap-2 px-4 py-2 rounded bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold transition-colors">
                   📦 Generate Steel Factory Package
                 </button>
+                <a href={`/projects/${projectId}/rebar/marked-drawing`}
+                  className="px-4 py-2 rounded bg-blue-700 hover:bg-blue-600 text-white text-sm font-semibold transition-colors">
+                  → View &amp; Place on Drawing
+                </a>
                 <a href={`/projects/${projectId}/rebar`}
                   className="px-4 py-2 rounded bg-green-700 hover:bg-green-600 text-white text-sm font-semibold transition-colors">
                   → Open Rebar Schedule

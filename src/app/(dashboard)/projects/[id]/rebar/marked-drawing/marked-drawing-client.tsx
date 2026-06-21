@@ -383,6 +383,7 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
 
   const removeLabel = (barId: string) => {
     setLabels(prev => prev.filter(l => l.barId !== barId))
+    updateBarLabel(barId, null, null).catch(() => {})
   }
 
   function flashLabel(barId: string) {
@@ -694,14 +695,30 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
 
                 {/* Placement progress */}
                 {selectedDrawingId && (
-                  <div className="flex items-center gap-2 text-[10px]">
-                    <span className="text-slate-600">Placed:</span>
-                    <span className={placedCount === allDisplayBars.length ? 'text-green-400' : 'text-blue-400'}>
-                      {placedCount}/{allDisplayBars.length}
-                    </span>
-                    <div className="flex-1 bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                      <div className="bg-blue-500 h-full rounded-full transition-all" style={{ width: `${(placedCount / Math.max(1, allDisplayBars.length)) * 100}%` }} />
+                  <div>
+                    <div className="flex items-center gap-2 text-[10px]">
+                      <span className="text-slate-600">Placed:</span>
+                      <span className={placedCount === allDisplayBars.length ? 'text-green-400' : 'text-blue-400'}>
+                        {placedCount}/{allDisplayBars.length}
+                      </span>
+                      <div className="flex-1 bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                        <div className="bg-blue-500 h-full rounded-full transition-all" style={{ width: `${(placedCount / Math.max(1, allDisplayBars.length)) * 100}%` }} />
+                      </div>
                     </div>
+                    {placedCount < allDisplayBars.length && (
+                      <button
+                        onClick={() => {
+                          const unplaced = filteredBars.find(b => !barsWithLabels.has(b.id))
+                          if (unplaced) setPlacingBarId(unplaced.id)
+                        }}
+                        className="mt-1.5 w-full px-3 py-1.5 text-xs rounded-lg bg-cyan-700 hover:bg-cyan-600 text-white font-medium transition-colors"
+                      >
+                        Place Next Unplaced Bar ({allDisplayBars.length - placedCount} remaining)
+                      </button>
+                    )}
+                    {placedCount === allDisplayBars.length && allDisplayBars.length > 0 && (
+                      <p className="mt-1.5 text-[10px] text-green-400 text-center">All bars placed on drawing</p>
+                    )}
                   </div>
                 )}
 
@@ -722,7 +739,7 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
                           className={`flex-1 text-left px-2 py-2 text-xs rounded-lg flex items-center gap-2 transition-all ${
                             isCurrentlyPlacing ? 'bg-cyan-600/30 ring-1 ring-cyan-500 text-cyan-200 animate-pulse' :
                             isActive ? 'bg-blue-600/20 ring-1 ring-blue-500 text-blue-200 shadow-lg shadow-blue-500/20' :
-                            placed ? 'bg-slate-800/80 hover:bg-slate-700/80' : 'bg-slate-800/30 hover:bg-slate-700/50 opacity-60'
+                            placed ? 'bg-slate-800/80 hover:bg-slate-700/80' : 'bg-slate-800/50 hover:bg-cyan-900/30 border border-dashed border-slate-700'
                           }`}
                         >
                           {/* Diameter color dot */}
@@ -748,11 +765,11 @@ export function MarkedDrawingClient({ barMarks, pageImages, drawings, defaultDra
                           </div>
 
                           {placed ? (
-                            <span className="text-green-500 text-xs shrink-0">&#9679;</span>
+                            <span className="text-green-500 text-xs shrink-0" title="Placed on drawing">&#9679;</span>
                           ) : isCurrentlyPlacing ? (
-                            <span className="text-cyan-400 text-[10px] shrink-0">click drawing</span>
+                            <span className="text-cyan-400 text-[10px] shrink-0 font-semibold">click drawing</span>
                           ) : (
-                            <span className="text-[10px] text-slate-600 shrink-0">&#9768;</span>
+                            <span className="text-cyan-600 text-[10px] shrink-0 font-medium">Place</span>
                           )}
                         </button>
                         {placed && (
