@@ -60,6 +60,7 @@ interface DebugState {
   ocrChars: number
   ocrConfidence: number
   ocrPreview: string
+  ocrPreviewImage: string | null
   calloutCount: number
   usedOCR: boolean
   matchedLines: MatchedLine[]
@@ -117,16 +118,18 @@ function elementToEditable(
 // ─── Image pipeline ────────────────────────────────────────────────────────────
 
 // Render PDF page to canvas at high resolution
-// Caps dimensions to 8192px per side to avoid browser canvas limits
+// Caps dimensions to 16384px per side (Chrome/Firefox limit) to avoid browser canvas limits
 async function renderPageToCanvas(
   pdfPage: Awaited<ReturnType<import('pdfjs-dist').PDFDocumentProxy['getPage']>>,
   scale = 4.0
 ): Promise<HTMLCanvasElement> {
-  const MAX_DIM = 8192
+  const MAX_DIM = 16384
   let viewport = pdfPage.getViewport({ scale })
+  let actualScale = scale
   if (viewport.width > MAX_DIM || viewport.height > MAX_DIM) {
     const downscale = Math.min(MAX_DIM / viewport.width, MAX_DIM / viewport.height)
-    viewport = pdfPage.getViewport({ scale: scale * downscale })
+    actualScale = scale * downscale
+    viewport = pdfPage.getViewport({ scale: actualScale })
   }
   const canvas = document.createElement('canvas')
   canvas.width = Math.floor(viewport.width)
@@ -149,8 +152,33 @@ async function renderPageToCanvas(
   return canvas
 }
 
-// Grayscale + contrast boost to improve OCR on engineering drawings
-// Converts to grayscale, stretches contrast, applies mild sharpening
+// Otsu's method: compute optimal threshold that minimizes intra-class variance
+function otsuThreshold(histogram: number[], total: number): number {
+  let sum = 0
+  for (let i = 0; i < 256; i++) sum += i * histogram[i]
+
+  let sumB = 0, wB = 0, wF: number
+  let maxVariance = 0, threshold = 128
+
+  for (let t = 0; t < 256; t++) {
+    wB += histogram[t]
+    if (wB === 0) continue
+    wF = total - wB
+    if (wF === 0) break
+    sumB += t * histogram[t]
+    const meanB = sumB / wB
+    const meanF = (sum - sumB) / wF
+    const variance = wB * wF * (meanB - meanF) * (meanB - meanF)
+    if (variance > maxVariance) {
+      maxVariance = variance
+      threshold = t
+    }
+  }
+  return threshold
+}
+
+// Improved OCR preprocessing: grayscale → Otsu binarization → invert if needed
+// Produces clean black text on white background, optimal for Tesseract
 function preprocessForOCR(src: HTMLCanvasElement): HTMLCanvasElement {
   const dst = document.createElement('canvas')
   dst.width = src.width
@@ -160,27 +188,36 @@ function preprocessForOCR(src: HTMLCanvasElement): HTMLCanvasElement {
   ctx.drawImage(src, 0, 0)
   const img = ctx.getImageData(0, 0, dst.width, dst.height)
   const d = img.data
+  const pixelCount = d.length / 4
 
-  // Find luminance range for contrast stretching
-  let minL = 255, maxL = 0
-  for (let i = 0; i < d.length; i += 4) {
-    const l = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2]
-    if (l < minL) minL = l
-    if (l > maxL) maxL = l
+  // Step 1: Convert to grayscale luminance
+  const lum = new Uint8Array(pixelCount)
+  for (let i = 0; i < pixelCount; i++) {
+    const off = i * 4
+    lum[i] = Math.round(0.299 * d[off] + 0.587 * d[off + 1] + 0.114 * d[off + 2])
   }
-  const range = Math.max(maxL - minL, 1)
 
-  for (let i = 0; i < d.length; i += 4) {
-    // Grayscale luminance
-    const l = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2]
-    // Stretch contrast to full 0–255 range, then apply gamma to darken text
-    const stretched = Math.min(255, Math.max(0, ((l - minL) / range) * 255))
-    // Binarise-friendly: push midtones toward white/black (S-curve)
-    const g = stretched < 128
-      ? Math.max(0, stretched * 0.75)           // darken dark pixels (ink)
-      : Math.min(255, 255 - (255 - stretched) * 0.4) // lighten light pixels (paper)
-    d[i] = d[i+1] = d[i+2] = g
-    // alpha unchanged
+  // Step 2: Build histogram for Otsu
+  const histogram = new Array<number>(256).fill(0)
+  for (let i = 0; i < pixelCount; i++) histogram[lum[i]]++
+
+  // Step 3: Compute Otsu threshold
+  const thresh = otsuThreshold(histogram, pixelCount)
+
+  // Step 4: Binarize — anything below threshold → black (0), above → white (255)
+  let blackCount = 0
+  for (let i = 0; i < pixelCount; i++) {
+    const v = lum[i] <= thresh ? 0 : 255
+    if (v === 0) blackCount++
+    const off = i * 4
+    d[off] = d[off + 1] = d[off + 2] = v
+  }
+
+  // Step 5: If more than 50% black, drawing has dark background — invert
+  if (blackCount > pixelCount * 0.5) {
+    for (let i = 0; i < d.length; i += 4) {
+      d[i] = d[i + 1] = d[i + 2] = d[i] === 0 ? 255 : 0
+    }
   }
 
   ctx.putImageData(img, 0, 0)
@@ -208,7 +245,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
   } | null>(null)
   const [debug, setDebug] = useState<DebugState>({
     lines: [], pdfChars: 0, ocrChars: 0, ocrConfidence: 0,
-    ocrPreview: '', calloutCount: 0, usedOCR: false, matchedLines: [],
+    ocrPreview: '', ocrPreviewImage: null, calloutCount: 0, usedOCR: false, matchedLines: [],
   })
   const [confidenceThreshold, setConfidenceThreshold] = useState(60)
   const [pageRenders, setPageRenders] = useState<PageRender[]>([])
@@ -224,7 +261,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
   }
 
   async function extractPDFClientSide(signedUrl: string): Promise<{ elements: DetectedElement[]; bboxMap: Map<string, BboxEntry[]> }> {
-    setDebug({ lines: [], pdfChars: 0, ocrChars: 0, ocrConfidence: 0, ocrPreview: '', calloutCount: 0, usedOCR: false, matchedLines: [] })
+    setDebug({ lines: [], pdfChars: 0, ocrChars: 0, ocrConfidence: 0, ocrPreview: '', ocrPreviewImage: null, calloutCount: 0, usedOCR: false, matchedLines: [] })
     setPageRenders([])
     setAnnotatedCallouts([])
     setActiveRaw(null)
@@ -450,7 +487,8 @@ export function ExtractClient({ projectId, drawings }: Props) {
         dbg('Native text found but 0 rebar regex matches — falling through to OCR')
       }
     } else {
-      dbg('No native text layer detected — switching to OCR')
+      dbg('No native text layer (0 chars) — this PDF likely uses SHX/vector fonts (common in AutoCAD/Revit exports)')
+      dbg('Falling back to OCR on rendered image…')
     }
 
     // ── Step 2: OCR fallback via Tesseract.js ──────────────────────────────
@@ -489,28 +527,76 @@ export function ExtractClient({ projectId, drawings }: Props) {
     type TLine = { text: string; bbox: { x0: number; y0: number; x1: number; y1: number } }
 
     for (let p = 1; p <= pdf.numPages; p++) {
-      dbg(`Rendering page ${p} at 4× scale…`)
       const page = await pdf.getPage(p)
+      const baseViewport = page.getViewport({ scale: 1.0 })
+      const basePtW = baseViewport.width   // PDF points (1pt = 1/72 inch)
+      const basePtH = baseViewport.height
+      const pageWidthInches = basePtW / 72
+      const pageHeightInches = basePtH / 72
 
-      // 4× scale ≈ 300 dpi for A1 drawing
-      const rawCanvas = await renderPageToCanvas(page, 4.0)
+      // Target 300 DPI for OCR — compute scale needed
+      const targetDPI = 300
+      const scaleForDPI = targetDPI * Math.max(pageWidthInches, pageHeightInches) > 16384
+        ? 16384 / Math.max(basePtW, basePtH) // cap to 16384px max dim
+        : (targetDPI / 72)                     // normal: 300/72 ≈ 4.17
+      const effectiveDPI = Math.round(scaleForDPI * 72)
+      dbg(`Rendering page ${p}: ${pageWidthInches.toFixed(1)}×${pageHeightInches.toFixed(1)} in, scale=${scaleForDPI.toFixed(2)}×, effective ${effectiveDPI} DPI`)
+
+      const rawCanvas = await renderPageToCanvas(page, scaleForDPI)
       dbg(`  canvas: ${rawCanvas.width}×${rawCanvas.height}px`)
 
-      // Grayscale + contrast stretch
-      const processedCanvas = preprocessForOCR(rawCanvas)
-      dbg(`  preprocessing done — running OCR…`)
-
-      const recognizeResult = await worker.recognize(processedCanvas)
-      const data = recognizeResult.data
-      dbg(`  OCR result: ${(data.text ?? '').length} chars, confidence=${data.confidence ?? 'null'}, blocks=${(data as { blocks?: unknown[] }).blocks?.length ?? 0}`)
-
-      // Store page render for annotated drawing overlay
+      // Store the COLOR render for annotated drawing overlay
       localPageRenders.push({
         page: p,
-        dataUrl: processedCanvas.toDataURL('image/jpeg', 0.82),
-        width: processedCanvas.width,
-        height: processedCanvas.height,
+        dataUrl: rawCanvas.toDataURL('image/jpeg', 0.82),
+        width: rawCanvas.width,
+        height: rawCanvas.height,
       })
+
+      // Binarize for OCR — black text on white background
+      const processedCanvas = preprocessForOCR(rawCanvas)
+      dbg(`  Otsu binarization done — sending to Tesseract…`)
+
+      // Save a small crop of the processed image for debug display
+      const debugCropW = Math.min(800, processedCanvas.width)
+      const debugCropH = Math.min(400, processedCanvas.height)
+      const debugCanvas = document.createElement('canvas')
+      debugCanvas.width = debugCropW
+      debugCanvas.height = debugCropH
+      const debugCtx = debugCanvas.getContext('2d')!
+      // Crop from center-ish area where annotations are likely
+      const srcX = Math.floor((processedCanvas.width - debugCropW) / 2)
+      const srcY = Math.floor(processedCanvas.height * 0.3)
+      debugCtx.drawImage(processedCanvas, srcX, srcY, debugCropW, debugCropH, 0, 0, debugCropW, debugCropH)
+      setDebug(d => ({ ...d, ocrPreviewImage: debugCanvas.toDataURL('image/png') }))
+      dbg(`  Debug crop: ${debugCropW}×${debugCropH}px from (${srcX},${srcY})`)
+
+      let recognizeResult = await worker.recognize(processedCanvas)
+      let data = recognizeResult.data
+      dbg(`  PSM 11 (sparse): ${(data.text ?? '').length} chars, confidence=${(data.confidence ?? 0).toFixed(0)}%, blocks=${(data as { blocks?: unknown[] }).blocks?.length ?? 0}`)
+
+      // If sparse mode gives very low confidence, try automatic page segmentation
+      if ((data.confidence ?? 0) < 40 || (data.text ?? '').length < 100) {
+        dbg(`  Low confidence — retrying with PSM 3 (auto page segmentation)…`)
+        await worker.setParameters({
+          tessedit_pageseg_mode: '3' as Parameters<typeof worker.setParameters>[0]['tessedit_pageseg_mode'],
+        })
+        const retryResult = await worker.recognize(processedCanvas)
+        const retryData = retryResult.data
+        dbg(`  PSM 3 (auto): ${(retryData.text ?? '').length} chars, confidence=${(retryData.confidence ?? 0).toFixed(0)}%`)
+
+        // Use whichever gave better results
+        if ((retryData.confidence ?? 0) > (data.confidence ?? 0) || (retryData.text ?? '').length > (data.text ?? '').length * 1.5) {
+          dbg(`  → Using PSM 3 result (better confidence/text)`)
+          data = retryData
+        } else {
+          dbg(`  → Keeping PSM 11 result`)
+        }
+        // Reset to PSM 11 for next page
+        await worker.setParameters({
+          tessedit_pageseg_mode: '11' as Parameters<typeof worker.setParameters>[0]['tessedit_pageseg_mode'],
+        })
+      }
 
       const rawOCR = data.text ?? ''
       const ocrText = normalizeOCRText(rawOCR)
@@ -1084,14 +1170,17 @@ export function ExtractClient({ projectId, drawings }: Props) {
               </details>
             )}
 
-            {/* OCR output preview */}
-            {debug.usedOCR && debug.ocrPreview && (
-              <div>
-                <p className="text-xs text-slate-500 mb-1">OCR output — first 500 chars (normalized):</p>
-                <pre className="p-3 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300 whitespace-pre-wrap max-h-32 overflow-y-auto font-mono">
-                  {debug.ocrPreview}
-                </pre>
-              </div>
+            {/* OCR processed image preview */}
+            {debug.ocrPreviewImage && (
+              <details className="text-xs">
+                <summary className="cursor-pointer text-slate-400 hover:text-slate-200 py-1">
+                  OCR input image (binarized crop — what Tesseract sees)
+                </summary>
+                <div className="p-2 bg-slate-900 border border-slate-700 rounded-lg">
+                  <img src={debug.ocrPreviewImage} alt="OCR preprocessed input" className="max-w-full border border-slate-600 rounded" />
+                  <p className="text-slate-500 mt-1">If text is illegible here, it will be illegible to OCR.</p>
+                </div>
+              </details>
             )}
 
             {/* Side-by-side matched lines */}
