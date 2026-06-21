@@ -1,9 +1,10 @@
 'use client'
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import * as XLSX from 'xlsx'
-import { GripVertical, Clipboard, Plus, Layers, Undo2, Redo2, Download, Upload, ClipboardPaste, ChevronDown, ChevronRight, ChevronUp, Copy, Trash2, Pencil } from 'lucide-react'
+import { GripVertical, Clipboard, Plus, Layers, Undo2, Redo2, Download, Upload, ClipboardPaste, ChevronDown, ChevronRight, ChevronUp, Copy, Trash2, Pencil, Save, FolderOpen } from 'lucide-react'
 import { updateBOQItem, createBOQItem, deleteBOQItem, bulkCreateBOQItems } from '@/app/actions/boq-spreadsheet'
 import ExcelImportModal from '@/components/boq/excel-import-modal'
+import { SaveTemplateModal, LoadTemplateModal } from '@/components/boq/template-modal'
 import { useTranslation } from '@/lib/i18n/use-translation'
 
 interface BOQItem {
@@ -211,6 +212,8 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
   const [rowError, setRowError] = useState<string | null>(null)
   const [showImportModal, setShowImportModal] = useState(false)
   const [showPasteModal, setShowPasteModal] = useState(false)
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false)
+  const [showLoadTemplate, setShowLoadTemplate] = useState(false)
   const [pasteText, setPasteText] = useState('')
   const [pastePreview, setPastePreview] = useState<Partial<BOQItem>[]>([])
 
@@ -969,6 +972,18 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
           </button>
         </div>
 
+        <div className="w-px h-6 bg-slate-200 mx-1" />
+
+        {/* Templates */}
+        <div className="flex items-center gap-1">
+          <button onClick={() => setShowSaveTemplate(true)} className="px-3 py-1.5 text-xs font-medium text-slate-600 rounded-lg hover:bg-slate-100 flex items-center gap-1.5">
+            <Save size={13} /> {t('save_template', 'Save Template')}
+          </button>
+          <button onClick={() => setShowLoadTemplate(true)} className="px-3 py-1.5 text-xs font-medium text-slate-600 rounded-lg hover:bg-slate-100 flex items-center gap-1.5">
+            <FolderOpen size={13} /> {t('load_template', 'Load Template')}
+          </button>
+        </div>
+
         {/* Right side: save status + item count */}
         <div className="ml-auto flex items-center gap-3 text-xs">
           <span className="text-slate-400">{sortedItems.filter(i => !i.is_section_header).length} items</span>
@@ -1336,6 +1351,20 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
           onImported={() => window.location.reload()}
         />
       )}
+
+      <SaveTemplateModal
+        isOpen={showSaveTemplate}
+        onClose={() => setShowSaveTemplate(false)}
+        projectId={projectId}
+        projectName={projectName}
+      />
+
+      <LoadTemplateModal
+        isOpen={showLoadTemplate}
+        onClose={() => setShowLoadTemplate(false)}
+        projectId={projectId}
+        onLoaded={() => window.location.reload()}
+      />
     </div>
   )
 }
