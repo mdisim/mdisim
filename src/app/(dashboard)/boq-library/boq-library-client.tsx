@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import { addLibraryItem, deleteLibraryItem } from '@/app/actions/boq-library'
-import { Plus, Search, Trash2, Globe, Building2 } from 'lucide-react'
+import { Plus, Search, Trash2, Globe, Building2, FileText } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n/use-translation'
 
@@ -113,7 +113,7 @@ export function BOQLibraryClient({ items }: Props) {
   return (
     <div>
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 mb-4">
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-md flex flex-wrap gap-4 mb-4">
         <div className="relative flex-1 min-w-48">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -121,13 +121,13 @@ export function BOQLibraryClient({ items }: Props) {
             placeholder={t('search', 'Search') + ' EN / עברית / عربي...'}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-4 py-2 w-full border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="pl-9 pr-4 py-2 w-full border border-slate-200 rounded-xl shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">{t('filter', 'Filter')}: {t('category', 'Category')}</option>
           {categories.map((c) => (
@@ -137,7 +137,7 @@ export function BOQLibraryClient({ items }: Props) {
         <select
           value={sectionFilter}
           onChange={(e) => setSectionFilter(e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">{t('filter', 'Filter')}: Section</option>
           {sections.map((s) => (
@@ -151,25 +151,28 @@ export function BOQLibraryClient({ items }: Props) {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="hidden md:block bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600">{t('item_code', 'Code')}</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600">{t('item_description', 'Description')}</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600">{t('unit', 'Unit')}</th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-600">{t('unit_rate', 'Rate')} ₪</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600">{t('category', 'Category')}</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600">Section</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600">Source</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('item_code', 'Code')}</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('item_description', 'Description')}</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('unit', 'Unit')}</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('unit_rate', 'Rate')} ₪</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('category', 'Category')}</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Section</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Source</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
-                  {items.length === 0 ? t('no_data', 'No library items yet.') : t('no_data', 'No items match your filters.')}
+                <td colSpan={8} className="px-4 py-12 text-center">
+                  <div className="flex flex-col items-center">
+                    <FileText size={40} className="text-slate-300 mb-3" />
+                    <span className="text-base font-medium text-slate-500">{items.length === 0 ? t('no_data', 'No library items yet.') : t('no_data', 'No items match your filters.')}</span>
+                  </div>
                 </td>
               </tr>
             ) : (
@@ -177,8 +180,8 @@ export function BOQLibraryClient({ items }: Props) {
                 const { primary, secondary, arabic } = getDesc(item)
                 const displayRate = item.typical_rate_ils ?? item.unit_rate
                 return (
-                  <tr key={item.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 font-mono text-xs text-slate-600">{item.item_code}</td>
+                  <tr key={item.id} className="hover:bg-blue-50/40">
+                    <td className="px-4 py-3 font-mono text-xs text-blue-600">{item.item_code}</td>
                     <td className="px-4 py-3">
                       <div className="text-slate-900">{primary}</div>
                       {secondary && secondary !== primary && (
@@ -189,12 +192,12 @@ export function BOQLibraryClient({ items }: Props) {
                       )}
                     </td>
                     <td className="px-4 py-3 text-slate-600">{item.unit}</td>
-                    <td className="px-4 py-3 text-right font-medium text-slate-900">
+                    <td className="px-4 py-3 text-right tabular-nums font-semibold text-slate-900">
                       {displayRate != null ? `₪${Number(displayRate).toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
                     </td>
                     <td className="px-4 py-3">
                       {item.category && (
-                        <span className="px-2 py-0.5 bg-slate-100 rounded-full text-xs text-slate-600">{item.category}</span>
+                        <span className="bg-blue-50 text-blue-700 rounded-lg px-2.5 py-1 text-xs">{item.category}</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -217,7 +220,7 @@ export function BOQLibraryClient({ items }: Props) {
                       {!item.is_global && (
                         <button
                           onClick={() => handleDelete(item.id)}
-                          className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                          className="p-1 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                           title={t('delete', 'Delete')}
                         >
                           <Trash2 size={14} />
@@ -231,10 +234,43 @@ export function BOQLibraryClient({ items }: Props) {
           </tbody>
         </table>
         {filtered.length > 0 && (
-          <div className="px-4 py-2 border-t border-slate-100 bg-slate-50 text-xs text-slate-500">
+          <div className="px-4 py-2 border-t border-slate-200 bg-slate-50/80 text-xs text-slate-500">
             {filtered.length} / {items.length}
           </div>
         )}
+      </div>
+
+      {/* Mobile card view */}
+      <div className="md:hidden space-y-3">
+        {filtered.map(item => {
+          const { primary } = getDesc(item)
+          const displayRate = item.typical_rate_ils ?? item.unit_rate
+          return (
+            <div key={item.id} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-mono text-xs text-blue-600">{item.item_code}</span>
+                {item.is_global ? (
+                  <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-medium"><Globe size={12} /> Netivei</span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-xs text-slate-500"><Building2 size={12} /> Company</span>
+                )}
+              </div>
+              <p className="text-sm font-medium text-slate-800 mb-3">{primary}</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs bg-slate-100 px-2 py-0.5 rounded-lg text-slate-500">{item.unit}</span>
+                  {item.category && <span className="text-xs bg-blue-50 px-2 py-0.5 rounded-lg text-blue-700">{item.category}</span>}
+                </div>
+                <span className="text-sm font-bold text-slate-800 tabular-nums">₪{displayRate != null ? Number(displayRate).toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'}</span>
+              </div>
+              {!item.is_global && (
+                <button onClick={() => handleDelete(item.id)} className="mt-3 w-full py-2 text-xs text-red-600 hover:bg-red-50 rounded-xl border border-red-200 font-medium transition-colors">
+                  Delete
+                </button>
+              )}
+            </div>
+          )
+        })}
       </div>
 
       {/* Add Modal */}
@@ -243,30 +279,30 @@ export function BOQLibraryClient({ items }: Props) {
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">{t('item_code', 'Item Code')} *</label>
-              <input name="item_code" required className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <label className="block text-sm font-semibold text-slate-700 mb-1">{t('item_code', 'Item Code')} *</label>
+              <input name="item_code" required className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">{t('unit', 'Unit')} *</label>
-              <input name="unit" required className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <label className="block text-sm font-semibold text-slate-700 mb-1">{t('unit', 'Unit')} *</label>
+              <input name="unit" required className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">{t('item_description', 'Description')} *</label>
-            <input name="description" required className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <label className="block text-sm font-semibold text-slate-700 mb-1">{t('item_description', 'Description')} *</label>
+            <input name="description" required className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">{t('unit_rate', 'Unit Rate')} (₪)</label>
-              <input name="unit_rate" type="number" step="0.01" min="0" defaultValue="0" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <label className="block text-sm font-semibold text-slate-700 mb-1">{t('unit_rate', 'Unit Rate')} (₪)</label>
+              <input name="unit_rate" type="number" step="0.01" min="0" defaultValue="0" className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">{t('category', 'Category')}</label>
-              <input name="category" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <label className="block text-sm font-semibold text-slate-700 mb-1">{t('category', 'Category')}</label>
+              <input name="category" className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Trade</label>
-              <input name="trade" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Trade</label>
+              <input name="trade" className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">

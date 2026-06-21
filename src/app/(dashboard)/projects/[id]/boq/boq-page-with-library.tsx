@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { ChevronRight, ChevronLeft, X, BookOpen } from 'lucide-react'
 import BOQSpreadsheet from './boq-spreadsheet'
 import { LibraryPanel } from '@/components/boq/library-panel'
 import type { LibraryItem } from '@/components/boq/library-panel'
@@ -35,6 +36,7 @@ const DEFAULT_PANEL_WIDTH = 320
 export default function BOQPageWithLibrary({ projectId, projectName, initialItems, libraryItems }: Props) {
   const [panelVisible, setPanelVisible] = useState(true)
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH)
+  const [mobileLibraryOpen, setMobileLibraryOpen] = useState(false)
   const resizing = useRef(false)
   const startX = useRef(0)
   const startWidth = useRef(DEFAULT_PANEL_WIDTH)
@@ -93,17 +95,7 @@ export default function BOQPageWithLibrary({ projectId, projectName, initialItem
   }
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Toggle button */}
-      <div className="flex justify-end mb-2">
-        <button
-          onClick={togglePanel}
-          className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition-colors"
-        >
-          {panelVisible ? 'Hide Library' : 'Show Library'}
-        </button>
-      </div>
-
+    <div className="flex flex-col h-full min-h-0">
       {/* Split pane */}
       <div className="flex flex-1 min-h-0 gap-0 overflow-hidden">
         {/* BOQ Spreadsheet */}
@@ -116,16 +108,14 @@ export default function BOQPageWithLibrary({ projectId, projectName, initialItem
           />
         </div>
 
+        {/* Desktop library panel */}
         {panelVisible && (
           <>
-            {/* Resize handle */}
             <div
               onMouseDown={handleResizeMouseDown}
-              className="w-1 cursor-col-resize bg-slate-200 hover:bg-amber-400 transition-colors shrink-0 select-none"
+              className="w-1.5 cursor-col-resize bg-slate-200 hover:bg-blue-400 transition-colors shrink-0 select-none hidden md:block"
             />
-
-            {/* Library panel */}
-            <div style={{ width: panelWidth }} className="shrink-0 min-h-0 overflow-hidden flex flex-col">
+            <div style={{ width: panelWidth }} className="shrink-0 min-h-0 overflow-hidden flex-col hidden md:flex border-l border-slate-200">
               <LibraryPanel
                 projectId={projectId}
                 items={libraryItems}
@@ -135,6 +125,45 @@ export default function BOQPageWithLibrary({ projectId, projectName, initialItem
           </>
         )}
       </div>
+
+      {/* Desktop toggle button - fixed position on the right edge */}
+      <button
+        onClick={togglePanel}
+        className="hidden md:flex fixed right-0 top-1/2 -translate-y-1/2 z-30 bg-white border border-slate-200 border-r-0 rounded-l-lg px-1.5 py-3 shadow-md hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-colors"
+        title={panelVisible ? 'Hide Library' : 'Show Library'}
+      >
+        {panelVisible ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+      </button>
+
+      {/* Mobile library overlay */}
+      {mobileLibraryOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setMobileLibraryOpen(false)} />
+          <div className="absolute inset-y-0 right-0 w-[85vw] max-w-[400px] bg-white shadow-2xl">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+              <span className="text-sm font-bold text-slate-800">BOQ Library</span>
+              <button onClick={() => setMobileLibraryOpen(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="h-[calc(100%-52px)] overflow-hidden">
+              <LibraryPanel
+                projectId={projectId}
+                items={libraryItems}
+                onInsertItem={handleInsertItem}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile FAB to open library */}
+      <button
+        onClick={() => setMobileLibraryOpen(true)}
+        className="md:hidden fixed bottom-20 right-4 z-40 w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center"
+      >
+        <BookOpen size={20} />
+      </button>
     </div>
   )
 }

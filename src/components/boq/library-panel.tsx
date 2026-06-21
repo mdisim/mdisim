@@ -55,7 +55,7 @@ function ItemRow({
     <div
       draggable
       onDragStart={handleDragStart}
-      className="group flex items-center gap-1.5 px-2 py-2 rounded-md hover:bg-blue-50/50 cursor-grab active:cursor-grabbing text-sm border border-transparent hover:border-blue-100 transition-colors"
+      className="group flex items-center gap-1.5 px-2 py-2 rounded-lg hover:bg-blue-50/60 cursor-grab active:cursor-grabbing text-sm border border-transparent hover:border-blue-100 transition-colors"
     >
       <GripVertical size={12} className="text-slate-300 shrink-0 group-hover:text-slate-400" />
       <button
@@ -71,7 +71,7 @@ function ItemRow({
       <span className="shrink-0 text-slate-600 text-xs font-medium min-w-[48px] text-right tabular-nums">{'₪'}{rate}</span>
       <button
         onClick={() => onInsert(item)}
-        className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ml-1 p-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white"
+        className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ml-1 w-6 h-6 flex items-center justify-center rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
         title="Add to BOQ"
       >
         <Plus size={10} />
@@ -97,9 +97,9 @@ function CategoryGroup({ category, items, favorites, onToggleFavorite, onInsert 
         onClick={() => setExpanded(p => !p)}
         className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wide hover:text-slate-700 hover:bg-slate-50 rounded-md transition-colors"
       >
-        {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        {expanded ? <ChevronDown size={12} className="text-slate-400" /> : <ChevronRight size={12} className="text-slate-400" />}
         {category || 'Uncategorized'}
-        <span className="ml-auto font-normal text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full text-[10px]">{items.length}</span>
+        <span className="ml-auto font-normal text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full text-[10px]">{items.length}</span>
       </button>
       {expanded && (
         <div className="ml-1">
@@ -190,8 +190,8 @@ export function LibraryPanel({ projectId: _projectId, items, onInsertItem }: Lib
   return (
     <div className="flex flex-col h-full overflow-hidden bg-white border-l border-slate-200">
       {/* Header */}
-      <div className="shrink-0 px-3 py-3 border-b border-slate-200 bg-slate-50/50">
-        <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">BOQ Library</div>
+      <div className="shrink-0 px-3 py-3 border-b border-slate-200 bg-slate-50/80 backdrop-blur-sm">
+        <div className="text-sm font-bold text-slate-800 mb-2">BOQ Library</div>
         {/* Search */}
         <div className="relative">
           <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -200,7 +200,7 @@ export function LibraryPanel({ projectId: _projectId, items, onInsertItem }: Lib
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search items..."
-            className="w-full pl-8 pr-3 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-shadow"
+            className="w-full pl-8 pr-3 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm placeholder:text-slate-400 transition-shadow"
           />
         </div>
         {/* Category filter pills */}
@@ -268,7 +268,7 @@ export function LibraryPanel({ projectId: _projectId, items, onInsertItem }: Lib
 
       {/* Footer */}
       <div className="shrink-0 px-3 py-2 border-t border-slate-200 bg-slate-50/50 text-xs text-slate-400">
-        {filtered.length} of {items.length} items · Drag to BOQ
+        {filtered.length} of {items.length} items · {'₪'}{filtered.reduce((sum, item) => sum + (item.typical_rate_ils ?? item.unit_rate ?? 0), 0).toLocaleString()} total · Drag to BOQ
       </div>
     </div>
   )

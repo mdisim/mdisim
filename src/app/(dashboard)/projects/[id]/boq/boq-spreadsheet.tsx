@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import * as XLSX from 'xlsx'
-import { GripVertical, Clipboard } from 'lucide-react'
+import { GripVertical, Clipboard, Plus, Layers, Undo2, Redo2, Download, Upload, ClipboardPaste, ChevronDown, ChevronRight, ChevronUp, Copy, Trash2, Pencil } from 'lucide-react'
 import { updateBOQItem, createBOQItem, deleteBOQItem, bulkCreateBOQItems } from '@/app/actions/boq-spreadsheet'
 import ExcelImportModal from '@/components/boq/excel-import-modal'
 import { useTranslation } from '@/lib/i18n/use-translation'
@@ -171,25 +171,25 @@ function BOQContextMenu({
 
   return (
     <div
-      className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px] text-sm"
+      className="fixed z-50 bg-white border border-slate-200 rounded-xl shadow-xl py-1.5 min-w-[180px] text-sm"
       style={{ top: menu.y, left: menu.x }}
       onClick={e => e.stopPropagation()}
     >
-      <button onClick={onEdit} className="w-full text-left px-3 py-1.5 hover:bg-gray-50 flex items-center gap-2">
-        ✏️ Edit
+      <button onClick={onEdit} className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-2.5 text-slate-700">
+        <Pencil size={14} /> Edit
       </button>
-      <button onClick={onDuplicate} className="w-full text-left px-3 py-1.5 hover:bg-gray-50 flex items-center gap-2">
-        ⧉ Duplicate
+      <button onClick={onDuplicate} className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-2.5 text-slate-700">
+        <Copy size={14} /> Duplicate
       </button>
-      <button onClick={onInsertAbove} className="w-full text-left px-3 py-1.5 hover:bg-gray-50 flex items-center gap-2">
-        ➕ Insert Above
+      <button onClick={onInsertAbove} className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-2.5 text-slate-700">
+        <Plus size={14} /> Insert Above
       </button>
-      <button onClick={onInsertBelow} className="w-full text-left px-3 py-1.5 hover:bg-gray-50 flex items-center gap-2">
-        ➕ Insert Below
+      <button onClick={onInsertBelow} className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-2.5 text-slate-700">
+        <Plus size={14} /> Insert Below
       </button>
-      <div className="border-t border-gray-100 my-1" />
-      <button onClick={onDelete} className="w-full text-left px-3 py-1.5 hover:bg-red-50 text-red-600 flex items-center gap-2">
-        🗑️ Delete
+      <div className="border-t border-slate-100 my-1" />
+      <button onClick={onDelete} className="w-full text-left px-3 py-2 hover:bg-red-50 text-red-600 flex items-center gap-2.5">
+        <Trash2 size={14} /> Delete
       </button>
     </div>
   )
@@ -231,6 +231,9 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
 
   // Feature 6: Context menu
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
+
+  // Collapsible sections
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
 
   // Toast notification
   const [toast, setToast] = useState<string | null>(null)
@@ -811,6 +814,17 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
     window.location.reload()
   }
 
+  // ─── Collapsible sections ─────────────────────────────────────────────────
+
+  function toggleSection(sectionId: string) {
+    setCollapsedSections(prev => {
+      const next = new Set(prev)
+      if (next.has(sectionId)) next.delete(sectionId)
+      else next.add(sectionId)
+      return next
+    })
+  }
+
   // ─── Totals ────────────────────────────────────────────────────────────────
 
   const grandTotal = sortedItems.filter(i => !i.is_section_header).reduce((s, i) => s + (i.total_amount ?? 0), 0)
@@ -856,7 +870,7 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
           onBlur={() => void commitEdit(item.id, field, editValue)}
           onKeyDown={e => handleKeyDown(e, item.id, field)}
           placeholder={placeholder}
-          className={`w-full border border-blue-400 rounded px-1 py-0 text-sm outline-none bg-blue-50 ${className}`}
+          className={`w-full border border-blue-500 rounded-md px-1 py-0 text-sm outline-none ring-2 ring-blue-500/20 bg-white ${className}`}
         />
       )
     }
@@ -879,7 +893,7 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
           value={editValue}
           onChange={e => { setEditValue(e.target.value); void commitEdit(item.id, 'unit', e.target.value) }}
           onBlur={() => void commitEdit(item.id, 'unit', editValue)}
-          className="w-full border border-blue-400 rounded px-1 py-0 text-sm outline-none bg-blue-50"
+          className="w-full border border-blue-500 rounded-md px-1 py-0 text-sm outline-none ring-2 ring-blue-500/20 bg-white"
         >
           {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
         </select>
@@ -901,55 +915,65 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
     <div className="flex flex-col h-full" onClick={() => setSelectedRows(new Set())}>
       {/* Toast notification */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-gray-900 text-white text-sm px-4 py-2 rounded-lg shadow-lg pointer-events-none">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-[#0F172A] text-white text-sm shadow-xl rounded-xl px-5 py-2.5 pointer-events-none">
           {toast}
         </div>
       )}
       {/* Main toolbar */}
-      <div className="flex items-center gap-2 mb-2 flex-wrap">
-        <button onClick={() => void addRow(false)} className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 flex items-center gap-1">
-          + {t('add_row', 'Add Row')}
-        </button>
-        <button onClick={() => void addRow(true)} className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 flex items-center gap-1">
-          + {t('add_section', 'Add Section')}
-        </button>
-        <div className="h-4 w-px bg-gray-300 mx-1" />
-        <button
-          onClick={() => void undo()}
-          disabled={historyIndex < 0}
-          title="Ctrl+Z"
-          className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
-        >
-          ↩ Undo <span className="text-xs text-gray-400">(Ctrl+Z)</span>
-        </button>
-        <button
-          onClick={() => void redo()}
-          disabled={historyIndex >= history.length - 1}
-          title="Ctrl+Y"
-          className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
-        >
-          ↪ Redo <span className="text-xs text-gray-400">(Ctrl+Y)</span>
-        </button>
-        <div className="h-4 w-px bg-gray-300 mx-1" />
-        <button onClick={() => exportToExcel(sortedItems.filter(i => !i.is_section_header), projectName)} className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">
-          {t('export_excel', 'Export Excel')}
-        </button>
-        <button onClick={() => setShowImportModal(true)} className="px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700">
-          {t('import_excel', 'Import Excel')}
-        </button>
-        <button onClick={() => setShowPasteModal(true)} className="px-3 py-1.5 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700">
-          {t('paste_excel', 'Paste from Excel')}
-        </button>
-        <button
-          onClick={() => void handlePasteRows()}
-          title="Paste rows (Ctrl+V)"
-          className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 flex items-center gap-1"
-        >
-          <Clipboard size={14} /> Paste <span className="text-xs text-gray-400">(Ctrl+V)</span>
-        </button>
-        <div className="ml-auto flex items-center gap-3 text-sm">
-          {rowError && <span className="text-red-600 font-medium text-xs bg-red-50 border border-red-200 rounded px-2 py-1">{rowError}</span>}
-          {saveStatus === 'saving' && <span className="text-gray-500 animate-pulse">{t('saving', 'Saving...')}</span>}
+      <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1.5 mb-3 shadow-sm flex-wrap">
+        {/* Left group: Row actions */}
+        <div className="flex items-center gap-1">
+          <button onClick={() => void addRow(false)} className="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 flex items-center gap-1.5">
+            <Plus size={13} /> {t('add_row', 'Add Row')}
+          </button>
+          <button onClick={() => void addRow(true)} className="px-3 py-1.5 bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-200 flex items-center gap-1.5">
+            <Layers size={13} /> {t('add_section', 'Add Section')}
+          </button>
+        </div>
+
+        {/* Divider */}
+        <div className="w-px h-6 bg-slate-200 mx-1" />
+
+        {/* Undo/Redo */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => void undo()}
+            disabled={historyIndex < 0}
+            title="Undo (Ctrl+Z)"
+            className="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-30 text-slate-500"
+          >
+            <Undo2 size={15} />
+          </button>
+          <button
+            onClick={() => void redo()}
+            disabled={historyIndex >= history.length - 1}
+            title="Redo (Ctrl+Y)"
+            className="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-30 text-slate-500"
+          >
+            <Redo2 size={15} />
+          </button>
+        </div>
+
+        <div className="w-px h-6 bg-slate-200 mx-1" />
+
+        {/* Import/Export */}
+        <div className="flex items-center gap-1">
+          <button onClick={() => exportToExcel(sortedItems.filter(i => !i.is_section_header), projectName)} className="px-3 py-1.5 text-xs font-medium text-slate-600 rounded-lg hover:bg-slate-100 flex items-center gap-1.5">
+            <Download size={13} /> {t('export_excel', 'Export')}
+          </button>
+          <button onClick={() => setShowImportModal(true)} className="px-3 py-1.5 text-xs font-medium text-slate-600 rounded-lg hover:bg-slate-100 flex items-center gap-1.5">
+            <Upload size={13} /> {t('import_excel', 'Import')}
+          </button>
+          <button onClick={() => setShowPasteModal(true)} className="px-3 py-1.5 text-xs font-medium text-slate-600 rounded-lg hover:bg-slate-100 flex items-center gap-1.5">
+            <ClipboardPaste size={13} /> {t('paste_excel', 'Paste')}
+          </button>
+        </div>
+
+        {/* Right side: save status + item count */}
+        <div className="ml-auto flex items-center gap-3 text-xs">
+          <span className="text-slate-400">{sortedItems.filter(i => !i.is_section_header).length} items</span>
+          {rowError && <span className="text-red-600 font-medium bg-red-50 border border-red-200 rounded px-2 py-1">{rowError}</span>}
+          {saveStatus === 'saving' && <span className="text-slate-500 animate-pulse">{t('saving', 'Saving...')}</span>}
           {saveStatus === 'saved' && <span className="text-green-600 font-medium">{t('saved', 'Saved')} ✓</span>}
           {saveStatus === 'error' && <span className="text-red-600 font-medium">Error saving</span>}
         </div>
@@ -957,46 +981,53 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
 
       {/* Multi-row selection toolbar */}
       {selectedRows.size > 0 && (
-        <div className="flex items-center gap-3 mb-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center gap-3 mb-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-xl shadow-sm text-sm" onClick={e => e.stopPropagation()}>
           <span className="font-medium text-blue-800">{selectedRows.size} row{selectedRows.size > 1 ? 's' : ''} selected</span>
           {selectedRows.size >= 2 && (
-            <button onClick={() => void handleFillDown()} className="px-2 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs">Fill Down (Ctrl+D)</button>
+            <button onClick={() => void handleFillDown()} className="px-2 py-1 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs">Fill Down (Ctrl+D)</button>
           )}
-          <button onClick={handleCopyRows} className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs flex items-center gap-1">
-            <Clipboard size={12} /> Copy (Ctrl+C)
+          <button onClick={handleCopyRows} className="px-2 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs flex items-center gap-1">
+            <Copy size={12} /> Copy (Ctrl+C)
           </button>
-          <button onClick={() => void handlePasteRows()} className="px-2 py-1 bg-blue-100 text-blue-800 border border-blue-300 rounded hover:bg-blue-200 text-xs flex items-center gap-1">
-            <Clipboard size={12} /> Paste (Ctrl+V)
+          <button onClick={() => void handlePasteRows()} className="px-2 py-1 bg-blue-100 text-blue-800 border border-blue-300 rounded-lg hover:bg-blue-200 text-xs flex items-center gap-1">
+            <ClipboardPaste size={12} /> Paste (Ctrl+V)
           </button>
-          <button onClick={() => void deleteSelectedRows()} className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs">Delete Selected</button>
-          <button onClick={() => setSelectedRows(new Set())} className="px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-xs">Deselect</button>
+          <button onClick={() => void deleteSelectedRows()} className="px-2 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 text-xs">Delete Selected</button>
+          <button onClick={() => setSelectedRows(new Set())} className="px-2 py-1 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-xs">Deselect</button>
         </div>
       )}
 
-      <div className="overflow-auto border rounded-xl shadow-sm">
+      {/* Desktop table view */}
+      <div className="hidden md:block overflow-auto border border-slate-200 rounded-xl shadow-md">
         <table className="w-full border-collapse text-sm" style={{ minWidth: 900 }}>
-          <thead className="bg-gray-100 sticky top-0 z-10">
+          <thead className="bg-slate-50 sticky top-0 z-10">
             <tr className="border-b">
-              <th className="w-10 px-2 py-2 text-center text-xs font-semibold text-gray-500 sticky left-0 z-20 bg-gray-100">#</th>
-              <th className="w-24 px-2 py-2 text-left text-xs font-semibold text-gray-600 sticky left-10 z-20 bg-gray-100">{t('item_code', 'Item Code')}</th>
-              <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 sticky left-[6.5rem] z-20 bg-gray-100">{t('item_description', 'Description')}</th>
-              <th className="w-20 px-2 py-2 text-left text-xs font-semibold text-gray-600">{t('unit', 'Unit')}</th>
-              <th className="w-24 px-2 py-2 text-right text-xs font-semibold text-gray-600">{t('quantity', 'Quantity')}</th>
-              <th className="w-28 px-2 py-2 text-right text-xs font-semibold text-gray-600">{t('unit_rate', 'Unit Rate')} ₪</th>
-              <th className="w-28 px-2 py-2 text-right text-xs font-semibold text-green-700">{t('total_amount', 'Total')} ₪</th>
-              <th className="w-16 px-2 py-2 text-right text-xs font-semibold text-gray-600">{t('vat_pct', 'VAT %')}</th>
-              <th className="w-24 px-2 py-2 text-right text-xs font-semibold text-gray-600">{t('vat_amount', 'VAT')} ₪</th>
-              <th className="w-28 px-2 py-2 text-right text-xs font-semibold text-gray-800">{t('net_total', 'Net Total')} ₪</th>
-              <th className="w-20 px-2 py-2 text-center text-xs font-semibold text-gray-500">{t('actions', 'Actions')}</th>
+              <th className="w-10 px-2 py-2 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider sticky left-0 z-20 bg-slate-50">#</th>
+              <th className="w-24 px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider sticky left-10 z-20 bg-slate-50">{t('item_code', 'Item Code')}</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider sticky left-[6.5rem] z-20 bg-slate-50">{t('item_description', 'Description')}</th>
+              <th className="w-20 px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('unit', 'Unit')}</th>
+              <th className="w-24 px-2 py-2 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('quantity', 'Quantity')}</th>
+              <th className="w-28 px-2 py-2 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('unit_rate', 'Unit Rate')} ₪</th>
+              <th className="w-28 px-2 py-2 text-right text-xs font-semibold text-green-700 uppercase tracking-wider">{t('total_amount', 'Total')} ₪</th>
+              <th className="w-16 px-2 py-2 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('vat_pct', 'VAT %')}</th>
+              <th className="w-24 px-2 py-2 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('vat_amount', 'VAT')} ₪</th>
+              <th className="w-28 px-2 py-2 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('net_total', 'Net Total')} ₪</th>
+              <th className="w-20 px-2 py-2 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('actions', 'Actions')}</th>
             </tr>
           </thead>
           <tbody>
-            {sections.map((section) => (
+            {sections.map((section) => {
+              const sectionCollapsed = section.header ? collapsedSections.has(section.header.id) : false
+              return (
               <React.Fragment key={section.key}>
                 {section.header && (
-                  <tr className="bg-amber-100 border-b border-amber-200">
-                    <td className="px-2 py-1.5 text-center text-gray-400 text-xs sticky left-0 z-10 bg-amber-100">§</td>
-                    <td colSpan={8} className="px-2 py-1.5 sticky left-10 z-10 bg-amber-100">
+                  <tr className="bg-blue-50 border-b-2 border-blue-200">
+                    <td className="px-2 py-2 text-center sticky left-0 z-10 bg-blue-50">
+                      <button onClick={() => toggleSection(section.header!.id)} className="p-0.5 rounded hover:bg-blue-100">
+                        {sectionCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+                      </button>
+                    </td>
+                    <td colSpan={8} className="px-2 py-1.5 sticky left-10 z-10 bg-blue-50">
                       {editCell?.id === section.header.id && editCell?.field === 'description' ? (
                         <input
                           autoFocus
@@ -1004,28 +1035,34 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
                           onChange={e => setEditValue(e.target.value)}
                           onBlur={() => void commitEdit(section.header!.id, 'description', editValue)}
                           onKeyDown={e => handleKeyDown(e, section.header!.id, 'description')}
-                          className="w-full border border-amber-400 rounded px-2 py-0.5 font-semibold bg-amber-50 outline-none text-sm"
+                          className="w-full border border-blue-400 rounded-md px-2 py-0.5 font-bold bg-white outline-none text-sm ring-2 ring-blue-500/20"
                         />
                       ) : (
                         <span
                           onClick={() => startEdit(section.header!, 'description', section.header!.description ?? '')}
-                          className="block font-semibold text-amber-900 cursor-text hover:text-amber-700"
+                          className="block font-bold text-slate-800 cursor-text hover:text-slate-600"
                         >
                           {section.header.description || 'Section Header'}
                         </span>
                       )}
                     </td>
-                    <td className="px-2 py-1.5" />
-                    <td className="px-2 py-1.5 text-center">
+                    <td className="px-2 py-1.5 bg-blue-50" />
+                    <td className="px-2 py-1.5 text-center bg-blue-50">
                       <div className="flex items-center justify-center gap-1">
-                        <button onClick={() => void moveRow(section.header!.id, 'up')} className="text-gray-400 hover:text-gray-700 text-xs">▲</button>
-                        <button onClick={() => void moveRow(section.header!.id, 'down')} className="text-gray-400 hover:text-gray-700 text-xs">▼</button>
-                        <button onClick={() => void removeRow(section.header!.id)} className="text-red-400 hover:text-red-600 text-xs ml-1">✕</button>
+                        <button onClick={() => void moveRow(section.header!.id, 'up')} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600">
+                          <ChevronUp size={13} />
+                        </button>
+                        <button onClick={() => void moveRow(section.header!.id, 'down')} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600">
+                          <ChevronDown size={13} />
+                        </button>
+                        <button onClick={() => void removeRow(section.header!.id)} className="p-1 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 ml-1">
+                          <Trash2 size={13} />
+                        </button>
                       </div>
                     </td>
                   </tr>
                 )}
-                {section.items.map((item) => {
+                {!sectionCollapsed && section.items.map((item) => {
                   rowNum++
                   const net = (item.total_amount ?? 0) + (item.vat_amount ?? 0)
                   const isSelected = selectedRows.has(item.id)
@@ -1033,9 +1070,9 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
                   const isDragOver = dragOverRowId === item.id
                   const rowClass = [
                     'border-b group',
-                    isSelected ? 'bg-blue-50 border-l-2 border-l-blue-500' : '',
-                    !isSelected && isCellSelected ? 'border-l-2 border-l-blue-300' : '',
-                    !isSelected && !isCellSelected ? 'hover:bg-gray-50' : '',
+                    isSelected ? 'bg-blue-50/80 border-l-[3px] border-l-blue-500' : '',
+                    !isSelected && isCellSelected ? 'border-l-[3px] border-l-blue-300' : '',
+                    !isSelected && !isCellSelected ? 'hover:bg-blue-50/40' : '',
                   ].filter(Boolean).join(' ')
                   return (
                     <React.Fragment key={item.id}>
@@ -1094,10 +1131,18 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
                         <td className="px-2 py-1 text-right font-bold text-gray-900 text-sm">{fmt(net)}</td>
                         <td className="px-2 py-1">
                           <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => void copyRow(item)} title="Copy" className="text-blue-400 hover:text-blue-600 text-xs p-0.5">⧉</button>
-                            <button onClick={() => void moveRow(item.id, 'up')} title="Move up" className="text-gray-400 hover:text-gray-600 text-xs p-0.5">▲</button>
-                            <button onClick={() => void moveRow(item.id, 'down')} title="Move down" className="text-gray-400 hover:text-gray-600 text-xs p-0.5">▼</button>
-                            <button onClick={() => void removeRow(item.id)} title="Delete" className="text-red-400 hover:text-red-600 text-xs p-0.5">✕</button>
+                            <button onClick={() => void copyRow(item)} title="Copy" className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600">
+                              <Copy size={13} />
+                            </button>
+                            <button onClick={() => void moveRow(item.id, 'up')} title="Move up" className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600">
+                              <ChevronUp size={13} />
+                            </button>
+                            <button onClick={() => void moveRow(item.id, 'down')} title="Move down" className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600">
+                              <ChevronDown size={13} />
+                            </button>
+                            <button onClick={() => void removeRow(item.id)} title="Delete" className="p-1 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600">
+                              <Trash2 size={13} />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -1105,7 +1150,7 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
                   )
                 })}
                 {section.items.length > 0 && (
-                  <tr className="bg-gray-50 border-b border-gray-200">
+                  <tr className="bg-slate-50/80 border-b border-slate-200">
                     <td colSpan={6} className="px-3 py-1.5 text-right text-xs font-medium text-gray-500">
                       {t('section_subtotal', 'Section Subtotal')}: {section.header?.description || 'General'}
                     </td>
@@ -1123,19 +1168,75 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
                   </tr>
                 )}
               </React.Fragment>
-            ))}
+              )
+            })}
           </tbody>
-          <tfoot className="bg-gray-800 text-white sticky bottom-0 z-10">
-            <tr className="border-t-2 border-gray-600">
-              <td colSpan={6} className="px-3 py-2 text-right text-sm font-medium text-gray-300">{t('grand_total', 'Grand Total')} (ex. VAT)</td>
-              <td className="px-2 py-2 text-right text-sm font-bold text-green-400">₪{fmt(grandTotal)}</td>
+          <tfoot className="bg-[#0F172A] text-white sticky bottom-0 z-10">
+            <tr className="border-t-2 border-slate-600">
+              <td colSpan={6} className="px-3 py-2 text-right text-sm font-medium text-slate-300">{t('grand_total', 'Grand Total')} (ex. VAT)</td>
+              <td className="px-2 py-2 text-right text-base font-bold text-green-400">₪{fmt(grandTotal)}</td>
               <td />
-              <td className="px-2 py-2 text-right text-sm text-gray-300">₪{fmt(vatTotal)}</td>
+              <td className="px-2 py-2 text-right text-sm text-slate-300">₪{fmt(vatTotal)}</td>
               <td className="px-2 py-2 text-right text-sm font-bold text-white">₪{fmt(netTotal)}</td>
               <td />
             </tr>
           </tfoot>
         </table>
+      </div>
+
+      {/* Mobile card view */}
+      <div className="md:hidden space-y-3">
+        {sections.map(section => (
+          <div key={section.key}>
+            {section.header && (
+              <div className="bg-blue-50 rounded-xl px-4 py-3 font-bold text-slate-800 flex items-center gap-2 mb-2">
+                <button onClick={() => toggleSection(section.header!.id)}>
+                  {collapsedSections.has(section.header!.id) ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                </button>
+                {section.header.description || 'Section'}
+              </div>
+            )}
+            {!collapsedSections.has(section.header?.id ?? '') && section.items.map(item => (
+              <div key={item.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-mono text-slate-400">{item.item_code}</span>
+                  <span className="text-xs bg-slate-100 px-2 py-0.5 rounded-lg text-slate-500">{item.unit}</span>
+                </div>
+                <p className="text-sm font-medium text-slate-800 mb-3">{item.description}</p>
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div>
+                    <p className="text-[10px] text-slate-400 uppercase">Qty</p>
+                    <p className="text-sm font-semibold text-slate-700">{item.quantity}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-400 uppercase">Rate</p>
+                    <p className="text-sm font-semibold text-slate-700">₪{fmt(item.unit_rate)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-400 uppercase">Total</p>
+                    <p className="text-sm font-bold text-green-700">₪{fmt(item.total_amount)}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+        {/* Mobile totals */}
+        <div className="bg-[#0F172A] rounded-xl p-4 text-white">
+          <div className="flex justify-between mb-2">
+            <span className="text-sm text-slate-400">Subtotal</span>
+            <span className="text-sm font-bold text-green-400">₪{fmt(grandTotal)}</span>
+          </div>
+          <div className="flex justify-between mb-2">
+            <span className="text-sm text-slate-400">VAT</span>
+            <span className="text-sm text-slate-300">₪{fmt(vatTotal)}</span>
+          </div>
+          <div className="h-px bg-slate-700 my-2" />
+          <div className="flex justify-between">
+            <span className="text-sm font-bold">Net Total</span>
+            <span className="text-base font-bold">₪{fmt(netTotal)}</span>
+          </div>
+        </div>
       </div>
 
       {/* Context Menu */}
@@ -1171,8 +1272,8 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
       {/* Paste Modal */}
       {showPasteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-slate-200">
               <h2 className="text-xl font-semibold">Paste from Excel</h2>
               <button onClick={() => { setShowPasteModal(false); setPasteText(''); setPastePreview([]) }} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
             </div>
@@ -1214,12 +1315,12 @@ export default function BOQSpreadsheet({ initialItems, projectId, projectName, o
                 </div>
               )}
             </div>
-            <div className="flex justify-between p-6 border-t bg-gray-50">
-              <button onClick={() => { setShowPasteModal(false); setPasteText(''); setPastePreview([]) }} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-100">Cancel</button>
+            <div className="flex justify-between p-6 border-t bg-slate-50/50">
+              <button onClick={() => { setShowPasteModal(false); setPasteText(''); setPastePreview([]) }} className="px-4 py-2 border border-slate-200 rounded-xl text-sm hover:bg-gray-100">Cancel</button>
               <button
                 onClick={() => void confirmPaste()}
                 disabled={pastePreview.length === 0}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+                className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700 disabled:opacity-50"
               >
                 Import {pastePreview.length} rows
               </button>

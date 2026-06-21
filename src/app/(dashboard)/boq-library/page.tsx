@@ -7,7 +7,7 @@ export default async function BOQLibraryPage() {
   const { data: items } = await getLibraryItems()
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-[1400px] mx-auto space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">BOQ Library</h1>
@@ -15,7 +15,7 @@ export default async function BOQLibraryPage() {
         </div>
         <Link
           href="/boq-library/import"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl shadow-sm transition-colors"
         >
           <Upload size={15} />
           Import Library
