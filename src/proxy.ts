@@ -40,8 +40,9 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return response
 
-  const role: string = (user.user_metadata?.role as string) ?? 'company_admin'
-  const accountType: string | undefined = user.user_metadata?.account_type as string | undefined
+  const role: string | undefined = user.user_metadata?.role as string | undefined
+  const COMPANY_ROLES = ['super_admin', 'company_admin', 'project_manager', 'quantity_surveyor', 'site_engineer', 'viewer']
+  const accountType: string | undefined = role === 'student' ? 'student' : role === 'engineer' ? 'engineer' : (role && COMPANY_ROLES.includes(role)) ? 'company' : undefined
 
   // Redirect to onboarding if no account type set (for dashboard routes)
   if (!accountType && pathname.startsWith('/') && !pathname.startsWith('/onboarding') && !pathname.startsWith('/login') && !pathname.startsWith('/register')) {
@@ -76,13 +77,13 @@ export async function proxy(request: NextRequest) {
   const isAdminRoute = ADMIN_ONLY.some(r => pathname.startsWith(r))
   const isPMRoute = PM_AND_ABOVE.some(r => pathname.startsWith(r))
 
-  if (isAdminRoute && !['super_admin', 'company_admin'].includes(role)) {
+  if (isAdminRoute && (!role || !['super_admin', 'company_admin'].includes(role))) {
     const url = request.nextUrl.clone()
     url.pathname = '/unauthorized'
     return NextResponse.redirect(url)
   }
 
-  if (isPMRoute && ['viewer', 'site_engineer'].includes(role)) {
+  if (isPMRoute && role && ['viewer', 'site_engineer'].includes(role)) {
     const url = request.nextUrl.clone()
     url.pathname = '/unauthorized'
     return NextResponse.redirect(url)

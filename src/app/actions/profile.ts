@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function ensureUserProfile(): Promise<{
   company_id: string
-  profile: { id: string; company_id: string; full_name: string | null; role: string | null; account_type: string | null }
+  profile: { id: string; company_id: string; full_name: string | null; role: string | null }
 } | { error: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -13,12 +13,12 @@ export async function ensureUserProfile(): Promise<{
   // Check if profile exists
   const { data: existing } = await supabase
     .from('profiles')
-    .select('id, company_id, full_name, role, account_type')
+    .select('id, company_id, full_name, role')
     .eq('id', user.id)
     .single()
 
   if (existing?.company_id) {
-    return { company_id: existing.company_id, profile: existing as { id: string; company_id: string; full_name: string | null; role: string | null; account_type: string | null } }
+    return { company_id: existing.company_id, profile: existing as { id: string; company_id: string; full_name: string | null; role: string | null } }
   }
 
   // Create a company named after the email domain
@@ -43,7 +43,7 @@ export async function ensureUserProfile(): Promise<{
       company_id: company.id,
       role: 'company_admin',
     })
-    .select('id, company_id, full_name, role, account_type')
+    .select('id, company_id, full_name, role')
     .single()
 
   if (profileError || !profile) {
@@ -53,7 +53,7 @@ export async function ensureUserProfile(): Promise<{
   // Sync role to user_metadata so proxy.ts can read it without a DB query
   await supabase.auth.updateUser({ data: { role: 'company_admin' } })
 
-  return { company_id: company.id, profile: profile as { id: string; company_id: string; full_name: string | null; role: string | null; account_type: string | null } }
+  return { company_id: company.id, profile: profile as { id: string; company_id: string; full_name: string | null; role: string | null } }
 }
 
 export async function getProfile() {

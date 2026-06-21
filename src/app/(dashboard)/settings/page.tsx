@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { SettingsForm } from '@/components/settings/settings-form'
 import { LanguageSettings } from '@/components/settings/language-settings'
 import type { UserRole, AccountType } from '@/lib/types'
+import { roleToAccountType } from '@/lib/types'
 
 const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: 'Super Admin',
@@ -51,7 +52,7 @@ export default async function SettingsPage() {
   }
 
   const userRole = (profile?.role as UserRole | null) ?? 'viewer'
-  const accountType = (profile?.account_type as AccountType | null) ?? null
+  const accountType = roleToAccountType(profile?.role as string | null)
 
   const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
     student: 'Student',

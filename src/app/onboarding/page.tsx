@@ -18,6 +18,7 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import type { AccountType } from '@/lib/types'
+import { accountTypeToRole } from '@/lib/types'
 
 const ACCOUNT_OPTIONS: {
   type: AccountType
@@ -92,16 +93,17 @@ export default function OnboardingPage() {
         return
       }
 
+      const role = accountTypeToRole(selected)
+
       const { error: updateErr } = await supabase
         .from('profiles')
-        .update({ account_type: selected })
+        .update({ role })
         .eq('id', user.id)
 
       if (updateErr) {
-        // Column may not exist yet — try upsert
         const { error: upsertErr } = await supabase
           .from('profiles')
-          .upsert({ id: user.id, account_type: selected })
+          .upsert({ id: user.id, role })
 
         if (upsertErr) {
           setError(upsertErr.message)
@@ -110,8 +112,7 @@ export default function OnboardingPage() {
         }
       }
 
-      // Sync to user_metadata so proxy can read it without DB query
-      await supabase.auth.updateUser({ data: { account_type: selected } })
+      await supabase.auth.updateUser({ data: { role } })
 
       // Redirect to the appropriate dashboard
       router.push('/dashboard')

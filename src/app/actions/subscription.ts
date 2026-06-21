@@ -136,9 +136,9 @@ export async function getAdminStats() {
     { count: totalCerts },
   ] = await Promise.all([
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
-    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_type', 'student'),
-    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_type', 'engineer'),
-    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_type', 'company'),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'student'),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'engineer'),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).in('role', ['company_admin', 'project_manager', 'quantity_surveyor', 'site_engineer', 'viewer', 'super_admin']),
     supabase.from('user_subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'active'),
     supabase.from('payment_history')
       .select('amount_cents, currency, paid_at, status')
@@ -146,7 +146,7 @@ export async function getAdminStats() {
       .order('paid_at', { ascending: false })
       .limit(100),
     supabase.from('profiles')
-      .select('id, full_name, account_type, created_at')
+      .select('id, full_name, role, created_at')
       .order('created_at', { ascending: false })
       .limit(20),
     supabase.from('certificates').select('id', { count: 'exact', head: true }),

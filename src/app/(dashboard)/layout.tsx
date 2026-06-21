@@ -6,6 +6,7 @@ import { BottomNav } from '@/components/layout/bottom-nav'
 import { SidebarProvider } from '@/components/layout/sidebar-context'
 import { LanguageProvider } from '@/components/language-provider'
 import { AdminModeProvider } from '@/components/admin-mode-context'
+import { roleToAccountType } from '@/lib/types'
 
 export default async function DashboardLayout({
   children,
@@ -27,14 +28,15 @@ export default async function DashboardLayout({
       .eq('is_read', false),
     supabase
       .from('profiles')
-      .select('account_type')
+      .select('role')
       .eq('id', user.id)
       .single(),
   ])
 
-  const accountType = (profileData?.account_type as string | null)
-    ?? (user.user_metadata?.account_type as string | null)
+  const role = (profileData?.role as string | null)
+    ?? (user.user_metadata?.role as string | null)
     ?? null
+  const accountType = roleToAccountType(role)
 
   return (
     <LanguageProvider>

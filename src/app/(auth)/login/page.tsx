@@ -25,10 +25,9 @@ export default function LoginPage() {
       setError(error.message)
       setLoading(false)
     } else {
-      // Check if user has account_type set
       const { data: { user: loggedUser } } = await supabase.auth.getUser()
-      const accountType = loggedUser?.user_metadata?.account_type
-      router.push(accountType ? '/dashboard' : '/onboarding')
+      const role = loggedUser?.user_metadata?.role
+      router.push(role ? '/dashboard' : '/onboarding')
       router.refresh()
     }
   }

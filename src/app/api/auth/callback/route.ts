@@ -46,13 +46,12 @@ export async function GET(request: Request) {
           // New user — send to onboarding to pick account type
           next = '/onboarding'
         } else {
-          // Existing user — check if they have an account_type set
           const { data: profile } = await supabase
             .from('profiles')
-            .select('account_type')
+            .select('role')
             .eq('id', user.id)
             .single()
-          if (!profile?.account_type) {
+          if (!profile?.role) {
             next = '/onboarding'
           }
         }

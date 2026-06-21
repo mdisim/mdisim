@@ -201,11 +201,11 @@ export default async function AdminDashboardPage() {
                     {user.full_name || '—'}
                   </td>
                   <td className="px-6 py-3">
-                    {user.account_type ? (
+                    {user.role ? (
                       <span
-                        className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGE[user.account_type] ?? 'bg-slate-100 text-slate-700'}`}
+                        className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGE[user.role] ?? 'bg-slate-100 text-slate-700'}`}
                       >
-                        {user.account_type}
+                        {user.role}
                       </span>
                     ) : (
                       <span className="text-slate-400">—</span>

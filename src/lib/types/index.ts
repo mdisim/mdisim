@@ -17,7 +17,6 @@ export interface Profile {
   company_id: string | null
   full_name: string | null
   role: string | null
-  account_type: AccountType | null
   avatar_url: string | null
   created_at: string
   updated_at: string
@@ -542,6 +541,22 @@ export interface MeetingMinutes {
 export type UserRole = 'super_admin' | 'company_admin' | 'project_manager' | 'quantity_surveyor' | 'site_engineer' | 'viewer'
 
 export type AccountType = 'student' | 'engineer' | 'company'
+
+const COMPANY_ROLES: string[] = ['super_admin', 'company_admin', 'project_manager', 'quantity_surveyor', 'site_engineer', 'viewer']
+
+export function roleToAccountType(role: string | null | undefined): AccountType | null {
+  if (!role) return null
+  if (role === 'student') return 'student'
+  if (role === 'engineer') return 'engineer'
+  if (COMPANY_ROLES.includes(role)) return 'company'
+  return null
+}
+
+export function accountTypeToRole(accountType: AccountType): string {
+  if (accountType === 'student') return 'student'
+  if (accountType === 'engineer') return 'engineer'
+  return 'company_admin'
+}
 
 export interface AuditLog {
   id: string
