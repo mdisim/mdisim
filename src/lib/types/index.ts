@@ -620,3 +620,76 @@ export interface ReinforcementRecord {
   created_by: string | null
   created_at: string
 }
+
+// ============================================
+// LEARNING SYSTEM
+// ============================================
+export interface CourseProgress {
+  id: string
+  user_id: string
+  course_slug: string
+  lesson_number: number
+  completed_at: string
+}
+
+export interface QuizAttempt {
+  id: string
+  user_id: string
+  course_slug: string
+  lesson_number: number
+  score: number
+  answers: Record<string, number>
+  passed: boolean
+  attempted_at: string
+}
+
+export interface Certificate {
+  id: string
+  user_id: string
+  course_slug: string
+  certificate_number: string
+  issued_at: string
+  full_name: string | null
+}
+
+// ============================================
+// SUBSCRIPTIONS & BILLING
+// ============================================
+export interface SubscriptionPlan {
+  id: string
+  name: string
+  price_cents: number
+  currency: string
+  interval: string
+  features: string[]
+  max_projects: number | null
+  max_team_members: number | null
+  created_at: string
+}
+
+export interface UserSubscription {
+  id: string
+  user_id: string
+  plan_id: string
+  status: 'active' | 'past_due' | 'cancelled' | 'trialing'
+  current_period_start: string
+  current_period_end: string
+  cancel_at_period_end: boolean
+  stripe_customer_id: string | null
+  stripe_subscription_id: string | null
+  created_at: string
+  updated_at: string
+  plan?: SubscriptionPlan
+}
+
+export interface PaymentHistoryRecord {
+  id: string
+  user_id: string
+  subscription_id: string | null
+  amount_cents: number
+  currency: string
+  status: string
+  description: string | null
+  stripe_payment_id: string | null
+  paid_at: string
+}

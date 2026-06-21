@@ -4,98 +4,84 @@ import {
   BookOpen,
   Calculator,
   ClipboardList,
-  FileText,
   BarChart3,
   GraduationCap,
-  Wrench,
   ArrowRight,
-  Ruler,
   Layers,
+  Award,
+  Ruler,
+  DollarSign,
+  FileText,
+  Calendar,
+  Wrench,
+  Table,
 } from 'lucide-react'
-
-const COURSE_CARDS = [
-  {
-    title: 'Civil Engineering Fundamentals',
-    description: 'Structural analysis, materials, and construction methods',
-    icon: Wrench,
-    color: 'bg-blue-600',
-    href: '/student/courses',
-    tag: 'Foundation',
-  },
-  {
-    title: 'Quantity Surveying Basics',
-    description: 'Cost estimation, measurement, and valuation principles',
-    icon: Calculator,
-    color: 'bg-emerald-600',
-    href: '/student/courses',
-    tag: 'QS Core',
-  },
-  {
-    title: 'BOQ Training',
-    description: 'Bills of Quantities — structure, pricing, and practice',
-    icon: ClipboardList,
-    color: 'bg-violet-600',
-    href: '/student/boq-training',
-    tag: 'Practical',
-  },
-  {
-    title: 'Measurement Sheet Practice',
-    description: 'Take-off sheets, dimension paper, and measurement methods',
-    icon: Ruler,
-    color: 'bg-amber-600',
-    href: '/student/measurement',
-    tag: 'Practical',
-  },
-  {
-    title: 'Rebar Calculation Practice',
-    description: 'Bar bending schedules, shape codes, and weight calculations',
-    icon: Layers,
-    color: 'bg-red-600',
-    href: '/student/rebar-practice',
-    tag: 'Rebar',
-  },
-  {
-    title: 'Cost Estimation Lessons',
-    description: 'Rate analysis, pricing, and project cost estimation',
-    icon: BarChart3,
-    color: 'bg-teal-600',
-    href: '/student/courses',
-    tag: 'Cost',
-  },
-  {
-    title: 'Excel & PDF Training',
-    description: 'Engineering spreadsheets, reports, and document management',
-    icon: FileText,
-    color: 'bg-orange-600',
-    href: '/student/courses',
-    tag: 'Tools',
-  },
-  {
-    title: 'Engineering Calculators',
-    description: 'Concrete, steel, area, and volume calculators',
-    icon: Calculator,
-    color: 'bg-cyan-600',
-    href: '/calculators',
-    tag: 'Tools',
-  },
-]
+import { courses } from '@/lib/learn-content'
 
 export default async function StudentDashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name')
-    .eq('id', user!.id)
-    .single()
+  const [
+    { data: profile },
+    { data: progressData },
+    { data: quizData },
+    { data: certData },
+  ] = await Promise.all([
+    supabase.from('profiles').select('full_name').eq('id', user!.id).single(),
+    supabase.from('course_progress').select('course_slug, lesson_number').eq('user_id', user!.id),
+    supabase.from('quiz_attempts').select('course_slug, passed').eq('user_id', user!.id),
+    supabase.from('certificates').select('course_slug').eq('user_id', user!.id),
+  ])
 
+  const completedLessons = progressData ?? []
+  const quizAttempts = quizData ?? []
+  const certificates = certData ?? []
   const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Student'
+
+  // Calculate per-course progress
+  const courseProgress = courses.map(course => {
+    const done = completedLessons.filter(l => l.course_slug === course.slug).length
+    const pct = Math.round((done / course.lessons.length) * 100)
+    const hasCert = certificates.some(c => c.course_slug === course.slug)
+    return { ...course, completedCount: done, progressPct: pct, hasCert }
+  })
+
+  const totalLessonsCompleted = completedLessons.length
+  const totalQuizzesPassed = quizAttempts.filter(q => q.passed).length
+  const totalCerts = certificates.length
+
+  // Icon mapping for courses
+  const COURSE_ICONS: Record<string, typeof BookOpen> = {
+    'civil-engineering-fundamentals': Wrench,
+    'quantity-surveying': Calculator,
+    'boq-fundamentals': ClipboardList,
+    'measurement-sheets': Ruler,
+    'rebar-calculations': Layers,
+    'cost-estimation': DollarSign,
+    'contracts-and-claims': FileText,
+    'primavera-basics': Calendar,
+    'autocad-basics': Table,
+    'excel-for-engineers': BarChart3,
+  }
+
+  const COURSE_COLORS: Record<string, string> = {
+    'civil-engineering-fundamentals': 'bg-blue-600',
+    'quantity-surveying': 'bg-emerald-600',
+    'boq-fundamentals': 'bg-violet-600',
+    'measurement-sheets': 'bg-amber-600',
+    'rebar-calculations': 'bg-red-600',
+    'cost-estimation': 'bg-teal-600',
+    'contracts-and-claims': 'bg-indigo-600',
+    'primavera-basics': 'bg-orange-600',
+    'autocad-basics': 'bg-cyan-600',
+    'excel-for-engineers': 'bg-pink-600',
+  }
 
   return (
     <div className="space-y-8 max-w-6xl">
       {/* Welcome header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">
             Welcome back, {displayName}
@@ -111,37 +97,48 @@ export default async function StudentDashboardPage() {
       </div>
 
       {/* Progress overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
               <BookOpen size={18} className="text-blue-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900">0</p>
+              <p className="text-2xl font-bold text-slate-900">{courseProgress.filter(c => c.completedCount > 0).length}</p>
               <p className="text-xs text-slate-500">Courses Started</p>
             </div>
           </div>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-              <ClipboardList size={18} className="text-amber-600" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
+              <ClipboardList size={18} className="text-violet-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900">0</p>
-              <p className="text-xs text-slate-500">Practice Exercises</p>
+              <p className="text-2xl font-bold text-slate-900">{totalLessonsCompleted}</p>
+              <p className="text-xs text-slate-500">Lessons Completed</p>
             </div>
           </div>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+              <Award size={18} className="text-amber-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-slate-900">{totalQuizzesPassed}</p>
+              <p className="text-xs text-slate-500">Quizzes Passed</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+          <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
               <GraduationCap size={18} className="text-emerald-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900">0</p>
-              <p className="text-xs text-slate-500">Certificates Earned</p>
+              <p className="text-2xl font-bold text-slate-900">{totalCerts}</p>
+              <p className="text-xs text-slate-500">Certificates</p>
             </div>
           </div>
         </div>
@@ -150,49 +147,95 @@ export default async function StudentDashboardPage() {
       {/* Course grid */}
       <div>
         <h2 className="text-lg font-semibold text-slate-900 mb-4">Learning Modules</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {COURSE_CARDS.map((card) => {
-            const Icon = card.icon
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {courseProgress.map((course) => {
+            const Icon = COURSE_ICONS[course.slug] ?? BookOpen
+            const color = COURSE_COLORS[course.slug] ?? 'bg-slate-600'
+            const started = course.completedCount > 0
+
             return (
               <Link
-                key={card.title}
-                href={card.href}
+                key={course.slug}
+                href={`/learn/${course.slug}`}
                 className="group bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md hover:border-slate-300 transition-all"
               >
                 <div className="flex items-start justify-between mb-3">
-                  <div className={`w-10 h-10 rounded-lg ${card.color} flex items-center justify-center`}>
+                  <div className={`w-10 h-10 rounded-lg ${color} flex items-center justify-center`}>
                     <Icon size={18} className="text-white" />
                   </div>
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-                    {card.tag}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {course.hasCert && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+                        Certified
+                      </span>
+                    )}
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      course.difficulty === 'Beginner' ? 'bg-green-100 text-green-700' :
+                      course.difficulty === 'Intermediate' ? 'bg-amber-100 text-amber-700' :
+                      'bg-red-100 text-red-700'
+                    }`}>
+                      {course.difficulty}
+                    </span>
+                  </div>
                 </div>
                 <h3 className="text-sm font-semibold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">
-                  {card.title}
+                  {course.title}
                 </h3>
-                <p className="text-xs text-slate-500 mb-3">{card.description}</p>
-                <div className="flex items-center gap-1 text-xs text-blue-600 font-medium">
-                  Start learning <ArrowRight size={12} />
-                </div>
+                <p className="text-xs text-slate-500 mb-3 line-clamp-2">{course.description}</p>
+
+                {/* Progress bar */}
+                {started ? (
+                  <div className="mb-2">
+                    <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
+                      <span>{course.completedCount}/{course.lessonCount} lessons</span>
+                      <span>{course.progressPct}%</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-100 rounded-full">
+                      <div
+                        className={`h-full rounded-full transition-all ${course.progressPct === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                        style={{ width: `${course.progressPct}%` }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-xs text-blue-600 font-medium">
+                    Start learning <ArrowRight size={12} />
+                  </div>
+                )}
               </Link>
             )
           })}
         </div>
       </div>
 
-      {/* Sample projects */}
-      <div className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl border border-slate-200 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">Sample Projects</h2>
-            <p className="text-sm text-slate-500 mt-1">
-              Practice with real-world project templates — villas, apartments, bridges, and more
-            </p>
+      {/* Quick links */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Link
+          href="/calculators"
+          className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md hover:border-blue-300 transition-all flex items-center gap-4"
+        >
+          <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+            <Calculator size={22} className="text-blue-600" />
           </div>
-          <span className="text-xs text-slate-400 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
-            Coming soon
-          </span>
-        </div>
+          <div>
+            <h3 className="font-semibold text-slate-900">Engineering Calculators</h3>
+            <p className="text-xs text-slate-500">Concrete, steel, earthwork, and more</p>
+          </div>
+          <ArrowRight size={16} className="text-slate-400 ml-auto" />
+        </Link>
+        <Link
+          href="/student/progress"
+          className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all flex items-center gap-4"
+        >
+          <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
+            <Award size={22} className="text-emerald-600" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-900">My Certificates</h3>
+            <p className="text-xs text-slate-500">View and download earned certificates</p>
+          </div>
+          <ArrowRight size={16} className="text-slate-400 ml-auto" />
+        </Link>
       </div>
     </div>
   )

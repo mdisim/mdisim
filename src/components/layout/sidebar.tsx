@@ -19,6 +19,9 @@ import {
   GraduationCap,
   Map,
   Bell,
+  CreditCard,
+  Shield,
+  Layers,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -40,16 +43,14 @@ export function Sidebar({ unreadNotifications = 0, userEmail, accountType }: Sid
   const studentNav = {
     learning: [
       { href: '/student', icon: LayoutDashboard, label: 'Learning Hub' },
-      { href: '/student/courses', icon: BookOpen, label: 'Courses' },
-      { href: '/student/boq-training', icon: ClipboardList, label: 'BOQ Training' },
-      { href: '/student/measurement', icon: Map, label: 'Measurement Practice' },
+      { href: '/learn', icon: BookOpen, label: 'All Courses' },
+      { href: '/student/progress', icon: GraduationCap, label: 'My Progress' },
     ],
     tools: [
       { href: '/calculators', icon: Calculator, label: t('calculators') },
-      { href: '/student/rebar-practice', icon: BarChart3, label: 'Rebar Practice' },
     ],
-    progress: [
-      { href: '/student/progress', icon: GraduationCap, label: 'My Progress' },
+    account: [
+      { href: '/subscription', icon: CreditCard, label: 'Subscription' },
       { href: '/settings', icon: Settings, label: t('settings') },
     ],
   }
@@ -63,8 +64,11 @@ export function Sidebar({ unreadNotifications = 0, userEmail, accountType }: Sid
     tools: [
       { href: '/calculators', icon: Calculator, label: t('calculators') },
       { href: '/boq-library', icon: BookOpen, label: t('boq_library') },
+      { href: '/learn', icon: GraduationCap, label: 'Learn' },
     ],
-    admin: [
+    account: [
+      { href: '/subscription', icon: CreditCard, label: 'Subscription' },
+      { href: '/billing', icon: Layers, label: 'Billing' },
       { href: '/settings', icon: Settings, label: t('settings') },
     ],
   }
@@ -83,8 +87,12 @@ export function Sidebar({ unreadNotifications = 0, userEmail, accountType }: Sid
     tools: [
       { href: '/calculators', icon: Calculator, label: t('calculators') },
       { href: '/boq-library', icon: BookOpen, label: t('boq_library') },
+      { href: '/learn', icon: GraduationCap, label: 'Learn' },
     ],
-    admin: [
+    account: [
+      { href: '/subscription', icon: CreditCard, label: 'Subscription' },
+      { href: '/billing', icon: Layers, label: 'Billing' },
+      { href: '/admin', icon: Shield, label: 'Admin' },
       { href: '/settings', icon: Settings, label: t('settings') },
     ],
   }
@@ -93,7 +101,7 @@ export function Sidebar({ unreadNotifications = 0, userEmail, accountType }: Sid
   const projectsGroup = accountType === 'student' ? studentNav.learning : accountType === 'engineer' ? engineerNav.projects : companyNav.projects
   const operationsGroup = accountType === 'company' ? companyNav.operations : []
   const toolsGroup = accountType === 'student' ? studentNav.tools : accountType === 'engineer' ? engineerNav.tools : companyNav.tools
-  const adminGroup = accountType === 'student' ? studentNav.progress : accountType === 'engineer' ? engineerNav.admin : companyNav.admin
+  const adminGroup = accountType === 'student' ? studentNav.account : accountType === 'engineer' ? engineerNav.account : companyNav.account
 
   const sectionLabel = (label: string) =>
     collapsed ? (
