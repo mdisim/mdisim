@@ -11,7 +11,7 @@ export async function GET(request: Request) {
 
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/dashboard'
+  let next = searchParams.get('next') ?? '/dashboard'
 
   if (code) {
     const supabase = await createClient()
@@ -40,8 +40,20 @@ export async function GET(request: Request) {
             await supabase.from('profiles').upsert({
               id: user.id,
               company_id: company.id,
-              role: 'owner',
+              role: 'company_admin',
             })
+          }
+          // New user — send to onboarding to pick account type
+          next = '/onboarding'
+        } else {
+          // Existing user — check if they have an account_type set
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('account_type')
+            .eq('id', user.id)
+            .single()
+          if (!profile?.account_type) {
+            next = '/onboarding'
           }
         }
       }

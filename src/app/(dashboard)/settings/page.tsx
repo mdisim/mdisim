@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { SettingsForm } from '@/components/settings/settings-form'
 import { LanguageSettings } from '@/components/settings/language-settings'
-import type { UserRole } from '@/lib/types'
+import type { UserRole, AccountType } from '@/lib/types'
 
 const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: 'Super Admin',
@@ -51,16 +51,36 @@ export default async function SettingsPage() {
   }
 
   const userRole = (profile?.role as UserRole | null) ?? 'viewer'
+  const accountType = (profile?.account_type as AccountType | null) ?? null
+
+  const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
+    student: 'Student',
+    engineer: 'Engineer',
+    company: 'Company / Contractor',
+  }
+  const ACCOUNT_TYPE_COLORS: Record<AccountType, string> = {
+    student: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    engineer: 'bg-blue-100 text-blue-800 border-blue-200',
+    company: 'bg-amber-100 text-amber-800 border-amber-200',
+  }
 
   return (
     <div className="space-y-8 max-w-5xl">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-        <p className="text-slate-500 text-sm mt-1">Manage your company profile and account details</p>
+        <p className="text-slate-500 text-sm mt-1">Manage your account and preferences</p>
       </div>
 
       {/* Account Info bar */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap items-center gap-6 shadow-md">
+        {accountType && (
+          <div>
+            <label className="block text-xs text-slate-400 uppercase tracking-wide mb-0.5">Account Type</label>
+            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${ACCOUNT_TYPE_COLORS[accountType]}`}>
+              {ACCOUNT_TYPE_LABELS[accountType]}
+            </span>
+          </div>
+        )}
         <div>
           <label className="block text-xs text-slate-400 uppercase tracking-wide mb-0.5">Email</label>
           <p className="text-slate-800 text-sm font-medium">{user?.email}</p>

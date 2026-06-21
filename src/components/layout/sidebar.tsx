@@ -28,32 +28,72 @@ import { LocaleSwitcher } from '@/components/ui/locale-switcher'
 interface SidebarProps {
   unreadNotifications?: number
   userEmail?: string
+  accountType?: string | null
 }
 
-export function Sidebar({ unreadNotifications = 0, userEmail }: SidebarProps) {
+export function Sidebar({ unreadNotifications = 0, userEmail, accountType }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const { mobileOpen, setMobileOpen } = useSidebar()
   const { t } = useTranslation()
 
-  const projectsGroup = [
-    { href: '/dashboard', icon: LayoutDashboard, label: t('dashboard') },
-    { href: '/projects', icon: FolderKanban, label: t('projects') },
-  ]
+  // ── Student navigation ──────────────────────────────────────────────
+  const studentNav = {
+    learning: [
+      { href: '/student', icon: LayoutDashboard, label: 'Learning Hub' },
+      { href: '/student/courses', icon: BookOpen, label: 'Courses' },
+      { href: '/student/boq-training', icon: ClipboardList, label: 'BOQ Training' },
+      { href: '/student/measurement', icon: Map, label: 'Measurement Practice' },
+    ],
+    tools: [
+      { href: '/calculators', icon: Calculator, label: t('calculators') },
+      { href: '/student/rebar-practice', icon: BarChart3, label: 'Rebar Practice' },
+    ],
+    progress: [
+      { href: '/student/progress', icon: GraduationCap, label: 'My Progress' },
+      { href: '/settings', icon: Settings, label: t('settings') },
+    ],
+  }
 
-  const operationsGroup = [
-    { href: '/tenders', icon: Gavel, label: t('tenders') },
-    { href: '/contractors', icon: Users, label: t('contractors') },
-    { href: '/team', icon: ClipboardList, label: t('team') },
-  ]
+  // ── Engineer navigation ─────────────────────────────────────────────
+  const engineerNav = {
+    projects: [
+      { href: '/dashboard', icon: LayoutDashboard, label: t('dashboard') },
+      { href: '/projects', icon: FolderKanban, label: t('projects') },
+    ],
+    tools: [
+      { href: '/calculators', icon: Calculator, label: t('calculators') },
+      { href: '/boq-library', icon: BookOpen, label: t('boq_library') },
+    ],
+    admin: [
+      { href: '/settings', icon: Settings, label: t('settings') },
+    ],
+  }
 
-  const toolsGroup = [
-    { href: '/calculators', icon: Calculator, label: t('calculators') },
-    { href: '/boq-library', icon: BookOpen, label: t('boq_library') },
-  ]
+  // ── Company navigation ──────────────────────────────────────────────
+  const companyNav = {
+    projects: [
+      { href: '/dashboard', icon: LayoutDashboard, label: t('dashboard') },
+      { href: '/projects', icon: FolderKanban, label: t('projects') },
+    ],
+    operations: [
+      { href: '/tenders', icon: Gavel, label: t('tenders') },
+      { href: '/contractors', icon: Users, label: t('contractors') },
+      { href: '/team', icon: ClipboardList, label: t('team') },
+    ],
+    tools: [
+      { href: '/calculators', icon: Calculator, label: t('calculators') },
+      { href: '/boq-library', icon: BookOpen, label: t('boq_library') },
+    ],
+    admin: [
+      { href: '/settings', icon: Settings, label: t('settings') },
+    ],
+  }
 
-  const adminGroup = [
-    { href: '/settings', icon: Settings, label: t('settings') },
-  ]
+  // Default to company nav for backwards compatibility
+  const projectsGroup = accountType === 'student' ? studentNav.learning : accountType === 'engineer' ? engineerNav.projects : companyNav.projects
+  const operationsGroup = accountType === 'company' ? companyNav.operations : []
+  const toolsGroup = accountType === 'student' ? studentNav.tools : accountType === 'engineer' ? engineerNav.tools : companyNav.tools
+  const adminGroup = accountType === 'student' ? studentNav.progress : accountType === 'engineer' ? engineerNav.admin : companyNav.admin
 
   const sectionLabel = (label: string) =>
     collapsed ? (
@@ -106,7 +146,7 @@ export function Sidebar({ unreadNotifications = 0, userEmail }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 px-2 py-3 overflow-y-auto scrollbar-thin">
-        {sectionLabel('Projects')}
+        {sectionLabel(accountType === 'student' ? 'Learning' : 'Projects')}
         <div className="space-y-0.5">
           {projectsGroup.map((item) => (
             <NavItem
@@ -118,17 +158,21 @@ export function Sidebar({ unreadNotifications = 0, userEmail }: SidebarProps) {
           ))}
         </div>
 
-        {sectionLabel('Operations')}
-        <div className="space-y-0.5">
-          {operationsGroup.map((item) => (
-            <NavItem
-              key={item.href}
-              {...item}
-              collapsed={collapsed}
-              onNavigate={() => setMobileOpen(false)}
-            />
-          ))}
-        </div>
+        {operationsGroup.length > 0 && (
+          <>
+            {sectionLabel('Operations')}
+            <div className="space-y-0.5">
+              {operationsGroup.map((item) => (
+                <NavItem
+                  key={item.href}
+                  {...item}
+                  collapsed={collapsed}
+                  onNavigate={() => setMobileOpen(false)}
+                />
+              ))}
+            </div>
+          </>
+        )}
 
         {sectionLabel('Tools')}
         <div className="space-y-0.5">
@@ -142,7 +186,7 @@ export function Sidebar({ unreadNotifications = 0, userEmail }: SidebarProps) {
           ))}
         </div>
 
-        {sectionLabel('Admin')}
+        {sectionLabel(accountType === 'student' ? 'Account' : 'Admin')}
         <div className="space-y-0.5">
           {adminGroup.map((item) => (
             <NavItem

@@ -4,6 +4,8 @@ import { updateSession } from '@/lib/supabase/middleware'
 
 const ADMIN_ONLY = ['/settings']
 const PM_AND_ABOVE = ['/tenders', '/executive', '/infrastructure']
+const COMPANY_ONLY = ['/team', '/contractors', '/tenders']
+const STUDENT_ALLOWED = ['/student', '/dashboard', '/settings', '/calculators', '/onboarding']
 
 export async function proxy(request: NextRequest) {
   // First run the standard session update (handles auth redirects)
@@ -15,13 +17,13 @@ export async function proxy(request: NextRequest) {
   }
 
   const pathname = request.nextUrl.pathname
-  const isProtectedRoute =
-    ADMIN_ONLY.some(r => pathname.startsWith(r)) ||
-    PM_AND_ABOVE.some(r => pathname.startsWith(r))
 
-  if (!isProtectedRoute) return response
+  // Skip RBAC for auth-related routes, onboarding, and API routes
+  if (pathname.startsWith('/api/') || pathname === '/onboarding' || pathname.startsWith('/_next')) {
+    return response
+  }
 
-  // Get user from cookies to check role
+  // Get user from cookies to check role and account type
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -39,7 +41,38 @@ export async function proxy(request: NextRequest) {
   if (!user) return response
 
   const role: string = (user.user_metadata?.role as string) ?? 'company_admin'
+  const accountType: string | undefined = user.user_metadata?.account_type as string | undefined
 
+  // Redirect to onboarding if no account type set (for dashboard routes)
+  if (!accountType && pathname.startsWith('/') && !pathname.startsWith('/onboarding') && !pathname.startsWith('/login') && !pathname.startsWith('/register')) {
+    const isDashboardRoute = !pathname.startsWith('/api/') && !pathname.startsWith('/_next')
+    if (isDashboardRoute) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/onboarding'
+      return NextResponse.redirect(url)
+    }
+  }
+
+  // Account type route protection
+  if (accountType === 'student') {
+    const isAllowed = STUDENT_ALLOWED.some(r => pathname.startsWith(r))
+    if (!isAllowed && pathname !== '/') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/student'
+      return NextResponse.redirect(url)
+    }
+  }
+
+  if (accountType === 'engineer') {
+    // Engineers cannot access company-only admin pages
+    if (COMPANY_ONLY.some(r => pathname.startsWith(r))) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
+  }
+
+  // Role-based access control (within company accounts)
   const isAdminRoute = ADMIN_ONLY.some(r => pathname.startsWith(r))
   const isPMRoute = PM_AND_ABOVE.some(r => pathname.startsWith(r))
 

@@ -17,6 +17,7 @@ export interface Profile {
   company_id: string | null
   full_name: string | null
   role: string | null
+  account_type: AccountType | null
   avatar_url: string | null
   created_at: string
   updated_at: string
@@ -539,6 +540,8 @@ export interface MeetingMinutes {
 // SPRINT 8A TYPES
 // ============================================
 export type UserRole = 'super_admin' | 'company_admin' | 'project_manager' | 'quantity_surveyor' | 'site_engineer' | 'viewer'
+
+export type AccountType = 'student' | 'engineer' | 'company'
 
 export interface AuditLog {
   id: string
