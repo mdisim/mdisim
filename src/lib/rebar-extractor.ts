@@ -15,8 +15,8 @@
 // ─── Valid diameters for filtering false positives ──────────────────────────
 const VALID_DIAMETERS = new Set([6, 8, 10, 12, 14, 16, 20, 25, 32, 40])
 
-// ─── Diameter symbol class (covers Ø ø Ö ö φ Φ and letters T H Y R) ─────────
-const DIA_SYM = '[TtHhYyRrØøÖöφΦØøφΦ#]'
+// ─── Diameter symbol class (covers Ø ø Ö ö φ Φ ∅ ⌀ and letters T H Y R d D) ──
+const DIA_SYM = '[TtHhYyRrDdØøÖöφΦ∅⌀#]'
 
 // ─── Master rebar pattern ─────────────────────────────────────────────────────
 // Groups:
@@ -29,10 +29,11 @@ const DIA_SYM = '[TtHhYyRrØøÖöφΦØøφΦ#]'
 const REBAR_RE = new RegExp(
   // optional rows × count prefix:  "2X3" | "2x3"
   `(?:(\\d+)[Xx])?` +
-  // count (optional when dia-only notation):
-  `(\\d+)?` +
-  // diameter symbol + digits:
-  `${DIA_SYM}(\\d{1,2})` +
+  // count + optional space (OCR may insert space: "4 T12"):
+  `(\\d+)?\\s?` +
+  // diameter symbol + optional space + digits (OCR often inserts space: "T 12", "Ø 12")
+  // Negative lookbehind: symbol must not follow a letter (avoids "NOTE 12", "PART 12"):
+  `(?<![A-Za-z])${DIA_SYM}\\s?(\\d{1,2})` +
   // optional spacing:  @200  -200  -20
   `(?:\\s*[@\\-]\\s*(\\d{2,4}))?` +
   // optional cut length:  L=929  l=116  L =929
@@ -137,6 +138,23 @@ export function parseRebarText(text: string, nearText = ''): RebarCallout[] {
       position: pos,
       isStirrup,
       nearText: combined,
+    })
+  }
+
+  // 3. Bare "diameter@spacing" without symbol prefix: "12@200" means Ø12@200
+  const BARE_SPACING_RE = /\b(\d{1,2})\s*@\s*(\d{2,4})\b/g
+  for (const m of text.matchAll(BARE_SPACING_RE)) {
+    const dia = parseInt(m[1], 10)
+    const rawSpc = parseInt(m[2], 10)
+    if (!VALID_DIAMETERS.has(dia)) continue
+    const spacingMm = normaliseSpacing(rawSpc)
+    if (spacingMm < 50 || spacingMm > 2000) continue
+    const dedupeKey = `1:${dia}:${spacingMm}:none`
+    if (seen.has(dedupeKey)) continue
+    seen.add(dedupeKey)
+    results.push({
+      raw: m[0].trim(), count: 1, diameterMm: dia, spacingMm,
+      isStirrup: dia <= 16, nearText: combined,
     })
   }
 

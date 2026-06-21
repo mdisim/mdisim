@@ -557,6 +557,57 @@ export function ExtractClient({ projectId, drawings }: Props) {
       console.log(`[OCR raw p${p}]:\n${rawOCR.slice(0, 3000)}`)
       console.log(`[OCR normalized p${p}]:\n${ocrText.slice(0, 3000)}`)
 
+      // ── Diagnostic: line-by-line OCR analysis ──────────────────────────
+      const diagRawLines = rawOCR.split('\n')
+      const diagNormLines = ocrText.split('\n')
+      dbg(`  === OCR Line-by-line analysis (${diagRawLines.length} raw lines) ===`)
+      const interestingPatterns = /[ØøÖöφΦ∅⌀@#]|\d{1,3}[TtHhYyRr]\d|\b\d+[xX]\d|[TtHhYyRr]\d{1,2}\b|\bdia|\brebar|\bbar\b|\bstir/i
+      const digitDiaPattern = /\d{1,2}\s*[ØøÖöφΦ∅⌀TtHhYyRr#]\s*\d{1,2}/
+      const looseRebarPattern = /(\d+)\s*[ØøÖöφΦ∅⌀OoDdTtHhYyRr#]\s*(\d{1,2})(?:\s*[@\-]\s*(\d{2,4}))?/g
+      let diagCount = 0
+      for (let li = 0; li < diagRawLines.length && diagCount < 200; li++) {
+        const raw = diagRawLines[li]?.trim()
+        const norm = diagNormLines[li]?.trim() ?? ''
+        if (!raw) continue
+        diagCount++
+
+        const callouts = parseRebarText(norm)
+        const isInteresting = interestingPatterns.test(raw) || interestingPatterns.test(norm) || digitDiaPattern.test(raw) || digitDiaPattern.test(norm)
+        const changed = raw !== norm
+
+        // Log all lines to console, but only interesting ones to the debug panel
+        const lineInfo = `  L${li + 1}: "${raw}"${changed ? ` → "${norm}"` : ''} → ${callouts.length > 0 ? `✓ ${callouts.map(c => c.raw).join(', ')}` : '✗ no match'}`
+        console.log(lineInfo)
+
+        if (isInteresting || callouts.length > 0) {
+          dbg(lineInfo)
+        }
+
+        // Check for loose/near-miss matches to explain WHY the strict regex rejected
+        if (callouts.length === 0 && isInteresting) {
+          const looseMatches = [...norm.matchAll(looseRebarPattern)]
+          if (looseMatches.length > 0) {
+            for (const lm of looseMatches) {
+              const dia = parseInt(lm[2], 10)
+              const count = parseInt(lm[1], 10)
+              const reasons: string[] = []
+              if (!REBAR_DIAMETERS.includes(dia as RebarDiameter)) reasons.push(`Ø${dia} not in valid set [${REBAR_DIAMETERS.join(',')}]`)
+              if (count < 1 || count > 200) reasons.push(`count ${count} out of range`)
+              if (lm[3]) {
+                const spc = parseInt(lm[3], 10)
+                if (spc < 50 || spc > 2000) reasons.push(`spacing ${spc} out of range`)
+              }
+              if (reasons.length > 0) {
+                dbg(`    ↳ Near-miss: "${lm[0]}" rejected because: ${reasons.join('; ')}`)
+              } else {
+                dbg(`    ↳ Loose match: "${lm[0]}" (Ø${dia}×${count}) — strict regex didn't match, check symbol/format`)
+              }
+            }
+          }
+        }
+      }
+      dbg(`  === End OCR analysis: ${diagCount} non-empty lines analyzed ===`)
+
       // Collect per-line matches, score each callout, and populate scoreMap
       const rawLines = rawOCR.split('\n')
       const normLines = ocrText.split('\n')
@@ -608,7 +659,7 @@ export function ExtractClient({ projectId, drawings }: Props) {
     }
 
     const avgConfidence = allOcrTexts.length > 0 ? sumConfidence / allOcrTexts.length : 0
-    const ocrPreview = allOcrTexts.map(pt => pt.text).join('\n').slice(0, 500)
+    const ocrPreview = allOcrTexts.map(pt => pt.text).join('\n').slice(0, 3000)
 
     setDebug(d => ({
       ...d,
@@ -1007,15 +1058,31 @@ export function ExtractClient({ projectId, drawings }: Props) {
             </div>
 
             {/* Log lines */}
-            <div className="p-3 bg-slate-900 border border-slate-700 rounded-lg font-mono text-xs text-slate-400 max-h-40 overflow-y-auto">
+            <div className="p-3 bg-slate-900 border border-slate-700 rounded-lg font-mono text-xs text-slate-400 max-h-60 overflow-y-auto">
               {debug.lines.map((line, i) => (
                 <p key={i} className={
-                  line.startsWith('  ✓') ? 'text-green-400' :
-                  line.includes('error') || line.includes('fail') ? 'text-red-400' :
-                  line.startsWith('OCR:') ? 'text-amber-300' : 'text-slate-400'
+                  line.includes('✓') ? 'text-green-400' :
+                  line.includes('Near-miss') || line.includes('Loose match') ? 'text-amber-400' :
+                  line.includes('rejected') ? 'text-red-300' :
+                  line.includes('error') || line.includes('fail') || line.includes('✗') ? 'text-red-400' :
+                  line.startsWith('OCR:') ? 'text-amber-300' :
+                  line.includes('↳') ? 'text-amber-200' :
+                  line.startsWith('  L') ? 'text-slate-500' : 'text-slate-400'
                 }>{line}</p>
               ))}
             </div>
+
+            {/* OCR text preview */}
+            {debug.ocrPreview && (
+              <details className="text-xs">
+                <summary className="cursor-pointer text-slate-400 hover:text-slate-200 py-1">
+                  Raw OCR text preview ({debug.ocrChars} chars)
+                </summary>
+                <pre className="p-3 bg-slate-900 border border-slate-700 rounded-lg font-mono text-slate-500 max-h-48 overflow-y-auto whitespace-pre-wrap break-all">
+                  {debug.ocrPreview}
+                </pre>
+              </details>
+            )}
 
             {/* OCR output preview */}
             {debug.usedOCR && debug.ocrPreview && (
