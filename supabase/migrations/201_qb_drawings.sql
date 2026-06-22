@@ -7,12 +7,15 @@ CREATE TABLE qb_drawings (
   project_id    UUID NOT NULL REFERENCES qb_projects(id) ON DELETE CASCADE,
   user_id       UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   name          TEXT NOT NULL,
+  drawing_number TEXT,
   drawing_type  TEXT NOT NULL DEFAULT 'other'
                 CHECK (drawing_type IN (
                   'architectural','structural','electrical','mechanical',
                   'plumbing','civil','landscape','other'
                 )),
-  revision      TEXT,
+  revision_number TEXT NOT NULL DEFAULT 'A',
+  revision_date   DATE,
+  revision_notes  TEXT,
   file_path     TEXT NOT NULL,
   file_type     TEXT NOT NULL
                 CHECK (file_type IN ('pdf','dwg','dxf','png','jpg','jpeg')),

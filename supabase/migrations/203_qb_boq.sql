@@ -19,7 +19,10 @@ CREATE TABLE qb_boq_items (
   description     TEXT NOT NULL,
   unit            VARCHAR(30) NOT NULL DEFAULT 'm',
   -- Quantity — auto-synced from measurement item, or manual
-  quantity        NUMERIC NOT NULL DEFAULT 0,
+  quantity          NUMERIC NOT NULL DEFAULT 0,
+  original_quantity NUMERIC NOT NULL DEFAULT 0,
+  revised_quantity  NUMERIC NOT NULL DEFAULT 0,
+  quantity_difference NUMERIC GENERATED ALWAYS AS (revised_quantity - original_quantity) STORED,
   -- Pricing
   unit_rate       NUMERIC(15,4) NOT NULL DEFAULT 0,
   material_rate   NUMERIC(15,4),

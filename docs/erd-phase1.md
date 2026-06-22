@@ -35,8 +35,11 @@
 │  project_id  UUID FK  │               │  unit            VARCHAR(30)     │
 │  user_id     UUID FK  │               │  default_rate    NUMERIC(15,4)   │
 │  name        TEXT     │               │  material_rate   NUMERIC(15,4)   │
-│  drawing_type TEXT    │               │  labor_rate      NUMERIC(15,4)   │
-│  revision    TEXT     │               │  equipment_rate  NUMERIC(15,4)   │
+│  drawing_number TEXT  │               │  labor_rate      NUMERIC(15,4)   │
+│  drawing_type TEXT    │               │  equipment_rate  NUMERIC(15,4)   │
+│  revision_number TEXT │               │                                  │
+│  revision_date  DATE  │               │                                  │
+│  revision_notes TEXT  │               │                                  │
 │  file_path   TEXT     │               │  notes           TEXT             │
 │  file_type   TEXT     │               │  sort_order      INT             │
 │  file_size   BIGINT   │               │  created_at      TIMESTAMPTZ     │
@@ -88,6 +91,8 @@
 │  drawing_ref      TEXT                                                   │
 │  location         TEXT                                                   │
 │  sort_order       INT                                                   │
+│  created_by       UUID FK → auth.users (SET NULL)                       │
+│  updated_by       UUID FK → auth.users (SET NULL)                       │
 │  additions_qty    NUMERIC  ← trigger-maintained                         │
 │  deductions_qty   NUMERIC  ← trigger-maintained                         │
 │  net_qty          NUMERIC  ← trigger-maintained                         │
@@ -141,8 +146,11 @@
 │  code            VARCHAR(50)                                            │
 │  description     TEXT NOT NULL                                          │
 │  unit            VARCHAR(30)                                            │
-│  quantity        NUMERIC  (auto-synced from mi.net_qty or manual)      │
-│  unit_rate       NUMERIC(15,4)                                          │
+│  quantity            NUMERIC  (auto-synced from mi.net_qty or manual)  │
+│  original_quantity   NUMERIC                                            │
+│  revised_quantity    NUMERIC                                            │
+│  quantity_difference NUMERIC  GENERATED (revised - original)            │
+│  unit_rate           NUMERIC(15,4)                                      │
 │  material_rate   NUMERIC(15,4)                                          │
 │  labor_rate      NUMERIC(15,4)                                          │
 │  equipment_rate  NUMERIC(15,4)                                          │
@@ -154,6 +162,12 @@
 │  updated_at      TIMESTAMPTZ                                            │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
+
+## Project Currency & VAT
+
+`qb_projects.currency` — VARCHAR(10), default `'USD'`. Common values: NIS, USD, EUR, GBP, or any custom code.
+
+`qb_projects.vat_pct` — NUMERIC(5,2), default `0`. Applied to project grand total.
 
 ## Enums
 
@@ -291,6 +305,7 @@ can be stored without a schema migration later.
                                  qb_sync_boq_qty trigger
 204_qb_pricing_library.sql   →  qb_library_categories + qb_library_items
 205_qb_boq_library_fk.sql    →  FK: boq_items.library_item_id → library_items
+206_qb_seed_data.sql         →  Demo projects, library, measurements, BOQ
 ```
 
 ## RLS Summary

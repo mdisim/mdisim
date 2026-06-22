@@ -43,6 +43,8 @@ CREATE TABLE qb_measurement_items (
   drawing_ref     TEXT,          -- e.g. "S-01, S-02"
   location        TEXT,          -- e.g. "Ground Floor"
   sort_order      INT NOT NULL DEFAULT 0,
+  created_by      UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  updated_by      UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   -- Aggregates (maintained by trigger on qb_measurement_lines)
   additions_qty   NUMERIC NOT NULL DEFAULT 0,
   deductions_qty  NUMERIC NOT NULL DEFAULT 0,
