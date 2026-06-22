@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { HardHat, Mail, Lock, Loader2 } from 'lucide-react'
+import { signIn } from '@/app/actions/auth'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -18,16 +18,13 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const result = await signIn(email, password)
 
-    if (error) {
-      setError(error.message)
+    if (result.error) {
+      setError(result.error)
       setLoading(false)
     } else {
-      const { data: { user: loggedUser } } = await supabase.auth.getUser()
-      const role = loggedUser?.user_metadata?.role
-      router.push(role ? '/dashboard' : '/onboarding')
+      router.push(result.role ? '/dashboard' : '/onboarding')
       router.refresh()
     }
   }
