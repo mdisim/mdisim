@@ -1,7 +1,6 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { ensureUserProfile } from '@/app/actions/profile'
 import type { Project } from '@/lib/types'
 
 export async function getProjects(): Promise<Project[]> {
@@ -36,18 +35,48 @@ export async function createProject(fields: {
   currency?: string
   description?: string
 }): Promise<{ data?: Project; error?: string }> {
-  const profileResult = await ensureUserProfile()
-  if ('error' in profileResult) return { error: profileResult.error }
-
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
+  // 1. Try to get company_id from profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('company_id')
+    .eq('id', user.id)
+    .single()
+
+  let companyId: string | null = profile?.company_id ?? null
+
+  // 2. If no company, create one and link to profile
+  if (!companyId) {
+    const domain = user.email?.split('@')[1] ?? 'workspace'
+    const companyName = domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1)
+
+    const { data: company, error: companyErr } = await supabase
+      .from('companies')
+      .insert({ name: companyName + ' Workspace' })
+      .select('id')
+      .single()
+
+    if (companyErr || !company) {
+      return { error: 'Failed to create workspace: ' + (companyErr?.message ?? 'unknown') }
+    }
+
+    companyId = company.id
+
+    // Link company to profile (upsert in case profile doesn't exist yet)
+    await supabase
+      .from('profiles')
+      .upsert({ id: user.id, company_id: companyId, role: 'company_admin' })
+  }
+
+  // 3. Insert project with company_id
   const { data, error } = await supabase
     .from('projects')
     .insert({
       created_by: user.id,
-      company_id: profileResult.company_id,
+      company_id: companyId,
       name: fields.name,
       client_name: fields.client_name || null,
       location: fields.location || null,
