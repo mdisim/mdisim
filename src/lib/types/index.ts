@@ -8,7 +8,7 @@ export interface Project {
   location: string | null
   currency: string
   vat_pct: number
-  notes: string | null
+  description: string | null
   created_at: string
   updated_at: string
 }

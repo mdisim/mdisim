@@ -29,7 +29,7 @@ export function ProjectNav({ project }: { project: Project }) {
     location: project.location ?? '',
     currency: project.currency,
     vat_pct: project.vat_pct,
-    notes: project.notes ?? '',
+    description: project.description ?? '',
   })
   const [saving, setSaving] = useState(false)
 
@@ -119,10 +119,10 @@ export function ProjectNav({ project }: { project: Project }) {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-slate-700">Notes</label>
+            <label className="text-sm font-medium text-slate-700">Description</label>
             <textarea
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={3}
               className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />

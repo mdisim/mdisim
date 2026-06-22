@@ -34,7 +34,7 @@ export async function createProject(fields: {
   location?: string
   currency?: string
   vat_pct?: number
-  notes?: string
+  description?: string
 }): Promise<{ data?: Project; error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -49,7 +49,7 @@ export async function createProject(fields: {
       location: fields.location || null,
       currency: fields.currency || 'USD',
       vat_pct: fields.vat_pct ?? 0,
-      notes: fields.notes || null,
+      description: fields.description || null,
     })
     .select()
     .single()
@@ -60,7 +60,7 @@ export async function createProject(fields: {
 
 export async function updateProject(
   id: string,
-  fields: Partial<Pick<Project, 'name' | 'client_name' | 'location' | 'currency' | 'vat_pct' | 'notes'>>
+  fields: Partial<Pick<Project, 'name' | 'client_name' | 'location' | 'currency' | 'vat_pct' | 'description'>>
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
   const { error } = await supabase
