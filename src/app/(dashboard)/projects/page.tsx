@@ -24,7 +24,6 @@ export default function ProjectsPage() {
     client_name: '',
     location: '',
     currency: 'USD',
-    vat_pct: 0,
     description: '',
   })
 
@@ -48,7 +47,7 @@ export default function ProjectsPage() {
       return
     }
     setShowCreate(false)
-    setForm({ name: '', client_name: '', location: '', currency: 'USD', vat_pct: 0, description: '' })
+    setForm({ name: '', client_name: '', location: '', currency: 'USD', description: '' })
     setCreating(false)
     loadProjects()
   }
@@ -190,34 +189,22 @@ export default function ProjectsPage() {
             onChange={(e) => setForm({ ...form, location: e.target.value })}
             placeholder="e.g. Riyadh, KSA"
           />
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-slate-700">Currency</label>
-              <select
-                value={form.currency}
-                onChange={(e) => setForm({ ...form, currency: e.target.value })}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
-                <option value="ILS">ILS (₪)</option>
-                <option value="SAR">SAR</option>
-                <option value="AED">AED</option>
-                <option value="JOD">JOD</option>
-                <option value="EGP">EGP</option>
-              </select>
-            </div>
-            <Input
-              label="VAT %"
-              type="number"
-              value={String(form.vat_pct)}
-              onChange={(e) => setForm({ ...form, vat_pct: parseFloat(e.target.value) || 0 })}
-              placeholder="17"
-              min="0"
-              max="100"
-              step="0.5"
-            />
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-slate-700">Currency</label>
+            <select
+              value={form.currency}
+              onChange={(e) => setForm({ ...form, currency: e.target.value })}
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+              <option value="NIS">NIS (₪)</option>
+              <option value="SAR">SAR</option>
+              <option value="AED">AED</option>
+              <option value="JOD">JOD</option>
+              <option value="EGP">EGP</option>
+            </select>
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-slate-700">Description</label>

@@ -2,13 +2,19 @@
 
 export interface Project {
   id: string
-  user_id: string
+  company_id: string | null
+  created_by: string
   name: string
   client_name: string | null
   location: string | null
-  currency: string
-  vat_pct: number
   description: string | null
+  category: string | null
+  budget: number | null
+  start_date: string | null
+  end_date: string | null
+  status: string | null
+  progress: number | null
+  currency: string
   created_at: string
   updated_at: string
 }

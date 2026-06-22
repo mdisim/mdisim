@@ -11,7 +11,7 @@ export async function getProjects(): Promise<Project[]> {
   const { data } = await supabase
     .from('projects')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('created_by', user.id)
     .order('updated_at', { ascending: false })
 
   return (data ?? []) as Project[]
@@ -33,7 +33,6 @@ export async function createProject(fields: {
   client_name?: string
   location?: string
   currency?: string
-  vat_pct?: number
   description?: string
 }): Promise<{ data?: Project; error?: string }> {
   const supabase = await createClient()
@@ -43,12 +42,11 @@ export async function createProject(fields: {
   const { data, error } = await supabase
     .from('projects')
     .insert({
-      user_id: user.id,
+      created_by: user.id,
       name: fields.name,
       client_name: fields.client_name || null,
       location: fields.location || null,
       currency: fields.currency || 'USD',
-      vat_pct: fields.vat_pct ?? 0,
       description: fields.description || null,
     })
     .select()
@@ -60,7 +58,7 @@ export async function createProject(fields: {
 
 export async function updateProject(
   id: string,
-  fields: Partial<Pick<Project, 'name' | 'client_name' | 'location' | 'currency' | 'vat_pct' | 'description'>>
+  fields: Partial<Pick<Project, 'name' | 'client_name' | 'location' | 'currency' | 'description'>>
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
   const { error } = await supabase
