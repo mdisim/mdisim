@@ -2,9 +2,32 @@
 -- 202: qb_measurement_items + qb_measurement_lines
 -- ============================================================
 -- The measurement book: items group lines; lines hold the
--- N × L × W × H (or formula) rows that produce quantities.
+-- dimension rows that produce quantities.
+--
+-- measurement_type controls how quantity is computed:
+--   length  → N × Length
+--   area    → N × Length × Width
+--   volume  → N × Length × Width × Height
+--   count   → N  (just a count of items)
+--   weight  → N × Length × unit_weight  (stored in formula)
+--   formula → evaluate free-text expression
+--
+-- When measurement_type = 'formula', the "formula" column is
+-- evaluated as a math expression by the app layer. For all
+-- other types the app computes from the dimension columns.
 -- A DB trigger keeps item totals in sync.
 -- ============================================================
+
+-- ── Measurement type enum ───────────────────────────────────
+
+CREATE TYPE qb_measurement_type AS ENUM (
+  'length',    -- N × L                → m, lm
+  'area',      -- N × L × W            → m²
+  'volume',    -- N × L × W × H        → m³
+  'count',     -- N                     → nr, pcs
+  'weight',    -- N × L × unit_weight   → kg, ton
+  'formula'    -- free-text expression  → any unit
+);
 
 -- ── Measurement items ───────────────────────────────────────
 
@@ -14,6 +37,7 @@ CREATE TABLE qb_measurement_items (
   item_code       VARCHAR(50),
   description     TEXT NOT NULL,
   unit            VARCHAR(30) NOT NULL DEFAULT 'm',
+  measurement_type qb_measurement_type NOT NULL DEFAULT 'volume',
   section         TEXT,          -- grouping: Substructure, Superstructure …
   drawing_ref     TEXT,          -- e.g. "S-01, S-02"
   location        TEXT,          -- e.g. "Ground Floor"
@@ -28,6 +52,7 @@ CREATE TABLE qb_measurement_items (
 
 CREATE INDEX idx_qb_mi_project   ON qb_measurement_items(project_id);
 CREATE INDEX idx_qb_mi_section   ON qb_measurement_items(section);
+CREATE INDEX idx_qb_mi_type      ON qb_measurement_items(measurement_type);
 
 ALTER TABLE qb_measurement_items ENABLE ROW LEVEL SECURITY;
 
@@ -54,16 +79,17 @@ CREATE TABLE qb_measurement_lines (
   line_number     INT NOT NULL DEFAULT 1,
   description     TEXT,
   location        TEXT,
-  -- Dimensions
+  -- Dimensions (which columns matter depends on parent item's measurement_type)
   nr              NUMERIC NOT NULL DEFAULT 1,    -- count / repetitions
   length          NUMERIC,
   width           NUMERIC,
   height          NUMERIC,
-  -- Optional free-form formula (overrides N×L×W×H when non-null)
+  -- Free-form formula — used when parent measurement_type = 'formula',
+  -- OR as override for any type (app evaluates this first when non-null)
   formula         TEXT,
   -- Addition vs deduction
   is_deduction    BOOLEAN NOT NULL DEFAULT false,
-  -- Computed quantity (set by app or trigger; negative for deductions)
+  -- Computed quantity (set by app; negative when is_deduction = true)
   quantity        NUMERIC NOT NULL DEFAULT 0,
   notes           TEXT,
   -- Optional link back to a drawing measurement
@@ -105,7 +131,6 @@ RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
   target UUID;
 BEGIN
-  -- Determine which item was affected
   target := COALESCE(NEW.item_id, OLD.item_id);
 
   UPDATE qb_measurement_items SET
@@ -126,10 +151,27 @@ BEGIN
     ), 0)
   WHERE id = target;
 
-  RETURN NULL;  -- AFTER trigger, return value ignored
+  RETURN NULL;
 END;
 $$;
 
 CREATE TRIGGER trg_qb_recalc_totals
   AFTER INSERT OR UPDATE OR DELETE ON qb_measurement_lines
   FOR EACH ROW EXECUTE FUNCTION public.qb_recalc_item_totals();
+
+-- ============================================================
+-- QUANTITY CALCULATION RULES (enforced in application layer)
+-- ============================================================
+--
+-- measurement_type │ formula col │ calculation
+-- ─────────────────┼─────────────┼───────────────────────────
+-- length           │ NULL        │ nr × length
+-- area             │ NULL        │ nr × length × width
+-- volume           │ NULL        │ nr × length × width × height
+-- count            │ NULL        │ nr
+-- weight           │ NULL        │ nr × length × (unit_weight in formula)
+-- formula          │ required    │ evaluate(formula)
+-- ANY type         │ non-NULL    │ evaluate(formula)  ← override
+--
+-- is_deduction = true  →  quantity stored as negative
+-- ============================================================

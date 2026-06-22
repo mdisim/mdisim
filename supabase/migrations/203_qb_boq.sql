@@ -1,17 +1,20 @@
 -- ============================================================
 -- 203: qb_boq_items — Bill of Quantities linked to measurements
 -- ============================================================
--- Each BOQ item can optionally link to a measurement item
--- via mi_id. When linked, "quantity" should reflect mi.net_qty
--- (enforced in application layer, not by trigger, so users
---  can also manually override or add standalone BOQ items).
+-- Each BOQ item can optionally link to:
+--   • a measurement item (mi_id) — quantity auto-syncs
+--   • a library item (library_item_id) — for rate reference
+--
+-- total_amount is a stored generated column: quantity × unit_rate
 -- ============================================================
 
 CREATE TABLE qb_boq_items (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id      UUID NOT NULL REFERENCES qb_projects(id) ON DELETE CASCADE,
-  -- Optional link to measurement item
+  -- Link to measurement item (quantity source)
   mi_id           UUID REFERENCES qb_measurement_items(id) ON DELETE SET NULL,
+  -- Link to library item (rate source) — FK added in 205 after library exists
+  library_item_id UUID,
   code            VARCHAR(50),
   description     TEXT NOT NULL,
   unit            VARCHAR(30) NOT NULL DEFAULT 'm',
@@ -57,7 +60,6 @@ CREATE TRIGGER trg_qb_boq_updated
 CREATE OR REPLACE FUNCTION public.qb_sync_boq_qty()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
-  -- When a measurement item's net_qty changes, push it to any linked BOQ rows
   IF NEW.net_qty IS DISTINCT FROM OLD.net_qty THEN
     UPDATE qb_boq_items
     SET quantity = NEW.net_qty
