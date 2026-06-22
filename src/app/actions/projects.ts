@@ -1,67 +1,84 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
-import { ensureUserProfile } from './profile'
-import { logAction } from './audit'
+import type { Project } from '@/lib/types'
 
-export async function createProject(formData: FormData) {
+export async function getProjects(): Promise<Project[]> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Unauthorized' }
+  if (!user) return []
 
-  const profileResult = await ensureUserProfile()
-  if ('error' in profileResult) return { error: profileResult.error }
+  const { data } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('updated_at', { ascending: false })
 
-  const { error } = await supabase.from('projects').insert({
-    created_by: user.id,
-    company_id: profileResult.company_id,
-    name: formData.get('name') as string,
-    description: formData.get('description') as string || null,
-    status: formData.get('status') as string || 'planning',
-    start_date: formData.get('start_date') as string || null,
-    end_date: formData.get('end_date') as string || null,
-    budget: parseFloat(formData.get('budget') as string) || 0,
-    location: formData.get('location') as string || null,
-    client_name: formData.get('client_name') as string || null,
-  })
-
-  if (error) return { error: error.message }
-  await logAction({ action: 'created', resource_type: 'project', resource_name: formData.get('name') as string })
-  revalidatePath('/projects')
-  return { success: true }
+  return (data ?? []) as Project[]
 }
 
-export async function updateProject(id: string, formData: FormData) {
+export async function getProject(id: string): Promise<Project | null> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Unauthorized' }
+  const { data } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('id', id)
+    .single()
 
-  const { error } = await supabase.from('projects').update({
-    name: formData.get('name') as string,
-    description: formData.get('description') as string || null,
-    status: formData.get('status') as string,
-    start_date: formData.get('start_date') as string || null,
-    end_date: formData.get('end_date') as string || null,
-    budget: parseFloat(formData.get('budget') as string) || 0,
-    location: formData.get('location') as string || null,
-    client_name: formData.get('client_name') as string || null,
-  }).eq('id', id).eq('created_by', user.id)
-
-  if (error) return { error: error.message }
-  revalidatePath('/projects')
-  revalidatePath(`/projects/${id}`)
-  return { success: true }
+  return data as Project | null
 }
 
-export async function deleteProject(id: string) {
+export async function createProject(fields: {
+  name: string
+  client_name?: string
+  location?: string
+  currency?: string
+  vat_pct?: number
+  notes?: string
+}): Promise<{ data?: Project; error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Unauthorized' }
+  if (!user) return { error: 'Not authenticated' }
 
-  const { error } = await supabase.from('projects').delete().eq('id', id).eq('created_by', user.id)
+  const { data, error } = await supabase
+    .from('projects')
+    .insert({
+      user_id: user.id,
+      name: fields.name,
+      client_name: fields.client_name || null,
+      location: fields.location || null,
+      currency: fields.currency || 'USD',
+      vat_pct: fields.vat_pct ?? 0,
+      notes: fields.notes || null,
+    })
+    .select()
+    .single()
+
   if (error) return { error: error.message }
-  await logAction({ action: 'deleted', resource_type: 'project', resource_id: id })
-  revalidatePath('/projects')
-  return { success: true }
+  return { data: data as Project }
+}
+
+export async function updateProject(
+  id: string,
+  fields: Partial<Pick<Project, 'name' | 'client_name' | 'location' | 'currency' | 'vat_pct' | 'notes'>>
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('projects')
+    .update(fields)
+    .eq('id', id)
+
+  if (error) return { error: error.message }
+  return {}
+}
+
+export async function deleteProject(id: string): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('projects')
+    .delete()
+    .eq('id', id)
+
+  if (error) return { error: error.message }
+  return {}
 }

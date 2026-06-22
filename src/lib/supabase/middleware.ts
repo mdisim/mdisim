@@ -44,7 +44,7 @@ export async function updateSession(request: NextRequest) {
 
   if (user && isAuthPage) {
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    url.pathname = '/projects'
     return NextResponse.redirect(url)
   }
 
