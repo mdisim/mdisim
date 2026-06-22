@@ -15,60 +15,12 @@ import {
   Filter,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-// Stub imports — these actions are being created in parallel
-let getBOQItems: (projectId: string) => Promise<BOQItem[]>
-let createBOQItem: (data: Partial<BOQItem>) => Promise<{ data?: BOQItem; error?: string }>
-let updateBOQItem: (id: string, data: Partial<BOQItem>) => Promise<{ data?: BOQItem; error?: string }>
-let deleteBOQItem: (id: string) => Promise<void>
-
-try {
-  const mod = require('@/app/actions/boq')
-  getBOQItems = mod.getBOQItems
-  createBOQItem = mod.createBOQItem
-  updateBOQItem = mod.updateBOQItem
-  deleteBOQItem = mod.deleteBOQItem
-} catch {
-  getBOQItems = async () => []
-  createBOQItem = async () => ({ error: 'Not implemented' })
-  updateBOQItem = async () => ({ error: 'Not implemented' })
-  deleteBOQItem = async () => {}
-}
-
-const MOCK_DATA: BOQItem[] = [
-  {
-    id: '1', project_id: '', mi_id: null, library_item_id: null,
-    code: '01.01', description: 'Excavation for foundations', unit: 'm³',
-    quantity: 245.5, original_quantity: 245.5, revised_quantity: 260.0, quantity_difference: 14.5,
-    unit_rate: 35, material_rate: 10, labor_rate: 20, equipment_rate: 5,
-    total_amount: 8592.5, section: 'Substructure', notes: null, sort_order: 1,
-    created_at: '', updated_at: '',
-  },
-  {
-    id: '2', project_id: '', mi_id: null, library_item_id: null,
-    code: '01.02', description: 'Plain concrete grade C15 for blinding', unit: 'm³',
-    quantity: 18.2, original_quantity: 18.2, revised_quantity: null, quantity_difference: null,
-    unit_rate: 180, material_rate: 120, labor_rate: 45, equipment_rate: 15,
-    total_amount: 3276, section: 'Substructure', notes: null, sort_order: 2,
-    created_at: '', updated_at: '',
-  },
-  {
-    id: '3', project_id: '', mi_id: null, library_item_id: null,
-    code: '02.01', description: 'Reinforced concrete grade C30 for columns', unit: 'm³',
-    quantity: 52.8, original_quantity: 52.8, revised_quantity: 55.0, quantity_difference: 2.2,
-    unit_rate: 320, material_rate: 200, labor_rate: 90, equipment_rate: 30,
-    total_amount: 16896, section: 'Superstructure', notes: null, sort_order: 3,
-    created_at: '', updated_at: '',
-  },
-  {
-    id: '4', project_id: '', mi_id: null, library_item_id: null,
-    code: '02.02', description: 'Steel reinforcement (high tensile)', unit: 'kg',
-    quantity: 4200, original_quantity: 4200, revised_quantity: null, quantity_difference: null,
-    unit_rate: 4.5, material_rate: 3.2, labor_rate: 1.0, equipment_rate: 0.3,
-    total_amount: 18900, section: 'Superstructure', notes: null, sort_order: 4,
-    created_at: '', updated_at: '',
-  },
-]
+import {
+  getBOQItems,
+  createBOQItem,
+  updateBOQItem,
+  deleteBOQItem,
+} from '@/app/actions/boq'
 
 interface EditingCell {
   itemId: string
@@ -102,16 +54,8 @@ export default function BOQPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    try {
-      const data = await getBOQItems(projectId)
-      if (data && data.length > 0) {
-        setItems(data)
-      } else {
-        setItems(MOCK_DATA.map((d) => ({ ...d, project_id: projectId })))
-      }
-    } catch {
-      setItems(MOCK_DATA.map((d) => ({ ...d, project_id: projectId })))
-    }
+    const data = await getBOQItems(projectId)
+    setItems(data)
     setLoading(false)
   }, [projectId])
 
@@ -124,16 +68,16 @@ export default function BOQPage() {
     try {
       const result = await createBOQItem({
         project_id: projectId,
-        code: form.code || null,
+        code: form.code || undefined,
         description: form.description,
         unit: form.unit,
         quantity: parseFloat(form.quantity) || 0,
         unit_rate: parseFloat(form.unit_rate) || 0,
-        material_rate: parseFloat(form.material_rate) || null,
-        labor_rate: parseFloat(form.labor_rate) || null,
-        equipment_rate: parseFloat(form.equipment_rate) || null,
-        section: form.section || null,
-        notes: form.notes || null,
+        material_rate: parseFloat(form.material_rate) || undefined,
+        labor_rate: parseFloat(form.labor_rate) || undefined,
+        equipment_rate: parseFloat(form.equipment_rate) || undefined,
+        section: form.section || undefined,
+        notes: form.notes || undefined,
       })
       if (result.error) {
         setError(result.error)

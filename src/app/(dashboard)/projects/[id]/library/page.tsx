@@ -15,59 +15,15 @@ import {
   FolderOpen,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-// Stub imports — actions being created in parallel
-let getLibraryCategories: () => Promise<LibraryCategory[]>
-let createLibraryCategory: (data: Partial<LibraryCategory>) => Promise<{ data?: LibraryCategory; error?: string }>
-let getLibraryItems: (categoryId?: string) => Promise<LibraryItem[]>
-let createLibraryItem: (data: Partial<LibraryItem>) => Promise<{ data?: LibraryItem; error?: string }>
-let updateLibraryItem: (id: string, data: Partial<LibraryItem>) => Promise<{ data?: LibraryItem; error?: string }>
-let deleteLibraryItem: (id: string) => Promise<void>
-let deleteLibraryCategory: (id: string) => Promise<void>
-
-try {
-  const mod = require('@/app/actions/library')
-  getLibraryCategories = mod.getLibraryCategories
-  createLibraryCategory = mod.createLibraryCategory
-  getLibraryItems = mod.getLibraryItems
-  createLibraryItem = mod.createLibraryItem
-  updateLibraryItem = mod.updateLibraryItem
-  deleteLibraryItem = mod.deleteLibraryItem
-  deleteLibraryCategory = mod.deleteLibraryCategory
-} catch {
-  getLibraryCategories = async () => []
-  createLibraryCategory = async () => ({ error: 'Not implemented' })
-  getLibraryItems = async () => []
-  createLibraryItem = async () => ({ error: 'Not implemented' })
-  updateLibraryItem = async () => ({ error: 'Not implemented' })
-  deleteLibraryItem = async () => {}
-  deleteLibraryCategory = async () => {}
-}
-
-const MOCK_CATEGORIES: LibraryCategory[] = [
-  { id: '1', user_id: '', name: 'Earthworks', description: 'Excavation and filling', sort_order: 1, created_at: '', updated_at: '' },
-  { id: '2', user_id: '', name: 'Concrete Works', description: 'All concrete items', sort_order: 2, created_at: '', updated_at: '' },
-  { id: '3', user_id: '', name: 'Steel & Rebar', description: 'Reinforcement and structural steel', sort_order: 3, created_at: '', updated_at: '' },
-  { id: '4', user_id: '', name: 'Finishes', description: 'Plastering, painting, tiling', sort_order: 4, created_at: '', updated_at: '' },
-]
-
-const MOCK_ITEMS: Record<string, LibraryItem[]> = {
-  '1': [
-    { id: 'i1', category_id: '1', user_id: '', code: 'EW-01', description: 'Excavation in ordinary soil', unit: 'm³', default_rate: 35, material_rate: 10, labor_rate: 20, equipment_rate: 5, notes: null, sort_order: 1, created_at: '', updated_at: '' },
-    { id: 'i2', category_id: '1', user_id: '', code: 'EW-02', description: 'Backfilling with selected material', unit: 'm³', default_rate: 25, material_rate: 12, labor_rate: 10, equipment_rate: 3, notes: null, sort_order: 2, created_at: '', updated_at: '' },
-  ],
-  '2': [
-    { id: 'i3', category_id: '2', user_id: '', code: 'CW-01', description: 'Plain concrete C15', unit: 'm³', default_rate: 180, material_rate: 120, labor_rate: 45, equipment_rate: 15, notes: null, sort_order: 1, created_at: '', updated_at: '' },
-    { id: 'i4', category_id: '2', user_id: '', code: 'CW-02', description: 'Reinforced concrete C30', unit: 'm³', default_rate: 320, material_rate: 200, labor_rate: 90, equipment_rate: 30, notes: null, sort_order: 2, created_at: '', updated_at: '' },
-  ],
-  '3': [
-    { id: 'i5', category_id: '3', user_id: '', code: 'ST-01', description: 'Steel reinforcement (high tensile)', unit: 'kg', default_rate: 4.5, material_rate: 3.2, labor_rate: 1.0, equipment_rate: 0.3, notes: null, sort_order: 1, created_at: '', updated_at: '' },
-  ],
-  '4': [
-    { id: 'i6', category_id: '4', user_id: '', code: 'FN-01', description: 'Internal cement plaster (15mm)', unit: 'm²', default_rate: 28, material_rate: 12, labor_rate: 14, equipment_rate: 2, notes: null, sort_order: 1, created_at: '', updated_at: '' },
-    { id: 'i7', category_id: '4', user_id: '', code: 'FN-02', description: 'Ceramic floor tiles (600x600)', unit: 'm²', default_rate: 65, material_rate: 40, labor_rate: 22, equipment_rate: 3, notes: null, sort_order: 2, created_at: '', updated_at: '' },
-  ],
-}
+import {
+  getLibraryCategories,
+  createLibraryCategory,
+  getLibraryItems,
+  createLibraryItem,
+  updateLibraryItem,
+  deleteLibraryItem,
+  deleteLibraryCategory,
+} from '@/app/actions/library'
 
 interface EditingCell {
   itemId: string
@@ -103,31 +59,15 @@ export default function LibraryPage() {
 
   const loadCategories = useCallback(async () => {
     setLoading(true)
-    try {
-      const data = await getLibraryCategories()
-      if (data && data.length > 0) {
-        setCategories(data)
-      } else {
-        setCategories(MOCK_CATEGORIES)
-      }
-    } catch {
-      setCategories(MOCK_CATEGORIES)
-    }
+    const data = await getLibraryCategories()
+    setCategories(data)
     setLoading(false)
   }, [])
 
   const loadItems = useCallback(async (categoryId: string) => {
     setLoadingItems(true)
-    try {
-      const data = await getLibraryItems(categoryId)
-      if (data && data.length > 0) {
-        setItems(data)
-      } else {
-        setItems(MOCK_ITEMS[categoryId] ?? [])
-      }
-    } catch {
-      setItems(MOCK_ITEMS[categoryId] ?? [])
-    }
+    const data = await getLibraryItems(categoryId)
+    setItems(data)
     setLoadingItems(false)
   }, [])
 
@@ -155,7 +95,7 @@ export default function LibraryPage() {
     try {
       const result = await createLibraryCategory({
         name: categoryForm.name,
-        description: categoryForm.description || null,
+        description: categoryForm.description || undefined,
       })
       if (result.error) {
         setError(result.error)
@@ -189,14 +129,14 @@ export default function LibraryPage() {
     try {
       const result = await createLibraryItem({
         category_id: selectedCategory,
-        code: itemForm.code || null,
+        code: itemForm.code || undefined,
         description: itemForm.description,
         unit: itemForm.unit,
-        default_rate: parseFloat(itemForm.default_rate) || null,
-        material_rate: parseFloat(itemForm.material_rate) || null,
-        labor_rate: parseFloat(itemForm.labor_rate) || null,
-        equipment_rate: parseFloat(itemForm.equipment_rate) || null,
-        notes: itemForm.notes || null,
+        default_rate: parseFloat(itemForm.default_rate) || undefined,
+        material_rate: parseFloat(itemForm.material_rate) || undefined,
+        labor_rate: parseFloat(itemForm.labor_rate) || undefined,
+        equipment_rate: parseFloat(itemForm.equipment_rate) || undefined,
+        notes: itemForm.notes || undefined,
       })
       if (result.error) {
         setError(result.error)
