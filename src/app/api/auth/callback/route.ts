@@ -39,8 +39,15 @@ export async function GET(request: Request) {
           if (company) {
             await supabase.from('profiles').upsert({
               id: user.id,
+              email: user.email,
               company_id: company.id,
               role: 'company_admin',
+            })
+          } else {
+            // Company creation may have failed, but still ensure profile exists
+            await supabase.from('profiles').upsert({
+              id: user.id,
+              email: user.email,
             })
           }
           // New user — send to onboarding to pick account type

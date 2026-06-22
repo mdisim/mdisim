@@ -20,6 +20,21 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
+  // Ensure profile exists (fallback for edge cases where trigger didn't fire)
+  const { data: profileCheck } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', user.id)
+    .single()
+
+  if (!profileCheck) {
+    await supabase.from('profiles').upsert({
+      id: user.id,
+      email: user.email,
+      role: (user.user_metadata?.role as string) || 'owner',
+    })
+  }
+
   const [{ count: unreadCount }, { data: profileData }] = await Promise.all([
     supabase
       .from('notifications')

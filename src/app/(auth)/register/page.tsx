@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { HardHat, Mail, Lock, Loader2, CheckCircle } from 'lucide-react'
+import { signUp } from '@/app/actions/auth'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -24,16 +24,13 @@ export default function RegisterPage() {
     setLoading(true)
     setError(null)
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: `${window.location.origin}/api/auth/callback` },
-    })
+    const result = await signUp(email, password)
 
-    if (error) {
-      setError(error.message)
+    if (result.error) {
+      setError(result.error)
       setLoading(false)
+    } else if (result.confirmed) {
+      router.push('/onboarding')
     } else {
       setSuccess(true)
     }

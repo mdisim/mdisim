@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { completeOnboarding } from '@/app/actions/auth'
 import {
   HardHat,
   GraduationCap,
@@ -85,36 +85,15 @@ export default function OnboardingPage() {
     setError(null)
 
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        setError('You must be logged in')
+      const role = accountTypeToRole(selected)
+      const result = await completeOnboarding(role)
+
+      if (result.error) {
+        setError(result.error)
         setLoading(false)
         return
       }
 
-      const role = accountTypeToRole(selected)
-
-      const { error: updateErr } = await supabase
-        .from('profiles')
-        .update({ role })
-        .eq('id', user.id)
-
-      if (updateErr) {
-        const { error: upsertErr } = await supabase
-          .from('profiles')
-          .upsert({ id: user.id, role })
-
-        if (upsertErr) {
-          setError(upsertErr.message)
-          setLoading(false)
-          return
-        }
-      }
-
-      await supabase.auth.updateUser({ data: { role } })
-
-      // Redirect to the appropriate dashboard
       router.push('/dashboard')
       router.refresh()
     } catch (e) {

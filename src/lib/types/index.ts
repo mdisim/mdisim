@@ -14,6 +14,7 @@ export interface Company {
 
 export interface Profile {
   id: string
+  email: string | null
   company_id: string | null
   full_name: string | null
   role: string | null
