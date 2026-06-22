@@ -16,12 +16,12 @@ interface MeasurementSheetProps {
   onUpdate: () => void
 }
 
-type CellField = 'description' | 'location' | 'count' | 'length' | 'width' | 'height' | 'formula' | 'notes'
+type CellField = 'description' | 'location' | 'nr' | 'length' | 'width' | 'height' | 'formula' | 'notes'
 
 const COLUMNS: { key: CellField; label: string; width: string; numeric?: boolean }[] = [
   { key: 'description', label: 'Description', width: 'min-w-[160px] flex-1' },
   { key: 'location', label: 'Location', width: 'w-[110px]' },
-  { key: 'count', label: 'N', width: 'w-[60px]', numeric: true },
+  { key: 'nr', label: 'N', width: 'w-[60px]', numeric: true },
   { key: 'length', label: 'Length', width: 'w-[80px]', numeric: true },
   { key: 'width', label: 'Width', width: 'w-[80px]', numeric: true },
   { key: 'height', label: 'Height', width: 'w-[80px]', numeric: true },
@@ -106,7 +106,7 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
     await createMeasurementLine({
       item_id: item.id,
       is_deduction: isDeduction,
-      count: 1,
+      nr: 1,
     })
     setAdding(false)
     onUpdate()
@@ -296,9 +296,9 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
             <span className="text-slate-500">Total:</span>
             <span className={cn(
               'ml-2 font-bold text-sm tabular-nums',
-              item.total_qty < 0 ? 'text-red-600' : 'text-slate-900'
+              item.net_qty < 0 ? 'text-red-600' : 'text-slate-900'
             )}>
-              {formatQty(item.total_qty)} {item.unit}
+              {formatQty(item.net_qty)} {item.unit}
             </span>
           </div>
         </div>

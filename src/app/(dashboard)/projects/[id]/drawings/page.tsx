@@ -26,7 +26,7 @@ export default function DrawingsPage() {
   const [form, setForm] = useState({
     name: '',
     drawing_type: 'other' as DrawingType,
-    revision: '',
+    revision_number: '',
   })
   const [file, setFile] = useState<File | null>(null)
 
@@ -54,7 +54,7 @@ export default function DrawingsPage() {
 
     const supabase = createClient()
     const filePath = `${projectId}/${crypto.randomUUID()}.${ext}`
-    const { error: uploadErr } = await supabase.storage.from('drawings').upload(filePath, file)
+    const { error: uploadErr } = await supabase.storage.from('qb-drawings').upload(filePath, file)
 
     if (uploadErr) {
       setError(uploadErr.message)
@@ -66,7 +66,7 @@ export default function DrawingsPage() {
       project_id: projectId,
       name: form.name,
       drawing_type: form.drawing_type,
-      revision: form.revision || undefined,
+      revision_number: form.revision_number || undefined,
       file_path: filePath,
       file_type: ext,
       file_size: file.size,
@@ -79,7 +79,7 @@ export default function DrawingsPage() {
     }
 
     setShowUpload(false)
-    setForm({ name: '', drawing_type: 'other', revision: '' })
+    setForm({ name: '', drawing_type: 'other', revision_number: '' })
     setFile(null)
     setUploading(false)
     load()
@@ -145,7 +145,7 @@ export default function DrawingsPage() {
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-slate-900 truncate">{d.name}</p>
                 <p className="text-xs text-slate-500">
-                  {typeLabel(d.drawing_type)} · {d.file_type.toUpperCase()} · {d.revision ? `Rev ${d.revision}` : 'No rev'} · {formatDate(d.created_at)}
+                  {typeLabel(d.drawing_type)} · {d.file_type.toUpperCase()} · {d.revision_number ? `Rev ${d.revision_number}` : 'No rev'} · {formatDate(d.created_at)}
                 </p>
               </div>
               <div className="flex items-center gap-1">
@@ -186,8 +186,8 @@ export default function DrawingsPage() {
           </div>
           <Input
             label="Revision"
-            value={form.revision}
-            onChange={(e) => setForm({ ...form, revision: e.target.value })}
+            value={form.revision_number}
+            onChange={(e) => setForm({ ...form, revision_number: e.target.value })}
             placeholder="e.g. A, B, 01"
           />
           <div className="flex flex-col gap-1">

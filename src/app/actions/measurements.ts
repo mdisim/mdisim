@@ -1,15 +1,16 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import type { MeasurementItem, MeasurementLine } from '@/lib/types'
+import type { MeasurementItem, MeasurementLine, MeasurementType } from '@/lib/types'
+import { calculateLineQuantity } from '@/lib/calc'
 
 // ── Items ───────────────────────────────────────────────────────────────
 
 export async function getMeasurementItems(projectId: string): Promise<MeasurementItem[]> {
   const supabase = await createClient()
   const { data } = await supabase
-    .from('measurement_items')
-    .select('*, lines:measurement_lines(*)')
+    .from('qb_measurement_items')
+    .select('*, lines:qb_measurement_lines(*)')
     .eq('project_id', projectId)
     .order('sort_order')
     .order('created_at')
@@ -25,8 +26,8 @@ export async function getMeasurementItems(projectId: string): Promise<Measuremen
 export async function getMeasurementItem(id: string): Promise<MeasurementItem | null> {
   const supabase = await createClient()
   const { data } = await supabase
-    .from('measurement_items')
-    .select('*, lines:measurement_lines(*)')
+    .from('qb_measurement_items')
+    .select('*, lines:qb_measurement_lines(*)')
     .eq('id', id)
     .single()
 
@@ -44,6 +45,7 @@ export async function createMeasurementItem(fields: {
   item_code?: string
   description: string
   unit?: string
+  measurement_type?: MeasurementType
   section?: string
   drawing_ref?: string
   location?: string
@@ -53,7 +55,7 @@ export async function createMeasurementItem(fields: {
   if (!user) return { error: 'Not authenticated' }
 
   const { data: maxOrder } = await supabase
-    .from('measurement_items')
+    .from('qb_measurement_items')
     .select('sort_order')
     .eq('project_id', fields.project_id)
     .order('sort_order', { ascending: false })
@@ -61,10 +63,10 @@ export async function createMeasurementItem(fields: {
     .single()
 
   const { data, error } = await supabase
-    .from('measurement_items')
+    .from('qb_measurement_items')
     .insert({
       ...fields,
-      user_id: user.id,
+      created_by: user.id,
       sort_order: ((maxOrder as { sort_order: number } | null)?.sort_order ?? -1) + 1,
     })
     .select()
@@ -76,11 +78,11 @@ export async function createMeasurementItem(fields: {
 
 export async function updateMeasurementItem(
   id: string,
-  fields: Partial<Pick<MeasurementItem, 'item_code' | 'description' | 'unit' | 'section' | 'drawing_ref' | 'location' | 'sort_order'>>
+  fields: Partial<Pick<MeasurementItem, 'item_code' | 'description' | 'unit' | 'measurement_type' | 'section' | 'drawing_ref' | 'location' | 'sort_order'>>
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
   const { error } = await supabase
-    .from('measurement_items')
+    .from('qb_measurement_items')
     .update(fields)
     .eq('id', id)
 
@@ -91,7 +93,7 @@ export async function updateMeasurementItem(
 export async function deleteMeasurementItem(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
   const { error } = await supabase
-    .from('measurement_items')
+    .from('qb_measurement_items')
     .delete()
     .eq('id', id)
 
@@ -105,7 +107,7 @@ export async function createMeasurementLine(fields: {
   item_id: string
   description?: string
   location?: string
-  count?: number
+  nr?: number
   length?: number
   width?: number
   height?: number
@@ -114,13 +116,26 @@ export async function createMeasurementLine(fields: {
   notes?: string
   drawing_id?: string
   page_number?: number
-  points?: unknown
-  scale_used?: number
+  drawing_measurement_id?: string
+  geo_json?: unknown
+  scale_id?: string
+  ocr_source?: string
+  ocr_confidence?: number
+  ocr_text?: string
 }): Promise<{ data?: MeasurementLine; error?: string }> {
   const supabase = await createClient()
 
+  // Get parent item's measurement_type
+  const { data: parentItem } = await supabase
+    .from('qb_measurement_items')
+    .select('measurement_type')
+    .eq('id', fields.item_id)
+    .single()
+
+  const measurementType = (parentItem as { measurement_type: MeasurementType } | null)?.measurement_type ?? 'length'
+
   const { data: maxLine } = await supabase
-    .from('measurement_lines')
+    .from('qb_measurement_lines')
     .select('line_number, sort_order')
     .eq('item_id', fields.item_id)
     .order('line_number', { ascending: false })
@@ -130,10 +145,10 @@ export async function createMeasurementLine(fields: {
   const lineNumber = ((maxLine as { line_number: number } | null)?.line_number ?? 0) + 1
   const sortOrder = ((maxLine as { sort_order: number } | null)?.sort_order ?? -1) + 1
 
-  const quantity = calculateLineQuantity(fields)
+  const quantity = calculateLineQuantity(fields, measurementType)
 
   const { data, error } = await supabase
-    .from('measurement_lines')
+    .from('qb_measurement_lines')
     .insert({
       ...fields,
       line_number: lineNumber,
@@ -155,21 +170,29 @@ export async function updateMeasurementLine(
 
   const updateFields = { ...fields } as Record<string, unknown>
 
-  if ('count' in fields || 'length' in fields || 'width' in fields || 'height' in fields || 'formula' in fields || 'is_deduction' in fields) {
+  if ('nr' in fields || 'length' in fields || 'width' in fields || 'height' in fields || 'formula' in fields || 'is_deduction' in fields) {
     const { data: existing } = await supabase
-      .from('measurement_lines')
-      .select('count, length, width, height, formula, is_deduction')
+      .from('qb_measurement_lines')
+      .select('nr, length, width, height, formula, is_deduction, item_id')
       .eq('id', id)
       .single()
 
     if (existing) {
+      // Get parent item's measurement_type
+      const { data: parentItem } = await supabase
+        .from('qb_measurement_items')
+        .select('measurement_type')
+        .eq('id', (existing as Record<string, unknown>).item_id)
+        .single()
+
+      const measurementType = (parentItem as { measurement_type: MeasurementType } | null)?.measurement_type ?? 'length'
       const merged = { ...existing, ...fields }
-      updateFields.quantity = calculateLineQuantity(merged)
+      updateFields.quantity = calculateLineQuantity(merged, measurementType)
     }
   }
 
   const { data, error } = await supabase
-    .from('measurement_lines')
+    .from('qb_measurement_lines')
     .update(updateFields)
     .eq('id', id)
     .select()
@@ -182,7 +205,7 @@ export async function updateMeasurementLine(
 export async function deleteMeasurementLine(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
   const { error } = await supabase
-    .from('measurement_lines')
+    .from('qb_measurement_lines')
     .delete()
     .eq('id', id)
 
@@ -193,7 +216,7 @@ export async function deleteMeasurementLine(id: string): Promise<{ error?: strin
 export async function duplicateMeasurementLine(id: string): Promise<{ data?: MeasurementLine; error?: string }> {
   const supabase = await createClient()
   const { data: original } = await supabase
-    .from('measurement_lines')
+    .from('qb_measurement_lines')
     .select('*')
     .eq('id', id)
     .single()
@@ -201,7 +224,7 @@ export async function duplicateMeasurementLine(id: string): Promise<{ data?: Mea
   if (!original) return { error: 'Line not found' }
 
   const { data: maxLine } = await supabase
-    .from('measurement_lines')
+    .from('qb_measurement_lines')
     .select('line_number, sort_order')
     .eq('item_id', original.item_id)
     .order('line_number', { ascending: false })
@@ -211,7 +234,7 @@ export async function duplicateMeasurementLine(id: string): Promise<{ data?: Mea
   const { id: _id, created_at: _c, updated_at: _u, ...rest } = original
 
   const { data, error } = await supabase
-    .from('measurement_lines')
+    .from('qb_measurement_lines')
     .insert({
       ...rest,
       line_number: ((maxLine as { line_number: number } | null)?.line_number ?? 0) + 1,
@@ -224,45 +247,3 @@ export async function duplicateMeasurementLine(id: string): Promise<{ data?: Mea
   return { data: data as MeasurementLine }
 }
 
-// ── Formula engine ──────────────────────────────────────────────────────
-
-function calculateLineQuantity(fields: {
-  count?: number | null
-  length?: number | null
-  width?: number | null
-  height?: number | null
-  formula?: string | null
-  is_deduction?: boolean
-}): number {
-  let qty: number
-
-  if (fields.formula && fields.formula.trim()) {
-    qty = evaluateFormula(fields.formula)
-  } else {
-    const n = fields.count ?? 1
-    const l = fields.length ?? 0
-    const w = fields.width || 1
-    const h = fields.height || 1
-    qty = n * l * w * h
-  }
-
-  if (fields.is_deduction && qty > 0) {
-    qty = -qty
-  }
-
-  return Math.round(qty * 1000000) / 1000000
-}
-
-function evaluateFormula(formula: string): number {
-  const sanitized = formula.replace(/[^0-9+\-*/().× ,]/g, '').replace(/×/g, '*')
-  if (!sanitized.trim()) return 0
-
-  try {
-    const fn = new Function(`"use strict"; return (${sanitized})`)
-    const result = fn()
-    if (typeof result !== 'number' || !isFinite(result)) return 0
-    return result
-  } catch {
-    return 0
-  }
-}

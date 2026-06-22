@@ -1,36 +1,56 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import {
   getMeasurementItems,
   createMeasurementItem,
   deleteMeasurementItem,
   updateMeasurementItem,
+  createMeasurementLine,
+  updateMeasurementLine,
+  deleteMeasurementLine,
+  duplicateMeasurementLine,
 } from '@/app/actions/measurements'
-import type { MeasurementItem } from '@/lib/types'
-import { MEASUREMENT_UNITS } from '@/lib/types'
+import { generateBOQFromMeasurements } from '@/app/actions/boq'
+import type { MeasurementItem, MeasurementType } from '@/lib/types'
+import { MEASUREMENT_UNITS, MEASUREMENT_TYPES } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
-import { MeasurementSheet } from '@/components/measurements/measurement-sheet'
-import { Plus, Ruler, ChevronDown, ChevronRight, Trash2, Pencil } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Select } from '@/components/ui/select'
+import { MeasurementGrid } from '@/components/measurements/measurement-grid'
+import { MeasurementToolbar } from '@/components/measurements/measurement-toolbar'
+import { GenerateBOQDialog } from '@/components/measurements/generate-boq-dialog'
+import { Ruler, Plus } from 'lucide-react'
+
+const MEASUREMENT_TYPE_DEFAULT_UNIT: Record<MeasurementType, string> = {
+  volume: 'm³',
+  area: 'm²',
+  length: 'm',
+  count: 'nr',
+  weight: 'kg',
+  formula: 'm',
+}
 
 export default function MeasurementsPage() {
   const { id: projectId } = useParams<{ id: string }>()
+
   const [items, setItems] = useState<MeasurementItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [showCreate, setShowCreate] = useState(false)
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
+  const [sectionFilter, setSectionFilter] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showCreateItem, setShowCreateItem] = useState(false)
+  const [showGenerateBOQ, setShowGenerateBOQ] = useState(false)
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
-  const [editingItem, setEditingItem] = useState<MeasurementItem | null>(null)
 
-  const [form, setForm] = useState({
+  const [createForm, setCreateForm] = useState({
     item_code: '',
     description: '',
     unit: 'm',
+    measurement_type: 'length' as MeasurementType,
     section: '',
     drawing_ref: '',
     location: '',
@@ -43,306 +63,403 @@ export default function MeasurementsPage() {
     setLoading(false)
   }, [projectId])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load()
+  }, [load])
 
-  const handleCreate = async () => {
-    if (!form.description.trim()) return
+  const handleCreateItem = async () => {
+    if (!createForm.description.trim()) return
     setCreating(true)
     setError(null)
-    const result = await createMeasurementItem({ project_id: projectId, ...form })
+    const result = await createMeasurementItem({
+      project_id: projectId,
+      ...createForm,
+    })
     if (result.error) {
       setError(result.error)
       setCreating(false)
       return
     }
-    setShowCreate(false)
-    setForm({ item_code: '', description: '', unit: 'm', section: '', drawing_ref: '', location: '' })
+    setShowCreateItem(false)
+    setCreateForm({
+      item_code: '',
+      description: '',
+      unit: 'm',
+      measurement_type: 'length',
+      section: '',
+      drawing_ref: '',
+      location: '',
+    })
     setCreating(false)
-    if (result.data) {
-      setExpandedItems((prev) => new Set([...prev, result.data!.id]))
+    load()
+  }
+
+  const handleUpdateItem = useCallback(
+    async (id: string, fields: Partial<MeasurementItem>) => {
+      await updateMeasurementItem(id, fields)
+      load()
+    },
+    [load],
+  )
+
+  const handleDeleteItem = useCallback(
+    async (id: string) => {
+      if (!confirm('Delete this measurement item and all its lines?')) return
+      await deleteMeasurementItem(id)
+      setSelectedItems((prev) => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+      load()
+    },
+    [load],
+  )
+
+  const handleAddLine = useCallback(
+    async (itemId: string, isDeduction?: boolean) => {
+      await createMeasurementLine({
+        item_id: itemId,
+        nr: 1,
+        is_deduction: isDeduction ?? false,
+      })
+      load()
+    },
+    [load],
+  )
+
+  const handleUpdateLine = useCallback(
+    async (id: string, fields: Record<string, unknown>) => {
+      await updateMeasurementLine(id, fields)
+      load()
+    },
+    [load],
+  )
+
+  const handleDeleteLine = useCallback(
+    async (id: string) => {
+      await deleteMeasurementLine(id)
+      load()
+    },
+    [load],
+  )
+
+  const handleDuplicateLine = useCallback(
+    async (id: string) => {
+      await duplicateMeasurementLine(id)
+      load()
+    },
+    [load],
+  )
+
+  const handleGenerateBOQ = useCallback(
+    async (_options: { linkLibrary: boolean; copyRates: boolean }) => {
+      const ids = Array.from(selectedItems)
+      if (ids.length === 0) return
+      await generateBOQFromMeasurements(projectId, ids)
+      setShowGenerateBOQ(false)
+      setSelectedItems(new Set())
+    },
+    [projectId, selectedItems],
+  )
+
+  const sections = useMemo(() => {
+    const set = new Set<string>()
+    for (const item of items) {
+      if (item.section) set.add(item.section)
     }
-    load()
+    return Array.from(set).sort()
+  }, [items])
+
+  const filteredItems = useMemo(() => {
+    let result = items
+    if (sectionFilter) {
+      result = result.filter((item) => item.section === sectionFilter)
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter(
+        (item) =>
+          item.description.toLowerCase().includes(q) ||
+          item.item_code?.toLowerCase().includes(q) ||
+          item.location?.toLowerCase().includes(q) ||
+          item.drawing_ref?.toLowerCase().includes(q),
+      )
+    }
+    return result
+  }, [items, sectionFilter, searchQuery])
+
+  const lineCount = useMemo(() => {
+    return items.reduce((sum, item) => sum + (item.lines?.length ?? 0), 0)
+  }, [items])
+
+  const handleMeasurementTypeChange = (type: MeasurementType) => {
+    setCreateForm((prev) => ({
+      ...prev,
+      measurement_type: type,
+      unit: MEASUREMENT_TYPE_DEFAULT_UNIT[type] ?? prev.unit,
+    }))
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this measurement item and all its lines?')) return
-    await deleteMeasurementItem(id)
-    load()
-  }
-
-  const handleEditSave = async () => {
-    if (!editingItem) return
-    await updateMeasurementItem(editingItem.id, {
-      item_code: editingItem.item_code,
-      description: editingItem.description,
-      unit: editingItem.unit,
-      section: editingItem.section,
-      drawing_ref: editingItem.drawing_ref,
-      location: editingItem.location,
-    })
-    setEditingItem(null)
-    load()
-  }
-
-  const toggleExpand = (id: string) => {
-    setExpandedItems((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  const sections = groupBySection(items)
-
-  return (
-    <div className="p-4 md:p-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-lg font-bold text-slate-900">Measurement Book</h2>
-          <p className="text-sm text-slate-500">
-            {items.length} item{items.length !== 1 ? 's' : ''}
-          </p>
+  if (loading) {
+    return (
+      <div className="p-4 md:p-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <div className="h-6 w-48 bg-slate-200 rounded animate-pulse" />
+            <div className="h-4 w-24 bg-slate-200 rounded animate-pulse mt-2" />
+          </div>
+          <div className="h-9 w-24 bg-slate-200 rounded animate-pulse" />
         </div>
-        <Button onClick={() => setShowCreate(true)}>
-          <Plus size={16} />
-          Add Item
-        </Button>
-      </div>
-
-      {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 animate-pulse">
+            <div
+              key={i}
+              className="bg-white rounded-xl border border-slate-200 p-4 animate-pulse"
+            >
               <div className="h-5 bg-slate-200 rounded w-1/2" />
+              <div className="h-4 bg-slate-100 rounded w-1/3 mt-2" />
             </div>
           ))}
         </div>
-      ) : items.length === 0 ? (
+      </div>
+    )
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="p-4 md:p-8">
         <div className="text-center py-20">
           <Ruler size={48} className="mx-auto text-slate-300 mb-4" />
-          <h3 className="text-lg font-semibold text-slate-700 mb-1">No measurement items yet</h3>
+          <h3 className="text-lg font-semibold text-slate-700 mb-1">
+            No measurement items yet
+          </h3>
           <p className="text-slate-500 text-sm mb-6">
-            Add measurement items to start building your quantity calculation book.
+            Add measurement items to start building your quantity calculation
+            book.
           </p>
-          <Button onClick={() => setShowCreate(true)}>
+          <Button onClick={() => setShowCreateItem(true)}>
             <Plus size={16} />
             Add First Item
           </Button>
         </div>
-      ) : (
-        <div className="space-y-6">
-          {sections.map(([section, sectionItems]) => (
-            <div key={section}>
-              {section && (
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 px-1">
-                  {section}
-                </h3>
-              )}
-              <div className="space-y-2">
-                {sectionItems.map((item) => {
-                  const isExpanded = expandedItems.has(item.id)
-                  return (
-                    <div key={item.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                      {/* Item header */}
-                      <div
-                        className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors"
-                        onClick={() => toggleExpand(item.id)}
-                      >
-                        <button className="p-0.5 text-slate-400">
-                          {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                        </button>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            {item.item_code && (
-                              <span className="text-xs font-mono font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                                {item.item_code}
-                              </span>
-                            )}
-                            <span className="font-medium text-slate-900 truncate">{item.description}</span>
-                          </div>
-                          <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-500">
-                            <span>{item.unit}</span>
-                            {item.location && <span>· {item.location}</span>}
-                            {item.drawing_ref && <span>· Dwg: {item.drawing_ref}</span>}
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <p className={cn(
-                            'text-sm font-bold tabular-nums',
-                            item.total_qty < 0 ? 'text-red-600' : 'text-slate-900'
-                          )}>
-                            {formatQty(item.total_qty)}
-                          </p>
-                          <p className="text-[11px] text-slate-400">{item.unit}</p>
-                        </div>
-                        <div className="flex items-center gap-0.5 ml-2" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            onClick={() => setEditingItem({ ...item })}
-                            className="p-1.5 rounded hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors"
-                            title="Edit item"
-                          >
-                            <Pencil size={14} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            className="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
-                            title="Delete item"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </div>
+        <CreateItemModal
+          isOpen={showCreateItem}
+          onClose={() => setShowCreateItem(false)}
+          form={createForm}
+          setForm={setCreateForm}
+          onMeasurementTypeChange={handleMeasurementTypeChange}
+          onSubmit={handleCreateItem}
+          creating={creating}
+          error={error}
+          sections={sections}
+        />
+      </div>
+    )
+  }
 
-                      {/* Measurement lines spreadsheet */}
-                      {isExpanded && (
-                        <div className="border-t border-slate-100">
-                          <MeasurementSheet item={item} onUpdate={load} />
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
+  return (
+    <div className="p-4 md:p-8">
+      <MeasurementToolbar
+        itemCount={items.length}
+        lineCount={lineCount}
+        selectedCount={selectedItems.size}
+        sections={sections}
+        activeSection={sectionFilter}
+        onSectionFilter={setSectionFilter}
+        searchQuery={searchQuery}
+        onSearch={setSearchQuery}
+        onAddItem={() => setShowCreateItem(true)}
+        onGenerateBOQ={() => setShowGenerateBOQ(true)}
+      />
+
+      <MeasurementGrid
+        items={filteredItems}
+        selectedItems={selectedItems}
+        onToggleSelect={(id: string) => {
+          setSelectedItems((prev) => {
+            const next = new Set(prev)
+            if (next.has(id)) next.delete(id)
+            else next.add(id)
+            return next
+          })
+        }}
+        onSelectAll={() => {
+          setSelectedItems(new Set(filteredItems.map((i) => i.id)))
+        }}
+        onAddItem={() => setShowCreateItem(true)}
+        onUpdateItem={handleUpdateItem}
+        onDeleteItem={handleDeleteItem}
+        onAddLine={handleAddLine}
+        onUpdateLine={handleUpdateLine}
+        onDeleteLine={handleDeleteLine}
+        onDuplicateLine={handleDuplicateLine}
+      />
+
+      {/* Footer */}
+      <div className="mt-6 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm text-slate-600">
+        <div className="flex items-center gap-4">
+          <span>
+            <strong className="text-slate-900">{items.length}</strong> item
+            {items.length !== 1 ? 's' : ''}
+          </span>
+          <span className="text-slate-300">|</span>
+          <span>
+            <strong className="text-slate-900">{lineCount}</strong> line
+            {lineCount !== 1 ? 's' : ''}
+          </span>
         </div>
-      )}
+        {selectedItems.size > 0 && (
+          <span className="text-blue-600 font-medium">
+            {selectedItems.size} selected for BOQ
+          </span>
+        )}
+      </div>
 
-      {/* Create modal */}
-      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="New Measurement Item" size="md">
-        <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            <Input
-              label="Item Code"
-              value={form.item_code}
-              onChange={(e) => setForm({ ...form, item_code: e.target.value })}
-              placeholder="e.g. 01.01"
-            />
-            <div className="col-span-2">
-              <Input
-                label="Description"
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="e.g. Excavation for foundations"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-slate-700">Unit</label>
-              <select
-                value={form.unit}
-                onChange={(e) => setForm({ ...form, unit: e.target.value })}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {MEASUREMENT_UNITS.map((u) => (
-                  <option key={u.value} value={u.value}>{u.label}</option>
-                ))}
-              </select>
-            </div>
-            <Input
-              label="Section / Category"
-              value={form.section}
-              onChange={(e) => setForm({ ...form, section: e.target.value })}
-              placeholder="e.g. Substructure"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Drawing Reference"
-              value={form.drawing_ref}
-              onChange={(e) => setForm({ ...form, drawing_ref: e.target.value })}
-              placeholder="e.g. S-01"
-            />
-            <Input
-              label="Location / Floor"
-              value={form.location}
-              onChange={(e) => setForm({ ...form, location: e.target.value })}
-              placeholder="e.g. Ground Floor"
-            />
-          </div>
-          {error && <p className="text-sm text-red-500">{error}</p>}
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button onClick={handleCreate} loading={creating} disabled={!form.description.trim()}>
-              Add Item
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      <CreateItemModal
+        isOpen={showCreateItem}
+        onClose={() => setShowCreateItem(false)}
+        form={createForm}
+        setForm={setCreateForm}
+        onMeasurementTypeChange={handleMeasurementTypeChange}
+        onSubmit={handleCreateItem}
+        creating={creating}
+        error={error}
+        sections={sections}
+      />
 
-      {/* Edit modal */}
-      {editingItem && (
-        <Modal isOpen={true} onClose={() => setEditingItem(null)} title="Edit Measurement Item" size="md">
-          <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
-              <Input
-                label="Item Code"
-                value={editingItem.item_code ?? ''}
-                onChange={(e) => setEditingItem({ ...editingItem, item_code: e.target.value })}
-              />
-              <div className="col-span-2">
-                <Input
-                  label="Description"
-                  value={editingItem.description}
-                  onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-slate-700">Unit</label>
-                <select
-                  value={editingItem.unit}
-                  onChange={(e) => setEditingItem({ ...editingItem, unit: e.target.value })}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {MEASUREMENT_UNITS.map((u) => (
-                    <option key={u.value} value={u.value}>{u.label}</option>
-                  ))}
-                </select>
-              </div>
-              <Input
-                label="Section"
-                value={editingItem.section ?? ''}
-                onChange={(e) => setEditingItem({ ...editingItem, section: e.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Drawing Reference"
-                value={editingItem.drawing_ref ?? ''}
-                onChange={(e) => setEditingItem({ ...editingItem, drawing_ref: e.target.value })}
-              />
-              <Input
-                label="Location / Floor"
-                value={editingItem.location ?? ''}
-                onChange={(e) => setEditingItem({ ...editingItem, location: e.target.value })}
-              />
-            </div>
-            <div className="flex justify-end gap-3 pt-2">
-              <Button variant="ghost" onClick={() => setEditingItem(null)}>Cancel</Button>
-              <Button onClick={handleEditSave}>Save</Button>
-            </div>
-          </div>
-        </Modal>
-      )}
+      <GenerateBOQDialog
+        isOpen={showGenerateBOQ}
+        onClose={() => setShowGenerateBOQ(false)}
+        selectedItems={items.filter((item) => selectedItems.has(item.id))}
+        onGenerate={handleGenerateBOQ}
+      />
     </div>
   )
 }
 
-function groupBySection(items: MeasurementItem[]): [string, MeasurementItem[]][] {
-  const map = new Map<string, MeasurementItem[]>()
-  for (const item of items) {
-    const key = item.section ?? ''
-    if (!map.has(key)) map.set(key, [])
-    map.get(key)!.push(item)
+function CreateItemModal({
+  isOpen,
+  onClose,
+  form,
+  setForm,
+  onMeasurementTypeChange,
+  onSubmit,
+  creating,
+  error,
+  sections,
+}: {
+  isOpen: boolean
+  onClose: () => void
+  form: {
+    item_code: string
+    description: string
+    unit: string
+    measurement_type: MeasurementType
+    section: string
+    drawing_ref: string
+    location: string
   }
-  return Array.from(map.entries())
-}
+  setForm: React.Dispatch<React.SetStateAction<typeof form>>
+  onMeasurementTypeChange: (type: MeasurementType) => void
+  onSubmit: () => void
+  creating: boolean
+  error: string | null
+  sections: string[]
+}) {
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="New Measurement Item" size="md">
+      <div className="space-y-4">
+        <div className="grid grid-cols-3 gap-4">
+          <Input
+            label="Item Code"
+            value={form.item_code}
+            onChange={(e) => setForm((prev) => ({ ...prev, item_code: e.target.value }))}
+            placeholder="e.g. 01.01"
+          />
+          <div className="col-span-2">
+            <Input
+              label="Description"
+              value={form.description}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, description: e.target.value }))
+              }
+              placeholder="e.g. Excavation for foundations"
+            />
+          </div>
+        </div>
 
-function formatQty(n: number): string {
-  if (n === 0) return '0.00'
-  return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })
+        <div className="grid grid-cols-2 gap-4">
+          <Select
+            label="Measurement Type"
+            value={form.measurement_type}
+            onChange={(e) =>
+              onMeasurementTypeChange(e.target.value as MeasurementType)
+            }
+            options={MEASUREMENT_TYPES}
+          />
+          <Select
+            label="Unit"
+            value={form.unit}
+            onChange={(e) => setForm((prev) => ({ ...prev, unit: e.target.value }))}
+            options={MEASUREMENT_UNITS}
+          />
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-slate-700">
+              Section / Category
+            </label>
+            <input
+              type="text"
+              list="sections-list"
+              value={form.section}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, section: e.target.value }))
+              }
+              placeholder="e.g. Substructure"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <datalist id="sections-list">
+              {sections.map((s) => (
+                <option key={s} value={s} />
+              ))}
+            </datalist>
+          </div>
+          <Input
+            label="Drawing Reference"
+            value={form.drawing_ref}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, drawing_ref: e.target.value }))
+            }
+            placeholder="e.g. S-01"
+          />
+          <Input
+            label="Location / Floor"
+            value={form.location}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, location: e.target.value }))
+            }
+            placeholder="e.g. Ground Floor"
+          />
+        </div>
+
+        {error && <p className="text-sm text-red-500">{error}</p>}
+
+        <div className="flex justify-end gap-3 pt-2">
+          <Button variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            onClick={onSubmit}
+            loading={creating}
+            disabled={!form.description.trim()}
+          >
+            Add Item
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  )
 }
