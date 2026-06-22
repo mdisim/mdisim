@@ -15,6 +15,7 @@
 -- When measurement_type = 'formula', the "formula" column is
 -- evaluated as a math expression by the app layer. For all
 -- other types the app computes from the dimension columns.
+-- A non-null formula on ANY type overrides dimensional calc.
 -- A DB trigger keeps item totals in sync.
 -- ============================================================
 
@@ -79,24 +80,37 @@ CREATE TABLE qb_measurement_lines (
   line_number     INT NOT NULL DEFAULT 1,
   description     TEXT,
   location        TEXT,
+
   -- Dimensions (which columns matter depends on parent item's measurement_type)
   nr              NUMERIC NOT NULL DEFAULT 1,    -- count / repetitions
   length          NUMERIC,
   width           NUMERIC,
   height          NUMERIC,
+
   -- Free-form formula — used when parent measurement_type = 'formula',
   -- OR as override for any type (app evaluates this first when non-null)
   formula         TEXT,
+
   -- Addition vs deduction
   is_deduction    BOOLEAN NOT NULL DEFAULT false,
   -- Computed quantity (set by app; negative when is_deduction = true)
   quantity        NUMERIC NOT NULL DEFAULT 0,
+
   notes           TEXT,
-  -- Optional link back to a drawing measurement
+
+  -- ── Traceability: link to drawing measurement ─────────────
+  -- Full chain: drawing → drawing_measurement → measurement_line → item → BOQ
+  drawing_measurement_id UUID REFERENCES qb_drawing_measurements(id) ON DELETE SET NULL,
   drawing_id      UUID REFERENCES qb_drawings(id) ON DELETE SET NULL,
   page_number     INT,
   geo_json        JSONB,        -- polyline / polygon points on the drawing
   scale_id        UUID REFERENCES qb_drawing_scales(id) ON DELETE SET NULL,
+
+  -- ── OCR future-proofing ───────────────────────────────────
+  ocr_source      TEXT,            -- e.g. 'tesseract', 'google-vision'
+  ocr_confidence  NUMERIC(5,4),    -- 0.0000 – 1.0000
+  ocr_text        TEXT,            -- raw OCR output that generated this line
+
   sort_order      INT NOT NULL DEFAULT 0,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -104,6 +118,7 @@ CREATE TABLE qb_measurement_lines (
 
 CREATE INDEX idx_qb_ml_item    ON qb_measurement_lines(item_id);
 CREATE INDEX idx_qb_ml_drawing ON qb_measurement_lines(drawing_id);
+CREATE INDEX idx_qb_ml_dm      ON qb_measurement_lines(drawing_measurement_id);
 
 ALTER TABLE qb_measurement_lines ENABLE ROW LEVEL SECURITY;
 
@@ -174,4 +189,18 @@ CREATE TRIGGER trg_qb_recalc_totals
 -- ANY type         │ non-NULL    │ evaluate(formula)  ← override
 --
 -- is_deduction = true  →  quantity stored as negative
+-- ============================================================
+
+-- ============================================================
+-- TRACEABILITY CHAIN
+-- ============================================================
+--
+--  qb_drawings
+--    └── qb_drawing_scales        (calibration)
+--    └── qb_drawing_measurements  (takeoff on canvas)
+--          └── qb_measurement_lines.drawing_measurement_id
+--                └── qb_measurement_items  (aggregated net_qty)
+--                      └── qb_boq_items.mi_id  (priced quantity)
+--
+-- Every BOQ quantity can be traced: BOQ → MI → line → drawing measurement → drawing
 -- ============================================================
