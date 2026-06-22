@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { ensureUserProfile } from '@/app/actions/profile'
 import type { Project } from '@/lib/types'
 
 export async function getProjects(): Promise<Project[]> {
@@ -35,6 +36,9 @@ export async function createProject(fields: {
   currency?: string
   description?: string
 }): Promise<{ data?: Project; error?: string }> {
+  const profileResult = await ensureUserProfile()
+  if ('error' in profileResult) return { error: profileResult.error }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
@@ -43,6 +47,7 @@ export async function createProject(fields: {
     .from('projects')
     .insert({
       created_by: user.id,
+      company_id: profileResult.company_id,
       name: fields.name,
       client_name: fields.client_name || null,
       location: fields.location || null,
