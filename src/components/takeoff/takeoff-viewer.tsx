@@ -156,6 +156,8 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
 
   // Panel & help
   const [showPanel, setShowPanel] = useState(true)
+  const [panelWidth, setPanelWidth] = useState(320)
+  const panelDragRef = useRef<{ startX: number; startW: number } | null>(null)
   const [panelTab, setPanelTab] = useState<'measurements' | 'boq' | 'scales'>('measurements')
   const [showShortcuts, setShowShortcuts] = useState(false)
 
@@ -1077,9 +1079,35 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
           </div>
         </div>
 
-        {/* Side panel with tabs */}
+        {/* Resizable side panel */}
         {showPanel && (
-          <div className="w-[320px] flex-shrink-0 flex flex-col bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700">
+          <>
+          <div
+            className="w-1 flex-shrink-0 cursor-col-resize bg-slate-200 dark:bg-slate-700 hover:bg-blue-400 dark:hover:bg-blue-500 active:bg-blue-500 transition-colors relative group"
+            onMouseDown={(e) => {
+              e.preventDefault()
+              panelDragRef.current = { startX: e.clientX, startW: panelWidth }
+              const onMove = (ev: MouseEvent) => {
+                if (!panelDragRef.current) return
+                const delta = panelDragRef.current.startX - ev.clientX
+                setPanelWidth(Math.max(240, Math.min(600, panelDragRef.current.startW + delta)))
+              }
+              const onUp = () => {
+                panelDragRef.current = null
+                document.removeEventListener('mousemove', onMove)
+                document.removeEventListener('mouseup', onUp)
+                document.body.style.cursor = ''
+                document.body.style.userSelect = ''
+              }
+              document.body.style.cursor = 'col-resize'
+              document.body.style.userSelect = 'none'
+              document.addEventListener('mousemove', onMove)
+              document.addEventListener('mouseup', onUp)
+            }}
+          >
+            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-slate-300 dark:bg-slate-600 group-hover:bg-blue-400 dark:group-hover:bg-blue-400 transition-colors" />
+          </div>
+          <div style={{ width: panelWidth }} className="flex-shrink-0 flex flex-col bg-white dark:bg-slate-800">
             {/* Tab bar */}
             <div className="flex border-b border-slate-200 dark:border-slate-700 shrink-0">
               <button
@@ -1186,6 +1214,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
               )}
             </div>
           </div>
+          </>
         )}
       </div>
 
