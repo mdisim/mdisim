@@ -195,6 +195,26 @@ export default function MeasurementsPage() {
     return items.reduce((sum, item) => sum + (item.lines?.length ?? 0), 0)
   }, [items])
 
+  const { totalAdditions, totalDeductions, netQuantity } = useMemo(() => {
+    let additions = 0
+    let deductions = 0
+    for (const item of items) {
+      for (const line of item.lines ?? []) {
+        const qty = line.quantity ?? 0
+        if (line.is_deduction) {
+          deductions += qty
+        } else {
+          additions += qty
+        }
+      }
+    }
+    return {
+      totalAdditions: additions,
+      totalDeductions: deductions,
+      netQuantity: additions - deductions,
+    }
+  }, [items])
+
   const handleMeasurementTypeChange = (type: MeasurementType) => {
     setCreateForm((prev) => ({
       ...prev,
@@ -277,6 +297,9 @@ export default function MeasurementsPage() {
           const project = await getProject(projectId)
           if (project) await exportMeasurementsToExcel(items, project.name)
         }}
+        totalAdditions={totalAdditions}
+        totalDeductions={totalDeductions}
+        netQuantity={netQuantity}
       />
 
       <MeasurementGrid

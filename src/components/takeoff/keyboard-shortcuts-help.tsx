@@ -17,6 +17,8 @@ const SHORTCUTS = [
     { key: 'R', desc: 'Rectangle measure' },
     { key: 'O', desc: 'Circle measure' },
     { key: 'N', desc: 'Count tool' },
+    { key: 'G', desc: 'Polygon tool' },
+    { key: 'W', desc: 'Wall Area tool' },
   ]},
   { section: 'Navigation', items: [
     { key: 'Space + Drag', desc: 'Temporary pan' },
@@ -29,7 +31,7 @@ const SHORTCUTS = [
   ]},
   { section: 'Precision', items: [
     { key: 'Shift', desc: 'Constrain to 45° angles' },
-    { key: 'G', desc: 'Toggle grid overlay' },
+    { key: 'Ctrl+G', desc: 'Toggle grid overlay' },
     { key: 'Double-click', desc: 'Complete polyline / area / count' },
   ]},
   { section: 'Actions', items: [
@@ -38,6 +40,15 @@ const SHORTCUTS = [
     { key: 'Escape', desc: 'Cancel current action' },
     { key: 'Tab', desc: 'Toggle side panel' },
     { key: '?', desc: 'Show shortcuts' },
+  ]},
+  { section: 'Snap', items: [
+    { key: 'Endpoint', desc: 'Snap to line/polyline endpoints' },
+    { key: 'Midpoint', desc: 'Snap to segment midpoints' },
+    { key: 'Intersection', desc: 'Snap to line intersections' },
+    { key: 'Perpendicular', desc: 'Snap perpendicular to a line' },
+    { key: 'Parallel', desc: 'Snap parallel to a line' },
+    { key: 'Nearest', desc: 'Snap to nearest point on a line' },
+    { key: 'Grid', desc: 'Snap to grid points' },
   ]},
 ]
 
