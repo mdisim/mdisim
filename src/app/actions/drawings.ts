@@ -42,6 +42,16 @@ export async function createDrawing(fields: {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
+  const { data: project } = await supabase
+    .from('projects')
+    .select('id')
+    .eq('id', fields.project_id)
+    .single()
+
+  if (!project) {
+    return { error: 'Project not found. Verify the project exists and you have access.' }
+  }
+
   const { data, error } = await supabase
     .from('qb_drawings')
     .insert({
@@ -51,7 +61,12 @@ export async function createDrawing(fields: {
     .select()
     .single()
 
-  if (error) return { error: error.message }
+  if (error) {
+    if (error.message.includes('foreign key constraint')) {
+      return { error: 'Database schema mismatch: run migration 215_fix_all_project_fks.sql in Supabase SQL Editor.' }
+    }
+    return { error: error.message }
+  }
   return { data: data as Drawing }
 }
 
