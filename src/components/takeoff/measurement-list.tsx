@@ -26,6 +26,7 @@ interface MeasurementListProps {
   onLabelChange: (id: string, label: string) => void
   onLinkToBOQ?: (measurementIds: string[]) => void
   scale?: { px_per_unit: number; unit: string } | null
+  selectedIds?: string[]
 }
 
 const TOOL_META: Record<string, { icon: React.ComponentType<{ size?: number }>; label: string; unitType: 'length' | 'area' | 'count' }> = {
@@ -54,12 +55,15 @@ export function MeasurementList({
   onLabelChange,
   onLinkToBOQ,
   scale,
+  selectedIds: externalSelectedIds,
 }: MeasurementListProps) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [internalSelectedIds, setInternalSelectedIds] = useState<Set<string>>(new Set())
   const [multiSelectMode, setMultiSelectMode] = useState(false)
+  const selectedIds = externalSelectedIds ? new Set(externalSelectedIds) : internalSelectedIds
+  const setSelectedIds = externalSelectedIds ? (() => {}) as typeof setInternalSelectedIds : setInternalSelectedIds
 
   const groups = measurements.reduce<Record<string, TakeoffMeasurement[]>>((acc, m) => {
     const key = m.tool_type

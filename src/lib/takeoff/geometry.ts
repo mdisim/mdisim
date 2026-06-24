@@ -53,7 +53,7 @@ export function sqPixelsToReal(sqPixels: number, pxPerUnit: number): number {
 /** A snap candidate returned by the snapping engine */
 export interface SnapTarget {
   point: Point
-  type: 'endpoint' | 'midpoint' | 'intersection' | 'perpendicular' | 'nearest' | 'grid'
+  type: 'endpoint' | 'midpoint' | 'intersection' | 'perpendicular' | 'parallel' | 'nearest' | 'grid'
   sourceId?: string
 }
 
@@ -64,6 +64,7 @@ export interface SnapConfig {
   midpoint: boolean
   intersection: boolean
   perpendicular: boolean
+  parallel: boolean
   nearest: boolean
   grid: boolean
   gridSize: number
@@ -83,6 +84,7 @@ export const DEFAULT_SNAP_CONFIG: SnapConfig = {
   midpoint: true,
   intersection: false,
   perpendicular: false,
+  parallel: false,
   nearest: true,
   grid: false,
   gridSize: 50,
@@ -133,6 +135,20 @@ export function perimeterLength(points: Point[]): number {
   let total = polylineLength(points)
   total += distance(points[points.length - 1], points[0])
   return total
+}
+
+/** Line-line intersection. Returns the point if segments a1-a2 and b1-b2 cross within both segment bounds, else null. */
+export function segmentIntersection(a1: Point, a2: Point, b1: Point, b2: Point): Point | null {
+  const d1x = a2.x - a1.x
+  const d1y = a2.y - a1.y
+  const d2x = b2.x - b1.x
+  const d2y = b2.y - b1.y
+  const denom = d1x * d2y - d1y * d2x
+  if (Math.abs(denom) < 1e-10) return null // parallel or collinear
+  const t = ((b1.x - a1.x) * d2y - (b1.y - a1.y) * d2x) / denom
+  const u = ((b1.x - a1.x) * d1y - (b1.y - a1.y) * d1x) / denom
+  if (t < 0 || t > 1 || u < 0 || u > 1) return null
+  return { x: a1.x + t * d1x, y: a1.y + t * d1y }
 }
 
 export function extractSegments(measurements: SnapGeometry[]): Array<{ a: Point; b: Point; id: string }> {
@@ -198,6 +214,74 @@ export function findSnapTarget(
       }
     }
     if (best) return best
+  }
+
+  if (config.intersection) {
+    const segs = extractSegments(existingMeasurements)
+    for (let i = 0; i < segs.length; i++) {
+      for (let j = i + 1; j < segs.length; j++) {
+        if (segs[i].id === segs[j].id) continue
+        const ip = segmentIntersection(segs[i].a, segs[i].b, segs[j].a, segs[j].b)
+        if (ip) {
+          const d = distance(cursor, ip)
+          if (d < bestDist) {
+            bestDist = d
+            best = { point: ip, type: 'intersection', sourceId: segs[i].id }
+          }
+        }
+      }
+    }
+    if (best) return best
+  }
+
+  if (config.perpendicular && activePoints && activePoints.length > 0) {
+    const lastPt = activePoints[activePoints.length - 1]
+    const segs = extractSegments(existingMeasurements)
+    for (const seg of segs) {
+      const dx = seg.b.x - seg.a.x
+      const dy = seg.b.y - seg.a.y
+      const lenSq = dx * dx + dy * dy
+      if (lenSq === 0) continue
+      // Project lastPt onto the segment line to find the foot of the perpendicular
+      const t = ((lastPt.x - seg.a.x) * dx + (lastPt.y - seg.a.y) * dy) / lenSq
+      if (t < 0 || t > 1) continue
+      const foot: Point = { x: seg.a.x + t * dx, y: seg.a.y + t * dy }
+      const d = distance(cursor, foot)
+      if (d < bestDist) {
+        bestDist = d
+        best = { point: foot, type: 'perpendicular', sourceId: seg.id }
+      }
+    }
+    if (best) return best
+  }
+
+  if (config.parallel && activePoints && activePoints.length >= 2) {
+    const lastPt = activePoints[activePoints.length - 1]
+    const prevPt = activePoints[activePoints.length - 2]
+    const dirX = lastPt.x - prevPt.x
+    const dirY = lastPt.y - prevPt.y
+    const dirLen = Math.sqrt(dirX * dirX + dirY * dirY)
+    if (dirLen > 1e-10) {
+      const segs = extractSegments(existingMeasurements)
+      for (const seg of segs) {
+        const sdx = seg.b.x - seg.a.x
+        const sdy = seg.b.y - seg.a.y
+        const sLen = Math.sqrt(sdx * sdx + sdy * sdy)
+        if (sLen < 1e-10) continue
+        // Check if segments are parallel via cross product
+        const cross = Math.abs(dirX * sdy - dirY * sdx) / (dirLen * sLen)
+        if (cross < 0.01) {
+          // Parallel — snap cursor onto this segment at nearest point
+          const np = nearestPointOnSegment(cursor, seg.a, seg.b)
+          const d = distance(cursor, np)
+          if (d < bestDist) {
+            bestDist = d
+            best = { point: np, type: 'parallel', sourceId: seg.id }
+          }
+        }
+      }
+      if (best) return best
+    }
   }
 
   if (config.nearest) {

@@ -321,8 +321,44 @@ export function renderSnapIndicator(
       ctx.stroke()
       break
     }
+    case 'intersection': {
+      ctx.strokeStyle = '#EF4444'
+      ctx.lineWidth = 2 / scale
+      ctx.beginPath()
+      ctx.moveTo(point.x - r, point.y - r)
+      ctx.lineTo(point.x + r, point.y + r)
+      ctx.moveTo(point.x + r, point.y - r)
+      ctx.lineTo(point.x - r, point.y + r)
+      ctx.stroke()
+      break
+    }
+    case 'perpendicular': {
+      ctx.strokeStyle = '#06B6D4'
+      ctx.lineWidth = 2 / scale
+      ctx.beginPath()
+      ctx.moveTo(point.x, point.y - r)
+      ctx.lineTo(point.x, point.y)
+      ctx.lineTo(point.x + r, point.y)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.arc(point.x, point.y, r * 0.3, 0, Math.PI * 2)
+      ctx.fillStyle = '#06B6D4'
+      ctx.fill()
+      break
+    }
+    case 'parallel': {
+      ctx.strokeStyle = '#6366F1'
+      ctx.lineWidth = 2 / scale
+      const s = r * 0.7
+      ctx.beginPath()
+      ctx.moveTo(point.x - s, point.y - s * 0.3)
+      ctx.lineTo(point.x + s, point.y - s * 0.3)
+      ctx.moveTo(point.x - s, point.y + s * 0.3)
+      ctx.lineTo(point.x + s, point.y + s * 0.3)
+      ctx.stroke()
+      break
+    }
     case 'grid': {
-      // Plus sign
       const s = r * 0.6
       ctx.strokeStyle = color
       ctx.lineWidth = 2 / scale

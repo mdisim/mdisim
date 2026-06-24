@@ -10,6 +10,8 @@ import {
   Square,
   Circle,
   Hash,
+  Hexagon,
+  Layers,
   Crosshair,
   Undo2,
   Trash2,
@@ -52,6 +54,8 @@ const TOOLS = [
   { id: 'rectangle', icon: Square, label: 'Rectangle (R)', shortcut: 'R', group: 'measure' },
   { id: 'circle', icon: Circle, label: 'Circle (O)', shortcut: 'O', group: 'measure' },
   { id: 'count', icon: Hash, label: 'Count (N)', shortcut: 'N', group: 'measure' },
+  { id: 'polygon', icon: Hexagon, label: 'Polygon (G)', shortcut: 'G', group: 'measure' },
+  { id: 'wall', icon: Layers, label: 'Wall Area (W)', shortcut: 'W', group: 'measure' },
 ] as const
 
 function ToolButton({
@@ -74,12 +78,12 @@ function ToolButton({
       className={cn(
         'p-2 rounded-md transition-colors relative group',
         active
-          ? 'bg-blue-600 text-white shadow-sm'
+          ? 'bg-gradient-to-b from-blue-500 to-blue-600 text-white shadow-sm'
           : 'text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700',
         className,
       )}
     >
-      <Icon size={18} />
+      <Icon size={20} />
       <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs bg-slate-900 text-white px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
         {label}
       </span>
@@ -97,8 +101,11 @@ function SnapMenu({ config, onChange }: { config: SnapConfig; onChange: (c: Snap
   const SNAP_MODES = [
     { key: 'endpoint' as const, label: 'Endpoint', color: 'bg-yellow-500' },
     { key: 'midpoint' as const, label: 'Midpoint', color: 'bg-orange-500' },
-    { key: 'nearest' as const, label: 'Nearest', color: 'bg-cyan-500' },
+    { key: 'intersection' as const, label: 'Intersection', color: 'bg-red-500' },
+    { key: 'perpendicular' as const, label: 'Perpendicular', color: 'bg-cyan-500' },
+    { key: 'nearest' as const, label: 'Nearest', color: 'bg-green-500' },
     { key: 'grid' as const, label: 'Grid', color: 'bg-violet-500' },
+    { key: 'parallel' as const, label: 'Parallel', color: 'bg-indigo-500' },
   ]
 
   return (
@@ -189,9 +196,11 @@ export function TakeoffToolbar({
   const measureTools = TOOLS.filter((t) => t.group === 'measure')
 
   return (
-    <div className="flex items-center gap-1 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-3 py-1.5 flex-wrap">
+    <div className="flex items-center gap-1 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-3 py-1.5 flex-wrap shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
       {/* Navigation */}
-      <div className="flex items-center gap-0.5 pr-2 border-r border-slate-200 dark:border-slate-700">
+      <div className="flex flex-col items-center pr-2 border-r border-slate-200 dark:border-slate-700">
+        <span className="text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-0.5">Navigation</span>
+        <div className="flex items-center gap-0.5">
         {navTools.map((t) => (
           <ToolButton
             key={t.id}
@@ -201,10 +210,13 @@ export function TakeoffToolbar({
             onClick={() => onToolChange(t.id)}
           />
         ))}
+        </div>
       </div>
 
       {/* Measurement tools */}
-      <div className="flex items-center gap-0.5 px-2 border-r border-slate-200 dark:border-slate-700">
+      <div className="flex flex-col items-center px-2 border-r border-slate-200 dark:border-slate-700">
+        <span className="text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-0.5">Measurement</span>
+        <div className="flex items-center gap-0.5">
         {measureTools.map((t) => (
           <ToolButton
             key={t.id}
@@ -214,6 +226,7 @@ export function TakeoffToolbar({
             onClick={() => onToolChange(t.id)}
           />
         ))}
+        </div>
       </div>
 
       {/* Calibration */}

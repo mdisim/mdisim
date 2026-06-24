@@ -40,7 +40,10 @@ import {
   createDrawingScale,
 } from '@/app/actions/drawings'
 import { LiveBOQPanel } from './live-boq-panel'
-import { AlertTriangle, PanelRightClose, PanelRightOpen, Keyboard } from 'lucide-react'
+import { ScaleManager } from './scale-manager'
+import { AlertTriangle, PanelRightClose, PanelRightOpen, Keyboard, Link2 } from 'lucide-react'
+import { linkDrawingMeasurementsToItem } from '@/app/actions/measurements'
+import { createBOQItem } from '@/app/actions/boq'
 
 interface TakeoffViewerProps {
   drawingId: string
@@ -49,12 +52,13 @@ interface TakeoffViewerProps {
   pageCount: number
 }
 
-type ToolType = DrawingToolType | 'select' | 'pan'
+type ToolType = DrawingToolType | 'select' | 'pan' | 'polygon' | 'wall'
 
-const DRAWING_TOOLS: string[] = ['line', 'polyline', 'area', 'rectangle', 'circle', 'count']
+const DRAWING_TOOLS: string[] = ['line', 'polyline', 'area', 'rectangle', 'circle', 'count', 'polygon', 'wall']
 const TOOL_KEYS: Record<string, ToolType> = {
   v: 'select', h: 'pan', l: 'line', p: 'polyline',
   a: 'area', r: 'rectangle', o: 'circle', n: 'count',
+  g: 'polygon', w: 'wall',
 }
 
 const TOOL_LABELS: Record<string, string> = {
@@ -66,6 +70,8 @@ const TOOL_LABELS: Record<string, string> = {
   rectangle: 'Rectangle',
   circle: 'Circle',
   count: 'Count',
+  polygon: 'Polygon',
+  wall: 'Wall Area',
 }
 
 const SNAP_TYPE_COLORS: Record<string, string> = {
@@ -75,6 +81,7 @@ const SNAP_TYPE_COLORS: Record<string, string> = {
   perpendicular: '#06B6D4',
   nearest: '#10B981',
   grid: '#6366F1',
+  parallel: '#4F46E5',
 }
 
 /** Convert DrawingMeasurement[] to SnapGeometry[] for the snap engine */
@@ -149,7 +156,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
 
   // Panel & help
   const [showPanel, setShowPanel] = useState(true)
-  const [panelTab, setPanelTab] = useState<'measurements' | 'boq'>('measurements')
+  const [panelTab, setPanelTab] = useState<'measurements' | 'boq' | 'scales'>('measurements')
   const [showShortcuts, setShowShortcuts] = useState(false)
 
   // Snapping
@@ -158,6 +165,13 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
 
   // Grid
   const [showGrid, setShowGrid] = useState(false)
+
+  // Link mode
+  const [linkMode, setLinkMode] = useState(false)
+  const [selectedForLink, setSelectedForLink] = useState<string[]>([])
+
+  // All scales
+  const [allScales, setAllScales] = useState<DrawingScale[]>([])
 
   // Pan state
   const isPanning = useRef(false)
@@ -200,6 +214,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
       getDrawingScales(drawingId),
     ])
     setMeasurements(ms)
+    setAllScales(scales)
     const pageScale = scales.find((s) => s.page_number === page)
     setScale(pageScale ?? null)
   }, [drawingId, page])
@@ -273,19 +288,20 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
     const drawTool = activeTool as DrawingToolType
     if (DRAWING_TOOLS.includes(activeTool ?? '') && activePoints.length > 0) {
       const pts = [...activePoints]
-      if (mousePos && (drawTool === 'polyline' || drawTool === 'area' || drawTool === 'line' || drawTool === 'rectangle' || drawTool === 'circle')) {
+      if (mousePos && (drawTool === 'polyline' || drawTool === 'area' || drawTool === 'line' || drawTool === 'rectangle' || drawTool === 'circle' || activeTool === 'polygon' || activeTool === 'wall')) {
         if (drawTool === 'line' && pts.length === 1) pts.push(mousePos)
         else if (drawTool === 'rectangle' && pts.length === 1) pts.push(mousePos)
         else if (drawTool === 'circle' && pts.length === 1) pts.push(mousePos)
-        else if ((drawTool === 'polyline' || drawTool === 'area') && pts.length >= 1) pts.push(mousePos)
+        else if ((drawTool === 'polyline' || drawTool === 'area' || activeTool === 'polygon' || activeTool === 'wall') && pts.length >= 1) pts.push(mousePos)
       }
-      renderActiveDrawing(ctx, drawTool, pts, 1, activeColor, scale?.px_per_unit ?? 0, scale?.unit ?? null)
+      const renderTool = activeTool === 'polygon' ? 'area' as DrawingToolType : activeTool === 'wall' ? 'polyline' as DrawingToolType : drawTool
+      renderActiveDrawing(ctx, renderTool, pts, 1, activeColor, scale?.px_per_unit ?? 0, scale?.unit ?? null)
 
       // Angle guide when shift is held
       if (isShiftDown.current && activePoints.length >= 1 && mousePos) {
         const origin = activePoints[activePoints.length - 1]
         const previous = activePoints.length >= 2 ? activePoints[activePoints.length - 2] : null
-        if (drawTool === 'line' || drawTool === 'polyline' || drawTool === 'area') {
+        if (drawTool === 'line' || drawTool === 'polyline' || drawTool === 'area' || activeTool === 'polygon' || activeTool === 'wall') {
           renderAngleGuide(ctx, origin, mousePos, previous, 1)
         }
       }
@@ -403,11 +419,19 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
           coords = { points: points.map((p) => [p.x, p.y]) }
           break
         }
-        case 'area': {
+        case 'area':
+        case 'polygon' as DrawingToolType: {
           const a = polygonArea(points)
           quantity = pxPerUnit > 0 ? sqPixelsToReal(a, pxPerUnit) : a
           measureUnit = unit ? `${unit}²` : null
           coords = { points: points.map((p) => [p.x, p.y]) }
+          break
+        }
+        case 'wall' as DrawingToolType: {
+          const perim = polylineLength(points)
+          const wallLength = pxPerUnit > 0 ? pixelsToReal(perim, pxPerUnit) : perim
+          quantity = wallLength
+          coords = { points: points.map((p) => [p.x, p.y]), wallHeight: 0 }
           break
         }
         case 'rectangle': {
@@ -437,15 +461,17 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
         }
       }
 
+      const dbToolType = tool === ('polygon' as DrawingToolType) ? 'area' : tool === ('wall' as DrawingToolType) ? 'polyline' : tool
       const result = await createDrawingMeasurement({
         drawing_id: drawingId,
         page_number: page,
         scale_id: scale?.id,
-        tool_type: tool,
+        tool_type: dbToolType as DrawingToolType,
         coordinates: coords,
         quantity,
         unit: measureUnit ?? undefined,
         color: activeColor,
+        label: tool === ('wall' as DrawingToolType) ? 'Wall Area' : undefined,
       })
 
       if (result.data) {
@@ -605,6 +631,12 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
       } else if (activeTool === 'area' && activePoints.length >= 3) {
         completeMeasurement('area', activePoints)
         setActivePoints([])
+      } else if (activeTool === 'polygon' && activePoints.length >= 3) {
+        completeMeasurement('polygon' as DrawingToolType, activePoints)
+        setActivePoints([])
+      } else if (activeTool === 'wall' && activePoints.length >= 2) {
+        completeMeasurement('wall' as DrawingToolType, activePoints)
+        setActivePoints([])
       } else if (activeTool === 'count' && activePoints.length >= 1) {
         completeMeasurement('count', activePoints)
         setActivePoints([])
@@ -697,8 +729,9 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
         return
       }
 
-      // Grid toggle: g
-      if (e.key.toLowerCase() === 'g' && !e.ctrlKey && !e.metaKey) {
+      // Grid toggle: Ctrl+G
+      if (e.key.toLowerCase() === 'g' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault()
         setShowGrid(v => !v)
         return
       }
@@ -796,6 +829,42 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
     },
     [loadData],
   )
+
+  // ── Link mode handlers ────────────────────────────────────────────────
+  const handleToggleLinkMode = useCallback(() => {
+    setLinkMode(v => !v)
+    setSelectedForLink([])
+    if (!linkMode) setPanelTab('boq')
+  }, [linkMode])
+
+  const handleToggleMeasurementForLink = useCallback((id: string) => {
+    setSelectedForLink(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
+  }, [])
+
+  const handleLinkToItem = useCallback(async (boqItemId: string) => {
+    if (selectedForLink.length === 0) return
+    await linkDrawingMeasurementsToItem(boqItemId, selectedForLink)
+    setSelectedForLink([])
+    setLinkMode(false)
+    await loadData()
+  }, [selectedForLink, loadData])
+
+  const handleCreateAndLink = useCallback(async (description: string, unit: string) => {
+    if (selectedForLink.length === 0) return
+    const result = await createBOQItem({
+      project_id: projectId,
+      description,
+      unit,
+    })
+    if (result.data) {
+      await linkDrawingMeasurementsToItem(result.data.id, selectedForLink)
+    }
+    setSelectedForLink([])
+    setLinkMode(false)
+    await loadData()
+  }, [selectedForLink, projectId, loadData])
 
   // ── Cursor style ─────────────────────────────────────────────────────
   let cursor = 'default'
@@ -1010,13 +1079,13 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
 
         {/* Side panel with tabs */}
         {showPanel && (
-          <div className="w-[300px] flex-shrink-0 flex flex-col bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700">
+          <div className="w-[320px] flex-shrink-0 flex flex-col bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700">
             {/* Tab bar */}
             <div className="flex border-b border-slate-200 dark:border-slate-700 shrink-0">
               <button
                 onClick={() => setPanelTab('measurements')}
                 className={cn(
-                  'flex-1 px-3 py-2 text-xs font-medium transition-colors',
+                  'flex-1 px-2 py-2 text-xs font-medium transition-colors',
                   panelTab === 'measurements'
                     ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300',
@@ -1027,7 +1096,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
               <button
                 onClick={() => setPanelTab('boq')}
                 className={cn(
-                  'flex-1 px-3 py-2 text-xs font-medium transition-colors',
+                  'flex-1 px-2 py-2 text-xs font-medium transition-colors',
                   panelTab === 'boq'
                     ? 'text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-600 dark:border-emerald-400'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300',
@@ -1035,23 +1104,85 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
               >
                 Live BOQ
               </button>
+              <button
+                onClick={() => setPanelTab('scales')}
+                className={cn(
+                  'flex-1 px-2 py-2 text-xs font-medium transition-colors',
+                  panelTab === 'scales'
+                    ? 'text-amber-600 dark:text-amber-400 border-b-2 border-amber-600 dark:border-amber-400'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300',
+                )}
+              >
+                Scales ({allScales.length})
+              </button>
             </div>
+
+            {/* Link mode toggle */}
+            {panelTab === 'measurements' && measurements.length > 0 && (
+              <div className="px-3 py-1.5 border-b border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+                <button
+                  onClick={handleToggleLinkMode}
+                  className={cn(
+                    'flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors',
+                    linkMode
+                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                  )}
+                >
+                  <Link2 size={12} />
+                  {linkMode ? `Linking (${selectedForLink.length})` : 'Link to BOQ'}
+                </button>
+                {linkMode && selectedForLink.length > 0 && (
+                  <button
+                    onClick={() => { setSelectedForLink([]); setLinkMode(false) }}
+                    className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* Tab content */}
             <div className="flex-1 min-h-0">
               {panelTab === 'measurements' ? (
                 <MeasurementList
                   measurements={takeoffMs}
                   activeMeasurementId={activeMeasurementId}
-                  onSelect={setActiveMeasurementId}
+                  onSelect={(id) => {
+                    if (linkMode) {
+                      handleToggleMeasurementForLink(id)
+                    } else {
+                      setActiveMeasurementId(id)
+                    }
+                  }}
                   onDelete={handleDeleteMeasurement}
                   onLabelChange={handleLabelChange}
+                  selectedIds={linkMode ? selectedForLink : undefined}
                 />
-              ) : (
+              ) : panelTab === 'boq' ? (
                 <LiveBOQPanel
                   projectId={projectId}
                   drawingId={drawingId}
                   measurementCount={measurements.length}
+                  linkMode={linkMode && selectedForLink.length > 0}
+                  selectedMeasurementIds={selectedForLink}
+                  onLinkToItem={handleLinkToItem}
+                  onCreateAndLink={handleCreateAndLink}
                 />
+              ) : (
+                <div className="p-2">
+                  <ScaleManager
+                    drawingId={drawingId}
+                    currentPage={page}
+                    activeScale={scale}
+                    scales={allScales}
+                    onScaleSelect={setScale}
+                    onCalibrate={handleCalibrate}
+                    onScaleDelete={() => {}}
+                    onRefresh={loadData}
+                  />
+                </div>
               )}
             </div>
           </div>
