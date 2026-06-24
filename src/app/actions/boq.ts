@@ -34,13 +34,28 @@ export async function createBOQItem(fields: {
 }): Promise<{ data?: BOQItem; error?: string }> {
   const supabase = await createClient()
 
+  const { data: project } = await supabase
+    .from('projects')
+    .select('id')
+    .eq('id', fields.project_id)
+    .single()
+
+  if (!project) {
+    return { error: `Project ${fields.project_id} not found. The project may have been deleted or the ID is invalid.` }
+  }
+
   const { data, error } = await supabase
     .from('qb_boq_items')
     .insert(fields)
     .select()
     .single()
 
-  if (error) return { error: error.message }
+  if (error) {
+    if (error.message.includes('foreign key constraint') && error.message.includes('project_id')) {
+      return { error: 'Database FK mismatch: qb_boq_items references the wrong projects table. Run migration 207 to fix.' }
+    }
+    return { error: error.message }
+  }
   return { data: data as BOQItem }
 }
 

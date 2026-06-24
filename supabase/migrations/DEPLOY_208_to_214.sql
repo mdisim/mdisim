@@ -1,9 +1,71 @@
 -- ============================================================
--- CONSOLIDATED MIGRATIONS 208-214 FOR PRODUCTION DEPLOYMENT
+-- CONSOLIDATED MIGRATIONS 207-214 FOR PRODUCTION DEPLOYMENT
 -- Run this in Supabase SQL Editor as a single transaction
 -- ============================================================
 
 BEGIN;
+
+-- ============================================================
+-- 207: Fix FKs + RLS to use production "projects" table
+-- qb_boq_items and qb_measurement_items originally referenced
+-- qb_projects(id), but the app uses the production projects table.
+-- THIS IS THE ROOT CAUSE of "FK constraint violated" errors on BOQ.
+-- ============================================================
+
+-- Fix measurement_items FK
+ALTER TABLE qb_measurement_items
+  DROP CONSTRAINT IF EXISTS qb_measurement_items_project_id_fkey;
+ALTER TABLE qb_measurement_items
+  ADD CONSTRAINT qb_measurement_items_project_id_fkey
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE;
+
+-- Fix boq_items FK — THIS FIXES THE BOQ INSERT ERROR
+ALTER TABLE qb_boq_items
+  DROP CONSTRAINT IF EXISTS qb_boq_items_project_id_fkey;
+ALTER TABLE qb_boq_items
+  ADD CONSTRAINT qb_boq_items_project_id_fkey
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE;
+
+-- Fix RLS: qb_measurement_items
+DROP POLICY IF EXISTS "via_project_owner" ON qb_measurement_items;
+CREATE POLICY "via_project_owner" ON qb_measurement_items
+  FOR ALL
+  USING (EXISTS (
+    SELECT 1 FROM projects p
+    WHERE p.id = project_id AND p.created_by = auth.uid()
+  ))
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM projects p
+    WHERE p.id = project_id AND p.created_by = auth.uid()
+  ));
+
+-- Fix RLS: qb_measurement_lines
+DROP POLICY IF EXISTS "via_item_owner" ON qb_measurement_lines;
+CREATE POLICY "via_item_owner" ON qb_measurement_lines
+  FOR ALL
+  USING (EXISTS (
+    SELECT 1 FROM qb_measurement_items mi
+    JOIN projects p ON p.id = mi.project_id
+    WHERE mi.id = item_id AND p.created_by = auth.uid()
+  ))
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM qb_measurement_items mi
+    JOIN projects p ON p.id = mi.project_id
+    WHERE mi.id = item_id AND p.created_by = auth.uid()
+  ));
+
+-- Fix RLS: qb_boq_items
+DROP POLICY IF EXISTS "via_project_owner" ON qb_boq_items;
+CREATE POLICY "via_project_owner" ON qb_boq_items
+  FOR ALL
+  USING (EXISTS (
+    SELECT 1 FROM projects p
+    WHERE p.id = project_id AND p.created_by = auth.uid()
+  ))
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM projects p
+    WHERE p.id = project_id AND p.created_by = auth.uid()
+  ));
 
 -- ============================================================
 -- 208: Fix qb_drawings FK to use production projects
