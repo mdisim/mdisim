@@ -213,6 +213,71 @@ export async function deleteMeasurementLine(id: string): Promise<{ error?: strin
   return {}
 }
 
+export async function linkDrawingMeasurementsToItem(
+  itemId: string,
+  drawingMeasurementIds: string[]
+): Promise<{ count: number; error?: string }> {
+  const supabase = await createClient()
+
+  const { data: dmList, error: fetchErr } = await supabase
+    .from('qb_drawing_measurements')
+    .select('id, drawing_id, page_number, tool_type, coordinates, quantity, unit, scale_id, label')
+    .in('id', drawingMeasurementIds)
+
+  if (fetchErr) return { count: 0, error: fetchErr.message }
+  if (!dmList || dmList.length === 0) return { count: 0, error: 'No drawing measurements found' }
+
+  const { data: parentItem } = await supabase
+    .from('qb_measurement_items')
+    .select('measurement_type')
+    .eq('id', itemId)
+    .single()
+
+  const measurementType = (parentItem as { measurement_type: MeasurementType } | null)?.measurement_type ?? 'length'
+
+  const { data: maxLine } = await supabase
+    .from('qb_measurement_lines')
+    .select('line_number, sort_order')
+    .eq('item_id', itemId)
+    .order('line_number', { ascending: false })
+    .limit(1)
+    .single()
+
+  let lineNumber = ((maxLine as { line_number: number } | null)?.line_number ?? 0) + 1
+  let sortOrder = ((maxLine as { sort_order: number } | null)?.sort_order ?? -1) + 1
+
+  const rows = (dmList as Record<string, unknown>[]).map((dm) => {
+    const qty = (dm.quantity as number) ?? 0
+    const finalQty = measurementType === 'formula' ? qty : calculateLineQuantity(
+      { nr: 1, formula: String(qty) },
+      'formula'
+    )
+
+    return {
+      item_id: itemId,
+      line_number: lineNumber++,
+      sort_order: sortOrder++,
+      description: (dm.label as string) || `Takeoff: ${dm.tool_type}`,
+      drawing_measurement_id: dm.id as string,
+      drawing_id: dm.drawing_id as string,
+      page_number: dm.page_number as number,
+      scale_id: (dm.scale_id as string) || null,
+      geo_json: dm.coordinates,
+      quantity: qty,
+      nr: 1,
+      is_deduction: false,
+      formula: String(qty),
+    }
+  })
+
+  const { error } = await supabase
+    .from('qb_measurement_lines')
+    .insert(rows)
+
+  if (error) return { count: 0, error: error.message }
+  return { count: rows.length }
+}
+
 export async function duplicateMeasurementLine(id: string): Promise<{ data?: MeasurementLine; error?: string }> {
   const supabase = await createClient()
   const { data: original } = await supabase
