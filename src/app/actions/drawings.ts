@@ -136,3 +136,62 @@ export async function getDrawingMeasurements(drawingId: string, pageNumber?: num
 
   return (data ?? []) as DrawingMeasurement[]
 }
+
+export async function createDrawingMeasurement(fields: {
+  drawing_id: string
+  page_number: number
+  scale_id?: string
+  tool_type: string
+  coordinates: unknown
+  quantity: number
+  unit?: string
+  label?: string
+  color?: string
+  notes?: string
+}): Promise<{ data?: DrawingMeasurement; error?: string }> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('qb_drawing_measurements')
+    .insert(fields)
+    .select()
+    .single()
+
+  if (error) return { error: error.message }
+  return { data: data as DrawingMeasurement }
+}
+
+export async function updateDrawingMeasurement(
+  id: string,
+  fields: Partial<Pick<DrawingMeasurement, 'label' | 'color' | 'notes' | 'quantity' | 'unit'>>
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('qb_drawing_measurements')
+    .update(fields)
+    .eq('id', id)
+
+  if (error) return { error: error.message }
+  return {}
+}
+
+export async function deleteDrawingMeasurement(id: string): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('qb_drawing_measurements')
+    .delete()
+    .eq('id', id)
+
+  if (error) return { error: error.message }
+  return {}
+}
+
+export async function deleteDrawingScale(id: string): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('qb_drawing_scales')
+    .delete()
+    .eq('id', id)
+
+  if (error) return { error: error.message }
+  return {}
+}

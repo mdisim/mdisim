@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { useParams } from 'next/navigation'
-import { getDrawings, createDrawing, deleteDrawing, getDrawingUrl } from '@/app/actions/drawings'
+import { useParams, useRouter } from 'next/navigation'
+import { getDrawings, createDrawing, deleteDrawing } from '@/app/actions/drawings'
 import type { Drawing, DrawingType } from '@/lib/types'
 import { DRAWING_TYPES } from '@/lib/types'
 import { Button } from '@/components/ui/button'
@@ -11,17 +11,15 @@ import { Modal } from '@/components/ui/modal'
 import { createClient } from '@/lib/supabase/client'
 import { Upload, Trash2, FileText, Eye, Plus } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
-import { PdfViewer } from '@/components/drawings/pdf-viewer'
 
 export default function DrawingsPage() {
   const { id: projectId } = useParams<{ id: string }>()
+  const router = useRouter()
   const [drawings, setDrawings] = useState<Drawing[]>([])
   const [loading, setLoading] = useState(true)
   const [showUpload, setShowUpload] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [viewDrawing, setViewDrawing] = useState<Drawing | null>(null)
-  const [viewUrl, setViewUrl] = useState<string | null>(null)
 
   const [form, setForm] = useState({
     name: '',
@@ -85,12 +83,8 @@ export default function DrawingsPage() {
     load()
   }
 
-  const handleView = async (drawing: Drawing) => {
-    const url = await getDrawingUrl(drawing.file_path)
-    if (url) {
-      setViewUrl(url)
-      setViewDrawing(drawing)
-    }
+  const handleView = (drawing: Drawing) => {
+    router.push(`/projects/${projectId}/drawings/${drawing.id}`)
   }
 
   const handleDelete = async (id: string) => {
@@ -215,17 +209,6 @@ export default function DrawingsPage() {
         </div>
       </Modal>
 
-      {/* PDF viewer modal */}
-      {viewDrawing && viewUrl && (
-        <Modal
-          isOpen={true}
-          onClose={() => { setViewDrawing(null); setViewUrl(null) }}
-          title={viewDrawing.name}
-          size="xl"
-        >
-          <PdfViewer url={viewUrl} />
-        </Modal>
-      )}
     </div>
   )
 }
