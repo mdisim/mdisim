@@ -89,6 +89,7 @@ export default function TakeoffPage() {
       <div className="flex-1 min-h-0">
         <TakeoffViewer
           drawingId={drawing.id}
+          projectId={projectId}
           drawingUrl={drawingUrl}
           pageCount={drawing.page_count}
         />

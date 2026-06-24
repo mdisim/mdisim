@@ -33,10 +33,12 @@ import {
   deleteDrawingMeasurement,
   createDrawingScale,
 } from '@/app/actions/drawings'
+import { LiveBOQPanel } from './live-boq-panel'
 import { AlertTriangle, PanelRightClose, PanelRightOpen, Keyboard } from 'lucide-react'
 
 interface TakeoffViewerProps {
   drawingId: string
+  projectId: string
   drawingUrl: string
   pageCount: number
 }
@@ -49,7 +51,7 @@ const TOOL_KEYS: Record<string, ToolType> = {
   a: 'area', r: 'rectangle', o: 'circle', n: 'count',
 }
 
-export function TakeoffViewer({ drawingId, drawingUrl, pageCount }: TakeoffViewerProps) {
+export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: TakeoffViewerProps) {
   // PDF state
   const [pdfDoc, setPdfDoc] = useState<unknown>(null)
   const [page, setPage] = useState(1)
@@ -78,6 +80,7 @@ export function TakeoffViewer({ drawingId, drawingUrl, pageCount }: TakeoffViewe
 
   // Panel & help
   const [showPanel, setShowPanel] = useState(true)
+  const [panelTab, setPanelTab] = useState<'measurements' | 'boq'>('measurements')
   const [showShortcuts, setShowShortcuts] = useState(false)
 
   // Pan state
@@ -787,16 +790,52 @@ export function TakeoffViewer({ drawingId, drawingUrl, pageCount }: TakeoffViewe
           </div>
         </div>
 
-        {/* Measurement panel */}
+        {/* Side panel with tabs */}
         {showPanel && (
-          <div className={cn('w-[280px] flex-shrink-0')}>
-            <MeasurementList
-              measurements={takeoffMs}
-              activeMeasurementId={activeMeasurementId}
-              onSelect={setActiveMeasurementId}
-              onDelete={handleDeleteMeasurement}
-              onLabelChange={handleLabelChange}
-            />
+          <div className="w-[300px] flex-shrink-0 flex flex-col bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700">
+            {/* Tab bar */}
+            <div className="flex border-b border-slate-200 dark:border-slate-700 shrink-0">
+              <button
+                onClick={() => setPanelTab('measurements')}
+                className={cn(
+                  'flex-1 px-3 py-2 text-xs font-medium transition-colors',
+                  panelTab === 'measurements'
+                    ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300',
+                )}
+              >
+                Measurements ({measurements.length})
+              </button>
+              <button
+                onClick={() => setPanelTab('boq')}
+                className={cn(
+                  'flex-1 px-3 py-2 text-xs font-medium transition-colors',
+                  panelTab === 'boq'
+                    ? 'text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-600 dark:border-emerald-400'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300',
+                )}
+              >
+                Live BOQ
+              </button>
+            </div>
+            {/* Tab content */}
+            <div className="flex-1 min-h-0">
+              {panelTab === 'measurements' ? (
+                <MeasurementList
+                  measurements={takeoffMs}
+                  activeMeasurementId={activeMeasurementId}
+                  onSelect={setActiveMeasurementId}
+                  onDelete={handleDeleteMeasurement}
+                  onLabelChange={handleLabelChange}
+                />
+              ) : (
+                <LiveBOQPanel
+                  projectId={projectId}
+                  drawingId={drawingId}
+                  measurementCount={measurements.length}
+                />
+              )}
+            </div>
           </div>
         )}
       </div>
