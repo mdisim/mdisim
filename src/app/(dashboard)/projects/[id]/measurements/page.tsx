@@ -310,7 +310,7 @@ export default function MeasurementsPage() {
           </span>
         </div>
         {selectedItems.size > 0 && (
-          <span className="text-blue-600 font-medium">
+          <span className="text-blue-600 dark:text-blue-400 font-medium">
             {selectedItems.size} selected for BOQ
           </span>
         )}
@@ -408,7 +408,7 @@ function CreateItemModal({
 
         <div className="grid grid-cols-3 gap-4">
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-slate-700">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
               Section / Category
             </label>
             <input
@@ -419,7 +419,7 @@ function CreateItemModal({
                 setForm((prev) => ({ ...prev, section: e.target.value }))
               }
               placeholder="e.g. Substructure"
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <datalist id="sections-list">
               {sections.map((s) => (
