@@ -22,6 +22,9 @@ import type { TakeoffMeasurement } from '@/lib/takeoff/renderer'
 import { TakeoffToolbar } from './takeoff-toolbar'
 import { MeasurementList } from './measurement-list'
 import { CalibrationDialog } from './calibration-dialog'
+import { PageThumbnails } from './page-thumbnails'
+import { ZoomControls } from './zoom-controls'
+import { KeyboardShortcutsHelp } from './keyboard-shortcuts-help'
 import {
   getDrawingMeasurements,
   getDrawingScales,
@@ -30,7 +33,7 @@ import {
   deleteDrawingMeasurement,
   createDrawingScale,
 } from '@/app/actions/drawings'
-import { AlertTriangle, PanelRightClose, PanelRightOpen } from 'lucide-react'
+import { AlertTriangle, PanelRightClose, PanelRightOpen, Keyboard } from 'lucide-react'
 
 interface TakeoffViewerProps {
   drawingId: string
@@ -39,6 +42,12 @@ interface TakeoffViewerProps {
 }
 
 type ToolType = DrawingToolType | 'select' | 'pan'
+
+const DRAWING_TOOLS: string[] = ['line', 'polyline', 'area', 'rectangle', 'circle', 'count']
+const TOOL_KEYS: Record<string, ToolType> = {
+  v: 'select', h: 'pan', l: 'line', p: 'polyline',
+  a: 'area', r: 'rectangle', o: 'circle', n: 'count',
+}
 
 export function TakeoffViewer({ drawingId, drawingUrl, pageCount }: TakeoffViewerProps) {
   // PDF state
@@ -67,8 +76,9 @@ export function TakeoffViewer({ drawingId, drawingUrl, pageCount }: TakeoffViewe
   const [activeMeasurementId, setActiveMeasurementId] = useState<string | null>(null)
   const [undoStack, setUndoStack] = useState<string[]>([])
 
-  // Panel
+  // Panel & help
   const [showPanel, setShowPanel] = useState(true)
+  const [showShortcuts, setShowShortcuts] = useState(false)
 
   // Pan state
   const isPanning = useRef(false)
@@ -153,7 +163,6 @@ export function TakeoffViewer({ drawingId, drawingUrl, pageCount }: TakeoffViewe
 
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-    // Saved measurements
     const takeoffMs: TakeoffMeasurement[] = measurements.map((m) => ({
       id: m.id,
       tool_type: m.tool_type,
@@ -165,10 +174,8 @@ export function TakeoffViewer({ drawingId, drawingUrl, pageCount }: TakeoffViewe
     }))
     renderMeasurements(ctx, takeoffMs, 1, activeMeasurementId ?? undefined)
 
-    // Active drawing
     const drawTool = activeTool as DrawingToolType
-    const drawingToolsList: string[] = ['line', 'polyline', 'area', 'rectangle', 'circle', 'count']
-    if (drawingToolsList.includes(activeTool ?? '') && activePoints.length > 0) {
+    if (DRAWING_TOOLS.includes(activeTool ?? '') && activePoints.length > 0) {
       const pts = [...activePoints]
       if (mousePos && (drawTool === 'polyline' || drawTool === 'area' || drawTool === 'line' || drawTool === 'rectangle' || drawTool === 'circle')) {
         if (drawTool === 'line' && pts.length === 1) pts.push(mousePos)
@@ -179,15 +186,13 @@ export function TakeoffViewer({ drawingId, drawingUrl, pageCount }: TakeoffViewe
       renderActiveDrawing(ctx, drawTool, pts, 1, activeColor)
     }
 
-    // Calibration
     if (isCalibrating && calibrationPoints.length > 0) {
       const pts = [...calibrationPoints]
       if (mousePos && pts.length === 1) pts.push(mousePos)
       renderCalibrationLine(ctx, pts, 1)
     }
 
-    // Cursor crosshair
-    if (mousePos && (drawingToolsList.includes(activeTool ?? '') || isCalibrating)) {
+    if (mousePos && (DRAWING_TOOLS.includes(activeTool ?? '') || isCalibrating)) {
       ctx.strokeStyle = 'rgba(0,0,0,0.4)'
       ctx.lineWidth = 1
       ctx.setLineDash([4, 4])
@@ -345,7 +350,6 @@ export function TakeoffViewer({ drawingId, drawingUrl, pageCount }: TakeoffViewe
       if (isPanning.current) return
       const pt = screenToCanvas(e.clientX, e.clientY)
 
-      // Calibration mode
       if (isCalibrating) {
         const newPts = [...calibrationPoints, pt]
         setCalibrationPoints(newPts)
@@ -357,7 +361,6 @@ export function TakeoffViewer({ drawingId, drawingUrl, pageCount }: TakeoffViewe
         return
       }
 
-      // Select tool — hit test
       if (activeTool === 'select') {
         const HIT_RADIUS = 10
         let found: string | null = null
@@ -393,7 +396,6 @@ export function TakeoffViewer({ drawingId, drawingUrl, pageCount }: TakeoffViewe
 
       if (activeTool === 'pan') return
 
-      // Drawing tools
       const tool = activeTool as DrawingToolType
       if (!tool) return
 
@@ -432,7 +434,6 @@ export function TakeoffViewer({ drawingId, drawingUrl, pageCount }: TakeoffViewe
         return
       }
 
-      // Polyline / Area — click to add, double-click to complete
       setActivePoints((prev) => [...prev, pt])
     },
     [activeTool, isCalibrating, calibrationPoints, activePoints, measurements, screenToCanvas, completeMeasurement],
@@ -461,21 +462,103 @@ export function TakeoffViewer({ drawingId, drawingUrl, pageCount }: TakeoffViewe
     [],
   )
 
+  // ── Undo ─────────────────────────────────────────────────────────────
+  const handleUndo = useCallback(async () => {
+    if (undoStack.length === 0) return
+    const lastId = undoStack[undoStack.length - 1]
+    await deleteDrawingMeasurement(lastId)
+    setUndoStack((prev) => prev.slice(0, -1))
+    await loadData()
+  }, [undoStack, loadData])
+
+  // ── Zoom helpers ─────────────────────────────────────────────────────
+  const handleZoomIn = useCallback(() => {
+    setZoom(z => Math.min(5, z + 0.25))
+  }, [])
+
+  const handleZoomOut = useCallback(() => {
+    setZoom(z => Math.max(0.3, z - 0.25))
+  }, [])
+
+  const handleFitToPage = useCallback(() => {
+    if (!containerRef.current || canvasSize.width === 0) return
+    const container = containerRef.current
+    const cw = container.clientWidth
+    const ch = container.clientHeight
+    const baseW = canvasSize.width / zoom
+    const baseH = canvasSize.height / zoom
+    const fitZoom = Math.min(cw / baseW, ch / baseH) * 0.95
+    setZoom(Math.max(0.3, Math.min(5, fitZoom)))
+    setOffset({ x: 0, y: 0 })
+  }, [canvasSize, zoom])
+
+  const handleZoomSet = useCallback((z: number) => {
+    setZoom(Math.max(0.3, Math.min(5, z)))
+  }, [])
+
+  // ── Page navigation helper ───────────────────────────────────────────
+  const goToPage = useCallback((p: number) => {
+    const clamped = Math.max(1, Math.min(pageCount, p))
+    if (clamped !== page) {
+      setPage(clamped)
+      setOffset({ x: 0, y: 0 })
+    }
+  }, [page, pageCount])
+
   // ── Keyboard ─────────────────────────────────────────────────────────
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
-      if (e.key === ' ') { isSpaceDown.current = true; e.preventDefault() }
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') return
+
+      if (e.key === ' ') { isSpaceDown.current = true; e.preventDefault(); return }
+
       if (e.key === 'Escape') {
         setActivePoints([])
         setIsCalibrating(false)
         setCalibrationPoints([])
+        return
       }
+
       if (e.key === 'Delete' || e.key === 'Backspace') {
         if (activeMeasurementId) {
           deleteDrawingMeasurement(activeMeasurementId).then(() => loadData())
           setActiveMeasurementId(null)
         }
+        return
       }
+
+      // Undo: Ctrl+Z
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault()
+        handleUndo()
+        return
+      }
+
+      // Tool shortcuts
+      const toolKey = TOOL_KEYS[e.key.toLowerCase()]
+      if (toolKey && !e.ctrlKey && !e.metaKey) {
+        setActiveTool(toolKey)
+        setActivePoints([])
+        setIsCalibrating(false)
+        setCalibrationPoints([])
+        return
+      }
+
+      // Zoom: +/= and -/_
+      if (e.key === '=' || e.key === '+') { handleZoomIn(); return }
+      if (e.key === '-' || e.key === '_') { handleZoomOut(); return }
+      if (e.key === '0') { handleFitToPage(); return }
+
+      // Page navigation: [ ] or PgUp/PgDn
+      if (e.key === '[' || e.key === 'PageUp') { goToPage(page - 1); return }
+      if (e.key === ']' || e.key === 'PageDown') { goToPage(page + 1); return }
+
+      // Toggle panel: Tab
+      if (e.key === 'Tab') { e.preventDefault(); setShowPanel(v => !v); return }
+
+      // Help: ?
+      if (e.key === '?') { setShowShortcuts(v => !v); return }
     }
     const up = (e: KeyboardEvent) => {
       if (e.key === ' ') isSpaceDown.current = false
@@ -486,7 +569,7 @@ export function TakeoffViewer({ drawingId, drawingUrl, pageCount }: TakeoffViewe
       window.removeEventListener('keydown', down)
       window.removeEventListener('keyup', up)
     }
-  }, [activeMeasurementId, loadData])
+  }, [activeMeasurementId, loadData, handleZoomIn, handleZoomOut, handleFitToPage, goToPage, page, handleUndo])
 
   // ── Calibration confirm ──────────────────────────────────────────────
   const handleCalibConfirm = useCallback(
@@ -526,15 +609,6 @@ export function TakeoffViewer({ drawingId, drawingUrl, pageCount }: TakeoffViewe
     if (!isCalibrating) setActiveTool(null)
   }, [isCalibrating])
 
-  // ── Undo ─────────────────────────────────────────────────────────────
-  const handleUndo = useCallback(async () => {
-    if (undoStack.length === 0) return
-    const lastId = undoStack[undoStack.length - 1]
-    await deleteDrawingMeasurement(lastId)
-    setUndoStack((prev) => prev.slice(0, -1))
-    await loadData()
-  }, [undoStack, loadData])
-
   // ── Delete from toolbar ──────────────────────────────────────────────
   const handleDeleteMeasurement = useCallback(
     async (id: string) => {
@@ -555,10 +629,9 @@ export function TakeoffViewer({ drawingId, drawingUrl, pageCount }: TakeoffViewe
   )
 
   // ── Cursor style ─────────────────────────────────────────────────────
-  const drawingTools: string[] = ['line', 'polyline', 'area', 'rectangle', 'circle', 'count']
   let cursor = 'default'
   if (activeTool === 'pan' || isPanning.current || isSpaceDown.current) cursor = 'grab'
-  if (drawingTools.includes(activeTool ?? '') || isCalibrating) cursor = 'crosshair'
+  if (DRAWING_TOOLS.includes(activeTool ?? '') || isCalibrating) cursor = 'crosshair'
   if (activeTool === 'select') cursor = 'default'
 
   const takeoffMs: TakeoffMeasurement[] = measurements.map((m) => ({
@@ -595,13 +668,21 @@ export function TakeoffViewer({ drawingId, drawingUrl, pageCount }: TakeoffViewe
       )}
 
       <div className="flex flex-1 overflow-hidden">
+        {/* Page thumbnails */}
+        <PageThumbnails
+          pdfDoc={pdfDoc}
+          currentPage={page}
+          pageCount={pageCount}
+          onPageChange={goToPage}
+        />
+
         {/* Main canvas area */}
         <div className="flex-1 relative overflow-hidden bg-slate-200 dark:bg-slate-900">
-          {/* Page controls */}
+          {/* Page controls (for quick nav when no thumbnails visible) */}
           {pageCount > 1 && (
             <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-white/90 dark:bg-slate-800/90 backdrop-blur rounded-lg px-3 py-1 shadow-sm text-sm">
               <button
-                onClick={() => { setPage(Math.max(1, page - 1)); setOffset({ x: 0, y: 0 }) }}
+                onClick={() => goToPage(page - 1)}
                 disabled={page <= 1}
                 className="text-slate-600 dark:text-slate-300 disabled:opacity-40"
               >
@@ -611,7 +692,7 @@ export function TakeoffViewer({ drawingId, drawingUrl, pageCount }: TakeoffViewe
                 {page} / {pageCount}
               </span>
               <button
-                onClick={() => { setPage(Math.min(pageCount, page + 1)); setOffset({ x: 0, y: 0 }) }}
+                onClick={() => goToPage(page + 1)}
                 disabled={page >= pageCount}
                 className="text-slate-600 dark:text-slate-300 disabled:opacity-40"
               >
@@ -620,19 +701,55 @@ export function TakeoffViewer({ drawingId, drawingUrl, pageCount }: TakeoffViewe
             </div>
           )}
 
-          {/* Zoom indicator */}
-          <div className="absolute bottom-2 left-2 z-10 bg-white/90 dark:bg-slate-800/90 backdrop-blur rounded px-2 py-0.5 text-xs text-slate-500 dark:text-slate-400">
-            {Math.round(zoom * 100)}%
+          {/* Zoom controls */}
+          <ZoomControls
+            zoom={zoom}
+            onZoomIn={handleZoomIn}
+            onZoomOut={handleZoomOut}
+            onFitToPage={handleFitToPage}
+            onZoomSet={handleZoomSet}
+          />
+
+          {/* Shortcuts + panel toggle */}
+          <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+            <button
+              onClick={() => setShowShortcuts(true)}
+              className="p-1.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur rounded-lg shadow-sm hover:bg-white dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400"
+              title="Keyboard shortcuts (?)"
+            >
+              <Keyboard size={16} />
+            </button>
+            <button
+              onClick={() => setShowPanel((v) => !v)}
+              className="p-1.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur rounded-lg shadow-sm hover:bg-white dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400"
+              title={showPanel ? 'Hide panel (Tab)' : 'Show panel (Tab)'}
+            >
+              {showPanel ? <PanelRightClose size={16} /> : <PanelRightOpen size={16} />}
+            </button>
           </div>
 
-          {/* Panel toggle */}
-          <button
-            onClick={() => setShowPanel((v) => !v)}
-            className="absolute top-2 right-2 z-10 p-1.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur rounded-lg shadow-sm hover:bg-white dark:hover:bg-slate-800 transition-colors"
-            title={showPanel ? 'Hide panel' : 'Show panel'}
-          >
-            {showPanel ? <PanelRightClose size={16} /> : <PanelRightOpen size={16} />}
-          </button>
+          {/* Status bar */}
+          <div className="absolute bottom-3 right-3 z-10 flex items-center gap-3 bg-white/95 dark:bg-slate-800/95 backdrop-blur rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+            {scale ? (
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                Scale: 1 {scale.unit} = {scale.px_per_unit.toFixed(1)}px
+              </span>
+            ) : (
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                No scale
+              </span>
+            )}
+            <span className="text-slate-300 dark:text-slate-600">|</span>
+            <span>{measurements.length} measurement{measurements.length !== 1 ? 's' : ''}</span>
+            {mousePos && (
+              <>
+                <span className="text-slate-300 dark:text-slate-600">|</span>
+                <span className="font-mono">{Math.round(mousePos.x)}, {Math.round(mousePos.y)}</span>
+              </>
+            )}
+          </div>
 
           <div
             ref={containerRef}
@@ -693,6 +810,11 @@ export function TakeoffViewer({ drawingId, drawingUrl, pageCount }: TakeoffViewe
         }}
         onConfirm={handleCalibConfirm}
         pixelDistance={calibPixelDist}
+      />
+
+      <KeyboardShortcutsHelp
+        isOpen={showShortcuts}
+        onClose={() => setShowShortcuts(false)}
       />
     </div>
   )
