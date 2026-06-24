@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import type { DrawingToolType, DrawingScale, DrawingMeasurement } from '@/lib/types'
-import type { Point } from '@/lib/takeoff/geometry'
+import type { Point, SnapConfig, SnapTarget, SnapGeometry } from '@/lib/takeoff/geometry'
 import {
   distance,
   polylineLength,
@@ -12,11 +12,17 @@ import {
   circleArea,
   pixelsToReal,
   sqPixelsToReal,
+  DEFAULT_SNAP_CONFIG,
+  findSnapTarget,
+  constrainAngle,
 } from '@/lib/takeoff/geometry'
 import {
   renderMeasurements,
   renderActiveDrawing,
   renderCalibrationLine,
+  renderSnapIndicator,
+  renderAngleGuide,
+  renderGrid,
 } from '@/lib/takeoff/renderer'
 import type { TakeoffMeasurement } from '@/lib/takeoff/renderer'
 import { TakeoffToolbar } from './takeoff-toolbar'
@@ -51,6 +57,69 @@ const TOOL_KEYS: Record<string, ToolType> = {
   a: 'area', r: 'rectangle', o: 'circle', n: 'count',
 }
 
+const TOOL_LABELS: Record<string, string> = {
+  select: 'Select',
+  pan: 'Pan',
+  line: 'Line',
+  polyline: 'Polyline',
+  area: 'Area',
+  rectangle: 'Rectangle',
+  circle: 'Circle',
+  count: 'Count',
+}
+
+const SNAP_TYPE_COLORS: Record<string, string> = {
+  endpoint: '#F59E0B',
+  midpoint: '#8B5CF6',
+  intersection: '#EF4444',
+  perpendicular: '#06B6D4',
+  nearest: '#10B981',
+  grid: '#6366F1',
+}
+
+/** Convert DrawingMeasurement[] to SnapGeometry[] for the snap engine */
+function measurementsToSnapGeometry(measurements: DrawingMeasurement[]): SnapGeometry[] {
+  const result: SnapGeometry[] = []
+  for (const m of measurements) {
+    const coords = m.coordinates as Record<string, unknown>
+    const sg: SnapGeometry = {
+      id: m.id,
+      points: [],
+      type: m.tool_type as SnapGeometry['type'],
+    }
+
+    if (coords?.points && Array.isArray(coords.points)) {
+      sg.points = (coords.points as number[][]).map(([x, y]) => ({ x, y }))
+    } else if (coords?.origin && Array.isArray(coords.origin)) {
+      const [ox, oy] = coords.origin as number[]
+      const w = (coords.width as number) ?? 0
+      const h = (coords.height as number) ?? 0
+      sg.points = [
+        { x: ox, y: oy },
+        { x: ox + w, y: oy },
+        { x: ox + w, y: oy + h },
+        { x: ox, y: oy + h },
+      ]
+    } else if (coords?.center && Array.isArray(coords.center)) {
+      const [cx, cy] = coords.center as number[]
+      const r = (coords.radius as number) ?? 0
+      // Represent circle as center + cardinal points
+      sg.points = [
+        { x: cx, y: cy },
+        { x: cx + r, y: cy },
+        { x: cx, y: cy - r },
+        { x: cx - r, y: cy },
+        { x: cx, y: cy + r },
+      ]
+    }
+
+    if (sg.points.length > 0) {
+      result.push(sg)
+    }
+  }
+  return result
+}
+
 export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: TakeoffViewerProps) {
   // PDF state
   const [pdfDoc, setPdfDoc] = useState<unknown>(null)
@@ -83,11 +152,19 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
   const [panelTab, setPanelTab] = useState<'measurements' | 'boq'>('measurements')
   const [showShortcuts, setShowShortcuts] = useState(false)
 
+  // Snapping
+  const [snapConfig, setSnapConfig] = useState<SnapConfig>(DEFAULT_SNAP_CONFIG)
+  const [currentSnap, setCurrentSnap] = useState<SnapTarget | null>(null)
+
+  // Grid
+  const [showGrid, setShowGrid] = useState(false)
+
   // Pan state
   const isPanning = useRef(false)
   const panStart = useRef<Point>({ x: 0, y: 0 })
   const offsetStart = useRef<Point>({ x: 0, y: 0 })
   const isSpaceDown = useRef(false)
+  const isShiftDown = useRef(false)
 
   // Canvas refs
   const pdfCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -157,6 +234,9 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
     overlayCanvasRef.current.height = canvasSize.height
   }, [canvasSize])
 
+  // ── Snap geometries (memoized) ───────────────────────────────────────
+  const snapGeometries = measurementsToSnapGeometry(measurements)
+
   // ── Render overlay ───────────────────────────────────────────────────
   const renderOverlay = useCallback(() => {
     const canvas = overlayCanvasRef.current
@@ -165,6 +245,19 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
     if (!ctx) return
 
     ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+    // Grid
+    if (showGrid) {
+      renderGrid(
+        ctx,
+        canvas.width,
+        canvas.height,
+        snapConfig.gridSize,
+        1,
+        scale?.px_per_unit,
+        scale?.unit,
+      )
+    }
 
     const takeoffMs: TakeoffMeasurement[] = measurements.map((m) => ({
       id: m.id,
@@ -186,13 +279,44 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
         else if (drawTool === 'circle' && pts.length === 1) pts.push(mousePos)
         else if ((drawTool === 'polyline' || drawTool === 'area') && pts.length >= 1) pts.push(mousePos)
       }
-      renderActiveDrawing(ctx, drawTool, pts, 1, activeColor)
+      renderActiveDrawing(ctx, drawTool, pts, 1, activeColor, scale?.px_per_unit ?? 0, scale?.unit ?? null)
+
+      // Angle guide when shift is held
+      if (isShiftDown.current && activePoints.length >= 1 && mousePos) {
+        const origin = activePoints[activePoints.length - 1]
+        const previous = activePoints.length >= 2 ? activePoints[activePoints.length - 2] : null
+        if (drawTool === 'line' || drawTool === 'polyline' || drawTool === 'area') {
+          renderAngleGuide(ctx, origin, mousePos, previous, 1)
+        }
+      }
+    }
+
+    // Count tool: show running count numbers on active points
+    if (activeTool === 'count' && activePoints.length > 0) {
+      const r = 12
+      for (let i = 0; i < activePoints.length; i++) {
+        const p = activePoints[i]
+        ctx.fillStyle = activeColor
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, r, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.font = '700 12px Inter, system-ui, sans-serif'
+        ctx.fillStyle = '#fff'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(String(i + 1), p.x, p.y)
+      }
     }
 
     if (isCalibrating && calibrationPoints.length > 0) {
       const pts = [...calibrationPoints]
       if (mousePos && pts.length === 1) pts.push(mousePos)
       renderCalibrationLine(ctx, pts, 1)
+    }
+
+    // Snap indicator
+    if (currentSnap) {
+      renderSnapIndicator(ctx, currentSnap, 1)
     }
 
     if (mousePos && (DRAWING_TOOLS.includes(activeTool ?? '') || isCalibrating)) {
@@ -207,7 +331,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
       ctx.stroke()
       ctx.setLineDash([])
     }
-  }, [measurements, activeMeasurementId, activeTool, activePoints, mousePos, activeColor, isCalibrating, calibrationPoints])
+  }, [measurements, activeMeasurementId, activeTool, activePoints, mousePos, activeColor, isCalibrating, calibrationPoints, currentSnap, showGrid, snapConfig.gridSize, scale])
 
   useEffect(() => {
     if (renderQueued.current) return
@@ -232,6 +356,29 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
       }
     },
     [],
+  )
+
+  // ── Compute effective cursor position (with snap + angle constraint) ──
+  const getEffectiveCursor = useCallback(
+    (rawPt: Point): { point: Point; snap: SnapTarget | null } => {
+      let pt = rawPt
+      let snap: SnapTarget | null = null
+
+      // Shift-constrain first
+      if (isShiftDown.current && activePoints.length >= 1) {
+        const lastPt = activePoints[activePoints.length - 1]
+        pt = constrainAngle(lastPt, pt, 45)
+      }
+
+      // Then snap
+      snap = findSnapTarget(pt, snapGeometries, snapConfig, activePoints)
+      if (snap) {
+        pt = snap.point
+      }
+
+      return { point: pt, snap }
+    },
+    [snapGeometries, snapConfig, activePoints],
   )
 
   // ── Complete measurement ─────────────────────────────────────────────
@@ -331,17 +478,23 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
-      const pt = screenToCanvas(e.clientX, e.clientY)
-      setMousePos(pt)
+      const rawPt = screenToCanvas(e.clientX, e.clientY)
 
       if (isPanning.current) {
         setOffset({
           x: offsetStart.current.x + (e.clientX - panStart.current.x),
           y: offsetStart.current.y + (e.clientY - panStart.current.y),
         })
+        setMousePos(rawPt)
+        return
       }
+
+      // Apply snap and angle constraint
+      const { point, snap } = getEffectiveCursor(rawPt)
+      setMousePos(point)
+      setCurrentSnap(snap)
     },
-    [screenToCanvas],
+    [screenToCanvas, getEffectiveCursor],
   )
 
   const handleMouseUp = useCallback(() => {
@@ -351,7 +504,8 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
       if (isPanning.current) return
-      const pt = screenToCanvas(e.clientX, e.clientY)
+      const rawPt = screenToCanvas(e.clientX, e.clientY)
+      const { point: pt } = getEffectiveCursor(rawPt)
 
       if (isCalibrating) {
         const newPts = [...calibrationPoints, pt]
@@ -402,8 +556,9 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
       const tool = activeTool as DrawingToolType
       if (!tool) return
 
+      // Count tool: accumulate points on single click, complete on double-click
       if (tool === 'count') {
-        completeMeasurement('count', [pt])
+        setActivePoints((prev) => [...prev, pt])
         return
       }
 
@@ -439,7 +594,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
 
       setActivePoints((prev) => [...prev, pt])
     },
-    [activeTool, isCalibrating, calibrationPoints, activePoints, measurements, screenToCanvas, completeMeasurement],
+    [activeTool, isCalibrating, calibrationPoints, activePoints, measurements, screenToCanvas, completeMeasurement, getEffectiveCursor],
   )
 
   const handleDoubleClick = useCallback(
@@ -449,6 +604,9 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
         setActivePoints([])
       } else if (activeTool === 'area' && activePoints.length >= 3) {
         completeMeasurement('area', activePoints)
+        setActivePoints([])
+      } else if (activeTool === 'count' && activePoints.length >= 1) {
+        completeMeasurement('count', activePoints)
         setActivePoints([])
       }
     },
@@ -515,6 +673,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') return
 
       if (e.key === ' ') { isSpaceDown.current = true; e.preventDefault(); return }
+      if (e.key === 'Shift') { isShiftDown.current = true; return }
 
       if (e.key === 'Escape') {
         setActivePoints([])
@@ -535,6 +694,12 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault()
         handleUndo()
+        return
+      }
+
+      // Grid toggle: g
+      if (e.key.toLowerCase() === 'g' && !e.ctrlKey && !e.metaKey) {
+        setShowGrid(v => !v)
         return
       }
 
@@ -565,6 +730,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
     }
     const up = (e: KeyboardEvent) => {
       if (e.key === ' ') isSpaceDown.current = false
+      if (e.key === 'Shift') isShiftDown.current = false
     }
     window.addEventListener('keydown', down)
     window.addEventListener('keyup', up)
@@ -647,6 +813,11 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
     label: m.label,
   }))
 
+  // ── Compute real-world mouse coordinates ─────────────────────────────
+  const realWorldCoords = mousePos && scale && scale.px_per_unit > 0
+    ? { x: mousePos.x / scale.px_per_unit, y: mousePos.y / scale.px_per_unit }
+    : null
+
   return (
     <div className="flex flex-col h-full">
       <TakeoffToolbar
@@ -660,6 +831,10 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
         canUndo={undoStack.length > 0}
         activeColor={activeColor}
         onColorChange={setActiveColor}
+        snapConfig={snapConfig}
+        onSnapConfigChange={setSnapConfig}
+        showGrid={showGrid}
+        onGridToggle={() => setShowGrid(v => !v)}
       />
 
       {/* Scale warning */}
@@ -733,6 +908,29 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
 
           {/* Status bar */}
           <div className="absolute bottom-3 right-3 z-10 flex items-center gap-3 bg-white/95 dark:bg-slate-800/95 backdrop-blur rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+            {/* Active tool name */}
+            {activeTool && (
+              <>
+                <span className="font-medium text-slate-700 dark:text-slate-200">
+                  {TOOL_LABELS[activeTool] ?? activeTool}
+                </span>
+                <span className="text-slate-300 dark:text-slate-600">|</span>
+              </>
+            )}
+            {/* Snap mode indicators */}
+            {snapConfig.enabled && (
+              <>
+                <span className="flex items-center gap-0.5">
+                  {snapConfig.endpoint && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: SNAP_TYPE_COLORS.endpoint }} title="Endpoint snap" />}
+                  {snapConfig.midpoint && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: SNAP_TYPE_COLORS.midpoint }} title="Midpoint snap" />}
+                  {snapConfig.intersection && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: SNAP_TYPE_COLORS.intersection }} title="Intersection snap" />}
+                  {snapConfig.perpendicular && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: SNAP_TYPE_COLORS.perpendicular }} title="Perpendicular snap" />}
+                  {snapConfig.nearest && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: SNAP_TYPE_COLORS.nearest }} title="Nearest snap" />}
+                  {snapConfig.grid && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: SNAP_TYPE_COLORS.grid }} title="Grid snap" />}
+                </span>
+                <span className="text-slate-300 dark:text-slate-600">|</span>
+              </>
+            )}
             {scale ? (
               <span className="flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
@@ -749,7 +947,27 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
             {mousePos && (
               <>
                 <span className="text-slate-300 dark:text-slate-600">|</span>
-                <span className="font-mono">{Math.round(mousePos.x)}, {Math.round(mousePos.y)}</span>
+                <span className="font-mono">
+                  {realWorldCoords
+                    ? `${realWorldCoords.x.toFixed(2)}, ${realWorldCoords.y.toFixed(2)} ${scale!.unit}`
+                    : `${Math.round(mousePos.x)}, ${Math.round(mousePos.y)}`
+                  }
+                </span>
+              </>
+            )}
+            {currentSnap && (
+              <>
+                <span className="text-slate-300 dark:text-slate-600">|</span>
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: SNAP_TYPE_COLORS[currentSnap.type] ?? '#F59E0B' }} />
+                  {currentSnap.type}
+                </span>
+              </>
+            )}
+            {showGrid && (
+              <>
+                <span className="text-slate-300 dark:text-slate-600">|</span>
+                <span>Grid</span>
               </>
             )}
           </div>

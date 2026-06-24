@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import {
   MousePointer2,
   Hand,
@@ -12,9 +13,13 @@ import {
   Crosshair,
   Undo2,
   Trash2,
+  Magnet,
+  Grid3X3,
+  ChevronDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { TakeoffMeasurement } from '@/lib/takeoff/renderer'
+import type { SnapConfig } from '@/lib/takeoff/geometry'
 
 interface TakeoffToolbarProps {
   activeTool: string | null
@@ -27,6 +32,10 @@ interface TakeoffToolbarProps {
   canUndo: boolean
   activeColor: string
   onColorChange: (color: string) => void
+  snapConfig?: SnapConfig
+  onSnapConfigChange?: (config: SnapConfig) => void
+  showGrid?: boolean
+  onGridToggle?: () => void
 }
 
 const COLORS = [
@@ -35,14 +44,14 @@ const COLORS = [
 ]
 
 const TOOLS = [
-  { id: 'select', icon: MousePointer2, label: 'Select', group: 'nav' },
-  { id: 'pan', icon: Hand, label: 'Pan', group: 'nav' },
-  { id: 'line', icon: Ruler, label: 'Line', group: 'measure' },
-  { id: 'polyline', icon: Spline, label: 'Polyline', group: 'measure' },
-  { id: 'area', icon: Pentagon, label: 'Area', group: 'measure' },
-  { id: 'rectangle', icon: Square, label: 'Rectangle', group: 'measure' },
-  { id: 'circle', icon: Circle, label: 'Circle', group: 'measure' },
-  { id: 'count', icon: Hash, label: 'Count', group: 'measure' },
+  { id: 'select', icon: MousePointer2, label: 'Select (V)', shortcut: 'V', group: 'nav' },
+  { id: 'pan', icon: Hand, label: 'Pan (H)', shortcut: 'H', group: 'nav' },
+  { id: 'line', icon: Ruler, label: 'Line (L)', shortcut: 'L', group: 'measure' },
+  { id: 'polyline', icon: Spline, label: 'Polyline (P)', shortcut: 'P', group: 'measure' },
+  { id: 'area', icon: Pentagon, label: 'Area (A)', shortcut: 'A', group: 'measure' },
+  { id: 'rectangle', icon: Square, label: 'Rectangle (R)', shortcut: 'R', group: 'measure' },
+  { id: 'circle', icon: Circle, label: 'Circle (O)', shortcut: 'O', group: 'measure' },
+  { id: 'count', icon: Hash, label: 'Count (N)', shortcut: 'N', group: 'measure' },
 ] as const
 
 function ToolButton({
@@ -50,11 +59,13 @@ function ToolButton({
   label,
   active,
   onClick,
+  className,
 }: {
   icon: React.ComponentType<{ size?: number }>
   label: string
   active: boolean
   onClick: () => void
+  className?: string
 }) {
   return (
     <button
@@ -65,6 +76,7 @@ function ToolButton({
         active
           ? 'bg-blue-600 text-white shadow-sm'
           : 'text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700',
+        className,
       )}
     >
       <Icon size={18} />
@@ -72,6 +84,88 @@ function ToolButton({
         {label}
       </span>
     </button>
+  )
+}
+
+function SnapMenu({ config, onChange }: { config: SnapConfig; onChange: (c: SnapConfig) => void }) {
+  const [open, setOpen] = useState(false)
+
+  const toggleField = (field: keyof SnapConfig) => {
+    onChange({ ...config, [field]: !config[field] })
+  }
+
+  const SNAP_MODES = [
+    { key: 'endpoint' as const, label: 'Endpoint', color: 'bg-yellow-500' },
+    { key: 'midpoint' as const, label: 'Midpoint', color: 'bg-orange-500' },
+    { key: 'nearest' as const, label: 'Nearest', color: 'bg-cyan-500' },
+    { key: 'grid' as const, label: 'Grid', color: 'bg-violet-500' },
+  ]
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(v => !v)}
+        title="Snap Settings"
+        className={cn(
+          'flex items-center gap-1 px-2 py-2 rounded-md transition-colors',
+          config.enabled
+            ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20'
+            : 'text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700',
+        )}
+      >
+        <Magnet size={18} />
+        <ChevronDown size={12} />
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute top-full left-0 mt-1 z-50 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 p-2 min-w-[180px]">
+            <label className="flex items-center gap-2 px-2 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-200 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-750 rounded">
+              <input
+                type="checkbox"
+                checked={config.enabled}
+                onChange={() => toggleField('enabled')}
+                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              />
+              Snap Enabled
+            </label>
+            <div className="h-px bg-slate-200 dark:bg-slate-700 my-1" />
+            {SNAP_MODES.map(mode => (
+              <label
+                key={mode.key}
+                className="flex items-center gap-2 px-2 py-1 text-sm text-slate-600 dark:text-slate-300 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-750 rounded"
+              >
+                <input
+                  type="checkbox"
+                  checked={config[mode.key]}
+                  onChange={() => toggleField(mode.key)}
+                  disabled={!config.enabled}
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className={cn('w-2 h-2 rounded-full', mode.color)} />
+                {mode.label}
+              </label>
+            ))}
+            <div className="h-px bg-slate-200 dark:bg-slate-700 my-1" />
+            <div className="px-2 py-1">
+              <label className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                Snap Radius
+              </label>
+              <input
+                type="range"
+                min={5}
+                max={30}
+                value={config.snapRadius}
+                onChange={e => onChange({ ...config, snapRadius: Number(e.target.value) })}
+                className="w-full h-1 mt-1"
+              />
+              <span className="text-xs text-slate-500">{config.snapRadius}px</span>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   )
 }
 
@@ -86,6 +180,10 @@ export function TakeoffToolbar({
   canUndo,
   activeColor,
   onColorChange,
+  snapConfig,
+  onSnapConfigChange,
+  showGrid,
+  onGridToggle,
 }: TakeoffToolbarProps) {
   const navTools = TOOLS.filter((t) => t.group === 'nav')
   const measureTools = TOOLS.filter((t) => t.group === 'measure')
@@ -128,6 +226,21 @@ export function TakeoffToolbar({
         />
       </div>
 
+      {/* Snap & Grid */}
+      <div className="flex items-center gap-0.5 px-2 border-r border-slate-200 dark:border-slate-700">
+        {snapConfig && onSnapConfigChange && (
+          <SnapMenu config={snapConfig} onChange={onSnapConfigChange} />
+        )}
+        {onGridToggle && (
+          <ToolButton
+            icon={Grid3X3}
+            label="Grid (G)"
+            active={showGrid ?? false}
+            onClick={onGridToggle}
+          />
+        )}
+      </div>
+
       {/* Color picker */}
       <div className="flex items-center gap-1 px-2 border-r border-slate-200 dark:border-slate-700">
         {COLORS.map((c) => (
@@ -151,17 +264,17 @@ export function TakeoffToolbar({
         <button
           onClick={onUndo}
           disabled={!canUndo}
-          title="Undo"
+          title="Undo (Ctrl+Z)"
           className="p-2 rounded-md text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700 disabled:opacity-40 transition-colors"
         >
           <Undo2 size={18} />
         </button>
         <button
           onClick={() => {
-            const active = measurements.find(() => false) // delete selected handled by parent
+            const active = measurements.find(() => false)
             if (active) onDeleteMeasurement(active.id)
           }}
-          title="Delete Selected"
+          title="Delete Selected (Del)"
           className="p-2 rounded-md text-slate-600 hover:bg-red-100 hover:text-red-600 dark:text-slate-300 dark:hover:bg-red-900/30 transition-colors"
         >
           <Trash2 size={18} />

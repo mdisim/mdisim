@@ -27,6 +27,11 @@ const SHORTCUTS = [
     { key: '] / PgDn', desc: 'Next page' },
     { key: 'Scroll', desc: 'Zoom in/out' },
   ]},
+  { section: 'Precision', items: [
+    { key: 'Shift', desc: 'Constrain to 45° angles' },
+    { key: 'G', desc: 'Toggle grid overlay' },
+    { key: 'Double-click', desc: 'Complete polyline / area / count' },
+  ]},
   { section: 'Actions', items: [
     { key: 'Ctrl+Z', desc: 'Undo last measurement' },
     { key: 'Delete', desc: 'Delete selected' },
