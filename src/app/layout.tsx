@@ -5,8 +5,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'ANGEL D.C. - Construction Project Management',
-  description: 'Complete construction project management platform',
+  title: 'ANGEL D.C. — Construction Intelligence Platform',
+  description: 'Enterprise construction intelligence and project management platform',
 }
 
 export default function RootLayout({
@@ -20,6 +20,13 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{__html: `
   (function(){
     try {
+      var theme = localStorage.getItem('angel-dc-theme') || 'light';
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+
       var lang = localStorage.getItem('angel-dc-language') || 'en';
       var rtl = ['ar','he'].includes(lang);
       document.documentElement.setAttribute('dir', rtl ? 'rtl' : 'ltr');
