@@ -23,6 +23,8 @@ import { MeasurementGrid } from '@/components/measurements/measurement-grid'
 import { MeasurementToolbar } from '@/components/measurements/measurement-toolbar'
 import { GenerateBOQDialog } from '@/components/measurements/generate-boq-dialog'
 import { Ruler, Plus } from 'lucide-react'
+import { getProject } from '@/app/actions/projects'
+import { exportMeasurementsToExcel } from '@/lib/export/measurements-excel'
 
 const MEASUREMENT_TYPE_DEFAULT_UNIT: Record<MeasurementType, string> = {
   volume: 'm³',
@@ -271,6 +273,10 @@ export default function MeasurementsPage() {
         onSearch={setSearchQuery}
         onAddItem={() => setShowCreateItem(true)}
         onGenerateBOQ={() => setShowGenerateBOQ(true)}
+        onExport={async () => {
+          const project = await getProject(projectId)
+          if (project) await exportMeasurementsToExcel(items, project.name)
+        }}
       />
 
       <MeasurementGrid

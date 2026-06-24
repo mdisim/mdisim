@@ -2,11 +2,12 @@
 
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Plus, FileSpreadsheet, Search } from 'lucide-react'
+import { Plus, FileSpreadsheet, Search, Download } from 'lucide-react'
 
 interface MeasurementToolbarProps {
   onAddItem: () => void
   onGenerateBOQ: () => void
+  onExport?: () => void
   selectedCount: number
   sections: string[]
   activeSection: string | null
@@ -20,6 +21,7 @@ interface MeasurementToolbarProps {
 export function MeasurementToolbar({
   onAddItem,
   onGenerateBOQ,
+  onExport,
   selectedCount,
   sections,
   activeSection,
@@ -52,6 +54,12 @@ export function MeasurementToolbar({
             </span>
           )}
         </Button>
+        {onExport && (
+          <Button size="sm" variant="outline" onClick={onExport} disabled={itemCount === 0}>
+            <Download size={15} />
+            Export
+          </Button>
+        )}
         <span className="text-xs text-slate-400 dark:text-slate-500 ml-2">
           {itemCount} items &middot; {lineCount} lines
         </span>

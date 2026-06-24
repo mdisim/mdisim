@@ -21,6 +21,8 @@ import {
   updateBOQItem,
   deleteBOQItem,
 } from '@/app/actions/boq'
+import { getProject } from '@/app/actions/projects'
+import { exportBOQToExcel } from '@/lib/export/boq-excel'
 
 interface EditingCell {
   itemId: string
@@ -215,9 +217,18 @@ export default function BOQPage() {
               </select>
             </div>
           )}
-          <Button variant="outline" disabled title="Coming soon">
+          <Button
+            variant="outline"
+            onClick={async () => {
+              const project = await getProject(projectId)
+              if (project) {
+                await exportBOQToExcel(items, project.name, project.currency, vatPct)
+              }
+            }}
+            disabled={items.length === 0}
+          >
             <Download size={16} />
-            Export
+            Export Excel
           </Button>
           <Button onClick={() => setShowCreate(true)}>
             <Plus size={16} />
