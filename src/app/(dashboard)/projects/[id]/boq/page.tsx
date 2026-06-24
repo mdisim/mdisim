@@ -11,6 +11,7 @@ import {
   Plus,
   FileSpreadsheet,
   Download,
+  Upload,
   Trash2,
   Filter,
 } from 'lucide-react'
@@ -20,9 +21,12 @@ import {
   createBOQItem,
   updateBOQItem,
   deleteBOQItem,
+  bulkCreateBOQItems,
 } from '@/app/actions/boq'
 import { getProject } from '@/app/actions/projects'
 import { exportBOQToExcel } from '@/lib/export/boq-excel'
+import { parseBOQExcel } from '@/lib/import/boq-excel'
+import type { ImportedBOQRow } from '@/lib/import/boq-excel'
 
 interface EditingCell {
   itemId: string
@@ -40,6 +44,10 @@ export default function BOQPage() {
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null)
   const [editValue, setEditValue] = useState('')
   const [vatPct, setVatPct] = useState(17)
+  const [showImport, setShowImport] = useState(false)
+  const [importRows, setImportRows] = useState<ImportedBOQRow[]>([])
+  const [importError, setImportError] = useState<string | null>(null)
+  const [importing, setImporting] = useState(false)
 
   const [form, setForm] = useState({
     code: '',
@@ -102,6 +110,31 @@ export default function BOQPage() {
     try {
       await deleteBOQItem(id)
     } catch { /* ignore */ }
+    load()
+  }
+
+  const handleImportFile = async (file: File) => {
+    setImportError(null)
+    const result = await parseBOQExcel(file)
+    if (result.error) {
+      setImportError(result.error)
+      return
+    }
+    setImportRows(result.rows)
+  }
+
+  const handleImportConfirm = async () => {
+    if (importRows.length === 0) return
+    setImporting(true)
+    const result = await bulkCreateBOQItems(projectId, importRows)
+    if (result.error) {
+      setImportError(result.error)
+      setImporting(false)
+      return
+    }
+    setShowImport(false)
+    setImportRows([])
+    setImporting(false)
     load()
   }
 
@@ -217,6 +250,13 @@ export default function BOQPage() {
               </select>
             </div>
           )}
+          <Button
+            variant="outline"
+            onClick={() => { setShowImport(true); setImportRows([]); setImportError(null) }}
+          >
+            <Upload size={16} />
+            Import Excel
+          </Button>
           <Button
             variant="outline"
             onClick={async () => {
@@ -403,6 +443,73 @@ export default function BOQPage() {
           </div>
         </div>
       )}
+
+      {/* Import Modal */}
+      <Modal isOpen={showImport} onClose={() => setShowImport(false)} title="Import BOQ from Excel" size="lg">
+        <div className="space-y-4">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Upload an Excel file (.xlsx, .xls) with BOQ data. The importer will auto-detect columns for Code, Description, Unit, Quantity, Rate, and Section.
+          </p>
+          <input
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) handleImportFile(f)
+            }}
+            className="text-sm text-slate-600 dark:text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-400 hover:file:bg-blue-100"
+          />
+          {importError && <p className="text-sm text-red-500">{importError}</p>}
+          {importRows.length > 0 && (
+            <>
+              <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                Preview: {importRows.length} items found
+              </div>
+              <div className="max-h-[300px] overflow-auto border border-slate-200 dark:border-slate-700 rounded-lg">
+                <table className="w-full text-xs">
+                  <thead className="bg-slate-50 dark:bg-slate-900 sticky top-0">
+                    <tr>
+                      <th className="text-left px-2 py-1.5 font-medium text-slate-500">Code</th>
+                      <th className="text-left px-2 py-1.5 font-medium text-slate-500">Description</th>
+                      <th className="text-left px-2 py-1.5 font-medium text-slate-500">Unit</th>
+                      <th className="text-right px-2 py-1.5 font-medium text-slate-500">Qty</th>
+                      <th className="text-right px-2 py-1.5 font-medium text-slate-500">Rate</th>
+                      <th className="text-left px-2 py-1.5 font-medium text-slate-500">Section</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importRows.slice(0, 50).map((row, i) => (
+                      <tr key={i} className="border-t border-slate-100 dark:border-slate-700">
+                        <td className="px-2 py-1 text-slate-600 dark:text-slate-300">{row.code ?? '-'}</td>
+                        <td className="px-2 py-1 text-slate-700 dark:text-slate-200 max-w-[200px] truncate">{row.description}</td>
+                        <td className="px-2 py-1 text-slate-500">{row.unit}</td>
+                        <td className="px-2 py-1 text-right tabular-nums text-slate-600 dark:text-slate-300">{row.quantity}</td>
+                        <td className="px-2 py-1 text-right tabular-nums text-slate-600 dark:text-slate-300">{row.unit_rate}</td>
+                        <td className="px-2 py-1 text-slate-500">{row.section ?? '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {importRows.length > 50 && (
+                  <div className="px-2 py-1.5 text-xs text-slate-400 text-center border-t border-slate-100 dark:border-slate-700">
+                    Showing first 50 of {importRows.length} rows
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setShowImport(false)}>Cancel</Button>
+            <Button
+              onClick={handleImportConfirm}
+              loading={importing}
+              disabled={importRows.length === 0}
+            >
+              Import {importRows.length} Items
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Create Modal */}
       <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="New BOQ Item" size="md">
