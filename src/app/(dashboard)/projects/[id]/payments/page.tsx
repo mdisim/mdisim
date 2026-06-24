@@ -14,6 +14,7 @@ import {
   updatePaymentLine,
   populateCertFromBOQ,
 } from '@/app/actions/payments'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Plus,
   Trash2,
@@ -25,6 +26,8 @@ import {
   Send,
   FileCheck,
   CreditCard,
+  Banknote,
+  ArrowUpRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -95,30 +98,45 @@ export default function PaymentsPage() {
   const totalPaid = certs.filter(c => c.status === 'paid').reduce((s, c) => s + c.net_payable, 0)
   const totalPending = certs.filter(c => c.status !== 'paid').reduce((s, c) => s + c.net_payable, 0)
 
+  const totalGross = certs.reduce((s, c) => s + c.gross_amount, 0)
+  const totalRetention = certs.reduce((s, c) => s + c.current_retention, 0)
+
   return (
-    <div className="p-4 md:p-8">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Payment Certificates</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Interim Payment Certificates (IPC) &amp; contractor payments</p>
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/20">
+            <Banknote size={22} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Payment Certificates</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Interim Payment Certificates (IPC) &amp; contractor payments</p>
+          </div>
         </div>
         <Button onClick={() => setShowCreate(true)}><Plus size={16} /> New Certificate</Button>
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
-          <div className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1">Certificates</div>
-          <div className="text-lg font-bold text-slate-900 dark:text-white">{certs.length}</div>
-        </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
-          <div className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1">Total Paid</div>
-          <div className="text-lg font-bold text-green-600 dark:text-green-400 tabular-nums">{fmt(totalPaid)}</div>
-        </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
-          <div className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1">Pending</div>
-          <div className="text-lg font-bold text-amber-600 dark:text-amber-400 tabular-nums">{fmt(totalPending)}</div>
-        </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        {([
+          { label: 'Certificates', value: String(certs.length), icon: Receipt, gradient: 'from-blue-500 to-blue-600', isCurrency: false },
+          { label: 'Gross Value', value: fmt(totalGross), icon: ArrowUpRight, gradient: 'from-indigo-500 to-indigo-600', isCurrency: true },
+          { label: 'Total Paid', value: fmt(totalPaid), icon: CreditCard, gradient: 'from-emerald-500 to-emerald-600', isCurrency: true },
+          { label: 'Pending', value: fmt(totalPending), icon: Clock, gradient: 'from-amber-500 to-amber-600', isCurrency: true },
+        ] as const).map(kpi => (
+          <Card key={kpi.label} className="relative overflow-hidden">
+            <CardContent className="p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <div className={cn('p-1 rounded-md bg-gradient-to-br text-white', kpi.gradient)}>
+                  <kpi.icon size={12} />
+                </div>
+                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{kpi.label}</span>
+              </div>
+              <div className="text-lg font-bold tabular-nums text-slate-900 dark:text-white">{kpi.value}</div>
+              <kpi.icon size={48} className="absolute -bottom-2 -right-2 text-slate-100 dark:text-slate-700/30" />
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {loading ? (

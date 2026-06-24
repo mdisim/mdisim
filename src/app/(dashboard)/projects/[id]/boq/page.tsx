@@ -14,6 +14,7 @@ import {
   Upload,
   Trash2,
   Filter,
+  Link2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -228,11 +229,22 @@ export default function BOQPage() {
     <div className="p-4 md:p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Bill of Quantities</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {items.length} item{items.length !== 1 ? 's' : ''}
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+            <FileSpreadsheet size={22} className="text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Bill of Quantities</h2>
+            <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+              <span>{items.length} item{items.length !== 1 ? 's' : ''}</span>
+              {!loading && items.length > 0 && (
+                <>
+                  <span className="text-slate-300 dark:text-slate-600">|</span>
+                  <span className="font-medium text-slate-700 dark:text-slate-200 tabular-nums">{formatCurrency(grandTotal)}</span>
+                </>
+              )}
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {allSections.length > 0 && (
@@ -299,11 +311,11 @@ export default function BOQPage() {
           </Button>
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+          <div className="overflow-x-auto max-h-[calc(100vh-220px)]">
             <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+              <thead className="sticky top-0 z-10">
+                <tr className="bg-slate-50 dark:bg-slate-900 border-b-2 border-slate-200 dark:border-slate-700">
                   <th className="text-left px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[80px]">Code</th>
                   <th className="text-left px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 min-w-[200px]">Description</th>
                   <th className="text-left px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[60px]">Unit</th>
@@ -322,21 +334,36 @@ export default function BOQPage() {
                   return (
                     <Fragment key={section}>
                       {section && (
-                        <tr className="bg-slate-50/50 dark:bg-slate-800/50">
-                          <td colSpan={10} className="px-3 py-2">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                              {section}
-                            </span>
+                        <tr className="bg-slate-100/80 dark:bg-slate-800/80">
+                          <td colSpan={10} className="px-0 py-2.5">
+                            <div className="flex items-center gap-2 border-l-[3px] border-blue-500 pl-3 ml-1">
+                              <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                                {section}
+                              </span>
+                              <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 bg-slate-200/60 dark:bg-slate-700/60 px-1.5 py-0.5 rounded">
+                                {sectionItems.length} items
+                              </span>
+                            </div>
                           </td>
                         </tr>
                       )}
-                      {sectionItems.map((item) => (
+                      {sectionItems.map((item, idx) => (
                         <tr
                           key={item.id}
-                          className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-700/50 transition-colors"
+                          className={cn(
+                            'group border-b border-slate-100 dark:border-slate-700/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors',
+                            idx % 2 === 1 && 'bg-slate-50/40 dark:bg-slate-800/40'
+                          )}
                         >
                           <td className="px-1 py-0.5">
-                            {renderCell(item, 'code', item.code)}
+                            <div className="flex items-center gap-1">
+                              {renderCell(item, 'code', item.code)}
+                              {item.mi_id && (
+                                <span title="Linked measurement item">
+                                  <Link2 size={12} className="text-blue-400 dark:text-blue-500 shrink-0" />
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="px-1 py-0.5">
                             {renderCell(item, 'description', item.description)}
@@ -385,11 +412,11 @@ export default function BOQPage() {
                         </tr>
                       ))}
                       {section && (
-                        <tr className="bg-slate-50/30 dark:bg-slate-800/30 border-b border-slate-200 dark:border-slate-700">
-                          <td colSpan={8} className="px-3 py-2 text-right text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        <tr className="bg-slate-100/60 dark:bg-slate-800/60 border-b-2 border-slate-200 dark:border-slate-700">
+                          <td colSpan={8} className="px-3 py-2.5 text-right text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                             {section} Subtotal
                           </td>
-                          <td className="px-3 py-2 text-right font-semibold text-sm tabular-nums text-slate-700 dark:text-slate-200">
+                          <td className="px-3 py-2.5 text-right font-bold text-sm tabular-nums text-slate-800 dark:text-slate-100">
                             {formatCurrency(sectionTotal)}
                           </td>
                           <td />
@@ -400,40 +427,40 @@ export default function BOQPage() {
                 })}
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
-                  <td colSpan={8} className="px-3 py-2.5 text-right font-semibold text-slate-600 dark:text-slate-300">
+                <tr className="border-t-2 border-slate-300 dark:border-slate-600 bg-slate-50/80 dark:bg-slate-900/80">
+                  <td colSpan={8} className="px-4 py-3 text-right font-semibold text-slate-500 dark:text-slate-400 text-sm uppercase tracking-wide">
                     Subtotal
                   </td>
-                  <td className="px-3 py-2.5 text-right font-bold text-slate-900 dark:text-white tabular-nums">
+                  <td className="px-4 py-3 text-right font-bold text-slate-900 dark:text-white tabular-nums">
                     {formatCurrency(subtotal)}
                   </td>
                   <td />
                 </tr>
-                <tr className="bg-slate-50 dark:bg-slate-900">
-                  <td colSpan={7} className="px-3 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">
+                <tr className="bg-slate-50/80 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-800">
+                  <td colSpan={7} className="px-4 py-3 text-right font-semibold text-slate-500 dark:text-slate-400 text-sm uppercase tracking-wide">
                     VAT
                   </td>
-                  <td className="px-1 py-1">
+                  <td className="px-1 py-2">
                     <div className="flex items-center justify-end gap-1">
                       <input
                         type="number"
                         value={vatPct}
                         onChange={(e) => setVatPct(parseFloat(e.target.value) || 0)}
-                        className="w-16 px-2 py-1 text-sm text-right border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-16 px-2 py-1 text-sm text-right border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500 tabular-nums"
                       />
                       <span className="text-xs text-slate-500 dark:text-slate-400">%</span>
                     </div>
                   </td>
-                  <td className="px-3 py-2 text-right font-semibold text-slate-700 dark:text-slate-200 tabular-nums">
+                  <td className="px-4 py-3 text-right font-semibold text-slate-700 dark:text-slate-200 tabular-nums">
                     {formatCurrency(vatAmount)}
                   </td>
                   <td />
                 </tr>
-                <tr className="bg-blue-50 dark:bg-blue-900/20 border-t border-blue-200 dark:border-blue-800">
-                  <td colSpan={8} className="px-3 py-3 text-right font-bold text-blue-900 dark:text-blue-200">
+                <tr className="bg-gradient-to-r from-blue-50 to-blue-100/80 dark:from-blue-900/30 dark:to-blue-800/20 border-t-2 border-blue-300 dark:border-blue-700">
+                  <td colSpan={8} className="px-4 py-4 text-right font-bold text-blue-900 dark:text-blue-100 text-base uppercase tracking-wide">
                     Grand Total
                   </td>
-                  <td className="px-3 py-3 text-right font-bold text-lg text-blue-900 tabular-nums">
+                  <td className="px-4 py-4 text-right font-black text-lg text-blue-900 dark:text-blue-100 tabular-nums">
                     {formatCurrency(grandTotal)}
                   </td>
                   <td />

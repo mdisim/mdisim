@@ -18,6 +18,7 @@ import {
   deleteCostEntry,
   getCashflow,
 } from '@/app/actions/cost-control'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Plus,
   Trash2,
@@ -29,6 +30,8 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
+  BarChart3,
+  Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -155,16 +158,29 @@ export default function CostControlPage() {
   const contingency = contractValue * ((contract?.contingency_pct ?? 0) / 100)
   const projectedProfit = revisedContract - totalExposure
 
+  const costBreakdown = totalExposure > 0
+    ? [
+        { label: 'Actual', pct: (actualCost / totalExposure) * 100, color: 'bg-red-500' },
+        { label: 'Committed', pct: (committedCost / totalExposure) * 100, color: 'bg-amber-500' },
+        { label: 'Forecast', pct: (forecastCost / totalExposure) * 100, color: 'bg-blue-400' },
+      ]
+    : []
+
   if (loading) {
-    return <div className="p-4 md:p-8"><div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-20 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 animate-pulse" />)}</div></div>
+    return <div className="p-4 md:p-8 max-w-7xl mx-auto"><div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-20 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 animate-pulse" />)}</div></div>
   }
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Cost Control</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Budget, variations, cost tracking &amp; forecasting</p>
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20">
+            <BarChart3 size={22} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Cost Control</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Budget, variations, cost tracking &amp; forecasting</p>
+          </div>
         </div>
         <Button variant="outline" onClick={() => setShowContractEdit(true)}>
           <DollarSign size={16} /> {contract ? 'Edit Contract' : 'Set Contract'}
@@ -172,24 +188,54 @@ export default function CostControlPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
         {([
-          { label: 'Contract Value', value: contractValue, icon: DollarSign, color: 'text-blue-600' },
-          { label: 'Approved Variations', value: approvedVariations, icon: FileText, color: 'text-green-600' },
-          { label: 'Revised Contract', value: revisedContract, icon: TrendingUp, color: 'text-indigo-600' },
-          { label: 'Actual Cost', value: actualCost, icon: TrendingDown, color: 'text-red-600' },
-          { label: 'Contingency', value: contingency, icon: AlertTriangle, color: 'text-amber-600' },
-          { label: 'Projected Profit', value: projectedProfit, icon: DollarSign, color: projectedProfit >= 0 ? 'text-green-600' : 'text-red-600' },
+          { label: 'Contract Value', value: contractValue, icon: DollarSign, gradient: 'from-blue-500 to-blue-600' },
+          { label: 'Approved Variations', value: approvedVariations, icon: FileText, gradient: 'from-green-500 to-emerald-600' },
+          { label: 'Revised Contract', value: revisedContract, icon: TrendingUp, gradient: 'from-indigo-500 to-indigo-600' },
+          { label: 'Actual Cost', value: actualCost, icon: TrendingDown, gradient: 'from-red-500 to-red-600' },
+          { label: 'Contingency', value: contingency, icon: Shield, gradient: 'from-amber-500 to-amber-600' },
+          { label: 'Projected Profit', value: projectedProfit, icon: DollarSign, gradient: projectedProfit >= 0 ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-rose-600' },
         ] as const).map(kpi => (
-          <div key={kpi.label} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <kpi.icon size={14} className={cn(kpi.color, 'dark:opacity-80')} />
-              <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{kpi.label}</span>
-            </div>
-            <div className={cn('text-lg font-bold tabular-nums', kpi.color)}>{fmt(kpi.value)}</div>
-          </div>
+          <Card key={kpi.label} className="relative overflow-hidden">
+            <CardContent className="p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <div className={cn('p-1 rounded-md bg-gradient-to-br text-white', kpi.gradient)}>
+                  <kpi.icon size={12} />
+                </div>
+                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{kpi.label}</span>
+              </div>
+              <div className="text-lg font-bold tabular-nums text-slate-900 dark:text-white">{fmt(kpi.value)}</div>
+              <kpi.icon size={48} className="absolute -bottom-2 -right-2 text-slate-100 dark:text-slate-700/30" />
+            </CardContent>
+          </Card>
         ))}
       </div>
+
+      {/* Cost Breakdown Bar */}
+      {costBreakdown.length > 0 && (
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Cost Composition</span>
+              <span className="text-xs text-slate-500 tabular-nums">Total Exposure: {fmt(totalExposure)}</span>
+            </div>
+            <div className="h-3 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden flex">
+              {costBreakdown.map(s => (
+                <div key={s.label} className={cn('h-full', s.color)} style={{ width: `${s.pct}%` }} />
+              ))}
+            </div>
+            <div className="flex gap-4 mt-2">
+              {costBreakdown.map(s => (
+                <div key={s.label} className="flex items-center gap-1.5 text-xs text-slate-500">
+                  <span className={cn('w-2 h-2 rounded-full', s.color)} />
+                  {s.label} ({s.pct.toFixed(1)}%)
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-1 mb-4 border-b border-slate-200 dark:border-slate-700">
