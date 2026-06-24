@@ -226,6 +226,226 @@ export interface RateResource {
   created_at: string
 }
 
+// ── Tender Management types ──────────────────────────────────────────────
+
+export type TenderStatus = 'draft' | 'issued' | 'closed' | 'awarded' | 'cancelled'
+export type BidderStatus = 'invited' | 'submitted' | 'disqualified' | 'awarded'
+
+export interface Tender {
+  id: string
+  project_id: string
+  title: string
+  description: string | null
+  tender_number: string | null
+  issue_date: string | null
+  closing_date: string | null
+  status: TenderStatus
+  awarded_bidder_id: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+  bidders?: TenderBidder[]
+}
+
+export interface TenderBidder {
+  id: string
+  tender_id: string
+  name: string
+  company: string | null
+  email: string | null
+  phone: string | null
+  submission_date: string | null
+  status: BidderStatus
+  notes: string | null
+  created_at: string
+  bids?: TenderBid[]
+}
+
+export interface TenderBid {
+  id: string
+  tender_id: string
+  bidder_id: string
+  boq_item_id: string | null
+  description: string
+  unit: string
+  quantity: number
+  unit_rate: number
+  amount: number
+  notes: string | null
+  created_at: string
+}
+
+// ── Cost Control types ──────────────────────────────────────────────────
+
+export type VariationStatus = 'pending' | 'submitted' | 'approved' | 'rejected' | 'withdrawn'
+export type VariationType = 'addition' | 'omission' | 'substitution'
+export type CostCategory = 'actual' | 'committed' | 'forecast'
+export type CostType = 'direct' | 'indirect' | 'material' | 'labor' | 'equipment' | 'subcontractor' | 'overhead' | 'other'
+
+export interface Contract {
+  id: string
+  project_id: string
+  contract_value: number
+  contingency_pct: number
+  retention_pct: number
+  advance_pct: number
+  vat_pct: number
+  start_date: string | null
+  end_date: string | null
+  duration_months: number | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface Variation {
+  id: string
+  project_id: string
+  variation_no: string
+  title: string
+  description: string | null
+  status: VariationStatus
+  variation_type: VariationType
+  submitted_date: string | null
+  approved_date: string | null
+  amount: number
+  approved_amount: number | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+  items?: VariationItem[]
+}
+
+export interface VariationItem {
+  id: string
+  variation_id: string
+  boq_item_id: string | null
+  description: string
+  unit: string
+  quantity: number
+  unit_rate: number
+  amount: number
+  sort_order: number
+  created_at: string
+}
+
+export interface CostEntry {
+  id: string
+  project_id: string
+  period_date: string
+  category: CostCategory
+  cost_type: CostType
+  description: string
+  amount: number
+  boq_item_id: string | null
+  notes: string | null
+  created_at: string
+}
+
+export interface CashflowEntry {
+  id: string
+  project_id: string
+  period_date: string
+  planned_income: number
+  actual_income: number
+  planned_expense: number
+  actual_expense: number
+  cumulative_planned_income: number
+  cumulative_actual_income: number
+  cumulative_planned_expense: number
+  cumulative_actual_expense: number
+  notes: string | null
+  created_at: string
+}
+
+// ── Payment Certificate types ───────────────────────────────────────────
+
+export type PaymentCertStatus = 'draft' | 'submitted' | 'checked' | 'approved' | 'paid'
+
+export interface PaymentCert {
+  id: string
+  project_id: string
+  cert_number: number
+  period_from: string
+  period_to: string
+  status: PaymentCertStatus
+  gross_amount: number
+  previous_gross: number
+  current_gross: number
+  variations_amount: number
+  retention_pct: number
+  retention_amount: number
+  previous_retention: number
+  current_retention: number
+  advance_recovery: number
+  previous_advance_recovery: number
+  current_advance_recovery: number
+  vat_pct: number
+  vat_amount: number
+  net_payable: number
+  submitted_date: string | null
+  approved_date: string | null
+  paid_date: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+  lines?: PaymentLine[]
+}
+
+export interface PaymentLine {
+  id: string
+  cert_id: string
+  boq_item_id: string | null
+  description: string
+  unit: string
+  contract_qty: number
+  contract_rate: number
+  contract_amount: number
+  previous_qty: number
+  previous_amount: number
+  current_qty: number
+  current_amount: number
+  cumulative_qty: number
+  cumulative_amount: number
+  sort_order: number
+  created_at: string
+}
+
+// ── Drawing Revision types ──────────────────────────────────────────────
+
+export type RevisionStatus = 'superseded' | 'current' | 'draft'
+export type QuantityChangeType = 'revision' | 'correction' | 'variation' | 'remeasurement'
+
+export interface DrawingRevision {
+  id: string
+  drawing_id: string
+  revision_number: string
+  revision_date: string
+  description: string | null
+  file_path: string | null
+  file_size: number | null
+  status: RevisionStatus
+  created_at: string
+}
+
+export interface QuantityChange {
+  id: string
+  project_id: string
+  drawing_id: string | null
+  from_revision_id: string | null
+  to_revision_id: string | null
+  boq_item_id: string | null
+  mi_id: string | null
+  description: string
+  previous_qty: number
+  new_qty: number
+  difference: number
+  unit: string
+  change_type: QuantityChangeType
+  notes: string | null
+  created_at: string
+}
+
 // ── Auth / profile types ────────────────────────────────────────────────
 
 export interface Profile {
