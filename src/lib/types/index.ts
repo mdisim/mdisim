@@ -177,6 +177,55 @@ export interface LibraryItem {
   updated_at: string
 }
 
+// ── Rate Analysis types ─────────────────────────────────────────────────
+
+export type ResourceType = 'material' | 'labor' | 'equipment' | 'subcontractor'
+
+export const RESOURCE_TYPES: { value: ResourceType; label: string }[] = [
+  { value: 'material', label: 'Material' },
+  { value: 'labor', label: 'Labor' },
+  { value: 'equipment', label: 'Equipment' },
+  { value: 'subcontractor', label: 'Subcontractor' },
+]
+
+export interface RateAnalysis {
+  id: string
+  project_id: string | null
+  boq_item_id: string | null
+  library_item_id: string | null
+  description: string
+  unit: string
+  output_qty: number
+  overhead_pct: number
+  profit_pct: number
+  material_total: number
+  labor_total: number
+  equipment_total: number
+  subcon_total: number
+  direct_cost: number
+  overhead_amount: number
+  profit_amount: number
+  unit_rate: number
+  created_at: string
+  updated_at: string
+  resources?: RateResource[]
+}
+
+export interface RateResource {
+  id: string
+  rate_analysis_id: string
+  resource_type: ResourceType
+  description: string
+  unit: string
+  quantity: number
+  unit_cost: number
+  amount: number
+  waste_pct: number
+  total_amount: number
+  sort_order: number
+  created_at: string
+}
+
 // ── Auth / profile types ────────────────────────────────────────────────
 
 export interface Profile {

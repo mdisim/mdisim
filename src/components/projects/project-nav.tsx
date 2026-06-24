@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import type { Project } from '@/lib/types'
-import { ArrowLeft, Ruler, ImageIcon, Settings2, FileSpreadsheet, BookOpen } from 'lucide-react'
+import { ArrowLeft, Ruler, ImageIcon, Settings2, FileSpreadsheet, BookOpen, Calculator } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/ui/modal'
 import { Input } from '@/components/ui/input'
@@ -15,6 +15,7 @@ const TABS = [
   { href: 'measurements', label: 'Measurements', icon: Ruler },
   { href: 'drawings', label: 'Drawings', icon: ImageIcon },
   { href: 'boq', label: 'BOQ', icon: FileSpreadsheet },
+  { href: 'rates', label: 'Rates', icon: Calculator },
   { href: 'library', label: 'Library', icon: BookOpen },
 ]
 
