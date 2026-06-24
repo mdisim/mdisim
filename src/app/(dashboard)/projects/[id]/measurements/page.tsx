@@ -206,19 +206,19 @@ export default function MeasurementsPage() {
       <div className="p-4 md:p-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <div className="h-6 w-48 bg-slate-200 rounded animate-pulse" />
-            <div className="h-4 w-24 bg-slate-200 rounded animate-pulse mt-2" />
+            <div className="h-6 w-48 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+            <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mt-2" />
           </div>
-          <div className="h-9 w-24 bg-slate-200 rounded animate-pulse" />
+          <div className="h-9 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
         </div>
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="bg-white rounded-xl border border-slate-200 p-4 animate-pulse"
+              className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 animate-pulse"
             >
               <div className="h-5 bg-slate-200 rounded w-1/2" />
-              <div className="h-4 bg-slate-100 rounded w-1/3 mt-2" />
+              <div className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-1/3 mt-2" />
             </div>
           ))}
         </div>
@@ -230,11 +230,11 @@ export default function MeasurementsPage() {
     return (
       <div className="p-4 md:p-8">
         <div className="text-center py-20">
-          <Ruler size={48} className="mx-auto text-slate-300 mb-4" />
-          <h3 className="text-lg font-semibold text-slate-700 mb-1">
+          <Ruler size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+          <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-1">
             No measurement items yet
           </h3>
-          <p className="text-slate-500 text-sm mb-6">
+          <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
             Add measurement items to start building your quantity calculation
             book.
           </p>
@@ -297,15 +297,15 @@ export default function MeasurementsPage() {
       />
 
       {/* Footer */}
-      <div className="mt-6 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm text-slate-600">
+      <div className="mt-6 flex items-center justify-between rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-5 py-3 text-sm text-slate-600 dark:text-slate-300">
         <div className="flex items-center gap-4">
           <span>
-            <strong className="text-slate-900">{items.length}</strong> item
+            <strong className="text-slate-900 dark:text-white">{items.length}</strong> item
             {items.length !== 1 ? 's' : ''}
           </span>
-          <span className="text-slate-300">|</span>
+          <span className="text-slate-300 dark:text-slate-600">|</span>
           <span>
-            <strong className="text-slate-900">{lineCount}</strong> line
+            <strong className="text-slate-900 dark:text-white">{lineCount}</strong> line
             {lineCount !== 1 ? 's' : ''}
           </span>
         </div>

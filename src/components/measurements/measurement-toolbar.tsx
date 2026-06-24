@@ -52,7 +52,7 @@ export function MeasurementToolbar({
             </span>
           )}
         </Button>
-        <span className="text-xs text-slate-400 ml-2">
+        <span className="text-xs text-slate-400 dark:text-slate-500 ml-2">
           {itemCount} items &middot; {lineCount} lines
         </span>
       </div>
@@ -63,7 +63,7 @@ export function MeasurementToolbar({
           value={activeSection ?? ''}
           onChange={(e) => onSectionFilter(e.target.value || null)}
           className={cn(
-            'text-xs px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700',
+            'text-xs px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200',
             'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
           )}
         >
@@ -78,16 +78,16 @@ export function MeasurementToolbar({
 
       {/* Right: search */}
       <div className="relative">
-        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
         <input
           type="text"
           placeholder="Search items..."
           value={searchQuery}
           onChange={(e) => onSearch(e.target.value)}
           className={cn(
-            'text-xs pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 w-52',
+            'text-xs pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 w-52',
             'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
-            'placeholder-slate-400',
+            'placeholder-slate-400 dark:placeholder-slate-500',
           )}
         />
       </div>

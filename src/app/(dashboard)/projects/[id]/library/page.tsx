@@ -202,7 +202,7 @@ export default function LibraryPage() {
       return (
         <input
           autoFocus
-          className="w-full px-2 py-1 text-sm border border-blue-400 rounded bg-white outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full px-2 py-1 text-sm border border-blue-400 rounded bg-white dark:bg-slate-800 outline-none focus:ring-1 focus:ring-blue-500"
           value={editValue}
           onChange={(e) => setEditValue(e.target.value)}
           onBlur={commitEdit}
@@ -215,7 +215,7 @@ export default function LibraryPage() {
     return (
       <div
         className={cn(
-          'px-2 py-1.5 cursor-pointer rounded hover:bg-blue-50 min-h-[32px] flex items-center',
+          'px-2 py-1.5 cursor-pointer rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 min-h-[32px] flex items-center',
           isNumeric && 'justify-end tabular-nums'
         )}
         onClick={() => startEdit(item.id, field, value)}
@@ -228,12 +228,12 @@ export default function LibraryPage() {
   return (
     <div className="flex h-[calc(100vh-120px)]">
       {/* Left panel — Categories */}
-      <div className="w-[300px] border-r border-slate-200 bg-white flex flex-col shrink-0">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
-          <h3 className="text-sm font-bold text-slate-900">Categories</h3>
+      <div className="w-[300px] border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex flex-col shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Categories</h3>
           <button
             onClick={() => setShowCreateCategory(true)}
-            className="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors"
+            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             title="Add category"
           >
             <Plus size={16} />
@@ -243,11 +243,11 @@ export default function LibraryPage() {
           {loading ? (
             <div className="p-4 space-y-2">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-10 bg-slate-100 rounded animate-pulse" />
+                <div key={i} className="h-10 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />
               ))}
             </div>
           ) : categories.length === 0 ? (
-            <div className="p-4 text-center text-sm text-slate-500">
+            <div className="p-4 text-center text-sm text-slate-500 dark:text-slate-400">
               No categories yet
             </div>
           ) : (
@@ -258,18 +258,18 @@ export default function LibraryPage() {
                   className={cn(
                     'group flex items-center gap-2 px-4 py-2.5 cursor-pointer transition-colors',
                     selectedCategory === cat.id
-                      ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
-                      : 'text-slate-700 hover:bg-slate-50'
+                      ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-r-2 border-blue-600 dark:border-blue-400'
+                      : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
                   )}
                   onClick={() => setSelectedCategory(cat.id)}
                 >
                   <FolderOpen size={16} className={cn(
-                    selectedCategory === cat.id ? 'text-blue-600' : 'text-slate-400'
+                    selectedCategory === cat.id ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'
                   )} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{cat.name}</p>
                     {cat.description && (
-                      <p className="text-xs text-slate-400 truncate">{cat.description}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{cat.description}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -278,7 +278,7 @@ export default function LibraryPage() {
                         e.stopPropagation()
                         setEditingCategory(cat)
                       }}
-                      className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-blue-600"
+                      className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400"
                       title="Edit"
                     >
                       <Pencil size={12} />
@@ -288,7 +288,7 @@ export default function LibraryPage() {
                         e.stopPropagation()
                         handleDeleteCategory(cat.id)
                       }}
-                      className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-500"
+                      className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 dark:text-slate-500 hover:text-red-500"
                       title="Delete"
                     >
                       <Trash2 size={12} />
@@ -302,14 +302,14 @@ export default function LibraryPage() {
       </div>
 
       {/* Right panel — Items */}
-      <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-200">
+      <div className="flex-1 flex flex-col bg-slate-50 dark:bg-slate-900 overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
               {selectedCategoryData?.name ?? 'Select a Category'}
             </h2>
             {selectedCategoryData?.description && (
-              <p className="text-sm text-slate-500">{selectedCategoryData.description}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{selectedCategoryData.description}</p>
             )}
           </div>
           {selectedCategory && (
@@ -323,23 +323,23 @@ export default function LibraryPage() {
         <div className="flex-1 overflow-auto p-6">
           {!selectedCategory ? (
             <div className="text-center py-20">
-              <BookOpen size={48} className="mx-auto text-slate-300 mb-4" />
-              <h3 className="text-lg font-semibold text-slate-700 mb-1">Pricing Library</h3>
-              <p className="text-slate-500 text-sm">
+              <BookOpen size={48} className="mx-auto text-slate-300 dark:text-slate-500 mb-4" />
+              <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-1">Pricing Library</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm">
                 Select a category to view and manage rate items.
               </p>
             </div>
           ) : loadingItems ? (
-            <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-10 bg-slate-100 rounded animate-pulse" />
+                <div key={i} className="h-10 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />
               ))}
             </div>
           ) : items.length === 0 ? (
             <div className="text-center py-20">
-              <BookOpen size={48} className="mx-auto text-slate-300 mb-4" />
-              <h3 className="text-lg font-semibold text-slate-700 mb-1">No items in this category</h3>
-              <p className="text-slate-500 text-sm mb-6">
+              <BookOpen size={48} className="mx-auto text-slate-300 dark:text-slate-500 mb-4" />
+              <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-1">No items in this category</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
                 Add rate items to build your pricing catalog.
               </p>
               <Button onClick={() => setShowCreateItem(true)}>
@@ -348,18 +348,18 @@ export default function LibraryPage() {
               </Button>
             </div>
           ) : (
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200">
-                      <th className="text-left px-3 py-3 font-semibold text-slate-600 w-[80px]">Code</th>
-                      <th className="text-left px-3 py-3 font-semibold text-slate-600 min-w-[200px]">Description</th>
-                      <th className="text-left px-3 py-3 font-semibold text-slate-600 w-[60px]">Unit</th>
-                      <th className="text-right px-3 py-3 font-semibold text-slate-600 w-[100px]">Rate</th>
-                      <th className="text-right px-3 py-3 font-semibold text-slate-600 w-[100px]">Material</th>
-                      <th className="text-right px-3 py-3 font-semibold text-slate-600 w-[100px]">Labor</th>
-                      <th className="text-right px-3 py-3 font-semibold text-slate-600 w-[100px]">Equipment</th>
+                    <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+                      <th className="text-left px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[80px]">Code</th>
+                      <th className="text-left px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 min-w-[200px]">Description</th>
+                      <th className="text-left px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[60px]">Unit</th>
+                      <th className="text-right px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[100px]">Rate</th>
+                      <th className="text-right px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[100px]">Material</th>
+                      <th className="text-right px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[100px]">Labor</th>
+                      <th className="text-right px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[100px]">Equipment</th>
                       <th className="w-[40px]" />
                     </tr>
                   </thead>
@@ -367,7 +367,7 @@ export default function LibraryPage() {
                     {items.map((item) => (
                       <tr
                         key={item.id}
-                        className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors group"
+                        className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group"
                       >
                         <td className="px-1 py-0.5">
                           {renderCell(item, 'code', item.code)}
@@ -393,7 +393,7 @@ export default function LibraryPage() {
                         <td className="px-1 py-0.5">
                           <button
                             onClick={() => handleDeleteItem(item.id)}
-                            className="p-1.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                            className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-300 dark:text-slate-500 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
                             title="Delete"
                           >
                             <Trash2 size={14} />
@@ -455,11 +455,11 @@ export default function LibraryPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-slate-700">Unit</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Unit</label>
               <select
                 value={itemForm.unit}
                 onChange={(e) => setItemForm({ ...itemForm, unit: e.target.value })}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {MEASUREMENT_UNITS.map((u) => (
                   <option key={u.value} value={u.value}>{u.label}</option>
@@ -498,12 +498,12 @@ export default function LibraryPage() {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-slate-700">Notes</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Notes</label>
             <textarea
               value={itemForm.notes}
               onChange={(e) => setItemForm({ ...itemForm, notes: e.target.value })}
               rows={2}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
