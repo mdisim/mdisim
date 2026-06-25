@@ -125,11 +125,13 @@ export function VolumeCalculator({ isOpen, onClose, onAddMeasurement, drawingMea
       try {
         const sanitized = customFormula.replace(/[^0-9+\-*/().LWDHNRlwdhnr\s]/g, '')
         if (!sanitized || sanitized !== customFormula.trim()) return 0
+        if (/\*\*|__|\\|;|=|\[|\]|\{|\}/g.test(sanitized)) return 0
         const vars = customVars
         let expr = sanitized
         for (const [k, v] of Object.entries(vars)) {
           expr = expr.replace(new RegExp(`\\b${k}\\b`, 'g'), String(v ?? 0))
         }
+        if (/[a-zA-Z]/.test(expr)) return 0
         const result = Function(`"use strict"; return (${expr})`)()
         return typeof result === 'number' && isFinite(result) ? result : 0
       } catch {

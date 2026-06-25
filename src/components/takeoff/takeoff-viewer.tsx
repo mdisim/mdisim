@@ -706,6 +706,8 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
     if (clamped !== page) {
       setPage(clamped)
       setOffset({ x: 0, y: 0 })
+      setUndoStack([])
+      setActivePoints([])
     }
   }, [page, pageCount])
 
