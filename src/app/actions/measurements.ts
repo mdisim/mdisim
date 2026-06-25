@@ -293,6 +293,76 @@ export async function linkDrawingMeasurementsToItem(
   return { count: rows.length }
 }
 
+export async function linkDrawingMeasurementsToBOQ(
+  boqItemId: string,
+  drawingMeasurementIds: string[],
+  projectId: string,
+): Promise<{ count: number; error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { count: 0, error: 'Not authenticated' }
+
+  const { data: boqItem } = await supabase
+    .from('qb_boq_items')
+    .select('id, mi_id, description, unit')
+    .eq('id', boqItemId)
+    .single()
+
+  if (!boqItem) return { count: 0, error: 'BOQ item not found' }
+
+  let measurementItemId = (boqItem as Record<string, unknown>).mi_id as string | null
+
+  if (!measurementItemId) {
+    const toolTypeToMeasurementType: Record<string, MeasurementType> = {
+      line: 'length', polyline: 'length',
+      area: 'area', rectangle: 'area', circle: 'area',
+      count: 'count',
+    }
+
+    const { data: firstDm } = await supabase
+      .from('qb_drawing_measurements')
+      .select('tool_type')
+      .in('id', drawingMeasurementIds)
+      .limit(1)
+      .single()
+
+    const mType = toolTypeToMeasurementType[(firstDm as Record<string, unknown>)?.tool_type as string] ?? 'length'
+
+    const { data: maxOrder } = await supabase
+      .from('qb_measurement_items')
+      .select('sort_order')
+      .eq('project_id', projectId)
+      .order('sort_order', { ascending: false })
+      .limit(1)
+      .single()
+
+    const nextOrder = ((maxOrder as { sort_order: number } | null)?.sort_order ?? -1) + 1
+
+    const { data: newMI, error: miErr } = await supabase
+      .from('qb_measurement_items')
+      .insert({
+        project_id: projectId,
+        description: (boqItem as Record<string, unknown>).description as string,
+        unit: (boqItem as Record<string, unknown>).unit as string,
+        measurement_type: mType,
+        sort_order: nextOrder,
+        created_by: user.id,
+      })
+      .select()
+      .single()
+
+    if (miErr || !newMI) return { count: 0, error: miErr?.message ?? 'Failed to create measurement item' }
+    measurementItemId = (newMI as { id: string }).id
+
+    await supabase
+      .from('qb_boq_items')
+      .update({ mi_id: measurementItemId })
+      .eq('id', boqItemId)
+  }
+
+  return linkDrawingMeasurementsToItem(measurementItemId, drawingMeasurementIds)
+}
+
 export async function duplicateMeasurementLine(id: string): Promise<{ data?: MeasurementLine; error?: string }> {
   const supabase = await createClient()
   const { data: original } = await supabase

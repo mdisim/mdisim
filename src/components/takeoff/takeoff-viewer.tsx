@@ -42,8 +42,9 @@ import {
 import { LiveBOQPanel } from './live-boq-panel'
 import { ScaleManager } from './scale-manager'
 import { VolumeCalculator } from './volume-calculator'
+import { BOQPicker } from './boq-picker'
 import { AlertTriangle, PanelRightClose, PanelRightOpen, Keyboard, Link2 } from 'lucide-react'
-import { linkDrawingMeasurementsToItem } from '@/app/actions/measurements'
+import { linkDrawingMeasurementsToBOQ } from '@/app/actions/measurements'
 import { createBOQItem } from '@/app/actions/boq'
 
 interface TakeoffViewerProps {
@@ -173,6 +174,8 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
   // Link mode
   const [linkMode, setLinkMode] = useState(false)
   const [selectedForLink, setSelectedForLink] = useState<string[]>([])
+  const [showBOQPicker, setShowBOQPicker] = useState(false)
+  const [boqPickerIds, setBOQPickerIds] = useState<string[]>([])
 
   // All scales
   const [allScales, setAllScales] = useState<DrawingScale[]>([])
@@ -849,11 +852,11 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
 
   const handleLinkToItem = useCallback(async (boqItemId: string) => {
     if (selectedForLink.length === 0) return
-    await linkDrawingMeasurementsToItem(boqItemId, selectedForLink)
+    await linkDrawingMeasurementsToBOQ(boqItemId, selectedForLink, projectId)
     setSelectedForLink([])
     setLinkMode(false)
     await loadData()
-  }, [selectedForLink, loadData])
+  }, [selectedForLink, projectId, loadData])
 
   const handleCreateAndLink = useCallback(async (description: string, unit: string) => {
     if (selectedForLink.length === 0) return
@@ -863,12 +866,26 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
       unit,
     })
     if (result.data) {
-      await linkDrawingMeasurementsToItem(result.data.id, selectedForLink)
+      await linkDrawingMeasurementsToBOQ(result.data.id, selectedForLink, projectId)
     }
     setSelectedForLink([])
     setLinkMode(false)
     await loadData()
   }, [selectedForLink, projectId, loadData])
+
+  const handleOpenBOQPicker = useCallback((measurementIds: string[]) => {
+    if (measurementIds.length === 0) return
+    setBOQPickerIds(measurementIds)
+    setShowBOQPicker(true)
+  }, [])
+
+  const handleBOQPickerLinked = useCallback(async () => {
+    setBOQPickerIds([])
+    setShowBOQPicker(false)
+    setSelectedForLink([])
+    setLinkMode(false)
+    await loadData()
+  }, [loadData])
 
   // ── Cursor style ─────────────────────────────────────────────────────
   let cursor = 'default'
@@ -1151,7 +1168,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
 
             {/* Link mode toggle */}
             {panelTab === 'measurements' && measurements.length > 0 && (
-              <div className="px-3 py-1.5 border-b border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+              <div className="px-3 py-1.5 border-b border-slate-100 dark:border-slate-700/50 flex items-center justify-between gap-2">
                 <button
                   onClick={handleToggleLinkMode}
                   className={cn(
@@ -1162,15 +1179,24 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
                   )}
                 >
                   <Link2 size={12} />
-                  {linkMode ? `Linking (${selectedForLink.length})` : 'Link to BOQ'}
+                  {linkMode ? `Select measurements (${selectedForLink.length})` : 'Link to BOQ'}
                 </button>
                 {linkMode && selectedForLink.length > 0 && (
-                  <button
-                    onClick={() => { setSelectedForLink([]); setLinkMode(false) }}
-                    className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                  >
-                    Cancel
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleOpenBOQPicker(selectedForLink)}
+                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-emerald-600 text-white rounded hover:bg-emerald-700 transition-colors"
+                    >
+                      <Link2 size={10} />
+                      Link ({selectedForLink.length})
+                    </button>
+                    <button
+                      onClick={() => { setSelectedForLink([]); setLinkMode(false) }}
+                      className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 px-1"
+                    >
+                      ×
+                    </button>
+                  </div>
                 )}
               </div>
             )}
@@ -1190,6 +1216,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
                   }}
                   onDelete={handleDeleteMeasurement}
                   onLabelChange={handleLabelChange}
+                  onLinkToBOQ={handleOpenBOQPicker}
                   selectedIds={linkMode ? selectedForLink : undefined}
                 />
               ) : panelTab === 'boq' ? (
@@ -1242,6 +1269,14 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
         isOpen={showVolumeCalc}
         onClose={() => setShowVolumeCalc(false)}
         drawingMeasurements={takeoffMs.map(m => ({ id: m.id, label: m.label ?? '', quantity: m.quantity, unit: m.unit ?? 'px' }))}
+      />
+
+      <BOQPicker
+        isOpen={showBOQPicker}
+        onClose={() => { setShowBOQPicker(false); setBOQPickerIds([]) }}
+        projectId={projectId}
+        drawingMeasurementIds={boqPickerIds}
+        onLinked={handleBOQPickerLinked}
       />
     </div>
   )

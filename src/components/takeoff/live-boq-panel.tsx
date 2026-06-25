@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { getBOQItems, createBOQItem } from '@/app/actions/boq'
-import { getMeasurementItems, linkDrawingMeasurementsToItem } from '@/app/actions/measurements'
+import { getMeasurementItems, linkDrawingMeasurementsToBOQ } from '@/app/actions/measurements'
 import type { BOQItem, MeasurementItem } from '@/lib/types'
 import {
   FileSpreadsheet,
@@ -94,7 +94,7 @@ export function LiveBOQPanel({
         unit: quickAddUnit,
       })
       if (result.data && selectedMeasurementIds.length > 0) {
-        await linkDrawingMeasurementsToItem(result.data.id, selectedMeasurementIds)
+        await linkDrawingMeasurementsToBOQ(result.data.id, selectedMeasurementIds, projectId)
       }
     }
 

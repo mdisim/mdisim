@@ -57,6 +57,7 @@ export function MeasurementList({
   selectedIds: externalSelectedIds,
 }: MeasurementListProps) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; id: string } | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
   const [internalSelectedIds, setInternalSelectedIds] = useState<Set<string>>(new Set())
@@ -218,6 +219,10 @@ export function MeasurementList({
                         if (multiSelectMode) toggleSelect(m.id)
                         else onSelect(m.id)
                       }}
+                      onContextMenu={(e) => {
+                        e.preventDefault()
+                        setContextMenu({ x: e.clientX, y: e.clientY, id: m.id })
+                      }}
                       className={cn(
                         'flex items-center gap-2 px-3 py-1.5 cursor-pointer text-sm transition-colors group',
                         active && !multiSelectMode
@@ -323,6 +328,52 @@ export function MeasurementList({
             </div>
           )}
         </div>
+      )}
+
+      {/* Right-click context menu */}
+      {contextMenu && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setContextMenu(null)} onContextMenu={(e) => { e.preventDefault(); setContextMenu(null) }} />
+          <div
+            className="fixed z-50 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-1 min-w-[160px]"
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+          >
+            {onLinkToBOQ && (
+              <button
+                onClick={() => {
+                  onLinkToBOQ([contextMenu.id])
+                  setContextMenu(null)
+                }}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+              >
+                <Link2 size={14} className="text-blue-500" />
+                Link to BOQ
+              </button>
+            )}
+            <button
+              onClick={() => {
+                const m = measurements.find(x => x.id === contextMenu.id)
+                if (m) { setEditingId(m.id); setEditValue(m.label ?? '') }
+                setContextMenu(null)
+              }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors"
+            >
+              <Ruler size={14} className="text-slate-400" />
+              Rename
+            </button>
+            <div className="h-px bg-slate-200 dark:bg-slate-700 my-1" />
+            <button
+              onClick={() => {
+                onDelete(contextMenu.id)
+                setContextMenu(null)
+              }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            >
+              <Trash2 size={14} />
+              Delete
+            </button>
+          </div>
+        </>
       )}
     </div>
   )
