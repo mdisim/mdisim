@@ -65,7 +65,7 @@ export function PageThumbnails({ pdfDoc, currentPage, pageCount, onPageChange }:
   return (
     <div
       ref={containerRef}
-      className="flex-shrink-0 w-[140px] bg-slate-100 dark:bg-slate-800/50 border-r border-slate-200 dark:border-slate-700 overflow-y-auto py-2 px-2 space-y-2"
+      className="flex-shrink-0 w-[140px] bg-slate-100 dark:bg-slate-800/50 border-r border-slate-200 dark:border-slate-700 overflow-y-auto py-2 px-2 space-y-2 hidden md:block"
     >
       <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider px-1 mb-1">
         Pages

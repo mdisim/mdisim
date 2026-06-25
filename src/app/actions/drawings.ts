@@ -72,6 +72,8 @@ export async function createDrawing(fields: {
 
 export async function deleteDrawing(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
 
   const { data: drawing } = await supabase
     .from('qb_drawings')
@@ -123,6 +125,8 @@ export async function createDrawingScale(fields: {
   px_per_unit: number
 }): Promise<{ data?: DrawingScale; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
 
   const { data, error } = await supabase
     .from('qb_drawing_scales')
@@ -165,6 +169,8 @@ export async function createDrawingMeasurement(fields: {
   notes?: string
 }): Promise<{ data?: DrawingMeasurement; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
   const { data, error } = await supabase
     .from('qb_drawing_measurements')
     .insert(fields)
@@ -180,6 +186,8 @@ export async function updateDrawingMeasurement(
   fields: Partial<Pick<DrawingMeasurement, 'label' | 'color' | 'notes' | 'quantity' | 'unit'>>
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
   const { error } = await supabase
     .from('qb_drawing_measurements')
     .update(fields)
@@ -191,6 +199,8 @@ export async function updateDrawingMeasurement(
 
 export async function deleteDrawingMeasurement(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
   const { error } = await supabase
     .from('qb_drawing_measurements')
     .delete()
@@ -202,6 +212,8 @@ export async function deleteDrawingMeasurement(id: string): Promise<{ error?: st
 
 export async function deleteDrawingScale(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
   const { error } = await supabase
     .from('qb_drawing_scales')
     .delete()

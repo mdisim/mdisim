@@ -96,6 +96,8 @@ export async function updateMeasurementItem(
   fields: Partial<Pick<MeasurementItem, 'item_code' | 'description' | 'unit' | 'measurement_type' | 'section' | 'drawing_ref' | 'location' | 'sort_order'>>
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
   const { error } = await supabase
     .from('qb_measurement_items')
     .update(fields)
@@ -107,6 +109,8 @@ export async function updateMeasurementItem(
 
 export async function deleteMeasurementItem(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
   const { error } = await supabase
     .from('qb_measurement_items')
     .delete()
@@ -139,6 +143,8 @@ export async function createMeasurementLine(fields: {
   ocr_text?: string
 }): Promise<{ data?: MeasurementLine; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
 
   // Get parent item's measurement_type
   const { data: parentItem } = await supabase
@@ -182,6 +188,8 @@ export async function updateMeasurementLine(
   fields: Partial<Omit<MeasurementLine, 'id' | 'item_id' | 'created_at' | 'updated_at'>>
 ): Promise<{ data?: MeasurementLine; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
 
   const updateFields = { ...fields } as Record<string, unknown>
 
@@ -219,6 +227,8 @@ export async function updateMeasurementLine(
 
 export async function deleteMeasurementLine(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
   const { error } = await supabase
     .from('qb_measurement_lines')
     .delete()

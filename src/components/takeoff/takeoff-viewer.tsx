@@ -157,7 +157,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
   const [undoStack, setUndoStack] = useState<string[]>([])
 
   // Panel & help
-  const [showPanel, setShowPanel] = useState(true)
+  const [showPanel, setShowPanel] = useState(typeof window !== 'undefined' ? window.innerWidth >= 768 : true)
   const [panelWidth, setPanelWidth] = useState(320)
   const panelDragRef = useRef<{ startX: number; startW: number } | null>(null)
   const [panelTab, setPanelTab] = useState<'measurements' | 'boq' | 'scales'>('measurements')
@@ -905,6 +905,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
 
   // ── Cursor style ─────────────────────────────────────────────────────
   let cursor = 'default'
+  // eslint-disable-next-line react-hooks/refs -- ref read is intentional for cursor styling during canvas interaction
   if (activeTool === 'pan' || isPanning.current || isSpaceDown.current) cursor = 'grab'
   if (DRAWING_TOOLS.includes(activeTool ?? '') || isCalibrating) cursor = 'crosshair'
   if (activeTool === 'select') cursor = 'default'

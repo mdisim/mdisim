@@ -1,4 +1,4 @@
-import type { MeasurementItem, MeasurementLine } from '@/lib/types'
+import type { MeasurementItem } from '@/lib/types'
 
 export async function exportMeasurementsToExcel(
   items: MeasurementItem[],

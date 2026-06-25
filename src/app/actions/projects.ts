@@ -95,10 +95,13 @@ export async function updateProject(
   fields: Partial<Pick<Project, 'name' | 'client_name' | 'location' | 'currency' | 'description'>>
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
   const { error } = await supabase
     .from('projects')
     .update(fields)
     .eq('id', id)
+    .eq('created_by', user.id)
 
   if (error) return { error: error.message }
   return {}
@@ -106,10 +109,13 @@ export async function updateProject(
 
 export async function deleteProject(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
   const { error } = await supabase
     .from('projects')
     .delete()
     .eq('id', id)
+    .eq('created_by', user.id)
 
   if (error) return { error: error.message }
   return {}
