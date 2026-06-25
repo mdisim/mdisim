@@ -41,7 +41,7 @@ export function DashboardHeader() {
   }
 
   return (
-    <header className="h-14 shrink-0 border-b border-slate-200 dark:border-white/[0.06] bg-white dark:bg-[#0B1120] flex items-center justify-between px-4 lg:px-6">
+    <header className="h-14 shrink-0 border-b border-slate-200 dark:border-white/[0.06] bg-white dark:bg-slate-900 flex items-center justify-between px-4 lg:px-6">
       {/* Breadcrumb area */}
       <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
         <span className="hidden lg:inline text-slate-400 dark:text-slate-500">ANGEL D.C.</span>
@@ -71,7 +71,7 @@ export function DashboardHeader() {
           {langOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setLangOpen(false)} />
-              <div className="absolute right-0 top-full mt-1 z-20 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-white/[0.08] rounded-lg shadow-lg shadow-black/10 py-1 min-w-[80px]">
+              <div className="absolute right-0 top-full mt-1 z-20 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.08] rounded-lg shadow-lg shadow-black/10 py-1 min-w-[80px]">
                 {LANGUAGES.map((lang) => (
                   <button
                     key={lang.code}

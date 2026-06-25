@@ -16,7 +16,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-[#0B1120]">
+    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-900">
       <AppSidebar userEmail={user.email} />
       <div className="flex-1 flex flex-col min-w-0">
         <DashboardHeader />
