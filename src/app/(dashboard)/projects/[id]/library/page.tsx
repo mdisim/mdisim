@@ -234,7 +234,18 @@ export default function LibraryPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-120px)]">
+    <div className="flex flex-col h-[calc(100vh-120px)]">
+      {/* Page Header */}
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+        <div className="p-2.5 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/20">
+          <BookOpen size={22} />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Pricing Library</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Manage reusable rate items and categories</p>
+        </div>
+      </div>
+      <div className="flex flex-1 overflow-hidden">
       {/* Mobile sidebar toggle */}
       <button
         onClick={() => setSidebarOpen((v) => !v)}
@@ -429,6 +440,7 @@ export default function LibraryPage() {
             </motion.div>
           )}
         </div>
+      </div>
       </div>
 
       {/* Create Category Modal */}

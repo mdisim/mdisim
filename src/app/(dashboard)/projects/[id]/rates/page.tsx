@@ -184,11 +184,16 @@ export default function RateAnalysisPage() {
     <div className="p-4 md:p-8 max-w-[1400px] mx-auto">
       {/* Page Header */}
       <div className="flex items-start justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Rate Analysis</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Build up unit rates from materials, labor, equipment &amp; subcontractors
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/20">
+            <Calculator size={22} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Rate Analysis</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Build up unit rates from materials, labor, equipment &amp; subcontractors
+            </p>
+          </div>
         </div>
         {activeTab === 'analyses' && (
           <Button onClick={() => setShowCreate(true)}>

@@ -269,11 +269,11 @@ export default function BOQPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-            <FileSpreadsheet size={22} className="text-blue-600 dark:text-blue-400" />
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20">
+            <FileSpreadsheet size={22} />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Bill of Quantities</h2>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Bill of Quantities</h2>
             <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
               <span>{items.length} item{items.length !== 1 ? 's' : ''}</span>
               {!loading && items.length > 0 && (

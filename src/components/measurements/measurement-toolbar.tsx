@@ -51,11 +51,11 @@ export function MeasurementToolbar({
       {/* Page Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-600 dark:bg-blue-500 text-white shadow-sm">
-            <BookOpen size={20} />
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20">
+            <BookOpen size={22} />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
               Measurement Book
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
