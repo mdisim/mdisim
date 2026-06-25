@@ -73,7 +73,7 @@ export function ProjectNav({ project }: { project: Project }) {
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-1 -mb-px overflow-x-auto scrollbar-none">
+        <div className="flex gap-0.5 -mb-px overflow-x-auto scrollbar-none">
           {TABS.map((tab) => {
             const href = `${base}/${tab.href}`
             const isActive = pathname.startsWith(href)
@@ -83,14 +83,15 @@ export function ProjectNav({ project }: { project: Project }) {
                 key={tab.href}
                 href={href}
                 className={cn(
-                  'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
+                  'flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 transition-all whitespace-nowrap',
+                  'md:px-4 md:text-sm md:gap-2',
                   isActive
-                    ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 font-bold'
+                    ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 font-bold bg-blue-50/50 dark:bg-blue-900/10'
                     : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600'
                 )}
               >
-                <Icon size={16} />
-                {tab.label}
+                <Icon size={14} className="md:w-4 md:h-4" />
+                <span className="hidden sm:inline">{tab.label}</span>
               </Link>
             )
           })}
