@@ -9,8 +9,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { createClient } from '@/lib/supabase/client'
-import { Upload, Trash2, FileText, Eye, Plus, Brain, ChevronDown, ChevronRight } from 'lucide-react'
+import { Upload, Trash2, FileText, Eye, Plus, Brain, ChevronDown, ChevronRight, ImageIcon } from 'lucide-react'
 import { formatDate, cn } from '@/lib/utils'
+import { motion } from 'framer-motion'
 import { DrawingIntelligence } from '@/components/drawings/drawing-intelligence'
 
 export default function DrawingsPage() {
@@ -105,9 +106,14 @@ export default function DrawingsPage() {
   return (
     <div className="p-4 md:p-8">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Drawings</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{drawings.length} drawing{drawings.length !== 1 ? 's' : ''}</p>
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 text-white shadow-lg shadow-violet-500/20">
+            <ImageIcon size={22} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Drawings</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{drawings.length} drawing{drawings.length !== 1 ? 's' : ''}</p>
+          </div>
         </div>
         <Button onClick={() => setShowUpload(true)}>
           <Upload size={16} />
@@ -135,9 +141,14 @@ export default function DrawingsPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {drawings.map((d) => (
-            <div
+          {drawings.map((d, idx) => (
+            <motion.div
               key={d.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.04 }}
+            >
+            <div
               className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex items-center gap-4 hover:border-blue-200 dark:hover:border-blue-800 transition-colors"
             >
               <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center shrink-0">
@@ -160,6 +171,7 @@ export default function DrawingsPage() {
                 </button>
               </div>
             </div>
+            </motion.div>
           ))}
         </div>
       )}
