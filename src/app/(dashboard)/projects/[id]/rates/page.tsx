@@ -19,6 +19,7 @@ import {
 } from '@/app/actions/rate-analysis'
 import { getBOQItems } from '@/app/actions/boq'
 import type { BOQItem } from '@/lib/types'
+import ResourceBreakdown from '@/components/resource-breakdown'
 import {
   Plus,
   Trash2,
@@ -34,6 +35,7 @@ import {
   Layers,
   DollarSign,
   BarChart3,
+  PieChart,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -67,6 +69,7 @@ export default function RateAnalysisPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [activeTab, setActiveTab] = useState<'analyses' | 'breakdown'>('analyses')
 
   const [form, setForm] = useState({
     description: '',
@@ -174,19 +177,53 @@ export default function RateAnalysisPage() {
   return (
     <div className="p-4 md:p-8 max-w-[1400px] mx-auto">
       {/* Page Header */}
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex items-start justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Rate Analysis</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Build up unit rates from materials, labor, equipment &amp; subcontractors
           </p>
         </div>
-        <Button onClick={() => setShowCreate(true)}>
-          <Plus size={16} />
-          New Analysis
-        </Button>
+        {activeTab === 'analyses' && (
+          <Button onClick={() => setShowCreate(true)}>
+            <Plus size={16} />
+            New Analysis
+          </Button>
+        )}
       </div>
 
+      {/* Tabs */}
+      <div className="flex items-center gap-1 mb-8 border-b border-slate-200 dark:border-slate-700">
+        <button
+          onClick={() => setActiveTab('analyses')}
+          className={cn(
+            'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px',
+            activeTab === 'analyses'
+              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
+          )}
+        >
+          <Calculator size={16} />
+          Rate Analyses
+        </button>
+        <button
+          onClick={() => setActiveTab('breakdown')}
+          className={cn(
+            'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px',
+            activeTab === 'breakdown'
+              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
+          )}
+        >
+          <PieChart size={16} />
+          Resource Breakdown
+        </button>
+      </div>
+
+      {activeTab === 'breakdown' ? (
+        <ResourceBreakdown rateAnalyses={analyses} boqItems={boqItems} />
+      ) : (
+      <>
       {/* Summary Metrics */}
       {!loading && analyses.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -370,6 +407,9 @@ export default function RateAnalysisPage() {
             />
           ))}
         </div>
+      )}
+
+      </>
       )}
 
       {/* Create Modal */}

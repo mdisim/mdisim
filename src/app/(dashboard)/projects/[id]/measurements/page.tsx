@@ -12,17 +12,21 @@ import {
   deleteMeasurementLine,
   duplicateMeasurementLine,
 } from '@/app/actions/measurements'
-import { generateBOQFromMeasurements } from '@/app/actions/boq'
-import type { MeasurementItem, MeasurementType } from '@/lib/types'
+import { generateBOQFromMeasurements, getBOQItems } from '@/app/actions/boq'
+import { getDrawings } from '@/app/actions/drawings'
+import { getRateAnalyses } from '@/app/actions/rate-analysis'
+import type { MeasurementItem, MeasurementType, BOQItem, Drawing, RateAnalysis } from '@/lib/types'
 import { MEASUREMENT_UNITS, MEASUREMENT_TYPES } from '@/lib/types'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { Select } from '@/components/ui/select'
 import { MeasurementGrid } from '@/components/measurements/measurement-grid'
 import { MeasurementToolbar } from '@/components/measurements/measurement-toolbar'
 import { GenerateBOQDialog } from '@/components/measurements/generate-boq-dialog'
-import { Ruler, Plus } from 'lucide-react'
+import { Ruler, Plus, Link2, Image, ArrowRight, BarChart3, GitBranch, FileText, Layers } from 'lucide-react'
 import { getProject } from '@/app/actions/projects'
 import { exportMeasurementsToExcel } from '@/lib/export/measurements-excel'
 
@@ -39,10 +43,16 @@ export default function MeasurementsPage() {
   const { id: projectId } = useParams<{ id: string }>()
 
   const [items, setItems] = useState<MeasurementItem[]>([])
+  const [boqItems, setBoqItems] = useState<BOQItem[]>([])
+  const [drawings, setDrawings] = useState<Drawing[]>([])
+  const [rateAnalyses, setRateAnalyses] = useState<RateAnalysis[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
   const [sectionFilter, setSectionFilter] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [activeTab, setActiveTab] = useState<'measurements' | 'traceability'>('measurements')
+  const [typeFilter, setTypeFilter] = useState<MeasurementType | null>(null)
+  const [linkFilter, setLinkFilter] = useState<'all' | 'linked-drawing' | 'linked-boq' | 'unlinked'>('all')
   const [showCreateItem, setShowCreateItem] = useState(false)
   const [showGenerateBOQ, setShowGenerateBOQ] = useState(false)
   const [creating, setCreating] = useState(false)

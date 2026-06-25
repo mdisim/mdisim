@@ -27,6 +27,8 @@ import {
   Briefcase,
   ArrowRight,
   Sparkles,
+  Target,
+  Wallet,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -34,10 +36,10 @@ import { cn, formatCurrency, formatDate } from '@/lib/utils'
 import { getProjects } from '@/app/actions/projects'
 import { getBOQItems } from '@/app/actions/boq'
 import { getMeasurementItems } from '@/app/actions/measurements'
-import { getVariations, getContract, getCostEntries } from '@/app/actions/cost-control'
+import { getVariations, getContract, getCostEntries, getCashflow } from '@/app/actions/cost-control'
 import { getPaymentCerts } from '@/app/actions/payments'
 import { getTenders } from '@/app/actions/tenders'
-import type { Project, BOQItem, MeasurementItem, Variation, Contract, CostEntry, PaymentCert, Tender } from '@/lib/types'
+import type { Project, BOQItem, MeasurementItem, Variation, Contract, CostEntry, PaymentCert, Tender, CashflowEntry } from '@/lib/types'
 
 interface ProjectSummary {
   project: Project
@@ -48,6 +50,7 @@ interface ProjectSummary {
   costEntries: CostEntry[]
   paymentCerts: PaymentCert[]
   tenders: Tender[]
+  cashflow: CashflowEntry[]
 }
 
 export default function DashboardPage() {
@@ -63,7 +66,7 @@ export default function DashboardPage() {
 
       const results = await Promise.all(
         allProjects.slice(0, 10).map(async (project) => {
-          const [boqItems, measurementItems, variations, contract, costEntries, paymentCerts, tenders] = await Promise.all([
+          const [boqItems, measurementItems, variations, contract, costEntries, paymentCerts, tenders, cashflow] = await Promise.all([
             getBOQItems(project.id).catch(() => [] as BOQItem[]),
             getMeasurementItems(project.id).catch(() => [] as MeasurementItem[]),
             getVariations(project.id).catch(() => [] as Variation[]),
@@ -71,8 +74,9 @@ export default function DashboardPage() {
             getCostEntries(project.id).catch(() => [] as CostEntry[]),
             getPaymentCerts(project.id).catch(() => [] as PaymentCert[]),
             getTenders(project.id).catch(() => [] as Tender[]),
+            getCashflow(project.id).catch(() => [] as CashflowEntry[]),
           ])
-          return { project, boqItems, measurementItems, variations, contract, costEntries, paymentCerts, tenders }
+          return { project, boqItems, measurementItems, variations, contract, costEntries, paymentCerts, tenders, cashflow }
         })
       )
       setSummaries(results)
@@ -86,6 +90,8 @@ export default function DashboardPage() {
   const totalBOQValue = summaries.reduce((s, p) => s + p.boqItems.reduce((a, b) => a + (b.total_amount ?? 0), 0), 0)
   const totalContractValue = summaries.reduce((s, p) => s + (p.contract?.contract_value ?? 0), 0)
   const totalActualCost = summaries.reduce((s, p) => s + p.costEntries.filter(c => c.category === 'actual').reduce((a, b) => a + b.amount, 0), 0)
+  const totalCommitted = summaries.reduce((s, p) => s + p.costEntries.filter(c => c.category === 'committed').reduce((a, b) => a + b.amount, 0), 0)
+  const totalForecast = summaries.reduce((s, p) => s + p.costEntries.filter(c => c.category === 'forecast').reduce((a, b) => a + b.amount, 0), 0)
   const totalPaid = summaries.reduce((s, p) => s + p.paymentCerts.filter(c => c.status === 'paid').reduce((a, b) => a + b.net_payable, 0), 0)
   const pendingPayments = summaries.reduce((s, p) => s + p.paymentCerts.filter(c => c.status !== 'paid' && c.status !== 'draft').reduce((a, b) => a + b.net_payable, 0), 0)
   const pendingVariations = summaries.reduce((s, p) => s + p.variations.filter(v => v.status === 'pending' || v.status === 'submitted').reduce((a, b) => a + b.amount, 0), 0)
@@ -93,7 +99,8 @@ export default function DashboardPage() {
   const activeTenders = summaries.reduce((s, p) => s + p.tenders.filter(t => t.status === 'issued').length, 0)
   const totalMeasurements = summaries.reduce((s, p) => s + p.measurementItems.length, 0)
   const totalMeasurementLines = summaries.reduce((s, p) => s + p.measurementItems.reduce((a, m) => a + (m.lines?.length ?? 0), 0), 0)
-  const projectedProfit = totalContractValue + approvedVariations - totalActualCost
+  const totalForecastCost = totalActualCost + totalCommitted + totalForecast
+  const projectedProfit = totalContractValue + approvedVariations - totalForecastCost
   const profitMargin = totalContractValue > 0 ? ((projectedProfit / totalContractValue) * 100) : 0
 
   const fmt = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
@@ -103,6 +110,93 @@ export default function DashboardPage() {
     if (Math.abs(n) >= 1_000) return `${(n / 1_000).toFixed(1)}K`
     return fmtFull(n)
   }
+  const fmtPct = (n: number) => `${n.toFixed(2)}`
+
+  // ── Earned Value computations per project ──
+  const earnedValueData = summaries
+    .filter(s => s.contract)
+    .map(s => {
+      const BAC = s.contract!.contract_value
+      // EV = % complete (from latest payment cert cumulative / contract) * BAC
+      // Use progress from project or derive from payment certs
+      const latestCert = s.paymentCerts.length > 0
+        ? s.paymentCerts.reduce((best, c) => c.cert_number > best.cert_number ? c : best, s.paymentCerts[0])
+        : null
+      const percentComplete = latestCert
+        ? (latestCert.gross_amount > 0 ? (latestCert.gross_amount / BAC) * 100 : 0)
+        : (s.project.progress ?? 0)
+      const EV = (percentComplete / 100) * BAC
+
+      // PV = planned value (time-based). Use contract duration to estimate
+      const contract = s.contract!
+      let PV = BAC // default: assume we should be done
+      if (contract.start_date && contract.end_date) {
+        const start = new Date(contract.start_date).getTime()
+        const end = new Date(contract.end_date).getTime()
+        const now = Date.now()
+        const totalDuration = end - start
+        if (totalDuration > 0) {
+          const elapsed = Math.min(now - start, totalDuration)
+          PV = (elapsed / totalDuration) * BAC
+        }
+      } else if (contract.start_date && contract.duration_months) {
+        const start = new Date(contract.start_date).getTime()
+        const end = new Date(contract.start_date)
+        end.setMonth(end.getMonth() + contract.duration_months)
+        const totalDuration = end.getTime() - start
+        if (totalDuration > 0) {
+          const elapsed = Math.min(Date.now() - start, totalDuration)
+          PV = (elapsed / totalDuration) * BAC
+        }
+      }
+
+      const AC = s.costEntries.filter(c => c.category === 'actual').reduce((a, b) => a + b.amount, 0)
+      const SPI = PV > 0 ? EV / PV : 0
+      const CPI = AC > 0 ? EV / AC : 0
+      const EAC = CPI > 0 ? BAC / CPI : BAC
+      const VAC = BAC - EAC
+
+      return {
+        name: s.project.name,
+        BAC, EV, PV, AC, SPI, CPI, EAC, VAC,
+        percentComplete,
+      }
+    })
+
+  // ── Project Financial Summary data ──
+  const financialData = summaries.map(s => {
+    const contractVal = s.contract?.contract_value ?? 0
+    const varApproved = s.variations.filter(v => v.status === 'approved').reduce((a, b) => a + (b.approved_amount ?? b.amount), 0)
+    const revisedValue = contractVal + varApproved
+    const actual = s.costEntries.filter(c => c.category === 'actual').reduce((a, b) => a + b.amount, 0)
+    const committed = s.costEntries.filter(c => c.category === 'committed').reduce((a, b) => a + b.amount, 0)
+    const forecast = s.costEntries.filter(c => c.category === 'forecast').reduce((a, b) => a + b.amount, 0)
+    const totalCost = actual + committed + forecast
+    const profit = revisedValue - totalCost
+    const margin = revisedValue > 0 ? (profit / revisedValue) * 100 : 0
+
+    return {
+      name: s.project.name,
+      id: s.project.id,
+      contractVal,
+      varApproved,
+      revisedValue,
+      actual,
+      committed,
+      forecast: totalCost,
+      profit,
+      margin,
+    }
+  })
+
+  // ── Cash Position data ──
+  const allCashflow = summaries.flatMap(s => s.cashflow)
+  const cashSummary = allCashflow.length > 0 ? {
+    plannedIncome: allCashflow.reduce((s, c) => s + c.planned_income, 0),
+    actualIncome: allCashflow.reduce((s, c) => s + c.actual_income, 0),
+    plannedExpense: allCashflow.reduce((s, c) => s + c.planned_expense, 0),
+    actualExpense: allCashflow.reduce((s, c) => s + c.actual_expense, 0),
+  } : null
 
   return (
     <div className="min-h-screen bg-[#0C1222]">
@@ -130,17 +224,15 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Primary KPI Cards */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+        {/* Portfolio KPI Cards */}
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
           {([
             {
-              label: 'Active Projects',
+              label: 'Total Projects',
               value: loading ? '...' : String(totalProjects),
               subtitle: `${summaries.filter(s => (s.project.progress ?? 0) > 0 && (s.project.progress ?? 0) < 100).length} in progress`,
               icon: FolderKanban,
               gradient: 'from-violet-600 to-indigo-600',
-              iconBg: 'text-violet-200/20',
-              trend: null,
             },
             {
               label: 'Contract Value',
@@ -148,8 +240,6 @@ export default function DashboardPage() {
               subtitle: 'Total portfolio',
               icon: Briefcase,
               gradient: 'from-blue-600 to-cyan-600',
-              iconBg: 'text-blue-200/20',
-              trend: null,
             },
             {
               label: 'BOQ Value',
@@ -157,17 +247,20 @@ export default function DashboardPage() {
               subtitle: `${summaries.reduce((s, p) => s + p.boqItems.length, 0)} line items`,
               icon: FileSpreadsheet,
               gradient: 'from-emerald-600 to-teal-600',
-              iconBg: 'text-emerald-200/20',
-              trend: null,
             },
             {
               label: 'Actual Cost',
               value: loading ? '...' : fmtCompact(totalActualCost),
               subtitle: totalContractValue > 0 ? `${((totalActualCost / totalContractValue) * 100).toFixed(1)}% of contract` : 'No contract set',
-              icon: TrendingDown,
+              icon: DollarSign,
               gradient: 'from-rose-600 to-pink-600',
-              iconBg: 'text-rose-200/20',
-              trend: null,
+            },
+            {
+              label: 'Forecast Cost',
+              value: loading ? '...' : fmtCompact(totalForecastCost),
+              subtitle: totalContractValue > 0 ? `${((totalForecastCost / totalContractValue) * 100).toFixed(1)}% of contract` : 'N/A',
+              icon: Target,
+              gradient: 'from-amber-600 to-orange-600',
             },
             {
               label: 'Projected Profit',
@@ -175,8 +268,6 @@ export default function DashboardPage() {
               subtitle: totalContractValue > 0 ? `${profitMargin.toFixed(1)}% margin` : 'N/A',
               icon: projectedProfit >= 0 ? TrendingUp : TrendingDown,
               gradient: projectedProfit >= 0 ? 'from-green-600 to-emerald-600' : 'from-red-600 to-rose-600',
-              iconBg: projectedProfit >= 0 ? 'text-green-200/20' : 'text-red-200/20',
-              trend: projectedProfit >= 0 ? 'up' as const : 'down' as const,
             },
           ]).map(kpi => (
             <div
@@ -186,10 +277,10 @@ export default function DashboardPage() {
                 kpi.gradient
               )}
             >
-              {/* Background icon */}
+              {/* Background icon watermark */}
               <kpi.icon
                 size={80}
-                className={cn('absolute -right-3 -top-3 rotate-12 opacity-[0.08]', kpi.iconBg)}
+                className="absolute -right-3 -top-3 rotate-12 opacity-[0.08] text-white"
                 strokeWidth={1}
               />
               <div className="relative z-10">
@@ -198,12 +289,8 @@ export default function DashboardPage() {
                     <kpi.icon size={16} className="text-white" />
                   </div>
                 </div>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold tabular-nums text-white tracking-tight">
-                    {kpi.value}
-                  </span>
-                  {kpi.trend === 'up' && <TrendingUp size={14} className="text-white/70" />}
-                  {kpi.trend === 'down' && <TrendingDown size={14} className="text-white/70" />}
+                <div className="text-2xl font-bold tabular-nums text-white tracking-tight">
+                  {kpi.value}
                 </div>
                 <div className="text-[11px] font-medium text-white/70 mt-0.5">{kpi.label}</div>
                 <div className="text-[10px] text-white/50 mt-0.5">{kpi.subtitle}</div>
@@ -238,6 +325,234 @@ export default function DashboardPage() {
             </div>
           ))}
         </div>
+
+        {/* ── Earned Value Metrics ── */}
+        {!loading && earnedValueData.length > 0 && (
+          <Card className="border-slate-700/50 bg-slate-800/50 shadow-none">
+            <CardHeader className="border-slate-700/30 bg-slate-800/80">
+              <div className="flex items-center gap-2">
+                <Activity size={18} className="text-cyan-400" />
+                <CardTitle className="text-slate-100">Earned Value Analysis</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-700/40 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                      <th className="px-4 py-3">Project</th>
+                      <th className="px-4 py-3 text-right">BAC</th>
+                      <th className="px-4 py-3 text-right">% Comp</th>
+                      <th className="px-4 py-3 text-right">EV</th>
+                      <th className="px-4 py-3 text-right">PV</th>
+                      <th className="px-4 py-3 text-right">AC</th>
+                      <th className="px-4 py-3 text-right">SPI</th>
+                      <th className="px-4 py-3 text-right">CPI</th>
+                      <th className="px-4 py-3 text-right">EAC</th>
+                      <th className="px-4 py-3 text-right">VAC</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {earnedValueData.map((ev, i) => (
+                      <tr
+                        key={i}
+                        className="border-b border-slate-700/20 transition-colors hover:bg-slate-700/20"
+                      >
+                        <td className="px-4 py-2.5 font-medium text-slate-200 max-w-[200px] truncate">{ev.name}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-300">{fmtCompact(ev.BAC)}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-300">{fmtPct(ev.percentComplete)}%</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-300">{fmtCompact(ev.EV)}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-300">{fmtCompact(ev.PV)}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-300">{fmtCompact(ev.AC)}</td>
+                        <td className={cn(
+                          'px-4 py-2.5 text-right tabular-nums font-semibold',
+                          ev.SPI >= 1 ? 'text-emerald-400' : ev.SPI >= 0.9 ? 'text-amber-400' : 'text-rose-400'
+                        )}>
+                          {fmtPct(ev.SPI)}
+                        </td>
+                        <td className={cn(
+                          'px-4 py-2.5 text-right tabular-nums font-semibold',
+                          ev.CPI >= 1 ? 'text-emerald-400' : ev.CPI >= 0.9 ? 'text-amber-400' : 'text-rose-400'
+                        )}>
+                          {fmtPct(ev.CPI)}
+                        </td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-300">{fmtCompact(ev.EAC)}</td>
+                        <td className={cn(
+                          'px-4 py-2.5 text-right tabular-nums font-semibold',
+                          ev.VAC >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                        )}>
+                          {fmtCompact(ev.VAC)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {/* Legend */}
+              <div className="flex flex-wrap gap-x-6 gap-y-1 border-t border-slate-700/30 px-4 py-2.5 text-[10px] text-slate-500">
+                <span>BAC = Budget at Completion</span>
+                <span>EV = Earned Value</span>
+                <span>PV = Planned Value</span>
+                <span>AC = Actual Cost</span>
+                <span>SPI = Schedule Perf. Index</span>
+                <span>CPI = Cost Perf. Index</span>
+                <span>EAC = Estimate at Completion</span>
+                <span>VAC = Variance at Completion</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ── Project Financial Summary ── */}
+        {!loading && summaries.length > 0 && (
+          <Card className="border-slate-700/50 bg-slate-800/50 shadow-none">
+            <CardHeader className="border-slate-700/30 bg-slate-800/80">
+              <div className="flex items-center gap-2">
+                <BarChart3 size={18} className="text-blue-400" />
+                <CardTitle className="text-slate-100">Project Financial Summary</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-700/40 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                      <th className="px-4 py-3">Project</th>
+                      <th className="px-4 py-3 text-right">Contract</th>
+                      <th className="px-4 py-3 text-right">Approved VOs</th>
+                      <th className="px-4 py-3 text-right">Revised Value</th>
+                      <th className="px-4 py-3 text-right">Actual Cost</th>
+                      <th className="px-4 py-3 text-right">Committed</th>
+                      <th className="px-4 py-3 text-right">Forecast Total</th>
+                      <th className="px-4 py-3 text-right">Profit</th>
+                      <th className="px-4 py-3 text-right">Margin %</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {financialData.map(row => (
+                      <tr
+                        key={row.id}
+                        className="border-b border-slate-700/20 transition-colors hover:bg-slate-700/20 cursor-pointer"
+                        onClick={() => router.push(`/projects/${row.id}/measurements`)}
+                      >
+                        <td className="px-4 py-2.5 font-medium text-slate-200 max-w-[200px] truncate">{row.name}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-300">{row.contractVal > 0 ? fmtCompact(row.contractVal) : '-'}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-blue-400">{row.varApproved > 0 ? fmtCompact(row.varApproved) : '-'}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-200 font-semibold">{row.revisedValue > 0 ? fmtCompact(row.revisedValue) : '-'}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-rose-400">{row.actual > 0 ? fmtCompact(row.actual) : '-'}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-amber-400">{row.committed > 0 ? fmtCompact(row.committed) : '-'}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-300">{row.forecast > 0 ? fmtCompact(row.forecast) : '-'}</td>
+                        <td className={cn(
+                          'px-4 py-2.5 text-right tabular-nums font-semibold',
+                          row.profit >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                        )}>
+                          {row.revisedValue > 0 ? fmtCompact(row.profit) : '-'}
+                        </td>
+                        <td className={cn(
+                          'px-4 py-2.5 text-right tabular-nums font-semibold',
+                          row.margin >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                        )}>
+                          {row.revisedValue > 0 ? `${row.margin.toFixed(1)}%` : '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  {/* Totals row */}
+                  <tfoot>
+                    <tr className="border-t-2 border-slate-600/50 bg-slate-800/80 font-semibold">
+                      <td className="px-4 py-2.5 text-slate-300">Portfolio Total</td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-slate-200">{fmtCompact(financialData.reduce((s, r) => s + r.contractVal, 0))}</td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-blue-400">{fmtCompact(financialData.reduce((s, r) => s + r.varApproved, 0))}</td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-slate-100">{fmtCompact(financialData.reduce((s, r) => s + r.revisedValue, 0))}</td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-rose-400">{fmtCompact(financialData.reduce((s, r) => s + r.actual, 0))}</td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-amber-400">{fmtCompact(financialData.reduce((s, r) => s + r.committed, 0))}</td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-slate-300">{fmtCompact(financialData.reduce((s, r) => s + r.forecast, 0))}</td>
+                      <td className={cn(
+                        'px-4 py-2.5 text-right tabular-nums',
+                        financialData.reduce((s, r) => s + r.profit, 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                      )}>
+                        {fmtCompact(financialData.reduce((s, r) => s + r.profit, 0))}
+                      </td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-slate-400">
+                        {(() => {
+                          const totalRev = financialData.reduce((s, r) => s + r.revisedValue, 0)
+                          const totalProf = financialData.reduce((s, r) => s + r.profit, 0)
+                          return totalRev > 0 ? `${((totalProf / totalRev) * 100).toFixed(1)}%` : '-'
+                        })()}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ── Cash Position ── */}
+        {!loading && cashSummary && (
+          <Card className="border-slate-700/50 bg-slate-800/50 shadow-none">
+            <CardHeader className="border-slate-700/30 bg-slate-800/80">
+              <div className="flex items-center gap-2">
+                <Wallet size={18} className="text-emerald-400" />
+                <CardTitle className="text-slate-100">Cash Position</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="p-4">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                {([
+                  { label: 'Planned Income', value: cashSummary.plannedIncome, color: 'text-blue-400' },
+                  { label: 'Actual Income', value: cashSummary.actualIncome, color: 'text-emerald-400' },
+                  { label: 'Planned Expense', value: cashSummary.plannedExpense, color: 'text-amber-400' },
+                  { label: 'Actual Expense', value: cashSummary.actualExpense, color: 'text-rose-400' },
+                ]).map(item => (
+                  <div key={item.label} className="rounded-lg border border-slate-700/30 bg-slate-900/50 p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{item.label}</div>
+                    <div className={cn('mt-1 text-lg font-bold tabular-nums', item.color)}>
+                      {fmtCompact(item.value)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Net position */}
+              <div className="mt-4 flex items-center justify-between rounded-lg border border-slate-700/30 bg-slate-900/50 px-4 py-3">
+                <span className="text-xs font-semibold text-slate-400">Net Cash Position (Actual Income - Actual Expense)</span>
+                <span className={cn(
+                  'text-lg font-bold tabular-nums',
+                  (cashSummary.actualIncome - cashSummary.actualExpense) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                )}>
+                  {fmtCompact(cashSummary.actualIncome - cashSummary.actualExpense)}
+                </span>
+              </div>
+              {/* Variance bars */}
+              <div className="mt-3 grid grid-cols-2 gap-4">
+                <div className="rounded-lg border border-slate-700/30 bg-slate-900/50 p-3">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Income Variance</div>
+                  <div className={cn(
+                    'mt-1 text-sm font-bold tabular-nums',
+                    (cashSummary.actualIncome - cashSummary.plannedIncome) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                  )}>
+                    {fmtCompact(cashSummary.actualIncome - cashSummary.plannedIncome)}
+                    <span className="ml-1 text-[10px] font-normal text-slate-500">
+                      ({cashSummary.plannedIncome > 0 ? `${(((cashSummary.actualIncome - cashSummary.plannedIncome) / cashSummary.plannedIncome) * 100).toFixed(1)}%` : 'N/A'})
+                    </span>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-slate-700/30 bg-slate-900/50 p-3">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Expense Variance</div>
+                  <div className={cn(
+                    'mt-1 text-sm font-bold tabular-nums',
+                    (cashSummary.actualExpense - cashSummary.plannedExpense) <= 0 ? 'text-emerald-400' : 'text-rose-400'
+                  )}>
+                    {fmtCompact(cashSummary.actualExpense - cashSummary.plannedExpense)}
+                    <span className="ml-1 text-[10px] font-normal text-slate-500">
+                      ({cashSummary.plannedExpense > 0 ? `${(((cashSummary.actualExpense - cashSummary.plannedExpense) / cashSummary.plannedExpense) * 100).toFixed(1)}%` : 'N/A'})
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Project Cards Section */}
         <section>
