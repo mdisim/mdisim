@@ -30,6 +30,8 @@ import {
   Target,
   Wallet,
 } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Legend } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
@@ -269,9 +271,12 @@ export default function DashboardPage() {
               icon: projectedProfit >= 0 ? TrendingUp : TrendingDown,
               gradient: projectedProfit >= 0 ? 'from-green-600 to-emerald-600' : 'from-red-600 to-rose-600',
             },
-          ]).map(kpi => (
-            <div
+          ]).map((kpi, index) => (
+            <motion.div
               key={kpi.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.08 }}
               className={cn(
                 'relative overflow-hidden rounded-xl bg-gradient-to-br p-4 shadow-lg',
                 kpi.gradient
@@ -295,7 +300,7 @@ export default function DashboardPage() {
                 <div className="text-[11px] font-medium text-white/70 mt-0.5">{kpi.label}</div>
                 <div className="text-[10px] text-white/50 mt-0.5">{kpi.subtitle}</div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
@@ -325,6 +330,86 @@ export default function DashboardPage() {
             </div>
           ))}
         </div>
+
+        {/* ── Charts ── */}
+        {!loading && summaries.length > 0 && (
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {/* Portfolio Cost Breakdown */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+              <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm dark:shadow-none">
+                <CardHeader className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80">
+                  <div className="flex items-center gap-2">
+                    <Layers size={18} className="text-rose-600 dark:text-rose-400" />
+                    <CardTitle className="text-slate-900 dark:text-slate-100">Portfolio Cost Breakdown</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Actual Cost', value: totalActualCost },
+                          { name: 'Committed', value: totalCommitted },
+                          { name: 'Remaining Budget', value: Math.max(0, totalContractValue - totalActualCost - totalCommitted) },
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={110}
+                        paddingAngle={2}
+                        dataKey="value"
+                        label={({ name, value }) => `${name}: ${fmtCompact(value)}`}
+                      >
+                        <Cell fill="#f43f5e" />
+                        <Cell fill="#f59e0b" />
+                        <Cell fill="#10b981" />
+                      </Pie>
+                      <Tooltip formatter={(value) => fmtCompact(Number(value))} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="mt-2 flex items-center justify-center gap-6 text-xs">
+                    <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-rose-500" />Actual Cost</span>
+                    <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" />Committed</span>
+                    <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />Remaining</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Project Health Overview */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.35 }}>
+              <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm dark:shadow-none">
+                <CardHeader className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 size={18} className="text-blue-600 dark:text-blue-400" />
+                    <CardTitle className="text-slate-900 dark:text-slate-100">Project Health Overview</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart
+                      data={financialData.map(d => ({
+                        name: d.name.length > 12 ? d.name.slice(0, 12) + '...' : d.name,
+                        'Contract Value': d.contractVal,
+                        'Actual Cost': d.actual,
+                        'Forecast': d.forecast,
+                      }))}
+                      margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+                    >
+                      <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'currentColor' }} className="text-slate-500 dark:text-slate-400" />
+                      <YAxis tickFormatter={(v: number) => fmtCompact(v)} tick={{ fontSize: 10, fill: 'currentColor' }} className="text-slate-500 dark:text-slate-400" />
+                      <Tooltip formatter={(value) => fmtCompact(Number(value))} />
+                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                      <Bar dataKey="Contract Value" fill="#3b82f6" radius={[2, 2, 0, 0]} />
+                      <Bar dataKey="Actual Cost" fill="#f43f5e" radius={[2, 2, 0, 0]} />
+                      <Bar dataKey="Forecast" fill="#f59e0b" radius={[2, 2, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        )}
 
         {/* ── Earned Value Metrics ── */}
         {!loading && earnedValueData.length > 0 && (

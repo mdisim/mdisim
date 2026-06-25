@@ -6,11 +6,6 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
   FolderKanban,
-  Ruler,
-  FileSpreadsheet,
-  BookOpen,
-  BarChart3,
-  Settings,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -24,14 +19,6 @@ import { createClient } from '@/lib/supabase/client'
 const NAV_ITEMS = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/projects', icon: FolderKanban, label: 'Projects' },
-  { href: '/takeoff', icon: Ruler, label: 'Quantity Takeoff', badge: 'Soon' },
-  { href: '/boq-builder', icon: FileSpreadsheet, label: 'BOQ Builder', badge: 'Soon' },
-  { href: '/library', icon: BookOpen, label: 'Rate Library', badge: 'Soon' },
-  { href: '/reports', icon: BarChart3, label: 'Reports', badge: 'Soon' },
-]
-
-const BOTTOM_ITEMS = [
-  { href: '/settings', icon: Settings, label: 'Settings', badge: 'Soon' },
 ]
 
 interface AppSidebarProps {
@@ -56,31 +43,18 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
     return (
       <Link
         key={item.href}
-        href={item.badge ? '#' : item.href}
-        onClick={(e) => {
-          if (item.badge) e.preventDefault()
-          else setMobileOpen(false)
-        }}
+        href={item.href}
+        onClick={() => setMobileOpen(false)}
         className={cn(
           'group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
           collapsed && 'justify-center px-2',
           isActive
             ? 'bg-blue-500/10 text-blue-400 border-l-[3px] border-blue-500 ml-0 pl-[9px]'
-            : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-200 border-l-[3px] border-transparent ml-0 pl-[9px]',
-          item.badge && !isActive && 'opacity-60 cursor-default'
+            : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-200 border-l-[3px] border-transparent ml-0 pl-[9px]'
         )}
       >
         <Icon size={18} className={cn(isActive ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300')} />
-        {!collapsed && (
-          <>
-            <span className="flex-1">{item.label}</span>
-            {item.badge && (
-              <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                {item.badge}
-              </span>
-            )}
-          </>
-        )}
+        {!collapsed && <span className="flex-1">{item.label}</span>}
       </Link>
     )
   }
@@ -122,17 +96,6 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
           {NAV_ITEMS.map(renderNavItem)}
         </div>
 
-        {/* Divider */}
-        <div className="my-4 mx-3 border-t border-white/[0.06]" />
-
-        {!collapsed && (
-          <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">
-            System
-          </p>
-        )}
-        <div className="space-y-0.5">
-          {BOTTOM_ITEMS.map(renderNavItem)}
-        </div>
       </nav>
 
       {/* User area */}

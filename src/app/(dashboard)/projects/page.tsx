@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { FolderKanban, Plus, Trash2, MapPin, User, Calendar, Search, LayoutGrid, List, DollarSign } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function ProjectsPage() {
   const router = useRouter()
@@ -168,8 +169,11 @@ export default function ProjectsPage() {
         /* Grid view */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((project, idx) => (
-            <div
+            <motion.div
               key={project.id}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: idx * 0.05, ease: 'easeOut' }}
               onClick={() => router.push(`/projects/${project.id}/measurements`)}
               className="bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/60 overflow-hidden hover:border-blue-300 dark:hover:border-blue-600/50 hover:shadow-lg hover:shadow-blue-500/5 dark:hover:shadow-blue-500/10 transition-all duration-200 cursor-pointer group"
             >
@@ -218,15 +222,18 @@ export default function ProjectsPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       ) : (
         /* List view */
         <div className="bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/60 overflow-hidden divide-y divide-slate-100 dark:divide-slate-700/60">
           {filtered.map((project, idx) => (
-            <div
+            <motion.div
               key={project.id}
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: idx * 0.03 }}
               onClick={() => router.push(`/projects/${project.id}/measurements`)}
               className="flex items-center gap-4 px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors cursor-pointer group"
             >
@@ -251,7 +258,7 @@ export default function ProjectsPage() {
               >
                 <Trash2 size={14} />
               </button>
-            </div>
+            </motion.div>
           ))}
         </div>
       )}
