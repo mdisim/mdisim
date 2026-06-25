@@ -41,6 +41,7 @@ import {
 } from '@/app/actions/drawings'
 import { LiveBOQPanel } from './live-boq-panel'
 import { ScaleManager } from './scale-manager'
+import { VolumeCalculator } from './volume-calculator'
 import { AlertTriangle, PanelRightClose, PanelRightOpen, Keyboard, Link2 } from 'lucide-react'
 import { linkDrawingMeasurementsToItem } from '@/app/actions/measurements'
 import { createBOQItem } from '@/app/actions/boq'
@@ -160,6 +161,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
   const panelDragRef = useRef<{ startX: number; startW: number } | null>(null)
   const [panelTab, setPanelTab] = useState<'measurements' | 'boq' | 'scales'>('measurements')
   const [showShortcuts, setShowShortcuts] = useState(false)
+  const [showVolumeCalc, setShowVolumeCalc] = useState(false)
 
   // Snapping
   const [snapConfig, setSnapConfig] = useState<SnapConfig>(DEFAULT_SNAP_CONFIG)
@@ -906,6 +908,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
         onSnapConfigChange={setSnapConfig}
         showGrid={showGrid}
         onGridToggle={() => setShowGrid(v => !v)}
+        onVolumeCalculator={() => setShowVolumeCalc(true)}
       />
 
       {/* Scale warning */}
@@ -1232,6 +1235,12 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
       <KeyboardShortcutsHelp
         isOpen={showShortcuts}
         onClose={() => setShowShortcuts(false)}
+      />
+
+      <VolumeCalculator
+        isOpen={showVolumeCalc}
+        onClose={() => setShowVolumeCalc(false)}
+        drawingMeasurements={takeoffMs.map(m => ({ id: m.id, label: m.label ?? '', quantity: m.quantity, unit: m.unit ?? 'px' }))}
       />
     </div>
   )

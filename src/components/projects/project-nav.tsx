@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import type { Project } from '@/lib/types'
-import { ArrowLeft, Ruler, ImageIcon, Settings2, FileSpreadsheet, BookOpen, Calculator, Users, DollarSign, Receipt } from 'lucide-react'
+import { ArrowLeft, Ruler, ImageIcon, Settings2, FileSpreadsheet, BookOpen, Calculator, Users, DollarSign, Receipt, GitCompare, BarChart3 } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/ui/modal'
 import { Input } from '@/components/ui/input'
@@ -16,6 +16,8 @@ const TABS = [
   { href: 'drawings', label: 'Drawings', icon: ImageIcon },
   { href: 'boq', label: 'BOQ', icon: FileSpreadsheet },
   { href: 'rates', label: 'Rates', icon: Calculator },
+  { href: 'quantities', label: 'Quantities', icon: BarChart3 },
+  { href: 'revisions', label: 'Revisions', icon: GitCompare },
   { href: 'tenders', label: 'Tenders', icon: Users },
   { href: 'cost-control', label: 'Cost Control', icon: DollarSign },
   { href: 'payments', label: 'Payments', icon: Receipt },

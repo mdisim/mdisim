@@ -15,6 +15,9 @@ import {
   Trash2,
   Filter,
   Link2,
+  GripVertical,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -49,6 +52,9 @@ export default function BOQPage() {
   const [importRows, setImportRows] = useState<ImportedBOQRow[]>([])
   const [importError, setImportError] = useState<string | null>(null)
   const [importing, setImporting] = useState(false)
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [dragOverId, setDragOverId] = useState<string | null>(null)
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
 
   const [form, setForm] = useState({
     code: '',
@@ -178,6 +184,33 @@ export default function BOQPage() {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') commitEdit()
     if (e.key === 'Escape') setEditingCell(null)
+  }
+
+  const handleDrop = async (targetId: string) => {
+    if (!dragId || dragId === targetId) { setDragId(null); setDragOverId(null); return }
+    const sorted = [...items].sort((a, b) => a.sort_order - b.sort_order)
+    const dragIdx = sorted.findIndex(i => i.id === dragId)
+    const targetIdx = sorted.findIndex(i => i.id === targetId)
+    if (dragIdx === -1 || targetIdx === -1) return
+    const [moved] = sorted.splice(dragIdx, 1)
+    sorted.splice(targetIdx, 0, moved)
+    const updates = sorted.map((item, idx) => ({ ...item, sort_order: idx }))
+    setItems(updates)
+    setDragId(null)
+    setDragOverId(null)
+    for (const item of updates) {
+      if (item.sort_order !== items.find(i => i.id === item.id)?.sort_order) {
+        await updateBOQItem(item.id, { sort_order: item.sort_order })
+      }
+    }
+  }
+
+  const toggleSection = (section: string) => {
+    setCollapsedSections(prev => {
+      const next = new Set(prev)
+      next.has(section) ? next.delete(section) : next.add(section)
+      return next
+    })
   }
 
   // Section grouping
@@ -316,6 +349,7 @@ export default function BOQPage() {
             <table className="w-full text-sm">
               <thead className="sticky top-0 z-10">
                 <tr className="bg-slate-50 dark:bg-slate-900 border-b-2 border-slate-200 dark:border-slate-700">
+                  <th className="w-[28px]" />
                   <th className="text-left px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[80px]">Code</th>
                   <th className="text-left px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 min-w-[200px]">Description</th>
                   <th className="text-left px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[60px]">Unit</th>
@@ -334,27 +368,45 @@ export default function BOQPage() {
                   return (
                     <Fragment key={section}>
                       {section && (
-                        <tr className="bg-slate-100/80 dark:bg-slate-800/80">
-                          <td colSpan={10} className="px-0 py-2.5">
+                        <tr className="bg-slate-100/80 dark:bg-slate-800/80 cursor-pointer" onClick={() => toggleSection(section)}>
+                          <td colSpan={11} className="px-0 py-2.5">
                             <div className="flex items-center gap-2 border-l-[3px] border-blue-500 pl-3 ml-1">
+                              {collapsedSections.has(section)
+                                ? <ChevronRight size={14} className="text-slate-400" />
+                                : <ChevronDown size={14} className="text-slate-400" />
+                              }
                               <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                                 {section}
                               </span>
                               <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 bg-slate-200/60 dark:bg-slate-700/60 px-1.5 py-0.5 rounded">
                                 {sectionItems.length} items
                               </span>
+                              <span className="ml-auto text-xs tabular-nums font-medium text-slate-500 dark:text-slate-400 pr-3">
+                                {formatCurrency(sectionTotal)}
+                              </span>
                             </div>
                           </td>
                         </tr>
                       )}
-                      {sectionItems.map((item, idx) => (
+                      {!collapsedSections.has(section) && sectionItems.map((item, idx) => (
                         <tr
                           key={item.id}
+                          draggable
+                          onDragStart={() => setDragId(item.id)}
+                          onDragOver={(e) => { e.preventDefault(); setDragOverId(item.id) }}
+                          onDragLeave={() => setDragOverId(null)}
+                          onDrop={() => handleDrop(item.id)}
+                          onDragEnd={() => { setDragId(null); setDragOverId(null) }}
                           className={cn(
                             'group border-b border-slate-100 dark:border-slate-700/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors',
-                            idx % 2 === 1 && 'bg-slate-50/40 dark:bg-slate-800/40'
+                            idx % 2 === 1 && 'bg-slate-50/40 dark:bg-slate-800/40',
+                            dragId === item.id && 'opacity-40',
+                            dragOverId === item.id && dragId !== item.id && 'border-t-2 border-t-blue-500'
                           )}
                         >
+                          <td className="px-0.5 py-0.5 w-[28px]">
+                            <GripVertical size={14} className="text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity mx-auto" />
+                          </td>
                           <td className="px-1 py-0.5">
                             <div className="flex items-center gap-1">
                               {renderCell(item, 'code', item.code)}

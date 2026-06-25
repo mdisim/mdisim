@@ -27,6 +27,7 @@ import { MeasurementGrid } from '@/components/measurements/measurement-grid'
 import { MeasurementToolbar } from '@/components/measurements/measurement-toolbar'
 import { GenerateBOQDialog } from '@/components/measurements/generate-boq-dialog'
 import { Ruler, Plus, Link2, Image, ArrowRight, BarChart3, GitBranch, FileText, Layers } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { getProject } from '@/app/actions/projects'
 import { exportMeasurementsToExcel } from '@/lib/export/measurements-excel'
 
@@ -70,8 +71,16 @@ export default function MeasurementsPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const data = await getMeasurementItems(projectId)
+    const [data, boq, dwgs, rates] = await Promise.all([
+      getMeasurementItems(projectId),
+      getBOQItems(projectId),
+      getDrawings(projectId),
+      getRateAnalyses(projectId),
+    ])
     setItems(data)
+    setBoqItems(boq)
+    setDrawings(dwgs)
+    setRateAnalyses(rates)
     setLoading(false)
   }, [projectId])
 
@@ -312,7 +321,105 @@ export default function MeasurementsPage() {
         netQuantity={netQuantity}
       />
 
-      <MeasurementGrid
+      {/* Tab bar */}
+      <div className="flex gap-1 mb-4 border-b border-slate-200 dark:border-slate-700">
+        <button onClick={() => setActiveTab('measurements')} className={cn(
+          'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
+          activeTab === 'measurements' ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700'
+        )}>
+          <Ruler size={14} className="inline mr-1.5" />Measurements
+        </button>
+        <button onClick={() => setActiveTab('traceability')} className={cn(
+          'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
+          activeTab === 'traceability' ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700'
+        )}>
+          <GitBranch size={14} className="inline mr-1.5" />Traceability Chain
+        </button>
+      </div>
+
+      {/* Traceability Chain View */}
+      {activeTab === 'traceability' && (
+        <div className="space-y-3">
+          {filteredItems.map(item => {
+            const linkedLines = (item.lines ?? []).filter(l => l.drawing_measurement_id || l.drawing_id)
+            const linkedBOQ = boqItems.filter(b => b.mi_id === item.id)
+            const linkedRates = rateAnalyses.filter(r => linkedBOQ.some(b => b.id === r.boq_item_id))
+            const drawingName = item.drawing_ref ? drawings.find(d => d.drawing_number === item.drawing_ref)?.name : null
+            return (
+              <Card key={item.id}>
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                      <Ruler size={16} className="text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        {item.item_code && <span className="font-mono text-xs text-slate-400">{item.item_code}</span>}
+                        <span className="font-medium text-slate-900 dark:text-white">{item.description}</span>
+                        <Badge variant="default">{item.measurement_type}</Badge>
+                      </div>
+                      <div className="text-xs text-slate-500 mt-0.5">
+                        {item.unit} · Net: {item.net_qty.toFixed(2)} · {(item.lines ?? []).length} lines
+                        {item.location && <span> · {item.location}</span>}
+                      </div>
+
+                      {/* Chain visualization */}
+                      <div className="mt-3 pl-4 border-l-2 border-slate-200 dark:border-slate-700 space-y-2">
+                        {/* Drawing links */}
+                        {(linkedLines.length > 0 || item.drawing_ref) && (
+                          <div className="flex items-center gap-2 text-xs">
+                            <Image size={12} className="text-indigo-500" />
+                            <span className="text-indigo-600 dark:text-indigo-400 font-medium">Drawing</span>
+                            <ArrowRight size={10} className="text-slate-300" />
+                            <span className="text-slate-600 dark:text-slate-300">
+                              {drawingName || item.drawing_ref || `${linkedLines.length} linked measurements`}
+                            </span>
+                            {linkedLines.length > 0 && (
+                              <Badge variant="info">{linkedLines.length} lines linked</Badge>
+                            )}
+                          </div>
+                        )}
+
+                        {/* BOQ links */}
+                        {linkedBOQ.length > 0 && linkedBOQ.map(boq => (
+                          <div key={boq.id} className="flex items-center gap-2 text-xs">
+                            <FileText size={12} className="text-emerald-500" />
+                            <span className="text-emerald-600 dark:text-emerald-400 font-medium">BOQ</span>
+                            <ArrowRight size={10} className="text-slate-300" />
+                            <span className="text-slate-600 dark:text-slate-300">{boq.code ?? '-'} {boq.description}</span>
+                            <span className="tabular-nums text-slate-500">{boq.quantity.toFixed(2)} {boq.unit}</span>
+                            {boq.total_amount != null && (
+                              <span className="tabular-nums font-medium text-slate-700 dark:text-slate-200">= {boq.total_amount.toFixed(2)}</span>
+                            )}
+                          </div>
+                        ))}
+
+                        {/* Rate links */}
+                        {linkedRates.length > 0 && linkedRates.map(rate => (
+                          <div key={rate.id} className="flex items-center gap-2 text-xs">
+                            <BarChart3 size={12} className="text-purple-500" />
+                            <span className="text-purple-600 dark:text-purple-400 font-medium">Rate</span>
+                            <ArrowRight size={10} className="text-slate-300" />
+                            <span className="text-slate-600 dark:text-slate-300">{rate.description}</span>
+                            <span className="tabular-nums text-slate-500">{rate.unit_rate.toFixed(2)}/{rate.unit}</span>
+                          </div>
+                        ))}
+
+                        {/* No links */}
+                        {linkedLines.length === 0 && !item.drawing_ref && linkedBOQ.length === 0 && (
+                          <div className="text-xs text-slate-400 italic">No links established</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      )}
+
+      {activeTab === 'measurements' && <MeasurementGrid
         items={filteredItems}
         selectedItems={selectedItems}
         onToggleSelect={(id: string) => {
@@ -333,7 +440,7 @@ export default function MeasurementsPage() {
         onUpdateLine={handleUpdateLine}
         onDeleteLine={handleDeleteLine}
         onDuplicateLine={handleDuplicateLine}
-      />
+      />}
 
       {/* Footer */}
       <div className="mt-6 flex items-center justify-between rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-5 py-3 text-sm text-slate-600 dark:text-slate-300">

@@ -18,6 +18,7 @@ import {
   Magnet,
   Grid3X3,
   ChevronDown,
+  Box,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { TakeoffMeasurement } from '@/lib/takeoff/renderer'
@@ -38,6 +39,7 @@ interface TakeoffToolbarProps {
   onSnapConfigChange?: (config: SnapConfig) => void
   showGrid?: boolean
   onGridToggle?: () => void
+  onVolumeCalculator?: () => void
 }
 
 const COLORS = [
@@ -191,6 +193,7 @@ export function TakeoffToolbar({
   onSnapConfigChange,
   showGrid,
   onGridToggle,
+  onVolumeCalculator,
 }: TakeoffToolbarProps) {
   const navTools = TOOLS.filter((t) => t.group === 'nav')
   const measureTools = TOOLS.filter((t) => t.group === 'measure')
@@ -253,6 +256,18 @@ export function TakeoffToolbar({
           />
         )}
       </div>
+
+      {/* Volume Calculator */}
+      {onVolumeCalculator && (
+        <div className="flex items-center gap-0.5 px-2 border-r border-slate-200 dark:border-slate-700">
+          <ToolButton
+            icon={Box}
+            label="Volume Calculator"
+            active={false}
+            onClick={onVolumeCalculator}
+          />
+        </div>
+      )}
 
       {/* Color picker */}
       <div className="flex items-center gap-1 px-2 border-r border-slate-200 dark:border-slate-700">

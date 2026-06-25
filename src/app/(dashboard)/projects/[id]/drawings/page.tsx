@@ -9,8 +9,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { createClient } from '@/lib/supabase/client'
-import { Upload, Trash2, FileText, Eye, Plus } from 'lucide-react'
-import { formatDate } from '@/lib/utils'
+import { Upload, Trash2, FileText, Eye, Plus, Brain, ChevronDown, ChevronRight } from 'lucide-react'
+import { formatDate, cn } from '@/lib/utils'
+import { DrawingIntelligence } from '@/components/drawings/drawing-intelligence'
 
 export default function DrawingsPage() {
   const { id: projectId } = useParams<{ id: string }>()
@@ -20,6 +21,7 @@ export default function DrawingsPage() {
   const [showUpload, setShowUpload] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showIntelligence, setShowIntelligence] = useState(false)
 
   const [form, setForm] = useState({
     name: '',
@@ -154,6 +156,26 @@ export default function DrawingsPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Drawing Intelligence */}
+      {drawings.length > 0 && (
+        <div className="mt-6">
+          <button
+            onClick={() => setShowIntelligence(v => !v)}
+            className="flex items-center gap-2 px-4 py-2.5 w-full rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-900/10 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+          >
+            {showIntelligence ? <ChevronDown size={16} className="text-purple-500" /> : <ChevronRight size={16} className="text-purple-500" />}
+            <Brain size={18} className="text-purple-500" />
+            <span className="text-sm font-semibold text-purple-700 dark:text-purple-300">Drawing Intelligence</span>
+            <span className="text-xs text-purple-500 dark:text-purple-400 ml-1">Quantity change detection &amp; auto-update suggestions</span>
+          </button>
+          {showIntelligence && (
+            <div className="mt-3">
+              <DrawingIntelligence projectId={projectId} drawings={drawings} />
+            </div>
+          )}
         </div>
       )}
 
