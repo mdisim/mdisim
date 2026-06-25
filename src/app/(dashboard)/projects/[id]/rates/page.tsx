@@ -70,6 +70,7 @@ export default function RateAnalysisPage() {
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<'analyses' | 'breakdown'>('analyses')
+  const [confirmAction, setConfirmAction] = useState<{ message: string; onConfirm: () => void } | null>(null)
 
   const [form, setForm] = useState({
     description: '',
@@ -112,9 +113,13 @@ export default function RateAnalysisPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this rate analysis?')) return
-    await deleteRateAnalysis(id)
-    load()
+    setConfirmAction({
+      message: 'Delete this rate analysis?',
+      onConfirm: async () => {
+        await deleteRateAnalysis(id)
+        load()
+      },
+    })
   }
 
   const handleUpdateAnalysis = async (id: string, fields: Partial<RateAnalysis>) => {
@@ -465,6 +470,14 @@ export default function RateAnalysisPage() {
             <Button variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
             <Button onClick={handleCreate} disabled={!form.description.trim()}>Create Analysis</Button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title="Confirm" size="sm">
+        <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{confirmAction?.message}</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="ghost" onClick={() => setConfirmAction(null)}>Cancel</Button>
+          <Button variant="danger" onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>Confirm</Button>
         </div>
       </Modal>
     </div>

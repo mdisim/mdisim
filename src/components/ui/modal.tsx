@@ -57,6 +57,7 @@ export function Modal({ isOpen, onClose, title, children, className, size = 'md'
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
             <button
               onClick={onClose}
+              aria-label="Close"
               className="p-1 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors dark:hover:bg-slate-700 dark:text-slate-400"
             >
               <X size={18} />

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import type { DrawingToolType, DrawingScale, DrawingMeasurement } from '@/lib/types'
 import type { Point, SnapConfig, SnapTarget, SnapGeometry } from '@/lib/takeoff/geometry'
@@ -254,7 +254,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
   }, [canvasSize])
 
   // ── Snap geometries (memoized) ───────────────────────────────────────
-  const snapGeometries = measurementsToSnapGeometry(measurements)
+  const snapGeometries = useMemo(() => measurementsToSnapGeometry(measurements), [measurements])
 
   // ── Render overlay ───────────────────────────────────────────────────
   const renderOverlay = useCallback(() => {
@@ -876,7 +876,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
   if (DRAWING_TOOLS.includes(activeTool ?? '') || isCalibrating) cursor = 'crosshair'
   if (activeTool === 'select') cursor = 'default'
 
-  const takeoffMs: TakeoffMeasurement[] = measurements.map((m) => ({
+  const takeoffMs: TakeoffMeasurement[] = useMemo(() => measurements.map((m) => ({
     id: m.id,
     tool_type: m.tool_type,
     coordinates: m.coordinates,
@@ -884,7 +884,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
     unit: m.unit,
     color: m.color,
     label: m.label,
-  }))
+  })), [measurements])
 
   // ── Compute real-world mouse coordinates ─────────────────────────────
   const realWorldCoords = mousePos && scale && scale.px_per_unit > 0

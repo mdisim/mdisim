@@ -55,6 +55,7 @@ export default function BOQPage() {
   const [dragId, setDragId] = useState<string | null>(null)
   const [dragOverId, setDragOverId] = useState<string | null>(null)
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
+  const [confirmAction, setConfirmAction] = useState<{ message: string; onConfirm: () => void } | null>(null)
 
   const [form, setForm] = useState({
     code: '',
@@ -113,11 +114,15 @@ export default function BOQPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this BOQ item?')) return
-    try {
-      await deleteBOQItem(id)
-    } catch { /* ignore */ }
-    load()
+    setConfirmAction({
+      message: 'Delete this BOQ item?',
+      onConfirm: async () => {
+        try {
+          await deleteBOQItem(id)
+        } catch { /* ignore */ }
+        load()
+      },
+    })
   }
 
   const handleImportFile = async (file: File) => {
@@ -279,7 +284,7 @@ export default function BOQPage() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {allSections.length > 0 && (
             <div className="flex items-center gap-1.5">
               <Filter size={14} className="text-slate-400 dark:text-slate-500" />
@@ -368,7 +373,7 @@ export default function BOQPage() {
                   return (
                     <Fragment key={section}>
                       {section && (
-                        <tr className="bg-slate-100/80 dark:bg-slate-800/80 cursor-pointer" onClick={() => toggleSection(section)}>
+                        <tr className="bg-slate-100/80 dark:bg-slate-800/80 cursor-pointer" tabIndex={0} onClick={() => toggleSection(section)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSection(section) } }}>
                           <td colSpan={11} className="px-0 py-2.5">
                             <div className="flex items-center gap-2 border-l-[3px] border-blue-500 pl-3 ml-1">
                               {collapsedSections.has(section)
@@ -682,6 +687,14 @@ export default function BOQPage() {
               Add Item
             </Button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title="Confirm" size="sm">
+        <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{confirmAction?.message}</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="ghost" onClick={() => setConfirmAction(null)}>Cancel</Button>
+          <Button variant="danger" onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>Confirm</Button>
         </div>
       </Modal>
     </div>

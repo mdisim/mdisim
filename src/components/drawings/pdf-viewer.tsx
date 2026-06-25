@@ -115,6 +115,7 @@ export function PdfViewer({ url }: PdfViewerProps) {
           <button
             onClick={() => { setScale(Math.max(0.5, scale - 0.25)); setOffset({ x: 0, y: 0 }) }}
             className="p-1.5 rounded hover:bg-slate-200 transition-colors"
+            aria-label="Zoom out"
           >
             <ZoomOut size={16} />
           </button>
@@ -124,10 +125,11 @@ export function PdfViewer({ url }: PdfViewerProps) {
           <button
             onClick={() => { setScale(Math.min(4, scale + 0.25)); setOffset({ x: 0, y: 0 }) }}
             className="p-1.5 rounded hover:bg-slate-200 transition-colors"
+            aria-label="Zoom in"
           >
             <ZoomIn size={16} />
           </button>
-          <button onClick={fitToWidth} className="p-1.5 rounded hover:bg-slate-200 transition-colors ml-1" title="Fit width">
+          <button onClick={fitToWidth} className="p-1.5 rounded hover:bg-slate-200 transition-colors ml-1" title="Fit width" aria-label="Fit to width">
             <Maximize2 size={16} />
           </button>
         </div>

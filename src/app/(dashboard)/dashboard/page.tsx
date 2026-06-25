@@ -199,16 +199,16 @@ export default function DashboardPage() {
   } : null
 
   return (
-    <div className="min-h-screen bg-[#0C1222]">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
 
         {/* Header */}
         <div className="flex items-end justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               Executive Dashboard
             </h1>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               Portfolio overview across {totalProjects} project{totalProjects !== 1 ? 's' : ''}
             </p>
           </div>
@@ -285,7 +285,7 @@ export default function DashboardPage() {
               />
               <div className="relative z-10">
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="rounded-lg bg-white/15 p-1.5 backdrop-blur-sm">
+                  <div className="rounded-lg bg-white/20 dark:bg-white/15 p-1.5 backdrop-blur-sm">
                     <kpi.icon size={16} className="text-white" />
                   </div>
                 </div>
@@ -302,16 +302,16 @@ export default function DashboardPage() {
         {/* Secondary KPI Strip */}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
           {([
-            { label: 'Total Paid', value: fmtCompact(totalPaid), icon: CheckCircle2, color: 'text-emerald-400', dotColor: 'bg-emerald-400' },
-            { label: 'Pending Payments', value: fmtCompact(pendingPayments), icon: Clock, color: 'text-amber-400', dotColor: 'bg-amber-400' },
-            { label: 'Approved VOs', value: fmtCompact(approvedVariations), icon: CheckCircle2, color: 'text-blue-400', dotColor: 'bg-blue-400' },
-            { label: 'Pending VOs', value: fmtCompact(pendingVariations), icon: AlertTriangle, color: 'text-orange-400', dotColor: 'bg-orange-400' },
-            { label: 'Active Tenders', value: fmt(activeTenders), icon: Receipt, color: 'text-purple-400', dotColor: 'bg-purple-400' },
-            { label: 'Measurements', value: `${fmt(totalMeasurements)}`, icon: Ruler, color: 'text-sky-400', dotColor: 'bg-sky-400' },
+            { label: 'Total Paid', value: fmtCompact(totalPaid), icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400', dotColor: 'bg-emerald-500 dark:bg-emerald-400' },
+            { label: 'Pending Payments', value: fmtCompact(pendingPayments), icon: Clock, color: 'text-amber-600 dark:text-amber-400', dotColor: 'bg-amber-500 dark:bg-amber-400' },
+            { label: 'Approved VOs', value: fmtCompact(approvedVariations), icon: CheckCircle2, color: 'text-blue-600 dark:text-blue-400', dotColor: 'bg-blue-500 dark:bg-blue-400' },
+            { label: 'Pending VOs', value: fmtCompact(pendingVariations), icon: AlertTriangle, color: 'text-orange-600 dark:text-orange-400', dotColor: 'bg-orange-500 dark:bg-orange-400' },
+            { label: 'Active Tenders', value: fmt(activeTenders), icon: Receipt, color: 'text-purple-600 dark:text-purple-400', dotColor: 'bg-purple-500 dark:bg-purple-400' },
+            { label: 'Measurements', value: `${fmt(totalMeasurements)}`, icon: Ruler, color: 'text-sky-600 dark:text-sky-400', dotColor: 'bg-sky-500 dark:bg-sky-400' },
           ] as const).map(kpi => (
             <div
               key={kpi.label}
-              className="rounded-lg border border-slate-700/50 bg-slate-800/50 px-3.5 py-3 backdrop-blur-sm"
+              className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-3 shadow-sm dark:shadow-none"
             >
               <div className="flex items-center gap-2">
                 <div className={cn('h-1.5 w-1.5 rounded-full', kpi.dotColor)} />
@@ -328,18 +328,18 @@ export default function DashboardPage() {
 
         {/* ── Earned Value Metrics ── */}
         {!loading && earnedValueData.length > 0 && (
-          <Card className="border-slate-700/50 bg-slate-800/50 shadow-none">
-            <CardHeader className="border-slate-700/30 bg-slate-800/80">
+          <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm dark:shadow-none">
+            <CardHeader className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80">
               <div className="flex items-center gap-2">
-                <Activity size={18} className="text-cyan-400" />
-                <CardTitle className="text-slate-100">Earned Value Analysis</CardTitle>
+                <Activity size={18} className="text-cyan-600 dark:text-cyan-400" />
+                <CardTitle className="text-slate-900 dark:text-slate-100">Earned Value Analysis</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b border-slate-700/40 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    <tr className="border-b border-slate-200 dark:border-slate-700 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                       <th className="px-4 py-3">Project</th>
                       <th className="px-4 py-3 text-right">BAC</th>
                       <th className="px-4 py-3 text-right">% Comp</th>
@@ -356,30 +356,30 @@ export default function DashboardPage() {
                     {earnedValueData.map((ev, i) => (
                       <tr
                         key={i}
-                        className="border-b border-slate-700/20 transition-colors hover:bg-slate-700/20"
+                        className="border-b border-slate-100 dark:border-slate-700/20 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/20"
                       >
-                        <td className="px-4 py-2.5 font-medium text-slate-200 max-w-[200px] truncate">{ev.name}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-300">{fmtCompact(ev.BAC)}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-300">{fmtPct(ev.percentComplete)}%</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-300">{fmtCompact(ev.EV)}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-300">{fmtCompact(ev.PV)}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-300">{fmtCompact(ev.AC)}</td>
+                        <td className="px-4 py-2.5 font-medium text-slate-700 dark:text-slate-200 max-w-[200px] truncate">{ev.name}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{fmtCompact(ev.BAC)}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{fmtPct(ev.percentComplete)}%</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{fmtCompact(ev.EV)}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{fmtCompact(ev.PV)}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{fmtCompact(ev.AC)}</td>
                         <td className={cn(
                           'px-4 py-2.5 text-right tabular-nums font-semibold',
-                          ev.SPI >= 1 ? 'text-emerald-400' : ev.SPI >= 0.9 ? 'text-amber-400' : 'text-rose-400'
+                          ev.SPI >= 1 ? 'text-emerald-600 dark:text-emerald-400' : ev.SPI >= 0.9 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'
                         )}>
                           {fmtPct(ev.SPI)}
                         </td>
                         <td className={cn(
                           'px-4 py-2.5 text-right tabular-nums font-semibold',
-                          ev.CPI >= 1 ? 'text-emerald-400' : ev.CPI >= 0.9 ? 'text-amber-400' : 'text-rose-400'
+                          ev.CPI >= 1 ? 'text-emerald-600 dark:text-emerald-400' : ev.CPI >= 0.9 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'
                         )}>
                           {fmtPct(ev.CPI)}
                         </td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-300">{fmtCompact(ev.EAC)}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{fmtCompact(ev.EAC)}</td>
                         <td className={cn(
                           'px-4 py-2.5 text-right tabular-nums font-semibold',
-                          ev.VAC >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                          ev.VAC >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                         )}>
                           {fmtCompact(ev.VAC)}
                         </td>
@@ -389,7 +389,7 @@ export default function DashboardPage() {
                 </table>
               </div>
               {/* Legend */}
-              <div className="flex flex-wrap gap-x-6 gap-y-1 border-t border-slate-700/30 px-4 py-2.5 text-[10px] text-slate-500">
+              <div className="flex flex-wrap gap-x-6 gap-y-1 border-t border-slate-200 dark:border-slate-700 px-4 py-2.5 text-[10px] text-slate-500">
                 <span>BAC = Budget at Completion</span>
                 <span>EV = Earned Value</span>
                 <span>PV = Planned Value</span>
@@ -405,18 +405,18 @@ export default function DashboardPage() {
 
         {/* ── Project Financial Summary ── */}
         {!loading && summaries.length > 0 && (
-          <Card className="border-slate-700/50 bg-slate-800/50 shadow-none">
-            <CardHeader className="border-slate-700/30 bg-slate-800/80">
+          <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm dark:shadow-none">
+            <CardHeader className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80">
               <div className="flex items-center gap-2">
-                <BarChart3 size={18} className="text-blue-400" />
-                <CardTitle className="text-slate-100">Project Financial Summary</CardTitle>
+                <BarChart3 size={18} className="text-blue-600 dark:text-blue-400" />
+                <CardTitle className="text-slate-900 dark:text-slate-100">Project Financial Summary</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b border-slate-700/40 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    <tr className="border-b border-slate-200 dark:border-slate-700 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                       <th className="px-4 py-3">Project</th>
                       <th className="px-4 py-3 text-right">Contract</th>
                       <th className="px-4 py-3 text-right">Approved VOs</th>
@@ -432,25 +432,28 @@ export default function DashboardPage() {
                     {financialData.map(row => (
                       <tr
                         key={row.id}
-                        className="border-b border-slate-700/20 transition-colors hover:bg-slate-700/20 cursor-pointer"
+                        role="row"
+                        tabIndex={0}
+                        className="border-b border-slate-100 dark:border-slate-700/20 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/20 cursor-pointer"
                         onClick={() => router.push(`/projects/${row.id}/measurements`)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/projects/${row.id}/measurements`) } }}
                       >
-                        <td className="px-4 py-2.5 font-medium text-slate-200 max-w-[200px] truncate">{row.name}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-300">{row.contractVal > 0 ? fmtCompact(row.contractVal) : '-'}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-blue-400">{row.varApproved > 0 ? fmtCompact(row.varApproved) : '-'}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-200 font-semibold">{row.revisedValue > 0 ? fmtCompact(row.revisedValue) : '-'}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-rose-400">{row.actual > 0 ? fmtCompact(row.actual) : '-'}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-amber-400">{row.committed > 0 ? fmtCompact(row.committed) : '-'}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-300">{row.forecast > 0 ? fmtCompact(row.forecast) : '-'}</td>
+                        <td className="px-4 py-2.5 font-medium text-slate-700 dark:text-slate-200 max-w-[200px] truncate">{row.name}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{row.contractVal > 0 ? fmtCompact(row.contractVal) : '-'}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-blue-600 dark:text-blue-400">{row.varApproved > 0 ? fmtCompact(row.varApproved) : '-'}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-700 dark:text-slate-200 font-semibold">{row.revisedValue > 0 ? fmtCompact(row.revisedValue) : '-'}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-rose-600 dark:text-rose-400">{row.actual > 0 ? fmtCompact(row.actual) : '-'}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-amber-600 dark:text-amber-400">{row.committed > 0 ? fmtCompact(row.committed) : '-'}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{row.forecast > 0 ? fmtCompact(row.forecast) : '-'}</td>
                         <td className={cn(
                           'px-4 py-2.5 text-right tabular-nums font-semibold',
-                          row.profit >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                          row.profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                         )}>
                           {row.revisedValue > 0 ? fmtCompact(row.profit) : '-'}
                         </td>
                         <td className={cn(
                           'px-4 py-2.5 text-right tabular-nums font-semibold',
-                          row.margin >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                          row.margin >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                         )}>
                           {row.revisedValue > 0 ? `${row.margin.toFixed(1)}%` : '-'}
                         </td>
@@ -459,21 +462,21 @@ export default function DashboardPage() {
                   </tbody>
                   {/* Totals row */}
                   <tfoot>
-                    <tr className="border-t-2 border-slate-600/50 bg-slate-800/80 font-semibold">
-                      <td className="px-4 py-2.5 text-slate-300">Portfolio Total</td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-slate-200">{fmtCompact(financialData.reduce((s, r) => s + r.contractVal, 0))}</td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-blue-400">{fmtCompact(financialData.reduce((s, r) => s + r.varApproved, 0))}</td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-slate-100">{fmtCompact(financialData.reduce((s, r) => s + r.revisedValue, 0))}</td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-rose-400">{fmtCompact(financialData.reduce((s, r) => s + r.actual, 0))}</td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-amber-400">{fmtCompact(financialData.reduce((s, r) => s + r.committed, 0))}</td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-slate-300">{fmtCompact(financialData.reduce((s, r) => s + r.forecast, 0))}</td>
+                    <tr className="border-t-2 border-slate-300 dark:border-slate-600/50 bg-slate-50 dark:bg-slate-800/80 font-semibold">
+                      <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">Portfolio Total</td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-slate-700 dark:text-slate-200">{fmtCompact(financialData.reduce((s, r) => s + r.contractVal, 0))}</td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-blue-600 dark:text-blue-400">{fmtCompact(financialData.reduce((s, r) => s + r.varApproved, 0))}</td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-slate-900 dark:text-slate-100">{fmtCompact(financialData.reduce((s, r) => s + r.revisedValue, 0))}</td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-rose-600 dark:text-rose-400">{fmtCompact(financialData.reduce((s, r) => s + r.actual, 0))}</td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-amber-600 dark:text-amber-400">{fmtCompact(financialData.reduce((s, r) => s + r.committed, 0))}</td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{fmtCompact(financialData.reduce((s, r) => s + r.forecast, 0))}</td>
                       <td className={cn(
                         'px-4 py-2.5 text-right tabular-nums',
-                        financialData.reduce((s, r) => s + r.profit, 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                        financialData.reduce((s, r) => s + r.profit, 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                       )}>
                         {fmtCompact(financialData.reduce((s, r) => s + r.profit, 0))}
                       </td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-slate-400">
+                      <td className="px-4 py-2.5 text-right tabular-nums text-slate-500 dark:text-slate-400">
                         {(() => {
                           const totalRev = financialData.reduce((s, r) => s + r.revisedValue, 0)
                           const totalProf = financialData.reduce((s, r) => s + r.profit, 0)
@@ -490,22 +493,22 @@ export default function DashboardPage() {
 
         {/* ── Cash Position ── */}
         {!loading && cashSummary && (
-          <Card className="border-slate-700/50 bg-slate-800/50 shadow-none">
-            <CardHeader className="border-slate-700/30 bg-slate-800/80">
+          <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm dark:shadow-none">
+            <CardHeader className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80">
               <div className="flex items-center gap-2">
-                <Wallet size={18} className="text-emerald-400" />
-                <CardTitle className="text-slate-100">Cash Position</CardTitle>
+                <Wallet size={18} className="text-emerald-600 dark:text-emerald-400" />
+                <CardTitle className="text-slate-900 dark:text-slate-100">Cash Position</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="p-4">
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 {([
-                  { label: 'Planned Income', value: cashSummary.plannedIncome, color: 'text-blue-400' },
-                  { label: 'Actual Income', value: cashSummary.actualIncome, color: 'text-emerald-400' },
-                  { label: 'Planned Expense', value: cashSummary.plannedExpense, color: 'text-amber-400' },
-                  { label: 'Actual Expense', value: cashSummary.actualExpense, color: 'text-rose-400' },
+                  { label: 'Planned Income', value: cashSummary.plannedIncome, color: 'text-blue-600 dark:text-blue-400' },
+                  { label: 'Actual Income', value: cashSummary.actualIncome, color: 'text-emerald-600 dark:text-emerald-400' },
+                  { label: 'Planned Expense', value: cashSummary.plannedExpense, color: 'text-amber-600 dark:text-amber-400' },
+                  { label: 'Actual Expense', value: cashSummary.actualExpense, color: 'text-rose-600 dark:text-rose-400' },
                 ]).map(item => (
-                  <div key={item.label} className="rounded-lg border border-slate-700/30 bg-slate-900/50 p-3">
+                  <div key={item.label} className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900/50 p-3">
                     <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{item.label}</div>
                     <div className={cn('mt-1 text-lg font-bold tabular-nums', item.color)}>
                       {fmtCompact(item.value)}
@@ -514,22 +517,22 @@ export default function DashboardPage() {
                 ))}
               </div>
               {/* Net position */}
-              <div className="mt-4 flex items-center justify-between rounded-lg border border-slate-700/30 bg-slate-900/50 px-4 py-3">
-                <span className="text-xs font-semibold text-slate-400">Net Cash Position (Actual Income - Actual Expense)</span>
+              <div className="mt-4 flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900/50 px-4 py-3">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Net Cash Position (Actual Income - Actual Expense)</span>
                 <span className={cn(
                   'text-lg font-bold tabular-nums',
-                  (cashSummary.actualIncome - cashSummary.actualExpense) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                  (cashSummary.actualIncome - cashSummary.actualExpense) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                 )}>
                   {fmtCompact(cashSummary.actualIncome - cashSummary.actualExpense)}
                 </span>
               </div>
               {/* Variance bars */}
               <div className="mt-3 grid grid-cols-2 gap-4">
-                <div className="rounded-lg border border-slate-700/30 bg-slate-900/50 p-3">
+                <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900/50 p-3">
                   <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Income Variance</div>
                   <div className={cn(
                     'mt-1 text-sm font-bold tabular-nums',
-                    (cashSummary.actualIncome - cashSummary.plannedIncome) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                    (cashSummary.actualIncome - cashSummary.plannedIncome) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                   )}>
                     {fmtCompact(cashSummary.actualIncome - cashSummary.plannedIncome)}
                     <span className="ml-1 text-[10px] font-normal text-slate-500">
@@ -537,11 +540,11 @@ export default function DashboardPage() {
                     </span>
                   </div>
                 </div>
-                <div className="rounded-lg border border-slate-700/30 bg-slate-900/50 p-3">
+                <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900/50 p-3">
                   <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Expense Variance</div>
                   <div className={cn(
                     'mt-1 text-sm font-bold tabular-nums',
-                    (cashSummary.actualExpense - cashSummary.plannedExpense) <= 0 ? 'text-emerald-400' : 'text-rose-400'
+                    (cashSummary.actualExpense - cashSummary.plannedExpense) <= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                   )}>
                     {fmtCompact(cashSummary.actualExpense - cashSummary.plannedExpense)}
                     <span className="ml-1 text-[10px] font-normal text-slate-500">
@@ -558,15 +561,15 @@ export default function DashboardPage() {
         <section>
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <h2 className="text-lg font-bold text-white">Projects</h2>
-              <span className="rounded-full bg-slate-700/50 px-2.5 py-0.5 text-xs font-medium tabular-nums text-slate-400">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Projects</h2>
+              <span className="rounded-full bg-slate-200 dark:bg-slate-700/50 px-2.5 py-0.5 text-xs font-medium tabular-nums text-slate-500 dark:text-slate-400">
                 {totalProjects}
               </span>
             </div>
             {projects.length > 0 && (
               <button
                 onClick={() => router.push('/projects')}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-700/50 bg-slate-800/50 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-slate-600 hover:text-white"
+                className="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 transition-colors hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-900 dark:hover:text-white"
               >
                 View all <ArrowUpRight size={12} />
               </button>
@@ -578,20 +581,20 @@ export default function DashboardPage() {
               {[1, 2, 3].map(i => (
                 <div
                   key={i}
-                  className="h-56 animate-pulse rounded-xl border border-slate-700/50 bg-slate-800/50"
+                  className="h-56 animate-pulse rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                 />
               ))}
             </div>
           ) : summaries.length === 0 ? (
             /* Premium Empty State */
-            <div className="relative overflow-hidden rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-800/80 to-slate-900/80 px-8 py-16 text-center backdrop-blur-sm">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-600/10 via-transparent to-transparent" />
+            <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-white to-slate-50 dark:from-slate-800/80 dark:to-slate-900/80 px-8 py-16 text-center shadow-sm dark:shadow-none">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-600/5 dark:from-blue-600/10 via-transparent to-transparent" />
               <div className="relative z-10">
                 <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 ring-1 ring-blue-500/20">
-                  <Building2 size={36} className="text-blue-400" />
+                  <Building2 size={36} className="text-blue-600 dark:text-blue-400" />
                 </div>
-                <h3 className="text-xl font-bold text-white">Start Your First Project</h3>
-                <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-400">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Start Your First Project</h3>
+                <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                   Create a project to begin managing BOQs, measurements, cost control, and payment certificates -- all in one place.
                 </p>
                 <div className="mt-8 flex items-center justify-center gap-3">
@@ -603,15 +606,15 @@ export default function DashboardPage() {
                     Create Project
                   </button>
                 </div>
-                <div className="mt-8 grid grid-cols-3 gap-6 border-t border-slate-700/50 pt-8">
+                <div className="mt-8 grid grid-cols-3 gap-6 border-t border-slate-200 dark:border-slate-700 pt-8">
                   {[
                     { icon: FileSpreadsheet, label: 'Bill of Quantities', desc: 'Structured BOQ management' },
                     { icon: Ruler, label: 'Measurements', desc: 'Accurate quantity tracking' },
                     { icon: BarChart3, label: 'Cost Control', desc: 'Budget & forecast analytics' },
                   ].map(f => (
                     <div key={f.label} className="text-center">
-                      <f.icon size={20} className="mx-auto mb-2 text-slate-500" />
-                      <div className="text-xs font-semibold text-slate-300">{f.label}</div>
+                      <f.icon size={20} className="mx-auto mb-2 text-slate-400 dark:text-slate-500" />
+                      <div className="text-xs font-semibold text-slate-600 dark:text-slate-300">{f.label}</div>
                       <div className="mt-0.5 text-[10px] text-slate-500">{f.desc}</div>
                     </div>
                   ))}
@@ -628,34 +631,34 @@ export default function DashboardPage() {
                 const varApproved = s.variations.filter(v => v.status === 'approved').reduce((a, b) => a + (b.approved_amount ?? b.amount), 0)
                 const progress = s.project.progress ?? 0
                 const statusColor = progress >= 100
-                  ? 'bg-emerald-500/15 text-emerald-400 ring-emerald-500/20'
+                  ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-emerald-500/20'
                   : progress > 0
-                    ? 'bg-blue-500/15 text-blue-400 ring-blue-500/20'
-                    : 'bg-slate-500/15 text-slate-400 ring-slate-500/20'
+                    ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 ring-blue-500/20'
+                    : 'bg-slate-500/15 text-slate-500 dark:text-slate-400 ring-slate-500/20'
                 const statusLabel = progress >= 100 ? 'Complete' : progress > 0 ? 'In Progress' : 'Not Started'
 
                 return (
                   <div
                     key={s.project.id}
-                    className="group relative overflow-hidden rounded-xl border border-slate-700/50 bg-slate-800/50 backdrop-blur-sm transition-all hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/5"
+                    className="group relative overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm dark:shadow-none transition-all hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/5"
                   >
                     {/* Card Header */}
-                    <div className="border-b border-slate-700/30 p-4 pb-3">
+                    <div className="border-b border-slate-200 dark:border-slate-700/30 p-4 pb-3">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                          <h3 className="truncate text-sm font-bold text-white">
+                          <h3 className="truncate text-sm font-bold text-slate-900 dark:text-white">
                             {s.project.name}
                           </h3>
-                          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-400">
+                          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500 dark:text-slate-400">
                             {s.project.client_name && (
                               <span className="flex items-center gap-1">
-                                <Users size={10} className="text-slate-500" />
+                                <Users size={10} className="text-slate-400 dark:text-slate-500" />
                                 {s.project.client_name}
                               </span>
                             )}
                             {s.project.location && (
                               <span className="flex items-center gap-1">
-                                <MapPin size={10} className="text-slate-500" />
+                                <MapPin size={10} className="text-slate-400 dark:text-slate-500" />
                                 {s.project.location}
                               </span>
                             )}
@@ -673,9 +676,9 @@ export default function DashboardPage() {
                       <div className="mt-3">
                         <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
                           <span>Progress</span>
-                          <span className="font-semibold tabular-nums text-slate-300">{progress}%</span>
+                          <span className="font-semibold tabular-nums text-slate-600 dark:text-slate-300">{progress}%</span>
                         </div>
-                        <div className="h-1.5 overflow-hidden rounded-full bg-slate-700/50">
+                        <div className="h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700/50">
                           <div
                             className={cn(
                               'h-full rounded-full transition-all duration-500',
@@ -697,38 +700,38 @@ export default function DashboardPage() {
                         {contractVal > 0 && (
                           <div className="flex items-center justify-between">
                             <span className="text-slate-500">Contract</span>
-                            <span className="font-semibold tabular-nums text-slate-200">{fmtFull(contractVal)}</span>
+                            <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{fmtFull(contractVal)}</span>
                           </div>
                         )}
                         {boqTotal > 0 && (
                           <div className="flex items-center justify-between">
                             <span className="text-slate-500">BOQ Total</span>
-                            <span className="font-semibold tabular-nums text-slate-200">{fmtFull(boqTotal)}</span>
+                            <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{fmtFull(boqTotal)}</span>
                           </div>
                         )}
                         {actual > 0 && (
                           <div className="flex items-center justify-between">
                             <span className="text-slate-500">Actual Cost</span>
-                            <span className="font-semibold tabular-nums text-rose-400">{fmtFull(actual)}</span>
+                            <span className="font-semibold tabular-nums text-rose-600 dark:text-rose-400">{fmtFull(actual)}</span>
                           </div>
                         )}
                         {paid > 0 && (
                           <div className="flex items-center justify-between">
                             <span className="text-slate-500">Paid</span>
-                            <span className="font-semibold tabular-nums text-emerald-400">{fmtFull(paid)}</span>
+                            <span className="font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">{fmtFull(paid)}</span>
                           </div>
                         )}
                         {varApproved > 0 && (
                           <div className="flex items-center justify-between">
                             <span className="text-slate-500">Approved VOs</span>
-                            <span className="font-semibold tabular-nums text-blue-400">{fmtFull(varApproved)}</span>
+                            <span className="font-semibold tabular-nums text-blue-600 dark:text-blue-400">{fmtFull(varApproved)}</span>
                           </div>
                         )}
                       </div>
                     </div>
 
                     {/* Footer with stats + action buttons */}
-                    <div className="border-t border-slate-700/30 px-4 py-2.5">
+                    <div className="border-t border-slate-200 dark:border-slate-700/30 px-4 py-2.5">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 text-[10px] tabular-nums text-slate-500">
                           <span>{s.boqItems.length} BOQ</span>
@@ -738,28 +741,28 @@ export default function DashboardPage() {
                         <div className="flex items-center gap-1">
                           <button
                             onClick={(e) => { e.stopPropagation(); router.push(`/projects/${s.project.id}/measurements`) }}
-                            className="rounded-md px-2 py-1 text-[10px] font-semibold text-blue-400 transition-colors hover:bg-blue-500/10"
+                            className="rounded-md px-2 py-1 text-[10px] font-semibold text-blue-600 dark:text-blue-400 transition-colors hover:bg-blue-500/10"
                             title="Open"
                           >
                             Open
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); router.push(`/projects/${s.project.id}/boq`) }}
-                            className="rounded-md px-2 py-1 text-[10px] font-semibold text-slate-400 transition-colors hover:bg-slate-500/10 hover:text-slate-300"
+                            className="rounded-md px-2 py-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-500/10 hover:text-slate-700 dark:hover:text-slate-300"
                             title="BOQ"
                           >
                             BOQ
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); router.push(`/projects/${s.project.id}/drawings`) }}
-                            className="rounded-md px-2 py-1 text-[10px] font-semibold text-slate-400 transition-colors hover:bg-slate-500/10 hover:text-slate-300"
+                            className="rounded-md px-2 py-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-500/10 hover:text-slate-700 dark:hover:text-slate-300"
                             title="Drawings"
                           >
                             Dwg
                           </button>
                         </div>
                       </div>
-                      <div className="mt-1.5 flex items-center gap-1 text-[10px] text-slate-600">
+                      <div className="mt-1.5 flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-600">
                         <Clock size={9} />
                         <span>Updated {formatDate(s.project.updated_at)}</span>
                       </div>

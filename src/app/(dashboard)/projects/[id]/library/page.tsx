@@ -13,6 +13,7 @@ import {
   Trash2,
   Pencil,
   FolderOpen,
+  Menu,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -43,7 +44,9 @@ export default function LibraryPage() {
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null)
   const [editValue, setEditValue] = useState('')
   const [creating, setCreating] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<{ message: string; onConfirm: () => void } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   const [categoryForm, setCategoryForm] = useState({ name: '', description: '' })
   const [itemForm, setItemForm] = useState({
@@ -114,12 +117,14 @@ export default function LibraryPage() {
   }
 
   const handleDeleteCategory = async (id: string) => {
-    if (!confirm('Delete this category and all its items?')) return
-    try {
-      await deleteLibraryCategory(id)
-    } catch { /* ignore */ }
-    if (selectedCategory === id) setSelectedCategory(null)
-    loadCategories()
+    setConfirmAction({
+      message: 'Delete this category and all its items?',
+      onConfirm: async () => {
+        try { await deleteLibraryCategory(id) } catch { /* ignore */ }
+        if (selectedCategory === id) setSelectedCategory(null)
+        loadCategories()
+      },
+    })
   }
 
   const handleCreateItem = async () => {
@@ -155,11 +160,13 @@ export default function LibraryPage() {
   }
 
   const handleDeleteItem = async (id: string) => {
-    if (!confirm('Delete this library item?')) return
-    try {
-      await deleteLibraryItem(id)
-    } catch { /* ignore */ }
-    if (selectedCategory) loadItems(selectedCategory)
+    setConfirmAction({
+      message: 'Delete this library item?',
+      onConfirm: async () => {
+        try { await deleteLibraryItem(id) } catch { /* ignore */ }
+        if (selectedCategory) loadItems(selectedCategory)
+      },
+    })
   }
 
   const startEdit = (itemId: string, field: keyof LibraryItem, value: string | number | null) => {
@@ -227,8 +234,16 @@ export default function LibraryPage() {
 
   return (
     <div className="flex h-[calc(100vh-120px)]">
+      {/* Mobile sidebar toggle */}
+      <button
+        onClick={() => setSidebarOpen((v) => !v)}
+        className="md:hidden fixed top-[130px] left-2 z-30 p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm"
+        aria-label="Toggle categories sidebar"
+      >
+        <Menu size={18} />
+      </button>
       {/* Left panel — Categories */}
-      <div className="w-[300px] border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex flex-col shrink-0">
+      <div className={cn('border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex flex-col shrink-0', sidebarOpen ? 'w-[300px]' : 'hidden', 'md:block md:w-[300px]')}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
           <h3 className="text-sm font-bold text-slate-900 dark:text-white">Categories</h3>
           <button
@@ -513,6 +528,14 @@ export default function LibraryPage() {
               Add Item
             </Button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title="Confirm" size="sm">
+        <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{confirmAction?.message}</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="ghost" onClick={() => setConfirmAction(null)}>Cancel</Button>
+          <Button variant="danger" onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>Confirm</Button>
         </div>
       </Modal>
     </div>

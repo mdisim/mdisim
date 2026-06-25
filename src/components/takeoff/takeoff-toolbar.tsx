@@ -78,6 +78,7 @@ function ToolButton({
     <button
       onClick={onClick}
       title={label}
+      aria-label={label}
       className={cn(
         'p-2 rounded-md transition-colors relative group',
         active

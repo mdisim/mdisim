@@ -79,6 +79,7 @@ export default function TendersPage() {
 
   const [tenderForm, setTenderForm] = useState({ title: '', description: '', tender_number: '', issue_date: '', closing_date: '' })
   const [bidderForm, setBidderForm] = useState({ name: '', company: '', email: '', phone: '' })
+  const [confirmAction, setConfirmAction] = useState<{ message: string; onConfirm: () => void; isDestructive?: boolean } | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -140,9 +141,14 @@ export default function TendersPage() {
   }
 
   const handleAward = async (tenderId: string, bidderId: string) => {
-    if (!confirm('Award this tender to the selected bidder?')) return
-    await awardTender(tenderId, bidderId)
-    load()
+    setConfirmAction({
+      message: 'Award this tender to the selected bidder?',
+      isDestructive: false,
+      onConfirm: async () => {
+        await awardTender(tenderId, bidderId)
+        load()
+      },
+    })
   }
 
   return (
@@ -216,10 +222,10 @@ export default function TendersPage() {
               boqItems={boqItems}
               isExpanded={expandedId === tender.id}
               onToggle={() => setExpandedId(expandedId === tender.id ? null : tender.id)}
-              onDelete={async () => { if (confirm('Delete this tender and all associated bids?')) { await deleteTender(tender.id); load() } }}
+              onDelete={() => setConfirmAction({ message: 'Delete this tender and all associated bids?', onConfirm: async () => { await deleteTender(tender.id); load() } })}
               onStatusChange={async (s) => { await updateTender(tender.id, { status: s }); load() }}
               onAddBidder={() => setShowAddBidder(tender.id)}
-              onDeleteBidder={async (id) => { if (confirm('Remove this bidder?')) { await deleteBidder(id); load() } }}
+              onDeleteBidder={(id) => setConfirmAction({ message: 'Remove this bidder?', onConfirm: async () => { await deleteBidder(id); load() } })}
               onUpdateBid={handleUpdateBid}
               onAward={(bidderId) => handleAward(tender.id, bidderId)}
               fmt={fmt}
@@ -336,6 +342,14 @@ export default function TendersPage() {
               <Users size={14} /> Add Bidder
             </Button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title="Confirm" size="sm">
+        <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{confirmAction?.message}</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="ghost" onClick={() => setConfirmAction(null)}>Cancel</Button>
+          <Button variant={confirmAction?.isDestructive === false ? 'primary' : 'danger'} onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>Confirm</Button>
         </div>
       </Modal>
     </div>

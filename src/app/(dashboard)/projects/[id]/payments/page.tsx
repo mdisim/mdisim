@@ -46,6 +46,7 @@ export default function PaymentsPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [confirmAction, setConfirmAction] = useState<{ message: string; onConfirm: () => void } | null>(null)
 
   const [form, setForm] = useState({
     period_from: '', period_to: '', retention_pct: '10', vat_pct: '17',
@@ -156,7 +157,7 @@ export default function PaymentsPage() {
               cert={cert}
               isExpanded={expandedId === cert.id}
               onToggle={() => setExpandedId(expandedId === cert.id ? null : cert.id)}
-              onDelete={async () => { if (confirm('Delete this certificate?')) { await deletePaymentCert(cert.id); load() } }}
+              onDelete={() => setConfirmAction({ message: 'Delete this certificate?', onConfirm: async () => { await deletePaymentCert(cert.id); load() } })}
               onStatusChange={async (s) => { await updatePaymentCert(cert.id, { status: s }); load() }}
               onUpdateLine={handleUpdateLine}
               fmt={fmt}
@@ -187,6 +188,14 @@ export default function PaymentsPage() {
           </div>
         </div>
       </Modal>
+
+      <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title="Confirm" size="sm">
+        <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{confirmAction?.message}</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="ghost" onClick={() => setConfirmAction(null)}>Cancel</Button>
+          <Button variant="danger" onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>Confirm</Button>
+        </div>
+      </Modal>
     </div>
   )
 }
@@ -214,7 +223,7 @@ function CertCard({
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-      <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-750" onClick={onToggle}>
+      <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-750" role="button" tabIndex={0} onClick={onToggle} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle() } }}>
         {isExpanded ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronRight size={16} className="text-slate-400" />}
         <div className="flex-1 min-w-0">
           <div className="font-medium text-slate-900 dark:text-white">IPC #{cert.cert_number}</div>

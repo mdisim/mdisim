@@ -56,6 +56,7 @@ export default function MeasurementsPage() {
   const [linkFilter, setLinkFilter] = useState<'all' | 'linked-drawing' | 'linked-boq' | 'unlinked'>('all')
   const [showCreateItem, setShowCreateItem] = useState(false)
   const [showGenerateBOQ, setShowGenerateBOQ] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<{ message: string; onConfirm: () => void } | null>(null)
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -125,14 +126,18 @@ export default function MeasurementsPage() {
 
   const handleDeleteItem = useCallback(
     async (id: string) => {
-      if (!confirm('Delete this measurement item and all its lines?')) return
-      await deleteMeasurementItem(id)
-      setSelectedItems((prev) => {
-        const next = new Set(prev)
-        next.delete(id)
-        return next
+      setConfirmAction({
+        message: 'Delete this measurement item and all its lines?',
+        onConfirm: async () => {
+          await deleteMeasurementItem(id)
+          setSelectedItems((prev) => {
+            const next = new Set(prev)
+            next.delete(id)
+            return next
+          })
+          load()
+        },
       })
-      load()
     },
     [load],
   )
@@ -473,6 +478,14 @@ export default function MeasurementsPage() {
         error={error}
         sections={sections}
       />
+
+      <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title="Confirm" size="sm">
+        <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{confirmAction?.message}</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="ghost" onClick={() => setConfirmAction(null)}>Cancel</Button>
+          <Button variant="danger" onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>Confirm</Button>
+        </div>
+      </Modal>
 
       <GenerateBOQDialog
         isOpen={showGenerateBOQ}

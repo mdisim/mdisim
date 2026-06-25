@@ -19,6 +19,7 @@ export default function ProjectsPage() {
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [view, setView] = useState<'grid' | 'list'>('grid')
+  const [confirmAction, setConfirmAction] = useState<{ message: string; onConfirm: () => void } | null>(null)
 
   const [form, setForm] = useState({
     name: '',
@@ -55,9 +56,13 @@ export default function ProjectsPage() {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!confirm('Delete this project and all its data?')) return
-    await deleteProject(id)
-    loadProjects()
+    setConfirmAction({
+      message: 'Delete this project and all its data?',
+      onConfirm: async () => {
+        await deleteProject(id)
+        loadProjects()
+      },
+    })
   }
 
   const filtered = projects.filter(
@@ -309,6 +314,14 @@ export default function ProjectsPage() {
               Create Project
             </Button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title="Confirm" size="sm">
+        <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{confirmAction?.message}</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="ghost" onClick={() => setConfirmAction(null)}>Cancel</Button>
+          <Button variant="danger" onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>Confirm</Button>
         </div>
       </Modal>
     </div>

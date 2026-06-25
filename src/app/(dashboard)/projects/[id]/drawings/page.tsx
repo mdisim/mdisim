@@ -22,6 +22,7 @@ export default function DrawingsPage() {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showIntelligence, setShowIntelligence] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<{ message: string; onConfirm: () => void } | null>(null)
 
   const [form, setForm] = useState({
     name: '',
@@ -90,9 +91,13 @@ export default function DrawingsPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this drawing?')) return
-    await deleteDrawing(id)
-    load()
+    setConfirmAction({
+      message: 'Delete this drawing?',
+      onConfirm: async () => {
+        await deleteDrawing(id)
+        load()
+      },
+    })
   }
 
   const typeLabel = (t: string) => DRAWING_TYPES.find((d) => d.value === t)?.label ?? t
@@ -231,6 +236,13 @@ export default function DrawingsPage() {
         </div>
       </Modal>
 
+      <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title="Confirm" size="sm">
+        <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{confirmAction?.message}</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="ghost" onClick={() => setConfirmAction(null)}>Cancel</Button>
+          <Button variant="danger" onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>Confirm</Button>
+        </div>
+      </Modal>
     </div>
   )
 }
