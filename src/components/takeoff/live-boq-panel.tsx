@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import { getBOQItems, createBOQItem } from '@/app/actions/boq'
 import { getMeasurementItems, linkDrawingMeasurementsToBOQ } from '@/app/actions/measurements'
@@ -27,6 +27,10 @@ interface LiveBOQPanelProps {
   selectedMeasurementIds?: string[]
   onLinkToItem?: (boqItemId: string) => void
   onCreateAndLink?: (description: string, unit: string) => void
+  activeBOQItemId?: string | null
+  onBOQItemSelect?: (boqItemId: string | null, linkedDrawingMeasurementIds: string[]) => void
+  highlightedBOQItemId?: string | null
+  selectedDrawingMeasurementId?: string | null
 }
 
 export function LiveBOQPanel({
@@ -37,6 +41,10 @@ export function LiveBOQPanel({
   selectedMeasurementIds = [],
   onLinkToItem,
   onCreateAndLink,
+  activeBOQItemId,
+  onBOQItemSelect,
+  highlightedBOQItemId: highlightedBOQItemIdProp,
+  selectedDrawingMeasurementId,
 }: LiveBOQPanelProps) {
   const [boqItems, setBOQItems] = useState<BOQItem[]>([])
   const [measurementItems, setMeasurementItems] = useState<MeasurementItem[]>([])
@@ -61,13 +69,37 @@ export function LiveBOQPanel({
 
   useEffect(() => { load() }, [load, measurementCount])
 
-  // Build a map of mi_id -> linked measurement count per BOQ item
+  // Build maps for linking
   const linkedMeasurementCounts = boqItems.reduce<Record<string, number>>((acc, item) => {
     if (item.mi_id) {
       acc[item.id] = (acc[item.id] ?? 0) + 1
     }
     return acc
   }, {})
+
+  // Map BOQ item ID → drawing measurement IDs (via measurement item lines)
+  const boqToDrawingMeasurements = useMemo(() => {
+    const map: Record<string, string[]> = {}
+    for (const boqItem of boqItems) {
+      if (!boqItem.mi_id) continue
+      const mi = measurementItems.find(m => m.id === boqItem.mi_id)
+      if (!mi?.lines) continue
+      map[boqItem.id] = mi.lines
+        .map(l => l.drawing_measurement_id)
+        .filter((id): id is string => !!id)
+    }
+    return map
+  }, [boqItems, measurementItems])
+
+  // Reverse map: drawing_measurement_id → BOQ item ID
+  const highlightedBOQItemId = useMemo(() => {
+    if (highlightedBOQItemIdProp) return highlightedBOQItemIdProp
+    if (!selectedDrawingMeasurementId) return null
+    for (const [boqId, dmIds] of Object.entries(boqToDrawingMeasurements)) {
+      if (dmIds.includes(selectedDrawingMeasurementId)) return boqId
+    }
+    return null
+  }, [highlightedBOQItemIdProp, selectedDrawingMeasurementId, boqToDrawingMeasurements])
 
   const boqBySection = boqItems.reduce<Record<string, BOQItem[]>>((acc, item) => {
     const section = item.section || 'Unsectioned'
@@ -260,18 +292,30 @@ export function LiveBOQPanel({
                     const quantitySynced = item.original_quantity != null
                       ? Math.abs((item.quantity ?? 0) - (item.original_quantity ?? 0)) < 0.01
                       : true
+                    const isActive = activeBOQItemId === item.id
+                    const isHighlighted = highlightedBOQItemId === item.id
 
                     return (
                       <div
                         key={item.id}
                         className={cn(
-                          'px-3 py-1.5 border-b border-slate-50 dark:border-slate-700/50 transition-colors',
+                          'px-3 py-1.5 border-b border-slate-50 dark:border-slate-700/50 transition-colors cursor-pointer',
                           linkMode
-                            ? 'hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer'
+                            ? 'hover:bg-blue-50 dark:hover:bg-blue-900/20'
                             : 'hover:bg-slate-50 dark:hover:bg-slate-750',
-                          isLinking && 'bg-emerald-50 dark:bg-emerald-900/20'
+                          isLinking && 'bg-emerald-50 dark:bg-emerald-900/20',
+                          isActive && 'bg-blue-50 dark:bg-blue-900/30 ring-1 ring-inset ring-blue-400 dark:ring-blue-500',
+                          isHighlighted && !isActive && 'bg-blue-50/50 dark:bg-blue-900/15',
                         )}
-                        onClick={linkMode ? () => handleLinkClick(item.id) : undefined}
+                        onClick={linkMode ? () => handleLinkClick(item.id) : () => {
+                          if (!onBOQItemSelect) return
+                          const dmIds = boqToDrawingMeasurements[item.id] ?? []
+                          if (isActive) {
+                            onBOQItemSelect(null, [])
+                          } else {
+                            onBOQItemSelect(item.id, dmIds)
+                          }
+                        }}
                       >
                         <div className="flex items-start gap-2">
                           {item.code && (

@@ -532,7 +532,29 @@ export function renderMeasurements(
   measurements: TakeoffMeasurement[],
   scale: number,
   activeId?: string,
+  highlightedIds?: Set<string>,
 ) {
+  // Render highlight glow pass first (behind everything)
+  if (highlightedIds && highlightedIds.size > 0) {
+    ctx.save()
+    ctx.shadowColor = '#3B82F6'
+    ctx.shadowBlur = 12 / scale
+    ctx.globalAlpha = 0.4
+    for (const m of measurements) {
+      if (!highlightedIds.has(m.id)) continue
+      const highlighted = { ...m, color: '#3B82F6' }
+      switch (m.tool_type) {
+        case 'line': renderLine(ctx, highlighted, scale, true); break
+        case 'polyline': renderPolyline(ctx, highlighted, scale, true); break
+        case 'area': renderArea(ctx, highlighted, scale, true); break
+        case 'rectangle': renderRectangle(ctx, highlighted, scale, true); break
+        case 'circle': renderCircle(ctx, highlighted, scale, true); break
+        case 'count': renderCount(ctx, highlighted, scale, true); break
+      }
+    }
+    ctx.restore()
+  }
+
   for (const m of measurements) {
     const active = m.id === activeId
     switch (m.tool_type) {
