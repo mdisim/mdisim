@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, Fragment } from 'react'
+import { motion } from 'framer-motion'
 import { useParams } from 'next/navigation'
 import type { BOQItem } from '@/lib/types'
 import { MEASUREMENT_UNITS } from '@/lib/types'
@@ -349,7 +350,7 @@ export default function BOQPage() {
           </Button>
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
           <div className="overflow-x-auto max-h-[calc(100vh-220px)]">
             <table className="w-full text-sm">
               <thead className="sticky top-0 z-10">
@@ -525,10 +526,11 @@ export default function BOQPage() {
               </tfoot>
             </table>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Import Modal */}
+
       <Modal isOpen={showImport} onClose={() => setShowImport(false)} title="Import BOQ from Excel" size="lg">
         <div className="space-y-4">
           <p className="text-sm text-slate-500 dark:text-slate-400">

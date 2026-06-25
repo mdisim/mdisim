@@ -34,6 +34,8 @@ import {
   Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { motion } from 'framer-motion'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Legend } from 'recharts'
 
 const VAR_STATUS_META: Record<VariationStatus, { label: string; color: string }> = {
   pending: { label: 'Pending', color: 'text-slate-500 bg-slate-100 dark:bg-slate-700' },
@@ -196,19 +198,21 @@ export default function CostControlPage() {
           { label: 'Actual Cost', value: actualCost, icon: TrendingDown, gradient: 'from-red-500 to-red-600' },
           { label: 'Contingency', value: contingency, icon: Shield, gradient: 'from-amber-500 to-amber-600' },
           { label: 'Projected Profit', value: projectedProfit, icon: DollarSign, gradient: projectedProfit >= 0 ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-rose-600' },
-        ] as const).map(kpi => (
-          <Card key={kpi.label} className="relative overflow-hidden">
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <div className={cn('p-1 rounded-md bg-gradient-to-br text-white', kpi.gradient)}>
-                  <kpi.icon size={12} />
+        ] as const).map((kpi, idx) => (
+          <motion.div key={kpi.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.06 }}>
+            <Card className="relative overflow-hidden">
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className={cn('p-1 rounded-md bg-gradient-to-br text-white', kpi.gradient)}>
+                    <kpi.icon size={12} />
+                  </div>
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{kpi.label}</span>
                 </div>
-                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{kpi.label}</span>
-              </div>
-              <div className="text-lg font-bold tabular-nums text-slate-900 dark:text-white">{fmt(kpi.value)}</div>
-              <kpi.icon size={48} className="absolute -bottom-2 -right-2 text-slate-100 dark:text-slate-700/30" />
-            </CardContent>
-          </Card>
+                <div className="text-lg font-bold tabular-nums text-slate-900 dark:text-white">{fmt(kpi.value)}</div>
+                <kpi.icon size={48} className="absolute -bottom-2 -right-2 text-slate-100 dark:text-slate-700/30" />
+              </CardContent>
+            </Card>
+          </motion.div>
         ))}
       </div>
 
@@ -232,6 +236,40 @@ export default function CostControlPage() {
                   {s.label} ({s.pct.toFixed(1)}%)
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Cost Composition Donut Chart */}
+      {totalExposure > 0 && (
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Cost Composition</span>
+            <div className="h-64 mt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: 'Actual', value: actualCost },
+                      { name: 'Committed', value: committedCost },
+                      { name: 'Forecast', value: forecastCost },
+                    ]}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    <Cell fill="#f43f5e" />
+                    <Cell fill="#f59e0b" />
+                    <Cell fill="#60a5fa" />
+                  </Pie>
+                  <Tooltip formatter={(value) => fmt(Number(value))} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
@@ -385,6 +423,27 @@ export default function CostControlPage() {
       {/* Cashflow tab */}
       {activeTab === 'cashflow' && (
         <div>
+          {cashflow.length > 0 && (
+            <Card className="mb-4">
+              <CardContent className="p-4">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Cashflow Overview</span>
+                <div className="h-72 mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={cashflow.map(cf => ({ period: cf.period_date, 'Planned Income': cf.planned_income, 'Actual Income': cf.actual_income, 'Planned Expense': cf.planned_expense, 'Actual Expense': cf.actual_expense }))}>
+                      <XAxis dataKey="period" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} />
+                      <Tooltip formatter={(value) => fmt(Number(value))} />
+                      <Legend />
+                      <Bar dataKey="Planned Income" fill="#86efac" />
+                      <Bar dataKey="Actual Income" fill="#22c55e" />
+                      <Bar dataKey="Planned Expense" fill="#fca5a5" />
+                      <Bar dataKey="Actual Expense" fill="#ef4444" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           {cashflow.length === 0 ? (
             <div className="text-center py-12 text-sm text-slate-400">No cash flow data yet. Cash flow is populated from payment certificates and cost entries.</div>
           ) : (

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
+import { motion } from 'framer-motion'
 import { useParams } from 'next/navigation'
 import type { RateAnalysis, RateResource, ResourceType } from '@/lib/types'
 import { RESOURCE_TYPES, MEASUREMENT_UNITS } from '@/lib/types'
@@ -397,9 +398,14 @@ export default function RateAnalysisPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {filteredAnalyses.map(ra => (
-            <RateAnalysisCard
+          {filteredAnalyses.map((ra, idx) => (
+            <motion.div
               key={ra.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, delay: idx * 0.04 }}
+            >
+            <RateAnalysisCard
               analysis={ra}
               isExpanded={expandedId === ra.id}
               onToggle={() => setExpandedId(expandedId === ra.id ? null : ra.id)}
@@ -410,6 +416,7 @@ export default function RateAnalysisPage() {
               onDeleteResource={handleDeleteResource}
               fmt={fmt}
             />
+            </motion.div>
           ))}
         </div>
       )}

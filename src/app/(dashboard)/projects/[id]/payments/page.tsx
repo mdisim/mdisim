@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { motion } from 'framer-motion'
 import { useParams } from 'next/navigation'
 import type { PaymentCert, PaymentLine, PaymentCertStatus } from '@/lib/types'
 import { Button } from '@/components/ui/button'
@@ -124,19 +125,21 @@ export default function PaymentsPage() {
           { label: 'Gross Value', value: fmt(totalGross), icon: ArrowUpRight, gradient: 'from-indigo-500 to-indigo-600', isCurrency: true },
           { label: 'Total Paid', value: fmt(totalPaid), icon: CreditCard, gradient: 'from-emerald-500 to-emerald-600', isCurrency: true },
           { label: 'Pending', value: fmt(totalPending), icon: Clock, gradient: 'from-amber-500 to-amber-600', isCurrency: true },
-        ] as const).map(kpi => (
-          <Card key={kpi.label} className="relative overflow-hidden">
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <div className={cn('p-1 rounded-md bg-gradient-to-br text-white', kpi.gradient)}>
-                  <kpi.icon size={12} />
+        ] as const).map((kpi, idx) => (
+          <motion.div key={kpi.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.06 }}>
+            <Card className="relative overflow-hidden">
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className={cn('p-1 rounded-md bg-gradient-to-br text-white', kpi.gradient)}>
+                    <kpi.icon size={12} />
+                  </div>
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{kpi.label}</span>
                 </div>
-                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{kpi.label}</span>
-              </div>
-              <div className="text-lg font-bold tabular-nums text-slate-900 dark:text-white">{kpi.value}</div>
-              <kpi.icon size={48} className="absolute -bottom-2 -right-2 text-slate-100 dark:text-slate-700/30" />
-            </CardContent>
-          </Card>
+                <div className="text-lg font-bold tabular-nums text-slate-900 dark:text-white">{kpi.value}</div>
+                <kpi.icon size={48} className="absolute -bottom-2 -right-2 text-slate-100 dark:text-slate-700/30" />
+              </CardContent>
+            </Card>
+          </motion.div>
         ))}
       </div>
 
@@ -151,9 +154,9 @@ export default function PaymentsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {certs.map(cert => (
+          {certs.map((cert, idx) => (
+            <motion.div key={cert.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}>
             <CertCard
-              key={cert.id}
               cert={cert}
               isExpanded={expandedId === cert.id}
               onToggle={() => setExpandedId(expandedId === cert.id ? null : cert.id)}
@@ -162,6 +165,7 @@ export default function PaymentsPage() {
               onUpdateLine={handleUpdateLine}
               fmt={fmt}
             />
+            </motion.div>
           ))}
         </div>
       )}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
+import { motion } from 'framer-motion'
 import { useParams } from 'next/navigation'
 import type { Tender, TenderBidder, TenderBid, BOQItem, TenderStatus } from '@/lib/types'
 import { Button } from '@/components/ui/button'
@@ -171,10 +172,18 @@ export default function TendersPage() {
       {/* Summary Stats */}
       {!loading && tenders.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <StatCard icon={FileSpreadsheet} label="Total Tenders" value={stats.total} color="text-slate-600 dark:text-slate-300" bg="bg-slate-100 dark:bg-slate-700" />
-          <StatCard icon={Gavel} label="Active" value={stats.active} color="text-blue-600 dark:text-blue-400" bg="bg-blue-50 dark:bg-blue-900/30" />
-          <StatCard icon={Users} label="Total Bidders" value={stats.totalBidders} color="text-purple-600 dark:text-purple-400" bg="bg-purple-50 dark:bg-purple-900/30" />
-          <StatCard icon={Trophy} label="Awarded" value={stats.awarded} color="text-green-600 dark:text-green-400" bg="bg-green-50 dark:bg-green-900/30" />
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 * 0.06 }}>
+            <StatCard icon={FileSpreadsheet} label="Total Tenders" value={stats.total} color="text-slate-600 dark:text-slate-300" bg="bg-slate-100 dark:bg-slate-700" />
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 * 0.06 }}>
+            <StatCard icon={Gavel} label="Active" value={stats.active} color="text-blue-600 dark:text-blue-400" bg="bg-blue-50 dark:bg-blue-900/30" />
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2 * 0.06 }}>
+            <StatCard icon={Users} label="Total Bidders" value={stats.totalBidders} color="text-purple-600 dark:text-purple-400" bg="bg-purple-50 dark:bg-purple-900/30" />
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 3 * 0.06 }}>
+            <StatCard icon={Trophy} label="Awarded" value={stats.awarded} color="text-green-600 dark:text-green-400" bg="bg-green-50 dark:bg-green-900/30" />
+          </motion.div>
         </div>
       )}
 
@@ -215,9 +224,9 @@ export default function TendersPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {tenders.map(tender => (
+          {tenders.map((tender, idx) => (
+            <motion.div key={tender.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}>
             <TenderCard
-              key={tender.id}
               tender={tender}
               boqItems={boqItems}
               isExpanded={expandedId === tender.id}
@@ -230,6 +239,7 @@ export default function TendersPage() {
               onAward={(bidderId) => handleAward(tender.id, bidderId)}
               fmt={fmt}
             />
+            </motion.div>
           ))}
         </div>
       )}

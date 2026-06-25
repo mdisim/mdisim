@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { HardHat, Mail, Lock, Loader2 } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { signIn } from '@/app/actions/auth'
 
 export default function LoginPage() {
@@ -31,18 +32,23 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+      <motion.div
+        className="w-full max-w-md"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+      >
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-14 h-14 bg-amber-500 rounded-2xl flex items-center justify-center mb-4">
+          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-500/20">
             <HardHat size={28} className="text-white" />
           </div>
-          <h1 className="text-white text-2xl font-bold">ANGEL D.C.</h1>
-          <p className="text-slate-400 text-sm mt-1">Construction Management Platform</p>
+          <h1 className="text-white text-2xl font-bold tracking-widest">ANGEL D.C.</h1>
+          <p className="text-blue-400/70 text-sm mt-1 tracking-wide">Construction Intelligence</p>
         </div>
 
         {/* Card */}
-        <div className="bg-slate-900 rounded-2xl p-8 border border-slate-800">
+        <div className="bg-slate-900 rounded-2xl p-8 border border-slate-800 shadow-2xl shadow-black/20">
           <h2 className="text-white text-xl font-semibold mb-1">Welcome back</h2>
           <p className="text-slate-400 text-sm mb-6">Sign in to your account</p>
 
@@ -106,7 +112,7 @@ export default function LoginPage() {
             </Link>
           </p>
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

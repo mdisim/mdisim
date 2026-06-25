@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
+import { motion } from 'framer-motion'
 import { useParams } from 'next/navigation'
 import type { Drawing, DrawingMeasurement, BOQItem } from '@/lib/types'
 import { getDrawings, getDrawingMeasurements } from '@/app/actions/drawings'
@@ -114,8 +115,14 @@ export default function QuantitiesPage() {
           { label: 'Linear Total', value: fmt(totalLinear), icon: Ruler, gradient: 'from-green-500 to-emerald-600' },
           { label: 'Area Total', value: fmt(totalArea), icon: Square, gradient: 'from-amber-500 to-amber-600' },
           { label: 'Count Total', value: String(totalCounts), icon: Hash, gradient: 'from-purple-500 to-purple-600' },
-        ] as const).map(kpi => (
-          <Card key={kpi.label} className="relative overflow-hidden">
+        ] as const).map((kpi, idx) => (
+          <motion.div
+            key={kpi.label}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: idx * 0.04 }}
+          >
+          <Card className="relative overflow-hidden">
             <CardContent className="p-3">
               <div className="flex items-center gap-2 mb-1">
                 <div className={cn('p-1 rounded-md bg-gradient-to-br text-white', kpi.gradient)}>
@@ -127,6 +134,7 @@ export default function QuantitiesPage() {
               <kpi.icon size={48} className="absolute -bottom-2 -right-2 text-slate-100 dark:text-slate-700/30" />
             </CardContent>
           </Card>
+          </motion.div>
         ))}
       </div>
 
@@ -205,10 +213,16 @@ export default function QuantitiesPage() {
             />
           </div>
           <div className="space-y-2">
-            {filteredDrawings.map(d => {
+            {filteredDrawings.map((d, idx) => {
               const isExpanded = expandedDrawings.has(d.id)
               return (
-                <Card key={d.id}>
+                <motion.div
+                  key={d.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: idx * 0.04 }}
+                >
+                <Card>
                   <div
                     className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/50"
                     onClick={() => setExpandedDrawings(prev => { const n = new Set(prev); n.has(d.id) ? n.delete(d.id) : n.add(d.id); return n })}
@@ -246,6 +260,7 @@ export default function QuantitiesPage() {
                     </div>
                   )}
                 </Card>
+                </motion.div>
               )
             })}
           </div>

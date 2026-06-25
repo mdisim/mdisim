@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { motion } from 'framer-motion'
 import { useParams } from 'next/navigation'
 import type { LibraryCategory, LibraryItem } from '@/lib/types'
 import { MEASUREMENT_UNITS } from '@/lib/types'
@@ -267,9 +268,14 @@ export default function LibraryPage() {
             </div>
           ) : (
             <div className="py-1">
-              {categories.map((cat) => (
-                <div
+              {categories.map((cat, idx) => (
+                <motion.div
                   key={cat.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: idx * 0.04 }}
+                >
+                <div
                   className={cn(
                     'group flex items-center gap-2 px-4 py-2.5 cursor-pointer transition-colors',
                     selectedCategory === cat.id
@@ -310,6 +316,7 @@ export default function LibraryPage() {
                     </button>
                   </div>
                 </div>
+                </motion.div>
               ))}
             </div>
           )}
@@ -363,7 +370,7 @@ export default function LibraryPage() {
               </Button>
             </div>
           ) : (
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -419,7 +426,7 @@ export default function LibraryPage() {
                   </tbody>
                 </table>
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
       </div>
