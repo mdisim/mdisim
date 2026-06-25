@@ -5,6 +5,8 @@ import type { PaymentCert, PaymentLine } from '@/lib/types'
 
 export async function getPaymentCerts(projectId: string): Promise<PaymentCert[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data } = await supabase
     .from('qb_payment_certs')
     .select('*, lines:qb_payment_lines(*)')
@@ -15,6 +17,8 @@ export async function getPaymentCerts(projectId: string): Promise<PaymentCert[]>
 
 export async function getPaymentCert(id: string): Promise<PaymentCert | null> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data } = await supabase
     .from('qb_payment_certs')
     .select('*, lines:qb_payment_lines(*)')
@@ -34,6 +38,8 @@ export async function createPaymentCert(fields: {
   previous_advance_recovery?: number
 }): Promise<{ data?: PaymentCert; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data, error } = await supabase
     .from('qb_payment_certs')
     .insert(fields)
@@ -48,6 +54,8 @@ export async function updatePaymentCert(
   fields: Partial<Pick<PaymentCert, 'status' | 'retention_pct' | 'vat_pct' | 'advance_recovery' | 'previous_advance_recovery' | 'variations_amount' | 'submitted_date' | 'approved_date' | 'paid_date' | 'notes'>>
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase.from('qb_payment_certs').update(fields).eq('id', id)
   if (error) return { error: error.message }
   return {}
@@ -55,6 +63,8 @@ export async function updatePaymentCert(
 
 export async function deletePaymentCert(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase.from('qb_payment_certs').delete().eq('id', id)
   if (error) return { error: error.message }
   return {}
@@ -72,6 +82,8 @@ export async function createPaymentLine(fields: {
   sort_order?: number
 }): Promise<{ data?: PaymentLine; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data, error } = await supabase
     .from('qb_payment_lines')
     .insert(fields)
@@ -86,6 +98,8 @@ export async function updatePaymentLine(
   fields: Partial<Pick<PaymentLine, 'description' | 'unit' | 'contract_qty' | 'contract_rate' | 'previous_qty' | 'current_qty'>>
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase.from('qb_payment_lines').update(fields).eq('id', id)
   if (error) return { error: error.message }
   return {}
@@ -93,6 +107,8 @@ export async function updatePaymentLine(
 
 export async function deletePaymentLine(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase.from('qb_payment_lines').delete().eq('id', id)
   if (error) return { error: error.message }
   return {}
@@ -104,6 +120,8 @@ export async function populateCertFromBOQ(
   previousCertId?: string
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
 
   const { data: boqItems } = await supabase
     .from('qb_boq_items')

@@ -96,16 +96,16 @@ const PRESETS: Preset[] = [
   },
   {
     id: 'trench',
-    name: 'Trench',
+    name: 'Trench Fill',
     icon: Minus,
-    formula: '((Tw + Bw) / 2) × D × L',
+    formula: 'W × D × L × N',
     fields: [
-      { key: 'Tw', label: 'Top Width', unit: 'm' },
-      { key: 'Bw', label: 'Bottom Width', unit: 'm' },
+      { key: 'W', label: 'Width', unit: 'm' },
       { key: 'D', label: 'Depth', unit: 'm' },
       { key: 'L', label: 'Length', unit: 'm' },
+      { key: 'N', label: 'Number', unit: 'nr' },
     ],
-    calc: (v) => ((v.Tw ?? 0) + (v.Bw ?? 0)) / 2 * (v.D ?? 0) * (v.L ?? 0),
+    calc: (v) => (v.W ?? 0) * (v.D ?? 0) * (v.L ?? 0) * (v.N ?? 1),
   },
 ]
 
@@ -123,8 +123,14 @@ export function VolumeCalculator({ isOpen, onClose, onAddMeasurement, drawingMea
   const volume = useMemo(() => {
     if (customMode) {
       try {
-        const fn = new Function(...Object.keys(customVars), `return ${customFormula}`)
-        const result = fn(...Object.values(customVars))
+        const sanitized = customFormula.replace(/[^0-9+\-*/().LWDHNRlwdhnr\s]/g, '')
+        if (!sanitized || sanitized !== customFormula.trim()) return 0
+        const vars = customVars
+        let expr = sanitized
+        for (const [k, v] of Object.entries(vars)) {
+          expr = expr.replace(new RegExp(`\\b${k}\\b`, 'g'), String(v ?? 0))
+        }
+        const result = Function(`"use strict"; return (${expr})`)()
         return typeof result === 'number' && isFinite(result) ? result : 0
       } catch {
         return 0

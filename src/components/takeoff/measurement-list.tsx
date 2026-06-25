@@ -13,7 +13,6 @@ import {
   Trash2,
   Link2,
   Check,
-  Copy,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { TakeoffMeasurement } from '@/lib/takeoff/renderer'
@@ -100,7 +99,7 @@ export function MeasurementList({
       else next.add(id)
       return next
     })
-  }, [])
+  }, [setSelectedIds])
 
   const selectAll = useCallback(() => {
     if (selectedIds.size === measurements.length) {

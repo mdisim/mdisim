@@ -5,6 +5,8 @@ import type { RateAnalysis, RateResource, ResourceType } from '@/lib/types'
 
 export async function getRateAnalyses(projectId: string): Promise<RateAnalysis[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data } = await supabase
     .from('qb_rate_analyses')
     .select('*, resources:qb_rate_resources(*)')
@@ -16,6 +18,8 @@ export async function getRateAnalyses(projectId: string): Promise<RateAnalysis[]
 
 export async function getRateAnalysis(id: string): Promise<RateAnalysis | null> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data } = await supabase
     .from('qb_rate_analyses')
     .select('*, resources:qb_rate_resources(*)')
@@ -27,6 +31,8 @@ export async function getRateAnalysis(id: string): Promise<RateAnalysis | null> 
 
 export async function getRateAnalysisForBOQ(boqItemId: string): Promise<RateAnalysis | null> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data } = await supabase
     .from('qb_rate_analyses')
     .select('*, resources:qb_rate_resources(*)')
@@ -47,6 +53,8 @@ export async function createRateAnalysis(fields: {
   profit_pct?: number
 }): Promise<{ data?: RateAnalysis; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data, error } = await supabase
     .from('qb_rate_analyses')
     .insert(fields)
@@ -62,6 +70,8 @@ export async function updateRateAnalysis(
   fields: Partial<Pick<RateAnalysis, 'description' | 'unit' | 'output_qty' | 'overhead_pct' | 'profit_pct'>>
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase
     .from('qb_rate_analyses')
     .update(fields)
@@ -73,6 +83,8 @@ export async function updateRateAnalysis(
 
 export async function deleteRateAnalysis(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase
     .from('qb_rate_analyses')
     .delete()
@@ -93,6 +105,8 @@ export async function createRateResource(fields: {
   sort_order?: number
 }): Promise<{ data?: RateResource; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data, error } = await supabase
     .from('qb_rate_resources')
     .insert(fields)
@@ -108,6 +122,8 @@ export async function updateRateResource(
   fields: Partial<Pick<RateResource, 'description' | 'unit' | 'quantity' | 'unit_cost' | 'waste_pct' | 'resource_type' | 'sort_order'>>
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase
     .from('qb_rate_resources')
     .update(fields)
@@ -119,6 +135,8 @@ export async function updateRateResource(
 
 export async function deleteRateResource(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase
     .from('qb_rate_resources')
     .delete()

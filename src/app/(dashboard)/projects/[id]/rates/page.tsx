@@ -221,7 +221,7 @@ export default function RateAnalysisPage() {
       </div>
 
       {activeTab === 'breakdown' ? (
-        <ResourceBreakdown rateAnalyses={analyses} boqItems={boqItems} />
+        <ResourceBreakdown rateAnalyses={analyses} />
       ) : (
       <>
       {/* Summary Metrics */}

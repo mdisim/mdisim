@@ -150,7 +150,7 @@ export default function DrawingsPage() {
                     <Eye size={16} />
                   </button>
                 )}
-                <button onClick={() => handleDelete(d.id)} className="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors" title="Delete">
+                <button onClick={() => handleDelete(d.id)} className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors" title="Delete">
                   <Trash2 size={16} />
                 </button>
               </div>

@@ -899,6 +899,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
         onCalibrate={handleCalibrate}
         isCalibrating={isCalibrating}
         measurements={takeoffMs}
+        activeMeasurementId={activeMeasurementId}
         onDeleteMeasurement={handleDeleteMeasurement}
         onUndo={handleUndo}
         canUndo={undoStack.length > 0}

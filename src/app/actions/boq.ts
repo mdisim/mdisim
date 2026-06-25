@@ -5,6 +5,8 @@ import type { BOQItem } from '@/lib/types'
 
 export async function getBOQItems(projectId: string): Promise<BOQItem[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data } = await supabase
     .from('qb_boq_items')
     .select('*')
@@ -33,6 +35,8 @@ export async function createBOQItem(fields: {
   sort_order?: number
 }): Promise<{ data?: BOQItem; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
 
   const { data: project } = await supabase
     .from('projects')
@@ -64,6 +68,8 @@ export async function updateBOQItem(
   fields: Partial<Omit<BOQItem, 'id' | 'created_at' | 'updated_at'>>
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase
     .from('qb_boq_items')
     .update(fields)
@@ -75,6 +81,8 @@ export async function updateBOQItem(
 
 export async function deleteBOQItem(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase
     .from('qb_boq_items')
     .delete()
@@ -97,6 +105,8 @@ export async function bulkCreateBOQItems(
   }[]
 ): Promise<{ count: number; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
 
   const { data: maxOrder } = await supabase
     .from('qb_boq_items')
@@ -133,6 +143,8 @@ export async function generateBOQFromMeasurements(
   measurementItemIds: string[]
 ): Promise<{ data?: BOQItem[]; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
 
   const { data: items, error: fetchError } = await supabase
     .from('qb_measurement_items')

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import type { RateAnalysis, ResourceType, BOQItem } from '@/lib/types'
+import type { RateAnalysis, ResourceType } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import {
@@ -101,10 +101,9 @@ interface CategoryData {
 
 export interface ResourceBreakdownProps {
   rateAnalyses: RateAnalysis[]
-  boqItems?: BOQItem[]
 }
 
-export default function ResourceBreakdown({ rateAnalyses, boqItems }: ResourceBreakdownProps) {
+export default function ResourceBreakdown({ rateAnalyses }: ResourceBreakdownProps) {
   const [expandedCategories, setExpandedCategories] = useState<Set<CategoryKey>>(new Set())
 
   const toggle = (key: CategoryKey) => {

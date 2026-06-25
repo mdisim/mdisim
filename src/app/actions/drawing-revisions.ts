@@ -5,6 +5,8 @@ import type { DrawingRevision, QuantityChange } from '@/lib/types'
 
 export async function getDrawingRevisions(drawingId: string): Promise<DrawingRevision[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data } = await supabase
     .from('qb_drawing_revisions')
     .select('*')
@@ -23,6 +25,8 @@ export async function createDrawingRevision(fields: {
   status?: string
 }): Promise<{ data?: DrawingRevision; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
 
   if (fields.status === 'current') {
     await supabase
@@ -43,6 +47,8 @@ export async function createDrawingRevision(fields: {
 
 export async function deleteDrawingRevision(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase.from('qb_drawing_revisions').delete().eq('id', id)
   if (error) return { error: error.message }
   return {}
@@ -50,6 +56,8 @@ export async function deleteDrawingRevision(id: string): Promise<{ error?: strin
 
 export async function getQuantityChanges(projectId: string): Promise<QuantityChange[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data } = await supabase
     .from('qb_quantity_changes')
     .select('*')
@@ -73,6 +81,8 @@ export async function createQuantityChange(fields: {
   notes?: string
 }): Promise<{ data?: QuantityChange; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data, error } = await supabase
     .from('qb_quantity_changes')
     .insert(fields)
@@ -84,6 +94,8 @@ export async function createQuantityChange(fields: {
 
 export async function deleteQuantityChange(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase.from('qb_quantity_changes').delete().eq('id', id)
   if (error) return { error: error.message }
   return {}

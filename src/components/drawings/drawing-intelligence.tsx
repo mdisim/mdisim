@@ -42,7 +42,7 @@ export function DrawingIntelligence({ projectId, drawings }: DrawingIntelligence
   const [revisionMap, setRevisionMap] = useState<Record<string, DrawingRevision[]>>({})
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [loading, setLoading] = useState(true)
-  const [analyzing, setAnalyzing] = useState(false)
+
 
   const load = useCallback(async () => {
     setLoading(true)

@@ -11,7 +11,7 @@ import {
   Copy,
   MoreHorizontal,
 } from 'lucide-react'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
@@ -49,8 +49,9 @@ function calcQuantity(
           .replace(/l/gi, String(l ?? 0))
           .replace(/w/gi, String(w ?? 0))
           .replace(/h/gi, String(h ?? 0))
-        // eslint-disable-next-line no-eval
-        const result = new Function(`return (${expr})`)()
+        const sanitized = expr.replace(/[^0-9+\-*/().\s]/g, '')
+        if (!sanitized) return 0
+        const result = Function(`"use strict"; return (${sanitized})`)()
         return typeof result === 'number' && isFinite(result) ? result : 0
       } catch {
         return 0
@@ -122,12 +123,14 @@ export function MeasurementGrid({
       if (!map.has(sec)) map.set(sec, [])
       map.get(sec)!.push(item)
     }
-    // Init expanded sections
-    if (expandedSections.size === 0 && map.size > 0) {
-      setExpandedSections(new Set(map.keys()))
-    }
     return map
-  }, [items, expandedSections.size])
+  }, [items])
+
+  useEffect(() => {
+    if (expandedSections.size === 0 && sections.size > 0) {
+      setExpandedSections(new Set(sections.keys()))
+    }
+  }, [sections, expandedSections.size])
 
   const toggleSection = (sec: string) => {
     setExpandedSections((prev) => {

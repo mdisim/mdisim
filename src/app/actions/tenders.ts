@@ -5,6 +5,8 @@ import type { Tender, TenderBidder, TenderBid, TenderStatus, BidderStatus } from
 
 export async function getTenders(projectId: string): Promise<Tender[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data } = await supabase
     .from('qb_tenders')
     .select('*, bidders:qb_tender_bidders(*, bids:qb_tender_bids(*))')
@@ -15,6 +17,8 @@ export async function getTenders(projectId: string): Promise<Tender[]> {
 
 export async function getTender(id: string): Promise<Tender | null> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data } = await supabase
     .from('qb_tenders')
     .select('*, bidders:qb_tender_bidders(*, bids:qb_tender_bids(*))')
@@ -32,6 +36,8 @@ export async function createTender(fields: {
   closing_date?: string
 }): Promise<{ data?: Tender; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data, error } = await supabase
     .from('qb_tenders')
     .insert(fields)
@@ -46,6 +52,8 @@ export async function updateTender(
   fields: Partial<Pick<Tender, 'title' | 'description' | 'tender_number' | 'issue_date' | 'closing_date' | 'status' | 'awarded_bidder_id' | 'notes'>>
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase.from('qb_tenders').update(fields).eq('id', id)
   if (error) return { error: error.message }
   return {}
@@ -53,6 +61,8 @@ export async function updateTender(
 
 export async function deleteTender(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase.from('qb_tenders').delete().eq('id', id)
   if (error) return { error: error.message }
   return {}
@@ -66,6 +76,8 @@ export async function createBidder(fields: {
   phone?: string
 }): Promise<{ data?: TenderBidder; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data, error } = await supabase
     .from('qb_tender_bidders')
     .insert(fields)
@@ -80,6 +92,8 @@ export async function updateBidder(
   fields: Partial<Pick<TenderBidder, 'name' | 'company' | 'email' | 'phone' | 'submission_date' | 'status' | 'notes'>>
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase.from('qb_tender_bidders').update(fields).eq('id', id)
   if (error) return { error: error.message }
   return {}
@@ -87,6 +101,8 @@ export async function updateBidder(
 
 export async function deleteBidder(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase.from('qb_tender_bidders').delete().eq('id', id)
   if (error) return { error: error.message }
   return {}
@@ -102,6 +118,8 @@ export async function createBid(fields: {
   unit_rate: number
 }): Promise<{ data?: TenderBid; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data, error } = await supabase
     .from('qb_tender_bids')
     .insert(fields)
@@ -116,6 +134,8 @@ export async function updateBid(
   fields: Partial<Pick<TenderBid, 'description' | 'unit' | 'quantity' | 'unit_rate' | 'notes'>>
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase.from('qb_tender_bids').update(fields).eq('id', id)
   if (error) return { error: error.message }
   return {}
@@ -123,6 +143,8 @@ export async function updateBid(
 
 export async function deleteBid(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase.from('qb_tender_bids').delete().eq('id', id)
   if (error) return { error: error.message }
   return {}
@@ -134,6 +156,8 @@ export async function bulkCreateBids(
   bids: { boq_item_id?: string; description: string; unit: string; quantity: number; unit_rate: number }[]
 ): Promise<{ count: number; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const rows = bids.map(b => ({ tender_id: tenderId, bidder_id: bidderId, ...b }))
   const { error } = await supabase.from('qb_tender_bids').insert(rows)
   if (error) return { count: 0, error: error.message }
@@ -142,6 +166,8 @@ export async function bulkCreateBids(
 
 export async function awardTender(tenderId: string, bidderId: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error: e1 } = await supabase
     .from('qb_tender_bidders')
     .update({ status: 'awarded' as BidderStatus })

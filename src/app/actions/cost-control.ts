@@ -7,6 +7,8 @@ import type { Contract, Variation, VariationItem, CostEntry, CashflowEntry } fro
 
 export async function getContract(projectId: string): Promise<Contract | null> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data } = await supabase
     .from('qb_contracts')
     .select('*')
@@ -28,6 +30,8 @@ export async function upsertContract(fields: {
   notes?: string
 }): Promise<{ data?: Contract; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data, error } = await supabase
     .from('qb_contracts')
     .upsert(fields, { onConflict: 'project_id' })
@@ -41,6 +45,8 @@ export async function upsertContract(fields: {
 
 export async function getVariations(projectId: string): Promise<Variation[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data } = await supabase
     .from('qb_variations')
     .select('*, items:qb_variation_items(*)')
@@ -58,6 +64,8 @@ export async function createVariation(fields: {
   amount?: number
 }): Promise<{ data?: Variation; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data, error } = await supabase
     .from('qb_variations')
     .insert(fields)
@@ -72,6 +80,8 @@ export async function updateVariation(
   fields: Partial<Pick<Variation, 'title' | 'description' | 'status' | 'variation_type' | 'submitted_date' | 'approved_date' | 'amount' | 'approved_amount' | 'notes'>>
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase.from('qb_variations').update(fields).eq('id', id)
   if (error) return { error: error.message }
   return {}
@@ -79,6 +89,8 @@ export async function updateVariation(
 
 export async function deleteVariation(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase.from('qb_variations').delete().eq('id', id)
   if (error) return { error: error.message }
   return {}
@@ -94,6 +106,8 @@ export async function createVariationItem(fields: {
   sort_order?: number
 }): Promise<{ data?: VariationItem; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data, error } = await supabase
     .from('qb_variation_items')
     .insert(fields)
@@ -108,6 +122,8 @@ export async function updateVariationItem(
   fields: Partial<Pick<VariationItem, 'description' | 'unit' | 'quantity' | 'unit_rate'>>
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase.from('qb_variation_items').update(fields).eq('id', id)
   if (error) return { error: error.message }
   return {}
@@ -115,6 +131,8 @@ export async function updateVariationItem(
 
 export async function deleteVariationItem(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase.from('qb_variation_items').delete().eq('id', id)
   if (error) return { error: error.message }
   return {}
@@ -124,6 +142,8 @@ export async function deleteVariationItem(id: string): Promise<{ error?: string 
 
 export async function getCostEntries(projectId: string): Promise<CostEntry[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data } = await supabase
     .from('qb_cost_entries')
     .select('*')
@@ -143,6 +163,8 @@ export async function createCostEntry(fields: {
   notes?: string
 }): Promise<{ data?: CostEntry; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data, error } = await supabase
     .from('qb_cost_entries')
     .insert(fields)
@@ -154,6 +176,8 @@ export async function createCostEntry(fields: {
 
 export async function deleteCostEntry(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase.from('qb_cost_entries').delete().eq('id', id)
   if (error) return { error: error.message }
   return {}
@@ -163,6 +187,8 @@ export async function deleteCostEntry(id: string): Promise<{ error?: string }> {
 
 export async function getCashflow(projectId: string): Promise<CashflowEntry[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { data } = await supabase
     .from('qb_cashflow')
     .select('*')
@@ -185,6 +211,8 @@ export async function upsertCashflow(fields: {
   notes?: string
 }): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   const { error } = await supabase
     .from('qb_cashflow')
     .upsert(fields, { onConflict: 'project_id,period_date' })

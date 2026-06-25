@@ -30,6 +30,7 @@ interface TakeoffToolbarProps {
   onCalibrate: () => void
   isCalibrating: boolean
   measurements: TakeoffMeasurement[]
+  activeMeasurementId: string | null
   onDeleteMeasurement: (id: string) => void
   onUndo: () => void
   canUndo: boolean
@@ -185,6 +186,7 @@ export function TakeoffToolbar({
   isCalibrating,
   onDeleteMeasurement,
   measurements,
+  activeMeasurementId,
   onUndo,
   canUndo,
   activeColor,
@@ -299,8 +301,7 @@ export function TakeoffToolbar({
         </button>
         <button
           onClick={() => {
-            const active = measurements.find(() => false)
-            if (active) onDeleteMeasurement(active.id)
+            if (activeMeasurementId) onDeleteMeasurement(activeMeasurementId)
           }}
           title="Delete Selected (Del)"
           className="p-2 rounded-md text-slate-600 hover:bg-red-100 hover:text-red-600 dark:text-slate-300 dark:hover:bg-red-900/30 transition-colors"
