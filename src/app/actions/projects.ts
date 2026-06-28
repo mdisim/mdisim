@@ -19,6 +19,9 @@ export async function getProjects(): Promise<Project[]> {
 
 export async function getProject(id: string): Promise<Project | null> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
   const { data } = await supabase
     .from('projects')
     .select('*')

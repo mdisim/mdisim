@@ -43,10 +43,14 @@ export async function updateLibraryCategory(
   fields: Partial<Omit<LibraryCategory, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
   const { error } = await supabase
     .from('qb_library_categories')
     .update(fields)
     .eq('id', id)
+    .eq('user_id', user.id)
 
   if (error) return { error: error.message }
   return {}
@@ -54,10 +58,14 @@ export async function updateLibraryCategory(
 
 export async function deleteLibraryCategory(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
   const { error } = await supabase
     .from('qb_library_categories')
     .delete()
     .eq('id', id)
+    .eq('user_id', user.id)
 
   if (error) return { error: error.message }
   return {}
@@ -115,10 +123,14 @@ export async function updateLibraryItem(
   fields: Partial<Omit<LibraryItem, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
   const { error } = await supabase
     .from('qb_library_items')
     .update(fields)
     .eq('id', id)
+    .eq('user_id', user.id)
 
   if (error) return { error: error.message }
   return {}
@@ -126,10 +138,14 @@ export async function updateLibraryItem(
 
 export async function deleteLibraryItem(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
   const { error } = await supabase
     .from('qb_library_items')
     .delete()
     .eq('id', id)
+    .eq('user_id', user.id)
 
   if (error) return { error: error.message }
   return {}

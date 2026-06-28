@@ -13,6 +13,7 @@ export function rateLimit(params: {
   limit: number
   windowMs: number
 }): { allowed: boolean; remaining: number; resetAt: number } {
+  cleanupExpired()
   const now = Date.now()
   const entry = store.get(params.key)
 
@@ -30,12 +31,12 @@ export function rateLimit(params: {
   return { allowed: true, remaining: params.limit - entry.count, resetAt: entry.resetAt }
 }
 
-// Clean up expired entries every 5 minutes
-if (typeof setInterval !== 'undefined') {
-  setInterval(() => {
+// Clean up expired entries lazily during each call instead of via setInterval
+function cleanupExpired() {
+  if (store.size > 100) {
     const now = Date.now()
     for (const [key, entry] of store.entries()) {
       if (now > entry.resetAt) store.delete(key)
     }
-  }, 5 * 60 * 1000)
+  }
 }

@@ -5,6 +5,9 @@ import type { Drawing, DrawingScale, DrawingMeasurement } from '@/lib/types'
 
 export async function getDrawings(projectId: string): Promise<Drawing[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
   const { data } = await supabase
     .from('qb_drawings')
     .select('*')
@@ -16,6 +19,9 @@ export async function getDrawings(projectId: string): Promise<Drawing[]> {
 
 export async function getDrawing(id: string): Promise<Drawing | null> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
   const { data } = await supabase
     .from('qb_drawings')
     .select('*')
@@ -92,6 +98,9 @@ export async function deleteDrawing(id: string): Promise<{ error?: string }> {
 
 export async function getDrawingUrl(filePath: string): Promise<string | null> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
   const { data } = await supabase.storage
     .from('qb-drawings')
     .createSignedUrl(filePath, 3600)
@@ -103,6 +112,9 @@ export async function getDrawingUrl(filePath: string): Promise<string | null> {
 
 export async function getDrawingScales(drawingId: string): Promise<DrawingScale[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
   const { data } = await supabase
     .from('qb_drawing_scales')
     .select('*')
@@ -142,6 +154,9 @@ export async function createDrawingScale(fields: {
 
 export async function getDrawingMeasurements(drawingId: string, pageNumber?: number): Promise<DrawingMeasurement[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
   let query = supabase
     .from('qb_drawing_measurements')
     .select('*')

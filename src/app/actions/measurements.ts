@@ -8,6 +8,9 @@ import { calculateLineQuantity } from '@/lib/calc'
 
 export async function getMeasurementItems(projectId: string): Promise<MeasurementItem[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
   const { data } = await supabase
     .from('qb_measurement_items')
     .select('*, lines:qb_measurement_lines(*)')
@@ -25,6 +28,9 @@ export async function getMeasurementItems(projectId: string): Promise<Measuremen
 
 export async function getMeasurementItem(id: string): Promise<MeasurementItem | null> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
   const { data } = await supabase
     .from('qb_measurement_items')
     .select('*, lines:qb_measurement_lines(*)')
@@ -375,6 +381,9 @@ export async function linkDrawingMeasurementsToBOQ(
 
 export async function duplicateMeasurementLine(id: string): Promise<{ data?: MeasurementLine; error?: string }> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
   const { data: original } = await supabase
     .from('qb_measurement_lines')
     .select('*')
