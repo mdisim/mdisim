@@ -13,6 +13,7 @@ import {
   FileSpreadsheet,
   Download,
   Upload,
+  FileText,
   Trash2,
   Filter,
   Link2,
@@ -31,6 +32,7 @@ import {
 } from '@/app/actions/boq'
 import { getProject } from '@/app/actions/projects'
 import { exportBOQToExcel } from '@/lib/export/boq-excel'
+import { exportBOQToPDF } from '@/lib/export/boq-pdf'
 import { parseBOQExcel } from '@/lib/import/boq-excel'
 import type { ImportedBOQRow } from '@/lib/import/boq-excel'
 
@@ -387,6 +389,19 @@ export default function BOQPage() {
           >
             <Download size={16} />
             Export Excel
+          </Button>
+          <Button
+            variant="outline"
+            onClick={async () => {
+              const project = await getProject(projectId)
+              if (project) {
+                exportBOQToPDF(items, project.name, project.currency, vatPct)
+              }
+            }}
+            disabled={items.length === 0}
+          >
+            <FileText size={16} />
+            Export PDF
           </Button>
           <Button onClick={() => setShowCreate(true)}>
             <Plus size={16} />

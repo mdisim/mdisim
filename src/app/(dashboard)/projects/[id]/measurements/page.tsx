@@ -30,6 +30,7 @@ import { Ruler, Plus, Link2, Image, ArrowRight, BarChart3, GitBranch, FileText, 
 import { cn } from '@/lib/utils'
 import { getProject } from '@/app/actions/projects'
 import { exportMeasurementsToExcel } from '@/lib/export/measurements-excel'
+import { exportMeasurementsToPDF } from '@/lib/export/measurements-pdf'
 
 const MEASUREMENT_TYPE_DEFAULT_UNIT: Record<MeasurementType, string> = {
   volume: 'm³',
@@ -320,6 +321,10 @@ export default function MeasurementsPage() {
         onExport={async () => {
           const project = await getProject(projectId)
           if (project) await exportMeasurementsToExcel(items, project.name)
+        }}
+        onExportPDF={async () => {
+          const project = await getProject(projectId)
+          if (project) exportMeasurementsToPDF(items, project.name)
         }}
         totalAdditions={totalAdditions}
         totalDeductions={totalDeductions}

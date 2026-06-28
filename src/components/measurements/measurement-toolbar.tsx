@@ -9,12 +9,14 @@ import {
   Download,
   BookOpen,
   Filter,
+  FileText,
 } from 'lucide-react'
 
 interface MeasurementToolbarProps {
   onAddItem: () => void
   onGenerateBOQ: () => void
   onExport?: () => void
+  onExportPDF?: () => void
   selectedCount: number
   sections: string[]
   activeSection: string | null
@@ -32,6 +34,7 @@ export function MeasurementToolbar({
   onAddItem,
   onGenerateBOQ,
   onExport,
+  onExportPDF,
   selectedCount,
   sections,
   activeSection,
@@ -69,6 +72,12 @@ export function MeasurementToolbar({
             <Button size="sm" variant="outline" onClick={onExport} disabled={itemCount === 0}>
               <Download size={14} />
               Export Excel
+            </Button>
+          )}
+          {onExportPDF && (
+            <Button size="sm" variant="outline" onClick={onExportPDF} disabled={itemCount === 0}>
+              <FileText size={14} />
+              Export PDF
             </Button>
           )}
           <Button size="sm" onClick={onAddItem}>
