@@ -20,6 +20,7 @@ import {
   Grid3X3,
   ChevronDown,
   Box,
+  Brain,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { TakeoffMeasurement } from '@/lib/takeoff/renderer'
@@ -44,6 +45,8 @@ interface TakeoffToolbarProps {
   showGrid?: boolean
   onGridToggle?: () => void
   onVolumeCalculator?: () => void
+  onAIAnalyze?: () => void
+  isAIAnalyzing?: boolean
 }
 
 const COLORS = [
@@ -202,6 +205,8 @@ export function TakeoffToolbar({
   showGrid,
   onGridToggle,
   onVolumeCalculator,
+  onAIAnalyze,
+  isAIAnalyzing,
 }: TakeoffToolbarProps) {
   const navTools = TOOLS.filter((t) => t.group === 'nav')
   const measureTools = TOOLS.filter((t) => t.group === 'measure')
@@ -274,6 +279,26 @@ export function TakeoffToolbar({
             active={false}
             onClick={onVolumeCalculator}
           />
+        </div>
+      )}
+
+      {/* AI Analyze */}
+      {onAIAnalyze && (
+        <div className="flex items-center gap-0.5 px-2 border-r border-slate-200 dark:border-slate-700">
+          <button
+            onClick={onAIAnalyze}
+            disabled={isAIAnalyzing}
+            title="AI Element Detection"
+            className={cn(
+              'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors',
+              isAIAnalyzing
+                ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-500 animate-pulse'
+                : 'bg-gradient-to-r from-violet-500 to-blue-500 text-white hover:from-violet-600 hover:to-blue-600 shadow-sm',
+            )}
+          >
+            <Brain size={16} className={isAIAnalyzing ? 'animate-spin' : ''} />
+            {isAIAnalyzing ? 'Analyzing...' : 'AI Detect'}
+          </button>
         </div>
       )}
 

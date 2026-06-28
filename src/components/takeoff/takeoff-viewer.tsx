@@ -52,6 +52,9 @@ import {
   canRedo as hasRedo,
 } from '@/lib/takeoff/undo-redo'
 import type { UndoRedoState, UndoAction } from '@/lib/takeoff/undo-redo'
+import { AISuggestionsPanel } from './ai-suggestions-panel'
+import { analyzeDrawingWithAI, estimateProjectCosts } from '@/app/actions/ai-takeoff'
+import type { AIFullAnalysis, AIDetectedElement, AIBOQItem } from '@/app/actions/ai-takeoff'
 import { AlertTriangle, PanelRightClose, PanelRightOpen, Keyboard, Link2 } from 'lucide-react'
 import { linkDrawingMeasurementsToBOQ } from '@/app/actions/measurements'
 import { createBOQItem } from '@/app/actions/boq'
@@ -195,6 +198,13 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
   // Bidirectional highlighting
   const [highlightedMeasurementIds, setHighlightedMeasurementIds] = useState<Set<string>>(new Set())
   const [activeBOQItemId, setActiveBOQItemId] = useState<string | null>(null)
+
+  // AI analysis
+  const [showAIPanel, setShowAIPanel] = useState(false)
+  const [isAIAnalyzing, setIsAIAnalyzing] = useState(false)
+  const [aiResult, setAIResult] = useState<AIFullAnalysis | null>(null)
+  const [aiHighlightedElement, setAIHighlightedElement] = useState<AIDetectedElement | null>(null)
+  const [isEstimatingCosts, setIsEstimatingCosts] = useState(false)
 
   // Pan state
   const isPanning = useRef(false)
@@ -359,6 +369,27 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
       renderSnapIndicator(ctx, currentSnap, 1)
     }
 
+    // AI highlighted element bounding box
+    if (aiHighlightedElement?.boundingBox) {
+      const bb = aiHighlightedElement.boundingBox
+      const bx = (bb.x / 100) * canvas.width
+      const by = (bb.y / 100) * canvas.height
+      const bw = (bb.width / 100) * canvas.width
+      const bh = (bb.height / 100) * canvas.height
+      ctx.save()
+      ctx.strokeStyle = '#8B5CF6'
+      ctx.lineWidth = 2
+      ctx.setLineDash([6, 4])
+      ctx.fillStyle = 'rgba(139, 92, 246, 0.08)'
+      ctx.fillRect(bx, by, bw, bh)
+      ctx.strokeRect(bx, by, bw, bh)
+      ctx.setLineDash([])
+      ctx.font = '600 11px Inter, system-ui, sans-serif'
+      ctx.fillStyle = '#8B5CF6'
+      ctx.fillText(aiHighlightedElement.label, bx + 4, by - 4)
+      ctx.restore()
+    }
+
     if (mousePos && (DRAWING_TOOLS.includes(activeTool ?? '') || isCalibrating)) {
       ctx.strokeStyle = 'rgba(0,0,0,0.4)'
       ctx.lineWidth = 1
@@ -371,7 +402,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
       ctx.stroke()
       ctx.setLineDash([])
     }
-  }, [measurements, activeMeasurementId, activeTool, activePoints, mousePos, activeColor, isCalibrating, calibrationPoints, currentSnap, showGrid, snapConfig.gridSize, scale, highlightedMeasurementIds])
+  }, [measurements, activeMeasurementId, activeTool, activePoints, mousePos, activeColor, isCalibrating, calibrationPoints, currentSnap, showGrid, snapConfig.gridSize, scale, highlightedMeasurementIds, aiHighlightedElement])
 
   useEffect(() => {
     if (renderQueued.current) return
@@ -1135,6 +1166,103 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
   }, [])
 
 
+  // ── AI analysis handlers ─────────────────────────────────────────────
+  const handleAIAnalyze = useCallback(async () => {
+    if (!pdfCanvasRef.current) return
+    setIsAIAnalyzing(true)
+    setShowAIPanel(true)
+    setAIResult(null)
+    try {
+      const canvas = pdfCanvasRef.current
+      const tempCanvas = document.createElement('canvas')
+      const maxDim = 2048
+      const scaleFactor = Math.min(maxDim / canvas.width, maxDim / canvas.height, 1)
+      tempCanvas.width = Math.round(canvas.width * scaleFactor)
+      tempCanvas.height = Math.round(canvas.height * scaleFactor)
+      const tctx = tempCanvas.getContext('2d')!
+      tctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height)
+      const dataUrl = tempCanvas.toDataURL('image/png')
+      const base64 = dataUrl.split(',')[1]
+      const result = await analyzeDrawingWithAI(base64, 'Drawing', 'general', page)
+      setAIResult(result)
+    } catch (e) {
+      setAIResult({
+        drawing: { drawingType: '', summary: '', elements: [], dimensions: [], detectedScale: null, repeatedPatterns: [] },
+        boq: [],
+        totalEstimatedCost: null,
+        currency: 'USD',
+        error: e instanceof Error ? e.message : 'Analysis failed',
+      })
+    } finally {
+      setIsAIAnalyzing(false)
+    }
+  }, [page])
+
+  const handleAIApproveElement = useCallback(async (element: AIDetectedElement, quantity: number, unit: string, boqDescription: string) => {
+    const result = await createBOQItem({
+      project_id: projectId,
+      description: boqDescription,
+      unit,
+      quantity,
+      unit_rate: 0,
+    })
+    if (result.error) console.error('Failed to create BOQ item:', result.error)
+  }, [projectId])
+
+  const handleAIApproveBOQItem = useCallback(async (item: AIBOQItem) => {
+    const result = await createBOQItem({
+      project_id: projectId,
+      code: item.code,
+      description: item.description,
+      unit: item.unit,
+      quantity: item.quantity,
+      unit_rate: item.unitRate ?? 0,
+    })
+    if (result.error) console.error('Failed to create BOQ item:', result.error)
+  }, [projectId])
+
+  const handleAIApproveAll = useCallback(async (elements: AIDetectedElement[]) => {
+    for (const el of elements) {
+      await createBOQItem({
+        project_id: projectId,
+        description: el.boqDescription,
+        unit: el.boqUnit,
+        quantity: el.estimatedQuantity ?? 0,
+        unit_rate: 0,
+      })
+    }
+  }, [projectId])
+
+  const handleEstimateCosts = useCallback(async () => {
+    if (!aiResult?.boq) return
+    setIsEstimatingCosts(true)
+    try {
+      const items = aiResult.boq.flatMap(g => g.items.map(i => ({
+        code: i.code,
+        description: i.description,
+        unit: i.unit,
+        quantity: i.quantity,
+      })))
+      const estimates = await estimateProjectCosts(items, 'Construction project')
+      const updated = { ...aiResult }
+      for (const est of estimates) {
+        for (const group of updated.boq) {
+          for (const item of group.items) {
+            if (item.code === est.boqItemCode) {
+              item.unitRate = est.suggestedUnitRate
+              item.amount = item.quantity * est.suggestedUnitRate
+            }
+          }
+          group.subtotal = group.items.reduce((sum, i) => sum + (i.amount ?? 0), 0)
+        }
+      }
+      updated.totalEstimatedCost = updated.boq.reduce((sum, g) => sum + (g.subtotal ?? 0), 0)
+      setAIResult(updated)
+    } finally {
+      setIsEstimatingCosts(false)
+    }
+  }, [aiResult])
+
   // ── Cursor style ─────────────────────────────────────────────────────
   let cursor = 'default'
   // eslint-disable-next-line react-hooks/refs -- ref read is intentional for cursor styling during canvas interaction
@@ -1179,6 +1307,8 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
         showGrid={showGrid}
         onGridToggle={() => setShowGrid(v => !v)}
         onVolumeCalculator={() => setShowVolumeCalc(true)}
+        onAIAnalyze={handleAIAnalyze}
+        isAIAnalyzing={isAIAnalyzing}
       />
 
       {/* Scale warning */}
@@ -1350,6 +1480,21 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
               </div>
             )}
           </div>
+
+          {/* AI Suggestions Panel */}
+          <AISuggestionsPanel
+            isOpen={showAIPanel}
+            onClose={() => setShowAIPanel(false)}
+            isAnalyzing={isAIAnalyzing}
+            result={aiResult}
+            onAnalyze={handleAIAnalyze}
+            onApproveElement={handleAIApproveElement}
+            onApproveBOQItem={handleAIApproveBOQItem}
+            onApproveAll={handleAIApproveAll}
+            onHighlightElement={setAIHighlightedElement}
+            onEstimateCosts={handleEstimateCosts}
+            isEstimatingCosts={isEstimatingCosts}
+          />
         </div>
 
         {/* Resizable side panel */}
