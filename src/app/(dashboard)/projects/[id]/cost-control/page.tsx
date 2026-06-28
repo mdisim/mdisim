@@ -345,7 +345,7 @@ export default function CostControlPage() {
                       <td className="px-3 py-2">
                         <select
                           value={v.status}
-                          onChange={e => { updateVariation(v.id, { status: e.target.value as VariationStatus }); load() }}
+                          onChange={async e => { await updateVariation(v.id, { status: e.target.value as VariationStatus }); load() }}
                           className={cn('text-xs px-2 py-0.5 rounded-full border-0 font-medium', VAR_STATUS_META[v.status].color)}
                         >
                           {Object.entries(VAR_STATUS_META).map(([k, m]) => <option key={k} value={k}>{m.label}</option>)}
@@ -354,7 +354,7 @@ export default function CostControlPage() {
                       <td className="px-3 py-2 text-right tabular-nums">{fmt(v.amount)}</td>
                       <td className="px-3 py-2 text-right tabular-nums font-medium">{v.approved_amount != null ? fmt(v.approved_amount) : '-'}</td>
                       <td className="px-3 py-1">
-                        <button onClick={() => { deleteVariation(v.id); load() }} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-300 hover:text-red-500">
+                        <button onClick={async () => { await deleteVariation(v.id); load() }} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-300 hover:text-red-500">
                           <Trash2 size={14} />
                         </button>
                       </td>
@@ -407,7 +407,7 @@ export default function CostControlPage() {
                       <td className="px-3 py-2 text-xs capitalize text-slate-500">{ce.cost_type}</td>
                       <td className="px-3 py-2 text-right tabular-nums font-medium">{fmt(ce.amount)}</td>
                       <td className="px-3 py-1">
-                        <button onClick={() => { deleteCostEntry(ce.id); load() }} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-300 hover:text-red-500">
+                        <button onClick={async () => { await deleteCostEntry(ce.id); load() }} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-300 hover:text-red-500">
                           <Trash2 size={14} />
                         </button>
                       </td>
