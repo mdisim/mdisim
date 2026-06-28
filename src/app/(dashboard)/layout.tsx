@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import { PageTransition } from '@/components/layout/page-transition'
 import { DashboardHeader } from './dashboard-header'
+import { CopilotProvider } from '@/components/copilot/copilot-provider'
 
 export default async function DashboardLayout({
   children,
@@ -16,6 +17,11 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
+  const { data: projects } = await supabase
+    .from('projects')
+    .select('id, name')
+    .order('created_at', { ascending: false })
+
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-900">
       <AppSidebar userEmail={user.email} />
@@ -27,6 +33,7 @@ export default async function DashboardLayout({
           </PageTransition>
         </main>
       </div>
+      <CopilotProvider projects={(projects ?? []).map(p => ({ id: p.id, name: p.name }))} />
     </div>
   )
 }
