@@ -64,6 +64,8 @@ interface TakeoffViewerProps {
   projectId: string
   drawingUrl: string
   pageCount: number
+  drawingName?: string
+  drawingType?: string
 }
 
 type ToolType = DrawingToolType | 'select' | 'pan' | 'polygon' | 'wall'
@@ -141,7 +143,7 @@ function measurementsToSnapGeometry(measurements: DrawingMeasurement[]): SnapGeo
   return result
 }
 
-export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: TakeoffViewerProps) {
+export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, drawingName, drawingType }: TakeoffViewerProps) {
   // PDF state
   const [pdfDoc, setPdfDoc] = useState<unknown>(null)
   const [page, setPage] = useState(1)
@@ -1183,7 +1185,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
       tctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height)
       const dataUrl = tempCanvas.toDataURL('image/png')
       const base64 = dataUrl.split(',')[1]
-      const result = await analyzeDrawingWithAI(base64, 'Drawing', 'general', page)
+      const result = await analyzeDrawingWithAI(base64, drawingName ?? 'Drawing', drawingType ?? 'general', page)
       setAIResult(result)
     } catch (e) {
       setAIResult({

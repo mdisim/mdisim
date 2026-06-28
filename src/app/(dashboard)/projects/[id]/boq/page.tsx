@@ -21,6 +21,7 @@ import {
   ChevronDown,
   ChevronRight,
   Copy,
+  BookOpen,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -30,6 +31,8 @@ import {
   deleteBOQItem,
   bulkCreateBOQItems,
 } from '@/app/actions/boq'
+import { getLibraryItems } from '@/app/actions/library'
+import type { LibraryItem } from '@/lib/types'
 import { getProject } from '@/app/actions/projects'
 import { exportBOQToExcel } from '@/lib/export/boq-excel'
 import { exportBOQToPDF } from '@/lib/export/boq-pdf'
@@ -62,6 +65,10 @@ export default function BOQPage() {
   const [dragOverId, setDragOverId] = useState<string | null>(null)
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
   const [confirmAction, setConfirmAction] = useState<{ message: string; onConfirm: () => void } | null>(null)
+  const [showLibraryLink, setShowLibraryLink] = useState<string | null>(null)
+  const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([])
+  const [librarySearch, setLibrarySearch] = useState('')
+  const [libraryLoaded, setLibraryLoaded] = useState(false)
 
   const [form, setForm] = useState({
     code: '',
@@ -259,6 +266,29 @@ export default function BOQPage() {
       })
       if (!result.error) load()
     } catch (e) { console.error('Failed to duplicate BOQ item:', e) }
+  }
+
+  const handleOpenLibraryLink = async (boqItemId: string) => {
+    setShowLibraryLink(boqItemId)
+    setLibrarySearch('')
+    if (!libraryLoaded) {
+      const items = await getLibraryItems()
+      setLibraryItems(items)
+      setLibraryLoaded(true)
+    }
+  }
+
+  const handleLinkLibraryItem = async (libraryItem: LibraryItem) => {
+    if (!showLibraryLink) return
+    await updateBOQItem(showLibraryLink, {
+      library_item_id: libraryItem.id,
+      unit_rate: libraryItem.default_rate ?? undefined,
+      material_rate: libraryItem.material_rate ?? undefined,
+      labor_rate: libraryItem.labor_rate ?? undefined,
+      equipment_rate: libraryItem.equipment_rate ?? undefined,
+    })
+    setShowLibraryLink(null)
+    load()
   }
 
   const handleDrop = async (targetId: string) => {
@@ -542,6 +572,18 @@ export default function BOQPage() {
                           </td>
                           <td className="px-1 py-0.5">
                             <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => handleOpenLibraryLink(item.id)}
+                                className={cn(
+                                  'p-1 rounded transition-colors',
+                                  item.library_item_id
+                                    ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+                                    : 'text-slate-300 dark:text-slate-500 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                                )}
+                                title={item.library_item_id ? 'Linked to library' : 'Link to library item'}
+                              >
+                                <BookOpen size={13} />
+                              </button>
                               <button
                                 onClick={() => handleDuplicate(item)}
                                 className="p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 text-slate-300 dark:text-slate-500 hover:text-blue-500 transition-colors"
@@ -853,6 +895,59 @@ export default function BOQPage() {
         <div className="flex justify-end gap-3">
           <Button variant="ghost" onClick={() => setConfirmAction(null)}>Cancel</Button>
           <Button variant="danger" onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>Confirm</Button>
+        </div>
+      </Modal>
+
+      {/* Library Link Modal */}
+      <Modal isOpen={!!showLibraryLink} onClose={() => setShowLibraryLink(null)} title="Link Library Item" size="md">
+        <div className="space-y-3">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Select a library item to apply its rates to this BOQ item.
+          </p>
+          <input
+            type="text"
+            placeholder="Search library items..."
+            value={librarySearch}
+            onChange={e => setLibrarySearch(e.target.value)}
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            autoFocus
+          />
+          <div className="max-h-[300px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700/50 border border-slate-200 dark:border-slate-700 rounded-lg">
+            {libraryItems.length === 0 ? (
+              <p className="text-xs text-slate-400 text-center py-8">No library items found. Add items in the Library page first.</p>
+            ) : (
+              libraryItems
+                .filter(li => {
+                  if (!librarySearch.trim()) return true
+                  const q = librarySearch.toLowerCase()
+                  return (li.description?.toLowerCase().includes(q)) || (li.code?.toLowerCase().includes(q))
+                })
+                .map(li => (
+                  <button
+                    key={li.id}
+                    onClick={() => handleLinkLibraryItem(li)}
+                    className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        {li.code && <span className="text-[10px] font-mono text-slate-400 shrink-0">{li.code}</span>}
+                        <span className="text-sm text-slate-700 dark:text-slate-200 truncate">{li.description}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-[10px] text-slate-400 mt-0.5">
+                        <span>{li.unit}</span>
+                        {li.default_rate != null && <span>Rate: {li.default_rate}</span>}
+                        {li.material_rate != null && <span>Mat: {li.material_rate}</span>}
+                        {li.labor_rate != null && <span>Lab: {li.labor_rate}</span>}
+                      </div>
+                    </div>
+                    <BookOpen size={14} className="text-emerald-500 shrink-0 ml-2" />
+                  </button>
+                ))
+            )}
+          </div>
+          <div className="flex justify-end">
+            <Button variant="ghost" onClick={() => setShowLibraryLink(null)}>Cancel</Button>
+          </div>
         </div>
       </Modal>
     </div>

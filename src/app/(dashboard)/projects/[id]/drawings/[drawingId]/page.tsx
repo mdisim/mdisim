@@ -107,6 +107,8 @@ export default function TakeoffPage() {
           projectId={projectId}
           drawingUrl={drawingUrl}
           pageCount={drawing.page_count}
+          drawingName={drawing.name}
+          drawingType={drawing.drawing_type}
         />
       </div>
     </div>
