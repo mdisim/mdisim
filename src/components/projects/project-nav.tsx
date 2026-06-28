@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import type { Project } from '@/lib/types'
-import { ArrowLeft, Ruler, ImageIcon, Settings2, FileSpreadsheet, BookOpen, Calculator, Users, DollarSign, Receipt, GitCompare, BarChart3 } from 'lucide-react'
+import { ArrowLeft, Ruler, ImageIcon, Settings2, FileSpreadsheet, BookOpen, Calculator, Users, DollarSign, Receipt, GitCompare, BarChart3, Activity } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/ui/modal'
 import { Input } from '@/components/ui/input'
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { updateProject } from '@/app/actions/projects'
 
 const TABS = [
+  { href: '', label: 'Intelligence', icon: Activity },
   { href: 'measurements', label: 'Measurements', icon: Ruler },
   { href: 'drawings', label: 'Drawings', icon: ImageIcon },
   { href: 'boq', label: 'BOQ', icon: FileSpreadsheet },
@@ -75,8 +76,8 @@ export function ProjectNav({ project }: { project: Project }) {
         {/* Tab bar */}
         <div className="flex gap-0.5 -mb-px overflow-x-auto scrollbar-none">
           {TABS.map((tab) => {
-            const href = `${base}/${tab.href}`
-            const isActive = pathname.startsWith(href)
+            const href = tab.href ? `${base}/${tab.href}` : base
+            const isActive = tab.href ? pathname.startsWith(href) : pathname === base
             const Icon = tab.icon
             return (
               <Link
