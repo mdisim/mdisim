@@ -14,6 +14,7 @@ import {
   Layers,
   Crosshair,
   Undo2,
+  Redo2,
   Trash2,
   Magnet,
   Grid3X3,
@@ -33,7 +34,9 @@ interface TakeoffToolbarProps {
   activeMeasurementId: string | null
   onDeleteMeasurement: (id: string) => void
   onUndo: () => void
+  onRedo?: () => void
   canUndo: boolean
+  canRedo?: boolean
   activeColor: string
   onColorChange: (color: string) => void
   snapConfig?: SnapConfig
@@ -189,7 +192,9 @@ export function TakeoffToolbar({
   measurements,
   activeMeasurementId,
   onUndo,
+  onRedo,
   canUndo,
+  canRedo,
   activeColor,
   onColorChange,
   snapConfig,
@@ -300,6 +305,16 @@ export function TakeoffToolbar({
         >
           <Undo2 size={18} />
         </button>
+        {onRedo && (
+          <button
+            onClick={onRedo}
+            disabled={!canRedo}
+            title="Redo (Ctrl+Shift+Z)"
+            className="p-2 rounded-md text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700 disabled:opacity-40 transition-colors"
+          >
+            <Redo2 size={18} />
+          </button>
+        )}
         <button
           onClick={() => {
             if (activeMeasurementId) onDeleteMeasurement(activeMeasurementId)

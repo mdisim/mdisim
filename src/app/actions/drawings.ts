@@ -204,7 +204,7 @@ export async function createDrawingMeasurement(fields: {
 
 export async function updateDrawingMeasurement(
   id: string,
-  fields: Partial<Pick<DrawingMeasurement, 'label' | 'color' | 'notes' | 'quantity' | 'unit'>>
+  fields: Partial<Pick<DrawingMeasurement, 'label' | 'color' | 'notes' | 'quantity' | 'unit' | 'coordinates'>>
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

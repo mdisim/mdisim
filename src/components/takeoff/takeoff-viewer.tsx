@@ -43,6 +43,15 @@ import { LiveBOQPanel } from './live-boq-panel'
 import { ScaleManager } from './scale-manager'
 import { VolumeCalculator } from './volume-calculator'
 import { BOQPicker } from './boq-picker'
+import {
+  createUndoRedoState,
+  pushAction,
+  undo as undoAction,
+  redo as redoAction,
+  canUndo as hasUndo,
+  canRedo as hasRedo,
+} from '@/lib/takeoff/undo-redo'
+import type { UndoRedoState, UndoAction } from '@/lib/takeoff/undo-redo'
 import { AlertTriangle, PanelRightClose, PanelRightOpen, Keyboard, Link2 } from 'lucide-react'
 import { linkDrawingMeasurementsToBOQ } from '@/app/actions/measurements'
 import { createBOQItem } from '@/app/actions/boq'
@@ -154,7 +163,10 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
   // Measurements
   const [measurements, setMeasurements] = useState<DrawingMeasurement[]>([])
   const [activeMeasurementId, setActiveMeasurementId] = useState<string | null>(null)
-  const [undoStack, setUndoStack] = useState<string[]>([])
+  const [undoRedoState, setUndoRedoState] = useState<UndoRedoState>(createUndoRedoState())
+
+  // Handle dragging
+  const [draggingHandle, setDraggingHandle] = useState<{ measurementId: string; handleIndex: number; originalCoords: unknown } | null>(null)
 
   // Panel & help
   const [showPanel, setShowPanel] = useState(typeof window !== 'undefined' ? window.innerWidth >= 768 : true)
@@ -487,7 +499,11 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
       })
 
       if (result.data) {
-        setUndoStack((prev) => [...prev, result.data!.id])
+        setUndoRedoState(prev => pushAction(prev, {
+          type: 'create',
+          measurementId: result.data!.id,
+          newData: result.data,
+        }))
       }
       await loadData()
     },
@@ -510,8 +526,59 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
         offsetStart.current = offset
         return
       }
+
+      // Handle dragging: check if clicking near a handle of the active measurement
+      if (activeTool === 'select' && activeMeasurementId && e.button === 0) {
+        const pt = screenToCanvas(e.clientX, e.clientY)
+        const m = measurements.find(m => m.id === activeMeasurementId)
+        if (m) {
+          const coords = m.coordinates as Record<string, unknown>
+          const HANDLE_RADIUS = 12
+          let handleIdx = -1
+
+          if (coords?.points && Array.isArray(coords.points)) {
+            const pts = coords.points as number[][]
+            for (let i = 0; i < pts.length; i++) {
+              if (distance(pt, { x: pts[i][0], y: pts[i][1] }) < HANDLE_RADIUS) {
+                handleIdx = i
+                break
+              }
+            }
+          } else if (coords?.origin && Array.isArray(coords.origin)) {
+            const [ox, oy] = coords.origin as number[]
+            const w = (coords.width as number) ?? 0
+            const h = (coords.height as number) ?? 0
+            const corners = [[ox, oy], [ox + w, oy], [ox + w, oy + h], [ox, oy + h]]
+            for (let i = 0; i < corners.length; i++) {
+              if (distance(pt, { x: corners[i][0], y: corners[i][1] }) < HANDLE_RADIUS) {
+                handleIdx = i
+                break
+              }
+            }
+          } else if (coords?.center && Array.isArray(coords.center)) {
+            const [cx, cy] = coords.center as number[]
+            const r = (coords.radius as number) ?? 0
+            if (distance(pt, { x: cx + r, y: cy }) < HANDLE_RADIUS) {
+              handleIdx = 1
+            } else if (distance(pt, { x: cx, y: cy }) < HANDLE_RADIUS) {
+              handleIdx = 0
+            }
+          }
+
+          if (handleIdx >= 0) {
+            e.preventDefault()
+            e.stopPropagation()
+            setDraggingHandle({
+              measurementId: m.id,
+              handleIndex: handleIdx,
+              originalCoords: JSON.parse(JSON.stringify(coords)),
+            })
+            return
+          }
+        }
+      }
     },
-    [activeTool, offset],
+    [activeTool, offset, activeMeasurementId, measurements, screenToCanvas],
   )
 
   const handleMouseMove = useCallback(
@@ -527,17 +594,114 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
         return
       }
 
+      // Handle dragging
+      if (draggingHandle) {
+        const { point } = getEffectiveCursor(rawPt)
+        setMeasurements(prev => prev.map(m => {
+          if (m.id !== draggingHandle.measurementId) return m
+          const coords = JSON.parse(JSON.stringify(m.coordinates)) as Record<string, unknown>
+          const idx = draggingHandle.handleIndex
+
+          if (coords?.points && Array.isArray(coords.points)) {
+            const pts = coords.points as number[][]
+            if (idx < pts.length) {
+              pts[idx] = [point.x, point.y]
+            }
+          } else if (coords?.origin && Array.isArray(coords.origin)) {
+            const [ox, oy] = coords.origin as number[]
+            const w = (coords.width as number) ?? 0
+            const h = (coords.height as number) ?? 0
+            // idx: 0=TL, 1=TR, 2=BR, 3=BL
+            if (idx === 0) {
+              coords.origin = [point.x, point.y]
+              coords.width = ox + w - point.x
+              coords.height = oy + h - point.y
+            } else if (idx === 1) {
+              coords.origin = [ox, point.y]
+              coords.width = point.x - ox
+              coords.height = oy + h - point.y
+            } else if (idx === 2) {
+              coords.width = point.x - ox
+              coords.height = point.y - oy
+            } else if (idx === 3) {
+              coords.origin = [point.x, oy]
+              coords.width = ox + w - point.x
+              coords.height = point.y - oy
+            }
+          } else if (coords?.center && Array.isArray(coords.center)) {
+            if (idx === 0) {
+              coords.center = [point.x, point.y]
+            } else if (idx === 1) {
+              const [cx, cy] = coords.center as number[]
+              coords.radius = distance({ x: cx, y: cy }, point)
+            }
+          }
+
+          return { ...m, coordinates: coords }
+        }))
+        setMousePos(point)
+        return
+      }
+
       // Apply snap and angle constraint
       const { point, snap } = getEffectiveCursor(rawPt)
       setMousePos(point)
       setCurrentSnap(snap)
     },
-    [screenToCanvas, getEffectiveCursor],
+    [screenToCanvas, getEffectiveCursor, draggingHandle],
   )
 
-  const handleMouseUp = useCallback(() => {
+  const handleMouseUp = useCallback(async () => {
     isPanning.current = false
-  }, [])
+
+    if (draggingHandle) {
+      const m = measurements.find(m => m.id === draggingHandle.measurementId)
+      if (m) {
+        const pxPerUnit = scale?.px_per_unit ?? 0
+        const coords = m.coordinates as Record<string, unknown>
+        let quantity = m.quantity
+
+        // Recalculate quantity based on new coordinates
+        if (coords?.points && Array.isArray(coords.points)) {
+          const pts = (coords.points as number[][]).map(([x, y]) => ({ x, y }))
+          if (m.tool_type === 'line' && pts.length === 2) {
+            const d = distance(pts[0], pts[1])
+            quantity = pxPerUnit > 0 ? pixelsToReal(d, pxPerUnit) : d
+          } else if (m.tool_type === 'polyline') {
+            const d = polylineLength(pts)
+            quantity = pxPerUnit > 0 ? pixelsToReal(d, pxPerUnit) : d
+          } else if (m.tool_type === 'area' && pts.length >= 3) {
+            const a = polygonArea(pts)
+            quantity = pxPerUnit > 0 ? sqPixelsToReal(a, pxPerUnit) : a
+          } else if (m.tool_type === 'count') {
+            quantity = pts.length
+          }
+        } else if (coords?.origin) {
+          const w = Math.abs((coords.width as number) ?? 0)
+          const h = Math.abs((coords.height as number) ?? 0)
+          const a = w * h
+          quantity = pxPerUnit > 0 ? sqPixelsToReal(a, pxPerUnit) : a
+        } else if (coords?.center) {
+          const r = (coords.radius as number) ?? 0
+          const a = circleArea(r)
+          quantity = pxPerUnit > 0 ? sqPixelsToReal(a, pxPerUnit) : a
+        }
+
+        // Record in undo history
+        setUndoRedoState(prev => pushAction(prev, {
+          type: 'update',
+          measurementId: m.id,
+          previousData: { coordinates: draggingHandle.originalCoords, quantity: m.quantity },
+          newData: { coordinates: coords, quantity },
+        }))
+
+        // Save to DB
+        await updateDrawingMeasurement(m.id, { quantity, coordinates: coords })
+        await loadData()
+      }
+      setDraggingHandle(null)
+    }
+  }, [draggingHandle, measurements, scale, loadData])
 
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
@@ -667,14 +831,64 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
     [],
   )
 
-  // ── Undo ─────────────────────────────────────────────────────────────
+  // ── Undo / Redo ──────────────────────────────────────────────────────
   const handleUndo = useCallback(async () => {
-    if (undoStack.length === 0) return
-    const lastId = undoStack[undoStack.length - 1]
-    await deleteDrawingMeasurement(lastId)
-    setUndoStack((prev) => prev.slice(0, -1))
+    const { state: newState, action } = undoAction(undoRedoState)
+    if (!action) return
+    setUndoRedoState(newState)
+
+    if (action.type === 'create') {
+      await deleteDrawingMeasurement(action.measurementId)
+    } else if (action.type === 'delete' && action.previousData) {
+      const prev = action.previousData as Record<string, unknown>
+      await createDrawingMeasurement({
+        drawing_id: prev.drawing_id as string,
+        page_number: prev.page_number as number,
+        scale_id: prev.scale_id as string | undefined,
+        tool_type: prev.tool_type as string,
+        coordinates: prev.coordinates,
+        quantity: prev.quantity as number,
+        unit: prev.unit as string | undefined,
+        label: prev.label as string | undefined,
+        color: prev.color as string | undefined,
+      })
+    } else if (action.type === 'update' && action.previousData) {
+      const prev = action.previousData as Record<string, unknown>
+      await updateDrawingMeasurement(action.measurementId, {
+        quantity: prev.quantity as number,
+      })
+    }
     await loadData()
-  }, [undoStack, loadData])
+  }, [undoRedoState, loadData])
+
+  const handleRedo = useCallback(async () => {
+    const { state: newState, action } = redoAction(undoRedoState)
+    if (!action) return
+    setUndoRedoState(newState)
+
+    if (action.type === 'create' && action.newData) {
+      const nd = action.newData as Record<string, unknown>
+      await createDrawingMeasurement({
+        drawing_id: nd.drawing_id as string,
+        page_number: nd.page_number as number,
+        scale_id: nd.scale_id as string | undefined,
+        tool_type: nd.tool_type as string,
+        coordinates: nd.coordinates,
+        quantity: nd.quantity as number,
+        unit: nd.unit as string | undefined,
+        label: nd.label as string | undefined,
+        color: nd.color as string | undefined,
+      })
+    } else if (action.type === 'delete') {
+      await deleteDrawingMeasurement(action.measurementId)
+    } else if (action.type === 'update' && action.newData) {
+      const nd = action.newData as Record<string, unknown>
+      await updateDrawingMeasurement(action.measurementId, {
+        quantity: nd.quantity as number,
+      })
+    }
+    await loadData()
+  }, [undoRedoState, loadData])
 
   // ── Zoom helpers ─────────────────────────────────────────────────────
   const handleZoomIn = useCallback(() => {
@@ -707,7 +921,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
     if (clamped !== page) {
       setPage(clamped)
       setOffset({ x: 0, y: 0 })
-      setUndoStack([])
+      setUndoRedoState(createUndoRedoState())
       setActivePoints([])
     }
   }, [page, pageCount])
@@ -733,6 +947,13 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
           deleteDrawingMeasurement(activeMeasurementId).then(() => loadData())
           setActiveMeasurementId(null)
         }
+        return
+      }
+
+      // Redo: Ctrl+Shift+Z or Ctrl+Y
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'Z' || e.key === 'y') && (e.shiftKey || e.key === 'y')) {
+        e.preventDefault()
+        handleRedo()
         return
       }
 
@@ -785,7 +1006,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
       window.removeEventListener('keydown', down)
       window.removeEventListener('keyup', up)
     }
-  }, [activeMeasurementId, loadData, handleZoomIn, handleZoomOut, handleFitToPage, goToPage, page, handleUndo])
+  }, [activeMeasurementId, loadData, handleZoomIn, handleZoomOut, handleFitToPage, goToPage, page, handleUndo, handleRedo])
 
   // ── Calibration confirm ──────────────────────────────────────────────
   const handleCalibConfirm = useCallback(
@@ -828,11 +1049,19 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
   // ── Delete from toolbar ──────────────────────────────────────────────
   const handleDeleteMeasurement = useCallback(
     async (id: string) => {
+      const m = measurements.find(m => m.id === id)
+      if (m) {
+        setUndoRedoState(prev => pushAction(prev, {
+          type: 'delete',
+          measurementId: id,
+          previousData: m,
+        }))
+      }
       await deleteDrawingMeasurement(id)
       if (activeMeasurementId === id) setActiveMeasurementId(null)
       await loadData()
     },
-    [activeMeasurementId, loadData],
+    [activeMeasurementId, loadData, measurements],
   )
 
   // ── Label change ─────────────────────────────────────────────────────
@@ -912,6 +1141,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
   if (activeTool === 'pan' || isPanning.current || isSpaceDown.current) cursor = 'grab'
   if (DRAWING_TOOLS.includes(activeTool ?? '') || isCalibrating) cursor = 'crosshair'
   if (activeTool === 'select') cursor = 'default'
+  if (draggingHandle) cursor = 'move'
 
   const takeoffMs: TakeoffMeasurement[] = useMemo(() => measurements.map((m) => ({
     id: m.id,
@@ -939,7 +1169,9 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
         activeMeasurementId={activeMeasurementId}
         onDeleteMeasurement={handleDeleteMeasurement}
         onUndo={handleUndo}
-        canUndo={undoStack.length > 0}
+        onRedo={handleRedo}
+        canUndo={hasUndo(undoRedoState)}
+        canRedo={hasRedo(undoRedoState)}
         activeColor={activeColor}
         onColorChange={setActiveColor}
         snapConfig={snapConfig}
