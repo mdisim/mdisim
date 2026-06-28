@@ -1,17 +1,73 @@
 import type { MeasurementType } from '@/lib/types'
 
 export function evaluateFormula(formula: string): number {
-  const sanitized = formula.replace(/[^0-9+\-*/().× ,]/g, '').replace(/×/g, '*')
+  // Replace × with * and strip spaces/commas
+  const sanitized = formula.replace(/×/g, '*').replace(/[, ]/g, '')
   if (!sanitized.trim()) return 0
 
+  // Reject dangerous patterns
+  if (/[a-zA-Z_\\;=\[\]{}]|\*\*/.test(sanitized)) return 0
+  // Only allow digits, operators, parens, decimal points
+  if (/[^0-9+\-*/().]/.test(sanitized)) return 0
+
   try {
-    const fn = new Function(`"use strict"; return (${sanitized})`)
-    const result = fn()
+    const result = parseExpr(sanitized, { pos: 0 })
     if (typeof result !== 'number' || !isFinite(result)) return 0
     return result
   } catch {
     return 0
   }
+}
+
+// Recursive-descent parser for safe math evaluation
+// Grammar: expr = term (('+' | '-') term)*
+//          term = factor (('*' | '/') factor)*
+//          factor = ['+' | '-'] (number | '(' expr ')')
+
+function parseExpr(s: string, ctx: { pos: number }): number {
+  let result = parseTerm(s, ctx)
+  while (ctx.pos < s.length && (s[ctx.pos] === '+' || s[ctx.pos] === '-')) {
+    const op = s[ctx.pos++]
+    const right = parseTerm(s, ctx)
+    result = op === '+' ? result + right : result - right
+  }
+  return result
+}
+
+function parseTerm(s: string, ctx: { pos: number }): number {
+  let result = parseFactor(s, ctx)
+  while (ctx.pos < s.length && (s[ctx.pos] === '*' || s[ctx.pos] === '/')) {
+    const op = s[ctx.pos++]
+    const right = parseFactor(s, ctx)
+    result = op === '*' ? result * right : result / right
+  }
+  return result
+}
+
+function parseFactor(s: string, ctx: { pos: number }): number {
+  // Handle unary +/-
+  if (ctx.pos < s.length && (s[ctx.pos] === '+' || s[ctx.pos] === '-')) {
+    const sign = s[ctx.pos++]
+    const val = parseFactor(s, ctx)
+    return sign === '-' ? -val : val
+  }
+
+  // Parenthesized expression
+  if (ctx.pos < s.length && s[ctx.pos] === '(') {
+    ctx.pos++ // skip '('
+    const result = parseExpr(s, ctx)
+    if (ctx.pos >= s.length || s[ctx.pos] !== ')') throw new Error('Missing )')
+    ctx.pos++ // skip ')'
+    return result
+  }
+
+  // Number
+  const start = ctx.pos
+  while (ctx.pos < s.length && (s[ctx.pos] >= '0' && s[ctx.pos] <= '9' || s[ctx.pos] === '.')) {
+    ctx.pos++
+  }
+  if (ctx.pos === start) throw new Error('Unexpected token')
+  return parseFloat(s.slice(start, ctx.pos))
 }
 
 export function calculateLineQuantity(fields: {

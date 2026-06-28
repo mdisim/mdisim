@@ -134,7 +134,8 @@ export function VolumeCalculator({ isOpen, onClose, onAddMeasurement, drawingMea
         if (/[a-zA-Z]/.test(expr)) return 0
         const result = Function(`"use strict"; return (${expr})`)()
         return typeof result === 'number' && isFinite(result) ? result : 0
-      } catch {
+      } catch (e) {
+        console.error('Failed to evaluate volume formula expression:', e)
         return 0
       }
     }

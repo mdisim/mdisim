@@ -33,7 +33,7 @@ export default function RootLayout({
       document.documentElement.setAttribute('lang', lang);
       if (lang === 'ar') document.documentElement.classList.add('font-arabic');
       if (lang === 'he') document.documentElement.classList.add('font-hebrew');
-    } catch(e) {}
+    } catch(e) { console.error('Failed to initialize language/direction settings:', e) }
   })()
 `}} />
         {children}

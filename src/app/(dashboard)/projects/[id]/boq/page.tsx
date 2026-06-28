@@ -103,7 +103,8 @@ export default function BOQPage() {
         setCreating(false)
         return
       }
-    } catch {
+    } catch (e) {
+      console.error('Failed to create BOQ item:', e)
       setError('Failed to create item')
       setCreating(false)
       return
@@ -120,7 +121,7 @@ export default function BOQPage() {
       onConfirm: async () => {
         try {
           await deleteBOQItem(id)
-        } catch { /* ignore */ }
+        } catch (e) { console.error('Failed to delete BOQ item:', e) }
         load()
       },
     })
@@ -182,7 +183,7 @@ export default function BOQPage() {
 
     try {
       await updateBOQItem(itemId, { [field]: val })
-    } catch { /* ignore */ }
+    } catch (e) { console.error('Failed to update BOQ item:', e) }
 
     setEditingCell(null)
   }

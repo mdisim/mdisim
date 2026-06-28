@@ -210,7 +210,8 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount }: T
           setPdfDoc(doc)
           setLoading(false)
         }
-      } catch {
+      } catch (e) {
+        console.error('Failed to load PDF document:', e)
         setLoading(false)
       }
     }

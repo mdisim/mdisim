@@ -106,7 +106,8 @@ export default function LibraryPage() {
         setCreating(false)
         return
       }
-    } catch {
+    } catch (e) {
+      console.error('Failed to create library category:', e)
       setError('Failed to create category')
       setCreating(false)
       return
@@ -121,7 +122,7 @@ export default function LibraryPage() {
     setConfirmAction({
       message: 'Delete this category and all its items?',
       onConfirm: async () => {
-        try { await deleteLibraryCategory(id) } catch { /* ignore */ }
+        try { await deleteLibraryCategory(id) } catch (e) { console.error('Failed to delete library category:', e) }
         if (selectedCategory === id) setSelectedCategory(null)
         loadCategories()
       },
@@ -149,7 +150,8 @@ export default function LibraryPage() {
         setCreating(false)
         return
       }
-    } catch {
+    } catch (e) {
+      console.error('Failed to create library item:', e)
       setError('Failed to create item')
       setCreating(false)
       return
@@ -164,7 +166,7 @@ export default function LibraryPage() {
     setConfirmAction({
       message: 'Delete this library item?',
       onConfirm: async () => {
-        try { await deleteLibraryItem(id) } catch { /* ignore */ }
+        try { await deleteLibraryItem(id) } catch (e) { console.error('Failed to delete library item:', e) }
         if (selectedCategory) loadItems(selectedCategory)
       },
     })
@@ -189,7 +191,7 @@ export default function LibraryPage() {
 
     try {
       await updateLibraryItem(itemId, { [field]: val })
-    } catch { /* ignore */ }
+    } catch (e) { console.error('Failed to update library item:', e) }
 
     setEditingCell(null)
   }
