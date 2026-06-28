@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, Fragment } from 'react'
+import { useEffect, useState, useCallback, useRef, Fragment } from 'react'
 import { motion } from 'framer-motion'
 import { useParams } from 'next/navigation'
 import type { BOQItem } from '@/lib/types'
@@ -19,6 +19,7 @@ import {
   GripVertical,
   ChevronDown,
   ChevronRight,
+  Copy,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -37,6 +38,8 @@ interface EditingCell {
   itemId: string
   field: keyof BOQItem
 }
+
+const EDITABLE_FIELDS: (keyof BOQItem)[] = ['code', 'description', 'unit', 'quantity', 'original_quantity', 'revised_quantity', 'unit_rate']
 
 export default function BOQPage() {
   const { id: projectId } = useParams<{ id: string }>()
@@ -188,9 +191,72 @@ export default function BOQPage() {
     setEditingCell(null)
   }
 
+  const navigateCell = useCallback((direction: 'next' | 'prev' | 'down' | 'up') => {
+    if (!editingCell) return
+    const flatItems = items.sort((a, b) => a.sort_order - b.sort_order)
+    const itemIdx = flatItems.findIndex(i => i.id === editingCell.itemId)
+    const fieldIdx = EDITABLE_FIELDS.indexOf(editingCell.field)
+    if (itemIdx === -1 || fieldIdx === -1) return
+
+    let nextItemIdx = itemIdx
+    let nextFieldIdx = fieldIdx
+
+    if (direction === 'next') {
+      nextFieldIdx++
+      if (nextFieldIdx >= EDITABLE_FIELDS.length) {
+        nextFieldIdx = 0
+        nextItemIdx++
+      }
+    } else if (direction === 'prev') {
+      nextFieldIdx--
+      if (nextFieldIdx < 0) {
+        nextFieldIdx = EDITABLE_FIELDS.length - 1
+        nextItemIdx--
+      }
+    } else if (direction === 'down') {
+      nextItemIdx++
+    } else if (direction === 'up') {
+      nextItemIdx--
+    }
+
+    if (nextItemIdx >= 0 && nextItemIdx < flatItems.length) {
+      const nextItem = flatItems[nextItemIdx]
+      const nextField = EDITABLE_FIELDS[nextFieldIdx]
+      startEdit(nextItem.id, nextField, nextItem[nextField] as string | number | null)
+    }
+  }, [editingCell, items, startEdit])
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') commitEdit()
-    if (e.key === 'Escape') setEditingCell(null)
+    if (e.key === 'Tab') {
+      e.preventDefault()
+      commitEdit()
+      setTimeout(() => navigateCell(e.shiftKey ? 'prev' : 'next'), 0)
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      commitEdit()
+      setTimeout(() => navigateCell('down'), 0)
+    } else if (e.key === 'Escape') {
+      setEditingCell(null)
+    }
+  }
+
+  const handleDuplicate = async (item: BOQItem) => {
+    try {
+      const result = await createBOQItem({
+        project_id: projectId,
+        code: item.code ? item.code + ' (copy)' : undefined,
+        description: item.description,
+        unit: item.unit ?? 'm',
+        quantity: item.quantity ?? 0,
+        unit_rate: item.unit_rate ?? 0,
+        material_rate: item.material_rate ?? undefined,
+        labor_rate: item.labor_rate ?? undefined,
+        equipment_rate: item.equipment_rate ?? undefined,
+        section: item.section ?? undefined,
+        notes: item.notes ?? undefined,
+      })
+      if (!result.error) load()
+    } catch (e) { console.error('Failed to duplicate BOQ item:', e) }
   }
 
   const handleDrop = async (targetId: string) => {
@@ -366,7 +432,7 @@ export default function BOQPage() {
                   <th className="text-right px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[80px]">Diff</th>
                   <th className="text-right px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[100px]">Unit Rate</th>
                   <th className="text-right px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[120px]">Amount</th>
-                  <th className="w-[40px]" />
+                  <th className="w-[56px]" />
                 </tr>
               </thead>
               <tbody>
@@ -460,13 +526,22 @@ export default function BOQPage() {
                             {renderCell(item, 'total_amount', item.total_amount, true, true)}
                           </td>
                           <td className="px-1 py-0.5">
-                            <button
-                              onClick={() => handleDelete(item.id)}
-                              className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-300 dark:text-slate-500 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                              title="Delete"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => handleDuplicate(item)}
+                                className="p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 text-slate-300 dark:text-slate-500 hover:text-blue-500 transition-colors"
+                                title="Duplicate row"
+                              >
+                                <Copy size={13} />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(item.id)}
+                                className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-300 dark:text-slate-500 hover:text-red-500 transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -486,6 +561,71 @@ export default function BOQPage() {
                 })}
               </tbody>
               <tfoot>
+                <tr className="border-t border-dashed border-slate-300 dark:border-slate-600 bg-slate-50/30 dark:bg-slate-900/30">
+                  <td />
+                  <td className="px-1 py-1">
+                    <input
+                      placeholder="Code"
+                      className="w-full px-2 py-1.5 text-sm rounded border border-transparent hover:border-slate-300 dark:hover:border-slate-600 bg-transparent focus:border-blue-400 focus:bg-white dark:focus:bg-slate-800 outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                      value={form.code}
+                      onChange={e => setForm(f => ({ ...f, code: e.target.value }))}
+                    />
+                  </td>
+                  <td className="px-1 py-1">
+                    <input
+                      placeholder="+ Add item description..."
+                      className="w-full px-2 py-1.5 text-sm rounded border border-transparent hover:border-slate-300 dark:hover:border-slate-600 bg-transparent focus:border-blue-400 focus:bg-white dark:focus:bg-slate-800 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                      value={form.description}
+                      onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                      onKeyDown={async e => {
+                        if (e.key === 'Enter' && form.description.trim()) {
+                          e.preventDefault()
+                          await handleCreate()
+                        }
+                      }}
+                    />
+                  </td>
+                  <td className="px-1 py-1">
+                    <select
+                      className="w-full px-1 py-1.5 text-sm rounded border border-transparent hover:border-slate-300 dark:hover:border-slate-600 bg-transparent focus:border-blue-400 outline-none"
+                      value={form.unit}
+                      onChange={e => setForm(f => ({ ...f, unit: e.target.value }))}
+                    >
+                      {MEASUREMENT_UNITS.map(u => <option key={u.value} value={u.value}>{u.value}</option>)}
+                    </select>
+                  </td>
+                  <td className="px-1 py-1">
+                    <input
+                      placeholder="0"
+                      type="number"
+                      className="w-full px-2 py-1.5 text-sm text-right rounded border border-transparent hover:border-slate-300 dark:hover:border-slate-600 bg-transparent focus:border-blue-400 focus:bg-white dark:focus:bg-slate-800 outline-none tabular-nums placeholder:text-slate-300"
+                      value={form.quantity}
+                      onChange={e => setForm(f => ({ ...f, quantity: e.target.value }))}
+                    />
+                  </td>
+                  <td /><td /><td />
+                  <td className="px-1 py-1">
+                    <input
+                      placeholder="0"
+                      type="number"
+                      className="w-full px-2 py-1.5 text-sm text-right rounded border border-transparent hover:border-slate-300 dark:hover:border-slate-600 bg-transparent focus:border-blue-400 focus:bg-white dark:focus:bg-slate-800 outline-none tabular-nums placeholder:text-slate-300"
+                      value={form.unit_rate}
+                      onChange={e => setForm(f => ({ ...f, unit_rate: e.target.value }))}
+                    />
+                  </td>
+                  <td />
+                  <td className="px-1 py-1">
+                    {form.description.trim() && (
+                      <button
+                        onClick={handleCreate}
+                        className="p-1.5 rounded bg-blue-500 hover:bg-blue-600 text-white transition-colors"
+                        title="Add item (or press Enter)"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    )}
+                  </td>
+                </tr>
                 <tr className="border-t-2 border-slate-300 dark:border-slate-600 bg-slate-50/80 dark:bg-slate-900/80">
                   <td colSpan={8} className="px-4 py-3 text-right font-semibold text-slate-500 dark:text-slate-400 text-sm uppercase tracking-wide">
                     Subtotal
