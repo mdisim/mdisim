@@ -473,7 +473,7 @@ export default function LibraryPage() {
       {/* Create Item Modal */}
       <Modal isOpen={showCreateItem} onClose={() => setShowCreateItem(false)} title="New Library Item" size="md">
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input
               label="Code"
               value={itemForm.code}
@@ -510,7 +510,7 @@ export default function LibraryPage() {
               placeholder="0.00"
             />
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input
               label="Material Rate"
               type="number"

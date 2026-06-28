@@ -756,7 +756,7 @@ export default function BOQPage() {
       {/* Create Modal */}
       <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="New BOQ Item" size="md">
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input
               label="Code"
               value={form.code}
@@ -772,7 +772,7 @@ export default function BOQPage() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Unit</label>
               <select
@@ -800,7 +800,7 @@ export default function BOQPage() {
               placeholder="0.00"
             />
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input
               label="Material Rate"
               type="number"

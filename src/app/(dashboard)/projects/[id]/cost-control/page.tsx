@@ -484,13 +484,13 @@ export default function CostControlPage() {
       <Modal isOpen={showContractEdit} onClose={() => setShowContractEdit(false)} title="Contract Details" size="md">
         <div className="space-y-4">
           <Input label="Contract Value" type="number" value={contractForm.contract_value} onChange={e => setContractForm({ ...contractForm, contract_value: e.target.value })} />
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <Input label="Contingency %" type="number" value={contractForm.contingency_pct} onChange={e => setContractForm({ ...contractForm, contingency_pct: e.target.value })} />
             <Input label="Retention %" type="number" value={contractForm.retention_pct} onChange={e => setContractForm({ ...contractForm, retention_pct: e.target.value })} />
             <Input label="Advance %" type="number" value={contractForm.advance_pct} onChange={e => setContractForm({ ...contractForm, advance_pct: e.target.value })} />
             <Input label="VAT %" type="number" value={contractForm.vat_pct} onChange={e => setContractForm({ ...contractForm, vat_pct: e.target.value })} />
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input label="Start Date" type="date" value={contractForm.start_date} onChange={e => setContractForm({ ...contractForm, start_date: e.target.value })} />
             <Input label="End Date" type="date" value={contractForm.end_date} onChange={e => setContractForm({ ...contractForm, end_date: e.target.value })} />
             <Input label="Duration (months)" type="number" value={contractForm.duration_months} onChange={e => setContractForm({ ...contractForm, duration_months: e.target.value })} />
@@ -506,7 +506,7 @@ export default function CostControlPage() {
       {/* Add Variation Modal */}
       <Modal isOpen={showAddVariation} onClose={() => setShowAddVariation(false)} title="New Variation" size="md">
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input label="Variation No." value={varForm.variation_no} onChange={e => setVarForm({ ...varForm, variation_no: e.target.value })} placeholder="VO-001" />
             <div className="col-span-2">
               <Input label="Title" value={varForm.title} onChange={e => setVarForm({ ...varForm, title: e.target.value })} placeholder="e.g. Additional foundation work" />
@@ -535,7 +535,7 @@ export default function CostControlPage() {
       <Modal isOpen={showAddCost} onClose={() => setShowAddCost(false)} title="New Cost Entry" size="md">
         <div className="space-y-4">
           <Input label="Description" value={costForm.description} onChange={e => setCostForm({ ...costForm, description: e.target.value })} placeholder="e.g. Concrete supply batch #5" />
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input label="Date" type="date" value={costForm.period_date} onChange={e => setCostForm({ ...costForm, period_date: e.target.value })} />
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Category</label>

@@ -534,7 +534,7 @@ function CreateItemModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="New Measurement Item" size="md">
       <div className="space-y-4">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Input
             label="Item Code"
             value={form.item_code}
@@ -570,7 +570,7 @@ function CreateItemModal({
           />
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
               Section / Category
