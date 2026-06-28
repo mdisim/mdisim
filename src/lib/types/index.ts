@@ -459,22 +459,6 @@ export interface Profile {
   updated_at: string
 }
 
-export type AccountType = 'student' | 'engineer' | 'company'
-
-export function accountTypeToRole(accountType: AccountType): string {
-  if (accountType === 'student') return 'student'
-  if (accountType === 'engineer') return 'engineer'
-  return 'company_admin'
-}
-
-export function roleToAccountType(role: string | null): AccountType | null {
-  if (!role) return null
-  if (role === 'student') return 'student'
-  if (role === 'engineer') return 'engineer'
-  const companyRoles = ['super_admin', 'company_admin', 'project_manager', 'quantity_surveyor', 'site_engineer', 'viewer']
-  if (companyRoles.includes(role)) return 'company'
-  return null
-}
 
 // ── Constants ───────────────────────────────────────────────────────────
 

@@ -20,12 +20,3 @@ export class ValidationError extends Error {
     this.name = 'ValidationError'
   }
 }
-
-export function validationGuard<T>(fn: () => T): T | { error: string } {
-  try {
-    return fn()
-  } catch (e) {
-    if (e instanceof ValidationError) return { error: e.message }
-    throw e
-  }
-}
