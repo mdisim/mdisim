@@ -200,6 +200,26 @@ export default function DashboardPage() {
     actualExpense: allCashflow.reduce((s, c) => s + c.actual_expense, 0),
   } : null
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+          <div className="h-8 w-48 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="h-28 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 animate-pulse" />
+            ))}
+          </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            {[1,2].map(i => (
+              <div key={i} className="h-64 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
