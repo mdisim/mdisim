@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import type { Drawing, DrawingScale, DrawingMeasurement } from '@/lib/types'
+import { isValidUUID } from '@/lib/validate'
 
 export async function getDrawings(projectId: string): Promise<Drawing[]> {
   const supabase = await createClient()
@@ -44,6 +45,10 @@ export async function createDrawing(fields: {
   file_size?: number
   page_count?: number
 }): Promise<{ data?: Drawing; error?: string }> {
+  if (!isValidUUID(fields.project_id)) return { error: 'Invalid project ID' }
+  if (!fields.name?.trim()) return { error: 'Drawing name is required' }
+  if (!fields.file_path?.trim()) return { error: 'File path is required' }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
@@ -77,6 +82,7 @@ export async function createDrawing(fields: {
 }
 
 export async function deleteDrawing(id: string): Promise<{ error?: string }> {
+  if (!isValidUUID(id)) return { error: 'Invalid ID' }
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
@@ -213,6 +219,7 @@ export async function updateDrawingMeasurement(
 }
 
 export async function deleteDrawingMeasurement(id: string): Promise<{ error?: string }> {
+  if (!isValidUUID(id)) return { error: 'Invalid ID' }
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
@@ -226,6 +233,7 @@ export async function deleteDrawingMeasurement(id: string): Promise<{ error?: st
 }
 
 export async function deleteDrawingScale(id: string): Promise<{ error?: string }> {
+  if (!isValidUUID(id)) return { error: 'Invalid ID' }
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }

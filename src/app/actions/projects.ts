@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import type { Project } from '@/lib/types'
+import { requireUUID, requireString, ValidationError } from '@/lib/validate'
 
 export async function getProjects(): Promise<Project[]> {
   const supabase = await createClient()
@@ -38,6 +39,11 @@ export async function createProject(fields: {
   currency?: string
   description?: string
 }): Promise<{ data?: Project; error?: string }> {
+  try { requireString(fields.name, 'Project name') } catch (e) {
+    if (e instanceof ValidationError) return { error: e.message }
+    throw e
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }

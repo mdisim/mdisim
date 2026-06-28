@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import type { MeasurementItem, MeasurementLine, MeasurementType } from '@/lib/types'
 import { calculateLineQuantity } from '@/lib/calc'
+import { isValidUUID } from '@/lib/validate'
 
 // ── Items ───────────────────────────────────────────────────────────────
 
@@ -56,6 +57,9 @@ export async function createMeasurementItem(fields: {
   drawing_ref?: string
   location?: string
 }): Promise<{ data?: MeasurementItem; error?: string }> {
+  if (!isValidUUID(fields.project_id)) return { error: 'Invalid project ID' }
+  if (!fields.description?.trim()) return { error: 'Description is required' }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
@@ -114,6 +118,7 @@ export async function updateMeasurementItem(
 }
 
 export async function deleteMeasurementItem(id: string): Promise<{ error?: string }> {
+  if (!isValidUUID(id)) return { error: 'Invalid ID' }
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
@@ -232,6 +237,7 @@ export async function updateMeasurementLine(
 }
 
 export async function deleteMeasurementLine(id: string): Promise<{ error?: string }> {
+  if (!isValidUUID(id)) return { error: 'Invalid ID' }
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
