@@ -21,8 +21,10 @@ export class AnthropicProvider implements AIProvider {
   name = 'anthropic'
 
   async analyze(messages: AIMessage[], options?: { maxTokens?: number }): Promise<AIProviderResponse> {
+    const apiKey = process.env.ANTHROPIC_API_KEY
+    if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not configured')
     const Anthropic = (await import('@anthropic-ai/sdk')).default
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+    const client = new Anthropic({ apiKey })
 
     const apiMessages = messages.map(m => ({
       role: m.role as 'user' | 'assistant',

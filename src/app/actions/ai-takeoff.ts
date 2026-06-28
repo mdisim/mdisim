@@ -1,5 +1,6 @@
 'use server'
 
+import { createClient } from '@/lib/supabase/server'
 import { analyzeDrawing, estimateCosts } from '@/lib/ai/engine'
 import type { AIFullAnalysis, AICostEstimate, UserCorrection } from '@/lib/ai/types'
 
@@ -24,6 +25,9 @@ export async function analyzeDrawingWithAI(
   pageNumber: number,
   corrections: UserCorrection[] = [],
 ): Promise<AIFullAnalysis> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   if (!process.env.ANTHROPIC_API_KEY) {
     return {
       drawing: { drawingType: '', summary: '', elements: [], dimensions: [], detectedScale: null, repeatedPatterns: [] },
@@ -40,6 +44,9 @@ export async function estimateProjectCosts(
   boqItems: { code: string; description: string; unit: string; quantity: number }[],
   projectContext: string,
 ): Promise<AICostEstimate[]> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   if (!process.env.ANTHROPIC_API_KEY) return []
   return estimateCosts(boqItems, projectContext)
 }
