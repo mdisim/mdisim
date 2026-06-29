@@ -45,6 +45,11 @@ interface WorkspaceContextType {
   linkedRevisions: DrawingRevision[]
   linkedRateAnalysis: RateAnalysis | null
   linkedDrawingMeasurements: DrawingMeasurement[]
+  linkedSourceDrawings: Drawing[]
+  linkedQuantityChanges: QuantityChange[]
+  linkedVariations: Variation[]
+  linkedPayments: { certs: PaymentCert[]; totalCertified: number; contractAmount: number }
+  linkedCostEntries: CostEntry[]
   fmt: (n: number) => string
   fmtCompact: (n: number) => string
 }
@@ -113,6 +118,59 @@ export function WorkspaceProvider({ data, children }: { data: WorkspaceData; chi
     return data.drawingMeasurements[selection.drawing.id] ?? []
   }, [selection.drawing, data.drawingMeasurements])
 
+  const linkedSourceDrawings = useMemo(() => {
+    if (!selection.boqItem) return []
+    const drawingIds = new Set<string>()
+    for (const m of linkedMeasurements) {
+      if (m.lines) {
+        for (const line of m.lines) {
+          if (line.drawing_id) drawingIds.add(line.drawing_id)
+        }
+      }
+      if (m.drawing_ref) {
+        const match = data.drawings.find(d => d.drawing_number === m.drawing_ref)
+        if (match) drawingIds.add(match.id)
+      }
+    }
+    return data.drawings.filter(d => drawingIds.has(d.id))
+  }, [selection.boqItem, linkedMeasurements, data.drawings])
+
+  const linkedQuantityChanges = useMemo(() => {
+    if (!selection.boqItem) return []
+    return data.quantityChanges.filter(qc =>
+      qc.boq_item_id === selection.boqItem!.id ||
+      (selection.boqItem!.mi_id && qc.mi_id === selection.boqItem!.mi_id)
+    )
+  }, [selection.boqItem, data.quantityChanges])
+
+  const linkedVariations = useMemo(() => {
+    if (!selection.boqItem) return []
+    return data.variations.filter(v =>
+      v.items?.some(vi => vi.boq_item_id === selection.boqItem!.id)
+    )
+  }, [selection.boqItem, data.variations])
+
+  const linkedPayments = useMemo(() => {
+    if (!selection.boqItem) return { certs: [] as PaymentCert[], totalCertified: 0, contractAmount: 0 }
+    const certs = data.payments.filter(cert =>
+      cert.lines?.some(line => line.boq_item_id === selection.boqItem!.id)
+    )
+    let totalCertified = 0
+    let contractAmount = 0
+    if (certs.length > 0) {
+      const latest = certs.reduce((a, b) => a.cert_number > b.cert_number ? a : b)
+      const lines = latest.lines?.filter(line => line.boq_item_id === selection.boqItem!.id) ?? []
+      totalCertified = lines.reduce((sum, line) => sum + line.cumulative_amount, 0)
+      contractAmount = lines.reduce((sum, line) => sum + line.contract_amount, 0)
+    }
+    return { certs, totalCertified, contractAmount }
+  }, [selection.boqItem, data.payments])
+
+  const linkedCostEntries = useMemo(() => {
+    if (!selection.boqItem) return []
+    return data.costEntries.filter(ce => ce.boq_item_id === selection.boqItem!.id)
+  }, [selection.boqItem, data.costEntries])
+
   const fmt = useCallback((n: number) =>
     n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), [])
 
@@ -127,6 +185,7 @@ export function WorkspaceProvider({ data, children }: { data: WorkspaceData; chi
       data, selection,
       selectBoqItem, selectDrawing, selectMeasurement, selectLibraryItem,
       linkedMeasurements, linkedBoqItems, linkedRevisions, linkedRateAnalysis, linkedDrawingMeasurements,
+      linkedSourceDrawings, linkedQuantityChanges, linkedVariations, linkedPayments, linkedCostEntries,
       fmt, fmtCompact,
     }}>
       {children}

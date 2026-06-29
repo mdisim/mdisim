@@ -20,14 +20,14 @@ import type {
 } from '@/lib/types'
 
 import { WorkspaceProvider, type WorkspaceData } from '@/components/workspace/workspace-context'
-import { LeftPanel } from '@/components/workspace/left-panel'
 import { CenterPanel } from '@/components/workspace/center-panel'
-import { RightPanel } from '@/components/workspace/right-panel'
+import { LeftPanel } from '@/components/workspace/left-panel'
+import { EvidenceCenter } from '@/components/workspace/evidence-center'
 import { BottomDock } from '@/components/workspace/bottom-dock'
 import { useResizable } from '@/components/workspace/use-resizable'
 import {
   LayoutPanelLeft, PanelLeftClose, PanelRightClose,
-  Loader2, AlertTriangle, RefreshCw,
+  AlertTriangle, RefreshCw,
 } from 'lucide-react'
 
 export default function WorkspacePage() {
@@ -39,9 +39,8 @@ export default function WorkspacePage() {
   const [leftVisible, setLeftVisible] = useState(true)
   const [rightVisible, setRightVisible] = useState(true)
 
-  const leftResize = useResizable({ direction: 'horizontal', initialSize: 280, minSize: 200, maxSize: 450, storageKey: 'left-panel' })
-  const rightResize = useResizable({ direction: 'horizontal', initialSize: 300, minSize: 220, maxSize: 450, storageKey: 'right-panel' })
-  const bottomResize = useResizable({ direction: 'vertical', initialSize: 220, minSize: 120, maxSize: 400, storageKey: 'bottom-dock' })
+  const leftResize = useResizable({ direction: 'horizontal', initialSize: 320, minSize: 240, maxSize: 500, storageKey: 'left-drawing' })
+  const rightResize = useResizable({ direction: 'horizontal', initialSize: 340, minSize: 280, maxSize: 500, storageKey: 'right-evidence' })
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -64,21 +63,18 @@ export default function WorkspacePage() {
 
       setProjectName(project?.name ?? 'Project')
 
-      // Build revision map
       const revisions: Record<string, DrawingRevision[]> = {}
       for (const rev of allRevisions) {
         if (!revisions[rev.drawing_id]) revisions[rev.drawing_id] = []
         revisions[rev.drawing_id].push(rev)
       }
 
-      // Fetch drawing measurements for all drawings
       const drawingMeasurements: Record<string, DrawingMeasurement[]> = {}
       const dmResults = await Promise.all(
         drawings.map(d => getDrawingMeasurements(d.id).catch(() => [] as DrawingMeasurement[]))
       )
       drawings.forEach((d, i) => { drawingMeasurements[d.id] = dmResults[i] })
 
-      // Fetch all library items
       let libraryItems: LibraryItem[] = []
       if (categories.length > 0) {
         const allItems = await Promise.all(categories.map(c => getLibraryItems(c.id).catch(() => [] as LibraryItem[])))
@@ -99,7 +95,6 @@ export default function WorkspacePage() {
 
   useEffect(() => { load() }, [load])
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === '[' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setLeftVisible(v => !v) }
@@ -163,7 +158,7 @@ export default function WorkspacePage() {
                 'p-1.5 rounded-lg transition-colors',
                 leftVisible ? 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04]' : 'text-blue-500 bg-blue-50 dark:bg-blue-500/10'
               )}
-              title="Toggle explorer (⌘[)"
+              title="Toggle drawing viewer (⌘[)"
             >
               <PanelLeftClose size={14} />
             </button>
@@ -173,7 +168,7 @@ export default function WorkspacePage() {
                 'p-1.5 rounded-lg transition-colors',
                 rightVisible ? 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04]' : 'text-blue-500 bg-blue-50 dark:bg-blue-500/10'
               )}
-              title="Toggle properties (⌘])"
+              title="Toggle evidence center (⌘])"
             >
               <PanelRightClose size={14} />
             </button>
@@ -184,15 +179,14 @@ export default function WorkspacePage() {
           </div>
         </div>
 
-        {/* Main Layout */}
+        {/* Main Layout: Left=Drawing | Center=BOQ Explorer | Right=Evidence Center */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Left Panel */}
+          {/* Left Panel — Drawing Viewer */}
           {leftVisible && (
             <>
               <div style={{ width: leftResize.size }} className="shrink-0 overflow-hidden">
-                <LeftPanel />
+                <CenterPanel />
               </div>
-              {/* Left resize handle */}
               <div
                 onMouseDown={leftResize.handleMouseDown}
                 className={cn(
@@ -208,24 +202,22 @@ export default function WorkspacePage() {
             </>
           )}
 
-          {/* Center Panel */}
+          {/* Center — BOQ Explorer + Measurements + Library */}
           <div className="flex-1 overflow-hidden">
-            <CenterPanel />
+            <LeftPanel />
           </div>
 
-          {/* Right Panel */}
+          {/* Right Panel — Evidence Center */}
           {rightVisible && (
             <>
-              {/* Right resize handle */}
               <div
                 onMouseDown={e => {
                   e.preventDefault()
                   const startX = e.clientX
                   const startSize = rightResize.size
-
                   const onMove = (me: MouseEvent) => {
                     const delta = startX - me.clientX
-                    rightResize.setSize(Math.max(220, Math.min(450, startSize + delta)))
+                    rightResize.setSize(Math.max(280, Math.min(500, startSize + delta)))
                   }
                   const onUp = () => {
                     document.removeEventListener('mousemove', onMove)
@@ -243,7 +235,7 @@ export default function WorkspacePage() {
                 <div className="absolute inset-y-0 right-0 w-px bg-slate-200 dark:bg-white/[0.04] group-hover:bg-blue-400" />
               </div>
               <div style={{ width: rightResize.size }} className="shrink-0 overflow-hidden">
-                <RightPanel />
+                <EvidenceCenter />
               </div>
             </>
           )}
