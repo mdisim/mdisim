@@ -1,61 +1,40 @@
 import { createClient } from '@/lib/supabase/server'
-import { execFile } from 'child_process'
 import { writeFile, readFile, unlink, mkdtemp, rmdir } from 'fs/promises'
 import { join } from 'path'
 import { tmpdir } from 'os'
+import { execFile } from 'child_process'
+import { pathToFileURL } from 'url'
 
-const CONVERT_SCRIPT = `
-import sys, os
+async function convertWithWasm(dwgBuffer: Buffer): Promise<Buffer> {
+  const { convertDwgToDxf } = await import('dwgdxf')
+  const wasmBase = pathToFileURL(
+    join(process.cwd(), 'node_modules/dwgdxf/dist/wasm')
+  ).href + '/'
+  const dxfBytes = await convertDwgToDxf(new Uint8Array(dwgBuffer), { wasmBase })
+  return Buffer.from(dxfBytes)
+}
 
-input_path = sys.argv[1]
-output_path = sys.argv[2]
-
-# Try ODA File Converter via ezdxf first (handles real DWG)
-try:
-    from ezdxf.addons import odafc
-    doc = odafc.readfile(input_path)
-    doc.saveas(output_path)
-    print("OK:odafc")
-    sys.exit(0)
-except Exception as e:
-    oda_err = str(e)
-
-# Fallback: try ezdxf.readfile (works if file is actually DXF-format despite .dwg extension)
-try:
-    import ezdxf
-    doc = ezdxf.readfile(input_path)
-    doc.saveas(output_path)
-    print("OK:ezdxf-direct")
-    sys.exit(0)
-except Exception as e:
-    dxf_err = str(e)
-
-# Fallback: try ezdxf.recover (handles corrupted/non-standard DXF)
-try:
-    from ezdxf import recover
-    doc, auditor = recover.readfile(input_path)
-    doc.saveas(output_path)
-    print("OK:ezdxf-recover")
-    sys.exit(0)
-except Exception as e:
-    recover_err = str(e)
-
-print(f"FAIL: ODA={oda_err} | ezdxf={dxf_err} | recover={recover_err}", file=sys.stderr)
-sys.exit(1)
-`
-
-function runPython(inputPath: string, outputPath: string): Promise<string> {
+function convertWithEzdxf(inputPath: string, outputPath: string): Promise<string> {
   return new Promise((resolve, reject) => {
+    const script = `
+import sys, ezdxf
+from ezdxf import recover
+inp, out = sys.argv[1], sys.argv[2]
+try:
+    doc = ezdxf.readfile(inp)
+    doc.saveas(out)
+    print("OK:ezdxf")
+except Exception:
+    doc, _ = recover.readfile(inp)
+    doc.saveas(out)
+    print("OK:recover")
+`
     execFile(
-      'python3',
-      ['-c', CONVERT_SCRIPT, inputPath, outputPath],
-      { timeout: 120_000 },
+      'python3', ['-c', script, inputPath, outputPath],
+      { timeout: 60_000 },
       (error, stdout, stderr) => {
-        if (error) {
-          reject(new Error(stderr || error.message))
-        } else {
-          resolve(stdout.trim())
-        }
+        if (error) reject(new Error(stderr || error.message))
+        else resolve(stdout.trim())
       }
     )
   })
@@ -76,7 +55,7 @@ export async function POST(request: Request) {
     }
 
     const supabase = await createClient()
-    log.push('[2] Supabase client created (authenticated via cookies)')
+    log.push('[2] Supabase client created')
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
@@ -89,115 +68,137 @@ export async function POST(request: Request) {
     log.push(`[2b] Authenticated as: ${user.email}`)
 
     const dxfPath = filePath.replace(/\.dwg$/i, '.dxf')
-    log.push(`[3] DXF target path: "${dxfPath}"`)
+    log.push(`[3] DXF target: "${dxfPath}"`)
 
-    // Check if converted DXF already exists
+    // Check cache
     const dirPath = filePath.substring(0, filePath.lastIndexOf('/'))
     const dxfFileName = dxfPath.split('/').pop() ?? ''
-    log.push(`[4] Checking for existing DXF: dir="${dirPath}", file="${dxfFileName}"`)
 
-    const { data: existingList, error: listError } = await supabase.storage
+    const { data: existingList } = await supabase.storage
       .from('qb-drawings')
       .list(dirPath, { search: dxfFileName })
 
-    if (listError) {
-      log.push(`[4a] List error: ${listError.message}`)
-    } else {
-      log.push(`[4b] Found ${existingList?.length ?? 0} files matching search`)
-    }
-
     if (existingList?.some((f) => f.name === dxfFileName)) {
-      log.push('[4c] Converted DXF already exists — returning cached path')
+      log.push('[4] Converted DXF already exists (cached)')
       return Response.json({ dxfPath, log, cached: true })
     }
+    log.push('[4] No cached DXF found')
 
-    // Download the DWG file
-    log.push(`[5] Downloading DWG from storage: "${filePath}"`)
+    // Download the DWG
+    log.push(`[5] Downloading DWG: "${filePath}"`)
+    let dwgBuffer: Buffer
+
     const { data: downloadData, error: downloadError } = await supabase.storage
       .from('qb-drawings')
       .download(filePath)
 
     if (downloadError || !downloadData) {
-      log.push(`[5a] Download failed: ${downloadError?.message ?? 'no data returned'}`)
-
-      log.push('[5b] Trying signed URL fallback...')
+      log.push(`[5a] Direct download failed: ${downloadError?.message ?? 'no data'}`)
       const { data: signedUrlData, error: urlError } = await supabase.storage
         .from('qb-drawings')
         .createSignedUrl(filePath, 300)
 
       if (urlError || !signedUrlData?.signedUrl) {
-        log.push(`[5c] Signed URL also failed: ${urlError?.message ?? 'no URL'}`)
-
-        const { data: bucketFiles, error: bucketErr } = await supabase.storage
-          .from('qb-drawings')
-          .list(dirPath)
-        if (bucketErr) {
-          log.push(`[5d] Cannot list bucket dir "${dirPath}": ${bucketErr.message}`)
-        } else {
-          const fileNames = bucketFiles?.map(f => f.name).join(', ') ?? 'empty'
-          log.push(`[5d] Files in "${dirPath}": [${fileNames}]`)
-        }
-
+        log.push(`[5b] Signed URL failed: ${urlError?.message ?? 'no URL'}`)
+        const { data: bucketFiles } = await supabase.storage
+          .from('qb-drawings').list(dirPath)
+        const names = bucketFiles?.map(f => f.name).join(', ') ?? 'empty'
+        log.push(`[5c] Files in "${dirPath}": [${names}]`)
         return Response.json(
           { error: 'Failed to download DWG file from storage', log },
           { status: 500 },
         )
       }
 
-      log.push('[5e] Got signed URL, fetching...')
-      const dwgResponse = await fetch(signedUrlData.signedUrl)
-      if (!dwgResponse.ok) {
-        log.push(`[5f] Fetch from signed URL failed: HTTP ${dwgResponse.status}`)
+      const resp = await fetch(signedUrlData.signedUrl)
+      if (!resp.ok) {
+        log.push(`[5d] Fetch failed: HTTP ${resp.status}`)
         return Response.json(
-          { error: `Failed to fetch DWG: HTTP ${dwgResponse.status}`, log },
+          { error: `Failed to fetch DWG: HTTP ${resp.status}`, log },
           { status: 500 },
         )
       }
-
-      const dwgBuffer = Buffer.from(await dwgResponse.arrayBuffer())
-      log.push(`[5g] Downloaded via signed URL: ${dwgBuffer.length} bytes`)
-
-      return await convertAndUpload(supabase, dwgBuffer, dxfPath, log)
+      dwgBuffer = Buffer.from(await resp.arrayBuffer())
+      log.push(`[5e] Downloaded via signed URL: ${dwgBuffer.length} bytes`)
+    } else {
+      dwgBuffer = Buffer.from(await downloadData.arrayBuffer())
+      log.push(`[5a] Downloaded: ${dwgBuffer.length} bytes`)
     }
 
-    const dwgBuffer = Buffer.from(await downloadData.arrayBuffer())
-    log.push(`[5a] Downloaded: ${dwgBuffer.length} bytes`)
+    // Detect format: real DWG starts with "AC10xx", DXF starts with "0\n" or whitespace
+    const header = dwgBuffer.slice(0, 6).toString('ascii')
+    const isDwgBinary = /^AC\d{4}$/.test(header)
+    log.push(`[6] File header: "${header}" → ${isDwgBinary ? 'binary DWG' : 'DXF-format'}`)
 
-    return await convertAndUpload(supabase, dwgBuffer, dxfPath, log)
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e)
-    log.push(`[ERROR] Uncaught: ${msg}`)
-    console.error('[convert-dwg]', log.join('\n'))
-    return Response.json(
-      { error: msg, log },
-      { status: 500 },
-    )
-  }
-}
+    let dxfBuffer: Buffer
 
-async function convertAndUpload(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  dwgBuffer: Buffer,
-  dxfPath: string,
-  log: string[],
-): Promise<Response> {
-  const tempDir = await mkdtemp(join(tmpdir(), 'dwg-convert-'))
-  const inputPath = join(tempDir, 'input.dwg')
-  const outputPath = join(tempDir, 'output.dxf')
-  log.push(`[6] Temp dir: ${tempDir}`)
+    if (isDwgBinary) {
+      // Method 1: WASM-based converter (handles real DWG binary files)
+      log.push('[7] Converting with dwgdxf WASM (ACadSharp)...')
+      try {
+        dxfBuffer = await convertWithWasm(dwgBuffer)
+        log.push(`[7a] WASM conversion OK: ${dxfBuffer.length} bytes`)
+      } catch (wasmErr) {
+        const wasmMsg = wasmErr instanceof Error ? wasmErr.message : String(wasmErr)
+        log.push(`[7b] WASM failed: ${wasmMsg}`)
 
-  try {
-    await writeFile(inputPath, dwgBuffer)
-    log.push(`[7] Wrote DWG to disk: ${dwgBuffer.length} bytes`)
+        // Method 2: Python ezdxf fallback (works for some DWG variants)
+        log.push('[7c] Trying Python ezdxf fallback...')
+        const tempDir = await mkdtemp(join(tmpdir(), 'dwg-'))
+        const inp = join(tempDir, 'input.dwg')
+        const out = join(tempDir, 'output.dxf')
+        try {
+          await writeFile(inp, dwgBuffer)
+          const result = await convertWithEzdxf(inp, out)
+          dxfBuffer = await readFile(out)
+          log.push(`[7d] Python fallback OK (${result}): ${dxfBuffer.length} bytes`)
+        } catch (pyErr) {
+          const pyMsg = pyErr instanceof Error ? pyErr.message : String(pyErr)
+          log.push(`[7e] Python also failed: ${pyMsg}`)
+          return Response.json(
+            { error: 'DWG conversion failed. This DWG version may not be supported. Try exporting as DXF from your CAD software.', log },
+            { status: 500 },
+          )
+        } finally {
+          await unlink(inp).catch(() => {})
+          await unlink(out).catch(() => {})
+          await rmdir(tempDir).catch(() => {})
+        }
+      }
+    } else {
+      // File is DXF-format (just renamed to .dwg) — pass through ezdxf to validate/normalize
+      log.push('[7] File is DXF-format, normalizing with ezdxf...')
+      const tempDir = await mkdtemp(join(tmpdir(), 'dwg-'))
+      const inp = join(tempDir, 'input.dwg')
+      const out = join(tempDir, 'output.dxf')
+      try {
+        await writeFile(inp, dwgBuffer)
+        const result = await convertWithEzdxf(inp, out)
+        dxfBuffer = await readFile(out)
+        log.push(`[7a] Normalized OK (${result}): ${dxfBuffer.length} bytes`)
+      } catch (pyErr) {
+        // DXF-format file that ezdxf can't parse — try WASM as last resort
+        log.push(`[7b] ezdxf failed, trying WASM...`)
+        try {
+          dxfBuffer = await convertWithWasm(dwgBuffer)
+          log.push(`[7c] WASM fallback OK: ${dxfBuffer.length} bytes`)
+        } catch {
+          const msg = pyErr instanceof Error ? pyErr.message : String(pyErr)
+          log.push(`[7d] All methods failed: ${msg}`)
+          return Response.json(
+            { error: 'Failed to parse this file. It may be corrupted.', log },
+            { status: 500 },
+          )
+        }
+      } finally {
+        await unlink(inp).catch(() => {})
+        await unlink(out).catch(() => {})
+        await rmdir(tempDir).catch(() => {})
+      }
+    }
 
-    log.push('[8] Starting Python conversion (ODA → ezdxf → recover)...')
-    const pyResult = await runPython(inputPath, outputPath)
-    log.push(`[8a] Python result: "${pyResult}"`)
-
-    const dxfBuffer = await readFile(outputPath)
-    log.push(`[9] Read converted DXF: ${dxfBuffer.length} bytes`)
-
-    log.push(`[10] Uploading DXF to storage: "${dxfPath}"`)
+    // Upload converted DXF
+    log.push(`[8] Uploading DXF: "${dxfPath}" (${dxfBuffer.length} bytes)`)
     const { error: uploadError } = await supabase.storage
       .from('qb-drawings')
       .upload(dxfPath, dxfBuffer, {
@@ -206,19 +207,20 @@ async function convertAndUpload(
       })
 
     if (uploadError) {
-      log.push(`[10a] Upload failed: ${uploadError.message}`)
+      log.push(`[8a] Upload failed: ${uploadError.message}`)
       return Response.json(
         { error: `Failed to upload converted file: ${uploadError.message}`, log },
         { status: 500 },
       )
     }
 
-    log.push('[11] DXF uploaded successfully')
+    log.push('[9] DXF uploaded successfully')
     console.log('[convert-dwg] Success:', log.join(' | '))
     return Response.json({ dxfPath, log, cached: false })
-  } finally {
-    await unlink(inputPath).catch(() => {})
-    await unlink(outputPath).catch(() => {})
-    await rmdir(tempDir).catch(() => {})
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    log.push(`[ERROR] ${msg}`)
+    console.error('[convert-dwg]', log.join('\n'))
+    return Response.json({ error: msg, log }, { status: 500 })
   }
 }

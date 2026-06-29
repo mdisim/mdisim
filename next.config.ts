@@ -31,6 +31,7 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['dwgdxf'],
   experimental: {
     serverActions: {
       bodySizeLimit: '10mb',
