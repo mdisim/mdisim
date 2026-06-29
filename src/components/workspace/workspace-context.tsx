@@ -8,6 +8,7 @@ import type {
 } from '@/lib/types'
 
 export type SelectionType = 'boq' | 'drawing' | 'measurement' | 'library-item' | 'revision' | null
+export type ViewMode = '2d' | '3d' | 'split'
 
 export interface WorkspaceData {
   boqItems: BOQItem[]
@@ -50,6 +51,9 @@ interface WorkspaceContextType {
   linkedVariations: Variation[]
   linkedPayments: { certs: PaymentCert[]; totalCertified: number; contractAmount: number }
   linkedCostEntries: CostEntry[]
+  highlightedDrawingMeasurementIds: Set<string>
+  viewMode: ViewMode
+  setViewMode: (mode: ViewMode) => void
   fmt: (n: number) => string
   fmtCompact: (n: number) => string
 }
@@ -60,18 +64,52 @@ export function WorkspaceProvider({ data, children }: { data: WorkspaceData; chi
   const [selection, setSelection] = useState<WorkspaceSelection>({
     type: null, boqItem: null, drawing: null, measurement: null, libraryItem: null,
   })
+  const [viewMode, setViewMode] = useState<ViewMode>('2d')
 
   const selectBoqItem = useCallback((item: BOQItem | null) => {
-    setSelection(prev => ({ ...prev, type: item ? 'boq' : null, boqItem: item }))
-  }, [])
+    setSelection(prev => {
+      const next = { ...prev, type: (item ? 'boq' : null) as SelectionType, boqItem: item }
+      if (item) {
+        const linkedMs = data.measurementItems.filter(m =>
+          m.item_code === item.code || (item.mi_id && m.id === item.mi_id)
+        )
+        for (const m of linkedMs) {
+          if (m.lines) {
+            for (const line of m.lines) {
+              if (line.drawing_id) {
+                const d = data.drawings.find(dr => dr.id === line.drawing_id)
+                if (d && d.id !== prev.drawing?.id) {
+                  next.drawing = d
+                  break
+                }
+              }
+            }
+          }
+          if (next.drawing && next.drawing.id !== prev.drawing?.id) break
+        }
+      }
+      return next
+    })
+  }, [data.measurementItems, data.drawings])
 
   const selectDrawing = useCallback((drawing: Drawing | null) => {
     setSelection(prev => ({ ...prev, type: drawing ? 'drawing' : null, drawing }))
   }, [])
 
   const selectMeasurement = useCallback((item: MeasurementItem | null) => {
-    setSelection(prev => ({ ...prev, type: item ? 'measurement' : null, measurement: item }))
-  }, [])
+    setSelection(prev => {
+      const next = { ...prev, type: (item ? 'measurement' : null) as SelectionType, measurement: item }
+      if (item?.lines) {
+        for (const line of item.lines) {
+          if (line.drawing_id) {
+            const d = data.drawings.find(dr => dr.id === line.drawing_id)
+            if (d) { next.drawing = d; break }
+          }
+        }
+      }
+      return next
+    })
+  }, [data.drawings])
 
   const selectLibraryItem = useCallback((item: LibraryItem | null) => {
     setSelection(prev => ({ ...prev, type: item ? 'library-item' : null, libraryItem: item }))
@@ -171,6 +209,28 @@ export function WorkspaceProvider({ data, children }: { data: WorkspaceData; chi
     return data.costEntries.filter(ce => ce.boq_item_id === selection.boqItem!.id)
   }, [selection.boqItem, data.costEntries])
 
+  const highlightedDrawingMeasurementIds = useMemo(() => {
+    const ids = new Set<string>()
+    if (selection.boqItem) {
+      for (const m of linkedMeasurements) {
+        if (m.lines) {
+          for (const line of m.lines) {
+            if (line.drawing_measurement_id) ids.add(line.drawing_measurement_id)
+          }
+        }
+      }
+    }
+    if (selection.measurement) {
+      const m = selection.measurement
+      if (m.lines) {
+        for (const line of m.lines) {
+          if (line.drawing_measurement_id) ids.add(line.drawing_measurement_id)
+        }
+      }
+    }
+    return ids
+  }, [selection.boqItem, selection.measurement, linkedMeasurements])
+
   const fmt = useCallback((n: number) =>
     n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), [])
 
@@ -186,6 +246,7 @@ export function WorkspaceProvider({ data, children }: { data: WorkspaceData; chi
       selectBoqItem, selectDrawing, selectMeasurement, selectLibraryItem,
       linkedMeasurements, linkedBoqItems, linkedRevisions, linkedRateAnalysis, linkedDrawingMeasurements,
       linkedSourceDrawings, linkedQuantityChanges, linkedVariations, linkedPayments, linkedCostEntries,
+      highlightedDrawingMeasurementIds, viewMode, setViewMode,
       fmt, fmtCompact,
     }}>
       {children}

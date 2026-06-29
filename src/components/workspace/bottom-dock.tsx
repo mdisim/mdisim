@@ -10,17 +10,17 @@ import {
   Bot, Clock, Activity, DollarSign, CheckSquare, FileBarChart,
   Minimize2, Maximize2, Send, Loader2, Sparkles, User,
   BarChart3, TrendingUp, TrendingDown, ArrowRight,
-  Package, AlertTriangle, Copy, CheckCircle,
+  Package, AlertTriangle, Copy, CheckCircle, Layers, GitCompare,
 } from 'lucide-react'
 
-type DockTab = 'ai' | 'timeline' | 'activity' | 'cost' | 'tasks' | 'reports'
+type DockTab = 'ai' | 'evidence' | 'history' | 'cost' | 'activity' | 'reports'
 
 const DOCK_TABS: { key: DockTab; label: string; icon: typeof Bot; color: string }[] = [
   { key: 'ai', label: 'AI Engineer', icon: Bot, color: 'text-violet-500' },
-  { key: 'timeline', label: 'Timeline', icon: Clock, color: 'text-blue-500' },
-  { key: 'activity', label: 'Activity', icon: Activity, color: 'text-emerald-500' },
-  { key: 'cost', label: 'Cost Summary', icon: DollarSign, color: 'text-amber-500' },
-  { key: 'tasks', label: 'Tasks', icon: CheckSquare, color: 'text-purple-500' },
+  { key: 'evidence', label: 'Evidence Center', icon: Layers, color: 'text-blue-500' },
+  { key: 'history', label: 'Quantity History', icon: GitCompare, color: 'text-amber-500' },
+  { key: 'cost', label: 'Cost Summary', icon: DollarSign, color: 'text-emerald-500' },
+  { key: 'activity', label: 'Activity', icon: Activity, color: 'text-cyan-500' },
   { key: 'reports', label: 'Reports', icon: FileBarChart, color: 'text-rose-500' },
 ]
 
@@ -66,10 +66,10 @@ export function BottomDock({ projectId, projectName }: { projectId: string; proj
       {expanded && (
         <div className="flex-1 overflow-hidden">
           {activeTab === 'ai' && <AIEngineerTab projectId={projectId} projectName={projectName} />}
-          {activeTab === 'timeline' && <TimelineTab />}
-          {activeTab === 'activity' && <ActivityTab />}
+          {activeTab === 'evidence' && <EvidenceTab />}
+          {activeTab === 'history' && <QuantityHistoryTab />}
           {activeTab === 'cost' && <CostTab />}
-          {activeTab === 'tasks' && <TasksTab />}
+          {activeTab === 'activity' && <ActivityTab />}
           {activeTab === 'reports' && <ReportsTab projectId={projectId} />}
         </div>
       )}
@@ -362,6 +362,101 @@ function TasksTab() {
           <span className="text-[9px] text-slate-400 bg-slate-50 dark:bg-white/[0.02] px-1.5 py-0.5 rounded">{task.category}</span>
         </div>
       ))}
+    </div>
+  )
+}
+
+function EvidenceTab() {
+  const { selection, linkedMeasurements, linkedSourceDrawings, linkedCostEntries, linkedPayments, fmt } = useWorkspace()
+  const item = selection.boqItem
+
+  if (!item) {
+    return (
+      <div className="h-full flex items-center justify-center text-[11px] text-slate-400">
+        Select a BOQ item to see its evidence summary
+      </div>
+    )
+  }
+
+  return (
+    <div className="h-full overflow-y-auto px-4 py-2">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="bg-blue-50/80 dark:bg-blue-500/5 rounded-lg p-2.5 border border-blue-100 dark:border-blue-500/10">
+          <div className="text-[8px] text-blue-500 uppercase tracking-wider font-bold">Quantity</div>
+          <div className="text-[14px] font-bold tabular-nums text-blue-700 dark:text-blue-300">{fmt(item.quantity)}</div>
+          <div className="text-[9px] text-blue-400">{item.unit}</div>
+        </div>
+        <div className="bg-cyan-50/80 dark:bg-cyan-500/5 rounded-lg p-2.5 border border-cyan-100 dark:border-cyan-500/10">
+          <div className="text-[8px] text-cyan-500 uppercase tracking-wider font-bold">Measurements</div>
+          <div className="text-[14px] font-bold tabular-nums text-cyan-700 dark:text-cyan-300">{linkedMeasurements.length}</div>
+          <div className="text-[9px] text-cyan-400">{linkedMeasurements.reduce((s, m) => s + (m.lines?.length ?? 0), 0)} lines</div>
+        </div>
+        <div className="bg-indigo-50/80 dark:bg-indigo-500/5 rounded-lg p-2.5 border border-indigo-100 dark:border-indigo-500/10">
+          <div className="text-[8px] text-indigo-500 uppercase tracking-wider font-bold">Drawings</div>
+          <div className="text-[14px] font-bold tabular-nums text-indigo-700 dark:text-indigo-300">{linkedSourceDrawings.length}</div>
+          <div className="text-[9px] text-indigo-400">source drawings</div>
+        </div>
+        <div className="bg-emerald-50/80 dark:bg-emerald-500/5 rounded-lg p-2.5 border border-emerald-100 dark:border-emerald-500/10">
+          <div className="text-[8px] text-emerald-500 uppercase tracking-wider font-bold">Cost</div>
+          <div className="text-[14px] font-bold tabular-nums text-emerald-700 dark:text-emerald-300">{fmt(linkedCostEntries.reduce((s, c) => s + c.amount, 0))}</div>
+          <div className="text-[9px] text-emerald-400">{linkedCostEntries.length} entries</div>
+        </div>
+        <div className="bg-green-50/80 dark:bg-green-500/5 rounded-lg p-2.5 border border-green-100 dark:border-green-500/10">
+          <div className="text-[8px] text-green-500 uppercase tracking-wider font-bold">Certified</div>
+          <div className="text-[14px] font-bold tabular-nums text-green-700 dark:text-green-300">{fmt(linkedPayments.totalCertified)}</div>
+          <div className="text-[9px] text-green-400">{linkedPayments.certs.length} certificates</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function QuantityHistoryTab() {
+  const { data, fmt } = useWorkspace()
+
+  const changes = useMemo(() => {
+    return [...data.quantityChanges]
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      .slice(0, 30)
+  }, [data.quantityChanges])
+
+  if (changes.length === 0) {
+    return (
+      <div className="h-full flex items-center justify-center text-[11px] text-slate-400">
+        No quantity changes recorded yet
+      </div>
+    )
+  }
+
+  return (
+    <div className="h-full overflow-y-auto px-4 py-2">
+      <div className="relative pl-6">
+        <div className="absolute left-2 top-0 bottom-0 w-px bg-slate-200 dark:bg-white/[0.06]" />
+        {changes.map((qc, i) => {
+          const boqItem = data.boqItems.find(b => b.id === qc.boq_item_id)
+          return (
+            <div key={qc.id} className="relative pb-3">
+              <div className={cn(
+                'absolute left-[-17px] w-2.5 h-2.5 rounded-full border-2 border-white dark:border-[#0f1117]',
+                qc.difference > 0 ? 'bg-green-500' : qc.difference < 0 ? 'bg-red-500' : 'bg-slate-400'
+              )} style={{ top: 2 }} />
+              <div className="flex items-center gap-2 text-[11px]">
+                <span className="text-slate-400 text-[10px] font-mono w-20 shrink-0">{qc.created_at.slice(0, 10)}</span>
+                <span className="font-mono text-[9px] text-slate-400 w-12 shrink-0">{boqItem?.code ?? '—'}</span>
+                <span className="text-slate-700 dark:text-slate-200 flex-1 truncate">{qc.description}</span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/[0.04] text-slate-500 capitalize">{qc.change_type}</span>
+                <span className="tabular-nums text-slate-400 shrink-0">{fmt(qc.previous_qty)} → {fmt(qc.new_qty)}</span>
+                <span className={cn(
+                  'tabular-nums font-medium shrink-0',
+                  qc.difference > 0 ? 'text-green-600' : qc.difference < 0 ? 'text-red-500' : 'text-slate-400'
+                )}>
+                  {qc.difference > 0 ? '+' : ''}{fmt(qc.difference)}
+                </span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

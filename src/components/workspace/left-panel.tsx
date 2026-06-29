@@ -7,20 +7,21 @@ import { useWorkspace } from './workspace-context'
 import {
   FileSpreadsheet, Ruler, BookOpen, GitCompare, FolderOpen,
   ChevronDown, ChevronRight, Search, Hash, Layers, Package,
-  ArrowRight, MoreHorizontal, Eye,
+  ArrowRight, MoreHorizontal, Eye, ImageIcon, Filter,
 } from 'lucide-react'
 
-type ExplorerSection = 'boq' | 'measurements' | 'library' | 'revisions'
+type ExplorerSection = 'boq' | 'drawings' | 'measurements' | 'library' | 'revisions'
 
 const SECTIONS: { key: ExplorerSection; label: string; icon: typeof FileSpreadsheet }[] = [
   { key: 'boq', label: 'BOQ', icon: FileSpreadsheet },
+  { key: 'drawings', label: 'Drawings', icon: ImageIcon },
   { key: 'measurements', label: 'Measurements', icon: Ruler },
   { key: 'library', label: 'Library', icon: BookOpen },
   { key: 'revisions', label: 'Revisions', icon: GitCompare },
 ]
 
 export function LeftPanel() {
-  const { data, selection, selectBoqItem, selectMeasurement, selectLibraryItem, fmt } = useWorkspace()
+  const { data, selection, selectBoqItem, selectDrawing, selectMeasurement, selectLibraryItem, fmt } = useWorkspace()
   const [expanded, setExpanded] = useState<Set<ExplorerSection>>(new Set(['boq']))
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -104,6 +105,7 @@ export function LeftPanel() {
               <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 flex-1 text-left">{sec.label}</span>
               <span className="text-[10px] tabular-nums text-slate-400 bg-slate-100 dark:bg-white/[0.04] px-1.5 py-0.5 rounded-full">
                 {sec.key === 'boq' ? data.boqItems.length
+                  : sec.key === 'drawings' ? data.drawings.length
                   : sec.key === 'measurements' ? data.measurementItems.length
                   : sec.key === 'library' ? data.categories.length
                   : drawingsWithRevisions.length}
@@ -149,6 +151,31 @@ export function LeftPanel() {
                       ))}
                       {filteredBoq.length === 0 && (
                         <div className="px-7 py-3 text-[10px] text-slate-400 italic">No items match</div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Drawings */}
+                  {sec.key === 'drawings' && (
+                    <div className="pb-1">
+                      {data.drawings.map(d => (
+                        <button
+                          key={d.id}
+                          onClick={() => selectDrawing(selection.drawing?.id === d.id ? null : d)}
+                          className={cn(
+                            'w-full text-left pl-7 pr-3 py-1.5 flex items-center gap-2 transition-all text-[11px] group',
+                            selection.drawing?.id === d.id
+                              ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-l-2 border-indigo-500 pl-[26px]'
+                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.02]'
+                          )}
+                        >
+                          <ImageIcon size={11} className="text-slate-400 shrink-0" />
+                          <span className="truncate flex-1">{d.drawing_number ?? d.name}</span>
+                          <span className="text-[9px] text-slate-400 shrink-0 uppercase">{d.file_type}</span>
+                        </button>
+                      ))}
+                      {data.drawings.length === 0 && (
+                        <div className="px-7 py-3 text-[10px] text-slate-400 italic">No drawings uploaded</div>
                       )}
                     </div>
                   )}

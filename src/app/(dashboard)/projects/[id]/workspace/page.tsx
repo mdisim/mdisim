@@ -20,15 +20,200 @@ import type {
 } from '@/lib/types'
 
 import { WorkspaceProvider, type WorkspaceData } from '@/components/workspace/workspace-context'
-import { CenterPanel } from '@/components/workspace/center-panel'
 import { LeftPanel } from '@/components/workspace/left-panel'
+import { WorkspaceDrawingViewer } from '@/components/workspace/workspace-drawing-viewer'
 import { EvidenceCenter } from '@/components/workspace/evidence-center'
 import { BottomDock } from '@/components/workspace/bottom-dock'
+import { BimViewer } from '@/components/workspace/bim-viewer'
 import { useResizable } from '@/components/workspace/use-resizable'
+import { useWorkspace } from '@/components/workspace/workspace-context'
 import {
   LayoutPanelLeft, PanelLeftClose, PanelRightClose,
-  AlertTriangle, RefreshCw,
+  AlertTriangle, RefreshCw, Box, Monitor, SplitSquareHorizontal,
+  Image as ImageIcon,
 } from 'lucide-react'
+
+function ViewModeToggle() {
+  const { viewMode, setViewMode } = useWorkspace()
+  return (
+    <div className="flex items-center bg-slate-100 dark:bg-white/[0.04] rounded-lg p-0.5">
+      {[
+        { mode: '2d' as const, icon: ImageIcon, label: '2D' },
+        { mode: '3d' as const, icon: Box, label: '3D' },
+        { mode: 'split' as const, icon: SplitSquareHorizontal, label: 'Split' },
+      ].map(({ mode, icon: Icon, label }) => (
+        <button
+          key={mode}
+          onClick={() => setViewMode(mode)}
+          className={cn(
+            'flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-md transition-all',
+            viewMode === mode
+              ? 'bg-white dark:bg-white/[0.08] text-indigo-600 dark:text-indigo-400 shadow-sm'
+              : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+          )}
+        >
+          <Icon size={11} />
+          {label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function WorkspaceInner({ projectId, projectName }: { projectId: string; projectName: string }) {
+  const { viewMode } = useWorkspace()
+  const [leftVisible, setLeftVisible] = useState(true)
+  const [rightVisible, setRightVisible] = useState(true)
+
+  const leftResize = useResizable({ direction: 'horizontal', initialSize: 260, minSize: 200, maxSize: 400, storageKey: 'ws-left' })
+  const rightResize = useResizable({ direction: 'horizontal', initialSize: 340, minSize: 280, maxSize: 500, storageKey: 'ws-right' })
+  const bottomResize = useResizable({ direction: 'vertical', initialSize: 220, minSize: 36, maxSize: 400, storageKey: 'ws-bottom' })
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === '[' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setLeftVisible(v => !v) }
+      if (e.key === ']' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setRightVisible(v => !v) }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [])
+
+  return (
+    <div className="flex flex-col h-[calc(100vh-140px)] bg-[#f8f9fa] dark:bg-[#0a0b0f] overflow-hidden">
+      {/* Workspace Header */}
+      <div className="flex items-center justify-between px-3 h-9 bg-white dark:bg-[#0f1117] border-b border-slate-200/60 dark:border-white/[0.04] shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="p-1 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 text-white">
+            <LayoutPanelLeft size={12} />
+          </div>
+          <h2 className="text-[12px] font-bold text-slate-900 dark:text-white">Workspace</h2>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 truncate max-w-[160px]">{projectName}</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <ViewModeToggle />
+          <div className="w-px h-4 bg-slate-200 dark:bg-white/[0.06]" />
+          <button
+            onClick={() => setLeftVisible(!leftVisible)}
+            className={cn(
+              'p-1 rounded-md transition-colors',
+              leftVisible ? 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04]' : 'text-blue-500 bg-blue-50 dark:bg-blue-500/10'
+            )}
+            title="Toggle explorer (⌘[)"
+          >
+            <PanelLeftClose size={13} />
+          </button>
+          <button
+            onClick={() => setRightVisible(!rightVisible)}
+            className={cn(
+              'p-1 rounded-md transition-colors',
+              rightVisible ? 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04]' : 'text-blue-500 bg-blue-50 dark:bg-blue-500/10'
+            )}
+            title="Toggle properties (⌘])"
+          >
+            <PanelRightClose size={13} />
+          </button>
+          <div className="hidden lg:flex items-center gap-0.5 text-[8px] text-slate-400">
+            <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-white/[0.04] rounded border border-slate-200 dark:border-white/[0.06]">⌘[</kbd>
+            <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-white/[0.04] rounded border border-slate-200 dark:border-white/[0.06]">⌘]</kbd>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Layout */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* LEFT: Project Explorer */}
+        {leftVisible && (
+          <>
+            <div style={{ width: leftResize.size }} className="shrink-0 overflow-hidden">
+              <LeftPanel />
+            </div>
+            <div
+              onMouseDown={leftResize.handleMouseDown}
+              className={cn(
+                'w-1 shrink-0 cursor-col-resize group relative',
+                leftResize.isResizing ? 'bg-blue-500/20' : 'hover:bg-blue-500/10'
+              )}
+            >
+              <div className={cn(
+                'absolute inset-y-0 left-0 w-px',
+                leftResize.isResizing ? 'bg-blue-500' : 'bg-slate-200 dark:bg-white/[0.04] group-hover:bg-blue-400'
+              )} />
+            </div>
+          </>
+        )}
+
+        {/* CENTER: Drawing Viewer / BIM / Split */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-hidden">
+            {viewMode === '2d' && <WorkspaceDrawingViewer />}
+            {viewMode === '3d' && <BimViewer />}
+            {viewMode === 'split' && (
+              <div className="flex h-full">
+                <div className="flex-1 overflow-hidden border-r border-slate-200 dark:border-white/[0.04]">
+                  <WorkspaceDrawingViewer />
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <BimViewer />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Dock */}
+          <div
+            onMouseDown={bottomResize.handleMouseDown}
+            className={cn(
+              'h-1 shrink-0 cursor-row-resize group relative',
+              bottomResize.isResizing ? 'bg-blue-500/20' : 'hover:bg-blue-500/10'
+            )}
+          >
+            <div className={cn(
+              'absolute inset-x-0 top-0 h-px',
+              bottomResize.isResizing ? 'bg-blue-500' : 'bg-slate-200 dark:bg-white/[0.04] group-hover:bg-blue-400'
+            )} />
+          </div>
+          <div style={{ height: bottomResize.size }} className="shrink-0 overflow-hidden">
+            <BottomDock projectId={projectId} projectName={projectName} />
+          </div>
+        </div>
+
+        {/* RIGHT: Dynamic Properties / Evidence Center */}
+        {rightVisible && (
+          <>
+            <div
+              onMouseDown={e => {
+                e.preventDefault()
+                const startX = e.clientX
+                const startSize = rightResize.size
+                const onMove = (me: MouseEvent) => {
+                  const delta = startX - me.clientX
+                  rightResize.setSize(Math.max(280, Math.min(500, startSize + delta)))
+                }
+                const onUp = () => {
+                  document.removeEventListener('mousemove', onMove)
+                  document.removeEventListener('mouseup', onUp)
+                  document.body.style.cursor = ''
+                  document.body.style.userSelect = ''
+                }
+                document.addEventListener('mousemove', onMove)
+                document.addEventListener('mouseup', onUp)
+                document.body.style.cursor = 'col-resize'
+                document.body.style.userSelect = 'none'
+              }}
+              className="w-1 shrink-0 cursor-col-resize group relative hover:bg-blue-500/10"
+            >
+              <div className="absolute inset-y-0 right-0 w-px bg-slate-200 dark:bg-white/[0.04] group-hover:bg-blue-400" />
+            </div>
+            <div style={{ width: rightResize.size }} className="shrink-0 overflow-hidden">
+              <EvidenceCenter />
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export default function WorkspacePage() {
   const { id: projectId } = useParams<{ id: string }>()
@@ -36,11 +221,6 @@ export default function WorkspacePage() {
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<WorkspaceData | null>(null)
   const [projectName, setProjectName] = useState('')
-  const [leftVisible, setLeftVisible] = useState(true)
-  const [rightVisible, setRightVisible] = useState(true)
-
-  const leftResize = useResizable({ direction: 'horizontal', initialSize: 320, minSize: 240, maxSize: 500, storageKey: 'left-drawing' })
-  const rightResize = useResizable({ direction: 'horizontal', initialSize: 340, minSize: 280, maxSize: 500, storageKey: 'right-evidence' })
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -95,15 +275,6 @@ export default function WorkspacePage() {
 
   useEffect(() => { load() }, [load])
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === '[' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setLeftVisible(v => !v) }
-      if (e.key === ']' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setRightVisible(v => !v) }
-    }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [])
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-140px)] bg-[#f8f9fa] dark:bg-[#0a0b0f]">
@@ -137,113 +308,7 @@ export default function WorkspacePage() {
 
   return (
     <WorkspaceProvider data={data}>
-      <div className="flex flex-col h-[calc(100vh-140px)] bg-[#f8f9fa] dark:bg-[#0a0b0f] overflow-hidden">
-        {/* Workspace Header */}
-        <div className="flex items-center justify-between px-4 h-10 bg-white dark:bg-[#0f1117] border-b border-slate-200/60 dark:border-white/[0.04] shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-sm">
-              <LayoutPanelLeft size={14} />
-            </div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-[13px] font-bold text-slate-900 dark:text-white">Workspace</h2>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500">·</span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[200px]">{projectName}</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setLeftVisible(!leftVisible)}
-              className={cn(
-                'p-1.5 rounded-lg transition-colors',
-                leftVisible ? 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04]' : 'text-blue-500 bg-blue-50 dark:bg-blue-500/10'
-              )}
-              title="Toggle drawing viewer (⌘[)"
-            >
-              <PanelLeftClose size={14} />
-            </button>
-            <button
-              onClick={() => setRightVisible(!rightVisible)}
-              className={cn(
-                'p-1.5 rounded-lg transition-colors',
-                rightVisible ? 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04]' : 'text-blue-500 bg-blue-50 dark:bg-blue-500/10'
-              )}
-              title="Toggle evidence center (⌘])"
-            >
-              <PanelRightClose size={14} />
-            </button>
-            <div className="hidden lg:flex items-center gap-1 ml-2 text-[9px] text-slate-400">
-              <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-white/[0.04] rounded border border-slate-200 dark:border-white/[0.06]">⌘[</kbd>
-              <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-white/[0.04] rounded border border-slate-200 dark:border-white/[0.06]">⌘]</kbd>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Layout: Left=Drawing | Center=BOQ Explorer | Right=Evidence Center */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Left Panel — Drawing Viewer */}
-          {leftVisible && (
-            <>
-              <div style={{ width: leftResize.size }} className="shrink-0 overflow-hidden">
-                <CenterPanel />
-              </div>
-              <div
-                onMouseDown={leftResize.handleMouseDown}
-                className={cn(
-                  'w-1 shrink-0 cursor-col-resize group relative',
-                  leftResize.isResizing ? 'bg-blue-500/20' : 'hover:bg-blue-500/10'
-                )}
-              >
-                <div className={cn(
-                  'absolute inset-y-0 left-0 w-px',
-                  leftResize.isResizing ? 'bg-blue-500' : 'bg-slate-200 dark:bg-white/[0.04] group-hover:bg-blue-400'
-                )} />
-              </div>
-            </>
-          )}
-
-          {/* Center — BOQ Explorer + Measurements + Library */}
-          <div className="flex-1 overflow-hidden">
-            <LeftPanel />
-          </div>
-
-          {/* Right Panel — Evidence Center */}
-          {rightVisible && (
-            <>
-              <div
-                onMouseDown={e => {
-                  e.preventDefault()
-                  const startX = e.clientX
-                  const startSize = rightResize.size
-                  const onMove = (me: MouseEvent) => {
-                    const delta = startX - me.clientX
-                    rightResize.setSize(Math.max(280, Math.min(500, startSize + delta)))
-                  }
-                  const onUp = () => {
-                    document.removeEventListener('mousemove', onMove)
-                    document.removeEventListener('mouseup', onUp)
-                    document.body.style.cursor = ''
-                    document.body.style.userSelect = ''
-                  }
-                  document.addEventListener('mousemove', onMove)
-                  document.addEventListener('mouseup', onUp)
-                  document.body.style.cursor = 'col-resize'
-                  document.body.style.userSelect = 'none'
-                }}
-                className="w-1 shrink-0 cursor-col-resize group relative hover:bg-blue-500/10"
-              >
-                <div className="absolute inset-y-0 right-0 w-px bg-slate-200 dark:bg-white/[0.04] group-hover:bg-blue-400" />
-              </div>
-              <div style={{ width: rightResize.size }} className="shrink-0 overflow-hidden">
-                <EvidenceCenter />
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Bottom Dock */}
-        <BottomDock projectId={projectId} projectName={projectName} />
-      </div>
+      <WorkspaceInner projectId={projectId} projectName={projectName} />
     </WorkspaceProvider>
   )
 }
