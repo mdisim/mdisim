@@ -859,15 +859,84 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
     [activeTool, activePoints, completeMeasurement],
   )
 
-  // ── Wheel zoom ───────────────────────────────────────────────────────
+  // ── Wheel zoom (zoom toward cursor) ──────────────────────────────────
   const handleWheel = useCallback(
     (e: React.WheelEvent) => {
       e.preventDefault()
-      const delta = e.deltaY > 0 ? -0.1 : 0.1
-      setZoom((z) => Math.min(5, Math.max(0.3, z + delta)))
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+      const cursorX = e.clientX - rect.left
+      const cursorY = e.clientY - rect.top
+
+      setZoom((prevZoom) => {
+        const factor = e.deltaY > 0 ? 0.9 : 1.1
+        const newZoom = Math.min(5, Math.max(0.3, prevZoom * factor))
+        const scale = newZoom / prevZoom
+
+        setOffset((prev) => ({
+          x: cursorX - scale * (cursorX - prev.x),
+          y: cursorY - scale * (cursorY - prev.y),
+        }))
+
+        return newZoom
+      })
     },
     [],
   )
+
+  // ── Pinch-to-zoom (touch) ────────────────────────────────────────────
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    let lastDist = 0
+    let lastCenter = { x: 0, y: 0 }
+
+    const getTouchDist = (t: TouchList) => {
+      const dx = t[1].clientX - t[0].clientX
+      const dy = t[1].clientY - t[0].clientY
+      return Math.hypot(dx, dy)
+    }
+    const getTouchCenter = (t: TouchList, rect: DOMRect) => ({
+      x: (t[0].clientX + t[1].clientX) / 2 - rect.left,
+      y: (t[0].clientY + t[1].clientY) / 2 - rect.top,
+    })
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        e.preventDefault()
+        lastDist = getTouchDist(e.touches)
+        lastCenter = getTouchCenter(e.touches, el.getBoundingClientRect())
+      }
+    }
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        e.preventDefault()
+        const dist = getTouchDist(e.touches)
+        const center = getTouchCenter(e.touches, el.getBoundingClientRect())
+        const scaleFactor = dist / lastDist
+
+        setZoom((prev) => {
+          const newZoom = Math.min(5, Math.max(0.3, prev * scaleFactor))
+          const s = newZoom / prev
+          setOffset((o) => ({
+            x: center.x - s * (center.x - o.x),
+            y: center.y - s * (center.y - o.y),
+          }))
+          return newZoom
+        })
+
+        lastDist = dist
+        lastCenter = center
+      }
+    }
+
+    el.addEventListener('touchstart', onTouchStart, { passive: false })
+    el.addEventListener('touchmove', onTouchMove, { passive: false })
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart)
+      el.removeEventListener('touchmove', onTouchMove)
+    }
+  }, [])
 
   // ── Undo / Redo ──────────────────────────────────────────────────────
   const handleUndo = useCallback(async () => {
