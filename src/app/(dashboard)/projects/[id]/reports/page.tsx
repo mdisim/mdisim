@@ -29,6 +29,7 @@ import { exportPaymentReportToPDF } from '@/lib/export/payment-pdf'
 import { exportPaymentReportToExcel } from '@/lib/export/payment-excel'
 import { exportEVMReportToPDF } from '@/lib/export/evm-pdf'
 import { exportEVMReportToExcel } from '@/lib/export/evm-excel'
+import { useI18n } from '@/lib/i18n'
 
 const reportCards = [
   {
@@ -72,6 +73,7 @@ type ReportKey = (typeof reportCards)[number]['key']
 
 export default function ReportsPage() {
   const { id: projectId } = useParams<{ id: string }>()
+  const { t } = useI18n()
   const [loading, setLoading] = useState<Record<string, 'pdf' | 'excel' | null>>({})
   const [error, setError] = useState<string | null>(null)
 
@@ -167,7 +169,7 @@ export default function ReportsPage() {
             <FileBarChart size={22} />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Reports</h2>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t.reports.title}</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               Generate and export project reports
             </p>

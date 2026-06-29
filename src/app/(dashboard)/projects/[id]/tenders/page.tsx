@@ -55,6 +55,7 @@ import {
   Target,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/lib/i18n'
 
 const STATUS_CONFIG: Record<TenderStatus, {
   label: string
@@ -78,6 +79,7 @@ const STATUS_OPTIONS: { value: string; label: string }[] = [
 
 export default function TendersPage() {
   const { id: projectId } = useParams<{ id: string }>()
+  const { t } = useI18n()
   const [tenders, setTenders] = useState<Tender[]>([])
   const [boqItems, setBOQItems] = useState<BOQItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -226,7 +228,7 @@ export default function TendersPage() {
     <div className="p-6 md:p-8 max-w-[1600px] mx-auto">
       <PageHeader
         icon={Users}
-        title="Tender Management"
+        title={t.tenders.title}
         subtitle="Compare bids, analyze variances, and award tenders"
         gradient="from-violet-500 to-violet-600"
         actions={
@@ -242,19 +244,19 @@ export default function TendersPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
             <StatCard
               icon={FileSpreadsheet}
-              label="Total Tenders"
+              label={t.tenders.totalTenders}
               value={stats.total}
               gradient="from-violet-500 to-violet-600"
             />
             <StatCard
               icon={Gavel}
-              label="Active Bids"
+              label={t.tenders.activeBids}
               value={stats.active}
               gradient="from-blue-500 to-blue-600"
             />
             <StatCard
               icon={DollarSign}
-              label="Awarded Value"
+              label={t.tenders.awardedValue}
               value={stats.awardedValue}
               prefix=""
               decimals={2}
@@ -262,7 +264,7 @@ export default function TendersPage() {
             />
             <StatCard
               icon={Target}
-              label="Average Bid"
+              label={t.tenders.avgBid}
               value={stats.avgBid}
               decimals={2}
               gradient="from-amber-500 to-amber-600"
@@ -272,7 +274,7 @@ export default function TendersPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Bid Comparison Chart */}
             {stats.bidComparison.length > 0 && (
-              <SectionCard title="Bid Comparison" icon={BarChart3} iconColor="text-violet-500">
+              <SectionCard title={t.tenders.bidComparison} icon={BarChart3} iconColor="text-violet-500">
                 <SimpleBarChart
                   bars={stats.bidComparison.flatMap(t => [
                     { label: `${t.label} (Low)`, value: t.lowest, color: '#22c55e' },
@@ -286,7 +288,7 @@ export default function TendersPage() {
 
             {/* Contractor Ranking */}
             {stats.contractors.length > 0 && (
-              <SectionCard title="Contractor Ranking" icon={Trophy} iconColor="text-amber-500">
+              <SectionCard title={t.tenders.contractorRanking} icon={Trophy} iconColor="text-amber-500">
                 <div className="space-y-3">
                   {stats.contractors
                     .sort((a, b) => b.total - a.total)

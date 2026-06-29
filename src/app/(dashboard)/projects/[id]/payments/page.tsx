@@ -40,6 +40,7 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/lib/i18n'
 
 const CERT_STATUS: Record<PaymentCertStatus, { label: string; color: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = {
   draft: { label: 'Draft', color: 'text-slate-500 bg-slate-100 dark:bg-slate-700', icon: Clock },
@@ -59,6 +60,7 @@ const STATUS_FLOW: { key: PaymentCertStatus; label: string; icon: React.Componen
 
 export default function PaymentsPage() {
   const { id: projectId } = useParams<{ id: string }>()
+  const { t } = useI18n()
   const [certs, setCerts] = useState<PaymentCert[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -155,7 +157,7 @@ export default function PaymentsPage() {
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
       <PageHeader
         icon={CreditCard}
-        title="Payment Certificates"
+        title={t.payments.title}
         subtitle="Interim Payment Certificates (IPC) & contractor payments"
         gradient="from-emerald-500 to-emerald-600"
         actions={
@@ -171,28 +173,28 @@ export default function PaymentsPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
             <StatCard
               icon={ArrowUpRight}
-              label="Total Certified"
+              label={t.payments.totalCertified}
               value={stats.totalCertified}
               decimals={2}
               gradient="from-indigo-500 to-indigo-600"
             />
             <StatCard
               icon={CreditCard}
-              label="Total Paid"
+              label={t.payments.totalPaid}
               value={stats.totalPaid}
               decimals={2}
               gradient="from-emerald-500 to-emerald-600"
             />
             <StatCard
               icon={Shield}
-              label="Retention Held"
+              label={t.payments.retentionHeld}
               value={stats.totalRetention}
               decimals={2}
               gradient="from-amber-500 to-amber-600"
             />
             <StatCard
               icon={Receipt}
-              label="Certificates Count"
+              label={t.payments.certificates}
               value={stats.count}
               gradient="from-blue-500 to-blue-600"
             />
@@ -201,7 +203,7 @@ export default function PaymentsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Payment Progress */}
             {stats.progressBars.length > 0 && (
-              <SectionCard title="Payment Progress" icon={Banknote} iconColor="text-emerald-500">
+              <SectionCard title={t.payments.paymentProgress} icon={Banknote} iconColor="text-emerald-500">
                 <SimpleBarChart
                   bars={stats.progressBars.flatMap(p => [
                     { label: `IPC #${p.certNumber} (Certified)`, value: p.certified, color: '#6366f1' },

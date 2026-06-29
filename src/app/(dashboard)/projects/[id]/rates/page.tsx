@@ -45,6 +45,7 @@ import { SectionCard } from '@/components/ui/section-card'
 import { PageHeader } from '@/components/ui/page-header'
 import { DonutChart, SimpleBarChart } from '@/components/ui/mini-chart'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useI18n } from '@/lib/i18n'
 
 const RESOURCE_ICONS: Record<ResourceType, React.ComponentType<{ size?: number; className?: string }>> = {
   material: Package,
@@ -69,6 +70,7 @@ const RESOURCE_BG_COLORS: Record<ResourceType, string> = {
 
 export default function RateAnalysisPage() {
   const { id: projectId } = useParams<{ id: string }>()
+  const { t } = useI18n()
   const [analyses, setAnalyses] = useState<RateAnalysis[]>([])
   const [boqItems, setBOQItems] = useState<BOQItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -208,7 +210,7 @@ export default function RateAnalysisPage() {
     <div className="p-6 md:p-8 max-w-[1400px] mx-auto">
       <PageHeader
         icon={Calculator}
-        title="Rate Analysis"
+        title={t.rates.title}
         subtitle="Build up unit rates from materials, labor, equipment & subcontractors"
         gradient="from-amber-500 to-amber-600"
         actions={activeTab === 'analyses' ? (
@@ -258,17 +260,17 @@ export default function RateAnalysisPage() {
           initial="hidden" animate="visible"
           variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
         >
-          <StatCard label="Total Rate Items" value={analyses.length} icon={Layers} gradient="from-blue-500 to-blue-600" />
-          <StatCard label="Average Rate" value={metrics.avgUnitRate} prefix="" decimals={2} icon={DollarSign} gradient="from-emerald-500 to-emerald-600" />
-          <StatCard label="Material Cost" value={metrics.materialPct} suffix="%" decimals={1} icon={Package} gradient="from-purple-500 to-purple-600" />
-          <StatCard label="Labor Cost" value={metrics.laborPct} suffix="%" decimals={1} icon={Users} gradient="from-amber-500 to-amber-600" />
+          <StatCard label={t.rates.totalItems} value={analyses.length} icon={Layers} gradient="from-blue-500 to-blue-600" />
+          <StatCard label={t.rates.avgRate} value={metrics.avgUnitRate} prefix="" decimals={2} icon={DollarSign} gradient="from-emerald-500 to-emerald-600" />
+          <StatCard label={t.rates.materialCost} value={metrics.materialPct} suffix="%" decimals={1} icon={Package} gradient="from-purple-500 to-purple-600" />
+          <StatCard label={t.rates.laborCost} value={metrics.laborPct} suffix="%" decimals={1} icon={Users} gradient="from-amber-500 to-amber-600" />
         </motion.div>
       )}
 
       {/* Cost Distribution & Rate Comparison Charts */}
       {!loading && analyses.length > 0 && metrics.totalByType > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <SectionCard title="Cost Distribution" icon={PieChart} iconColor="text-purple-500">
+          <SectionCard title={t.rates.costDistribution} icon={PieChart} iconColor="text-purple-500">
             <DonutChart
               segments={[
                 { value: metrics.byType.material, color: '#3b82f6', label: 'Material' },
@@ -278,7 +280,7 @@ export default function RateAnalysisPage() {
               ].filter(s => s.value > 0)}
             />
           </SectionCard>
-          <SectionCard title="Rate Comparison" icon={BarChart3} iconColor="text-amber-500">
+          <SectionCard title={t.rates.rateComparison} icon={BarChart3} iconColor="text-amber-500">
             <SimpleBarChart
               bars={[...analyses]
                 .sort((a, b) => b.unit_rate - a.unit_rate)
