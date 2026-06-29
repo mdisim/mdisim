@@ -256,6 +256,19 @@ export default function MeasurementsPage() {
     }
   }, [items])
 
+  const handleToggleSelect = useCallback((id: string) => {
+    setSelectedItems((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  const handleSelectAll = useCallback(() => {
+    setSelectedItems(new Set(filteredItems.map((i) => i.id)))
+  }, [filteredItems])
+
   const handleMeasurementTypeChange = (type: MeasurementType) => {
     setCreateForm((prev) => ({
       ...prev,
@@ -450,17 +463,8 @@ export default function MeasurementsPage() {
       {activeTab === 'measurements' && <MeasurementGrid
         items={filteredItems}
         selectedItems={selectedItems}
-        onToggleSelect={(id: string) => {
-          setSelectedItems((prev) => {
-            const next = new Set(prev)
-            if (next.has(id)) next.delete(id)
-            else next.add(id)
-            return next
-          })
-        }}
-        onSelectAll={() => {
-          setSelectedItems(new Set(filteredItems.map((i) => i.id)))
-        }}
+        onToggleSelect={handleToggleSelect}
+        onSelectAll={handleSelectAll}
         onAddItem={() => setShowCreateItem(true)}
         onUpdateItem={handleUpdateItem}
         onDeleteItem={handleDeleteItem}

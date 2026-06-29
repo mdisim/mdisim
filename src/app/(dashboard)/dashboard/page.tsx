@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   FolderKanban,
@@ -62,22 +62,37 @@ export default function DashboardPage() {
   }, [])
 
   // Aggregate KPIs across all projects
-  const totalProjects = projects.length
-  const totalBOQValue = summaries.reduce((s, p) => s + p.boqItems.reduce((a, b) => a + (b.total_amount ?? 0), 0), 0)
-  const totalContractValue = summaries.reduce((s, p) => s + (p.contract?.contract_value ?? 0), 0)
-  const totalActualCost = summaries.reduce((s, p) => s + p.costEntries.filter(c => c.category === 'actual').reduce((a, b) => a + b.amount, 0), 0)
-  const totalCommitted = summaries.reduce((s, p) => s + p.costEntries.filter(c => c.category === 'committed').reduce((a, b) => a + b.amount, 0), 0)
-  const totalForecast = summaries.reduce((s, p) => s + p.costEntries.filter(c => c.category === 'forecast').reduce((a, b) => a + b.amount, 0), 0)
-  const totalPaid = summaries.reduce((s, p) => s + p.paymentCerts.filter(c => c.status === 'paid').reduce((a, b) => a + b.net_payable, 0), 0)
-  const pendingPayments = summaries.reduce((s, p) => s + p.paymentCerts.filter(c => c.status !== 'paid' && c.status !== 'draft').reduce((a, b) => a + b.net_payable, 0), 0)
-  const pendingVariations = summaries.reduce((s, p) => s + p.variations.filter(v => v.status === 'pending' || v.status === 'submitted').reduce((a, b) => a + b.amount, 0), 0)
-  const approvedVariations = summaries.reduce((s, p) => s + p.variations.filter(v => v.status === 'approved').reduce((a, b) => a + (b.approved_amount ?? b.amount), 0), 0)
-  const activeTenders = summaries.reduce((s, p) => s + p.tenders.filter(t => t.status === 'issued').length, 0)
-  const totalMeasurements = summaries.reduce((s, p) => s + p.measurementItems.length, 0)
-  const totalMeasurementLines = summaries.reduce((s, p) => s + p.measurementItems.reduce((a, m) => a + (m.lines?.length ?? 0), 0), 0)
-  const totalForecastCost = totalActualCost + totalCommitted + totalForecast
-  const projectedProfit = totalContractValue + approvedVariations - totalForecastCost
-  const profitMargin = totalContractValue > 0 ? ((projectedProfit / totalContractValue) * 100) : 0
+  const {
+    totalProjects, totalBOQValue, totalContractValue, totalActualCost,
+    totalCommitted, totalForecast, totalPaid, pendingPayments,
+    pendingVariations, approvedVariations, activeTenders,
+    totalMeasurements, totalMeasurementLines,
+    totalForecastCost, projectedProfit, profitMargin,
+  } = useMemo(() => {
+    const totalProjects = projects.length
+    const totalBOQValue = summaries.reduce((s, p) => s + p.boqItems.reduce((a, b) => a + (b.total_amount ?? 0), 0), 0)
+    const totalContractValue = summaries.reduce((s, p) => s + (p.contract?.contract_value ?? 0), 0)
+    const totalActualCost = summaries.reduce((s, p) => s + p.costEntries.filter(c => c.category === 'actual').reduce((a, b) => a + b.amount, 0), 0)
+    const totalCommitted = summaries.reduce((s, p) => s + p.costEntries.filter(c => c.category === 'committed').reduce((a, b) => a + b.amount, 0), 0)
+    const totalForecast = summaries.reduce((s, p) => s + p.costEntries.filter(c => c.category === 'forecast').reduce((a, b) => a + b.amount, 0), 0)
+    const totalPaid = summaries.reduce((s, p) => s + p.paymentCerts.filter(c => c.status === 'paid').reduce((a, b) => a + b.net_payable, 0), 0)
+    const pendingPayments = summaries.reduce((s, p) => s + p.paymentCerts.filter(c => c.status !== 'paid' && c.status !== 'draft').reduce((a, b) => a + b.net_payable, 0), 0)
+    const pendingVariations = summaries.reduce((s, p) => s + p.variations.filter(v => v.status === 'pending' || v.status === 'submitted').reduce((a, b) => a + b.amount, 0), 0)
+    const approvedVariations = summaries.reduce((s, p) => s + p.variations.filter(v => v.status === 'approved').reduce((a, b) => a + (b.approved_amount ?? b.amount), 0), 0)
+    const activeTenders = summaries.reduce((s, p) => s + p.tenders.filter(t => t.status === 'issued').length, 0)
+    const totalMeasurements = summaries.reduce((s, p) => s + p.measurementItems.length, 0)
+    const totalMeasurementLines = summaries.reduce((s, p) => s + p.measurementItems.reduce((a, m) => a + (m.lines?.length ?? 0), 0), 0)
+    const totalForecastCost = totalActualCost + totalCommitted + totalForecast
+    const projectedProfit = totalContractValue + approvedVariations - totalForecastCost
+    const profitMargin = totalContractValue > 0 ? ((projectedProfit / totalContractValue) * 100) : 0
+    return {
+      totalProjects, totalBOQValue, totalContractValue, totalActualCost,
+      totalCommitted, totalForecast, totalPaid, pendingPayments,
+      pendingVariations, approvedVariations, activeTenders,
+      totalMeasurements, totalMeasurementLines,
+      totalForecastCost, projectedProfit, profitMargin,
+    }
+  }, [projects, summaries])
 
   const fmt = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
   const fmtFull = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -89,7 +104,7 @@ export default function DashboardPage() {
   const fmtPct = (n: number) => `${n.toFixed(2)}`
 
   // ── Earned Value computations per project ──
-  const earnedValueData = summaries
+  const earnedValueData = useMemo(() => summaries
     .filter(s => s.contract)
     .map(s => {
       const BAC = s.contract!.contract_value
@@ -137,10 +152,10 @@ export default function DashboardPage() {
         BAC, EV, PV, AC, SPI, CPI, EAC, VAC,
         percentComplete,
       }
-    })
+    }), [summaries])
 
   // ── Project Financial Summary data ──
-  const financialData = summaries.map(s => {
+  const financialData = useMemo(() => summaries.map(s => {
     const contractVal = s.contract?.contract_value ?? 0
     const varApproved = s.variations.filter(v => v.status === 'approved').reduce((a, b) => a + (b.approved_amount ?? b.amount), 0)
     const revisedValue = contractVal + varApproved
@@ -163,16 +178,18 @@ export default function DashboardPage() {
       profit,
       margin,
     }
-  })
+  }), [summaries])
 
   // ── Cash Position data ──
+  const cashSummary = useMemo(() => {
   const allCashflow = summaries.flatMap(s => s.cashflow)
-  const cashSummary = allCashflow.length > 0 ? {
+  return allCashflow.length > 0 ? {
     plannedIncome: allCashflow.reduce((s, c) => s + c.planned_income, 0),
     actualIncome: allCashflow.reduce((s, c) => s + c.actual_income, 0),
     plannedExpense: allCashflow.reduce((s, c) => s + c.planned_expense, 0),
     actualExpense: allCashflow.reduce((s, c) => s + c.actual_expense, 0),
   } : null
+  }, [summaries])
 
   if (loading) {
     return (

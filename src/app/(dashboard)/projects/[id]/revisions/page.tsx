@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import type { Drawing, DrawingRevision, QuantityChange } from '@/lib/types'
 import { getDrawings } from '@/app/actions/drawings'
-import { getDrawingRevisions } from '@/app/actions/drawing-revisions'
+import { getDrawingRevisionsForProject } from '@/app/actions/drawing-revisions'
 import { getQuantityChanges, createQuantityChange } from '@/app/actions/drawing-revisions'
 import { getBOQItems } from '@/app/actions/boq'
 import { Card, CardContent } from '@/components/ui/card'
@@ -54,13 +54,12 @@ export default function RevisionsPage() {
       setDrawings(drawingList)
       setChanges(qtyChanges)
 
+      const allRevisions = await getDrawingRevisionsForProject(projectId)
       const revMap: Record<string, DrawingRevision[]> = {}
-      await Promise.all(
-        drawingList.map(async (d) => {
-          const revs = await getDrawingRevisions(d.id)
-          if (revs.length > 0) revMap[d.id] = revs
-        })
-      )
+      for (const rev of allRevisions) {
+        if (!revMap[rev.drawing_id]) revMap[rev.drawing_id] = []
+        revMap[rev.drawing_id].push(rev)
+      }
       setRevisionMap(revMap)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load revisions')

@@ -3,6 +3,18 @@
 import { createClient } from '@/lib/supabase/server'
 import type { DrawingRevision, QuantityChange } from '@/lib/types'
 
+export async function getDrawingRevisionsForProject(projectId: string): Promise<DrawingRevision[]> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+  const { data } = await supabase
+    .from('qb_drawing_revisions')
+    .select('*, qb_drawings!inner(project_id)')
+    .eq('qb_drawings.project_id', projectId)
+    .order('revision_date', { ascending: false })
+  return (data ?? []) as DrawingRevision[]
+}
+
 export async function getDrawingRevisions(drawingId: string): Promise<DrawingRevision[]> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
