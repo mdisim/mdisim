@@ -19,17 +19,26 @@ export async function getDrawings(projectId: string): Promise<Drawing[]> {
 }
 
 export async function getDrawing(id: string): Promise<Drawing | null> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
 
-  const { data } = await supabase
-    .from('qb_drawings')
-    .select('*')
-    .eq('id', id)
-    .single()
+    const { data, error } = await supabase
+      .from('qb_drawings')
+      .select('*')
+      .eq('id', id)
+      .single()
 
-  return data as Drawing | null
+    if (error) {
+      console.error('[getDrawing] Supabase error:', error.message)
+      return null
+    }
+    return data as Drawing | null
+  } catch (e) {
+    console.error('[getDrawing] Unexpected error:', e)
+    return null
+  }
 }
 
 export async function createDrawing(fields: {
@@ -103,15 +112,25 @@ export async function deleteDrawing(id: string): Promise<{ error?: string }> {
 }
 
 export async function getDrawingUrl(filePath: string): Promise<string | null> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  try {
+    if (!filePath) return null
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
 
-  const { data } = await supabase.storage
-    .from('qb-drawings')
-    .createSignedUrl(filePath, 3600)
+    const { data, error } = await supabase.storage
+      .from('qb-drawings')
+      .createSignedUrl(filePath, 3600)
 
-  return data?.signedUrl ?? null
+    if (error) {
+      console.error('[getDrawingUrl] Storage error:', error.message)
+      return null
+    }
+    return data?.signedUrl ?? null
+  } catch (e) {
+    console.error('[getDrawingUrl] Unexpected error:', e)
+    return null
+  }
 }
 
 // ── Scales ──────────────────────────────────────────────────────────────

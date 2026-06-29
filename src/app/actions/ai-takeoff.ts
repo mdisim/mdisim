@@ -4,20 +4,6 @@ import { createClient } from '@/lib/supabase/server'
 import { analyzeDrawing, estimateCosts } from '@/lib/ai/engine'
 import type { AIFullAnalysis, AICostEstimate, UserCorrection } from '@/lib/ai/types'
 
-export type { AIFullAnalysis, AICostEstimate }
-export type {
-  AIDetectedElement,
-  AIBOQGroup,
-  AIBOQItem,
-  AIDrawingAnalysis,
-  UserCorrection,
-  MaterialBreakdown,
-  Trade,
-  ElementType,
-  DetectedScale,
-  RepeatedPattern,
-} from '@/lib/ai/types'
-
 export async function analyzeDrawingWithAI(
   imageBase64: string,
   drawingName: string,

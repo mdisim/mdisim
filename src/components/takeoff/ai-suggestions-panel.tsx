@@ -27,7 +27,7 @@ import type {
   AIBOQGroup,
   AIBOQItem,
   Trade,
-} from '@/app/actions/ai-takeoff'
+} from '@/lib/ai/types'
 
 type PanelTab = 'elements' | 'boq' | 'cost'
 

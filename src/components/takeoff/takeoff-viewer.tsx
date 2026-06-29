@@ -54,7 +54,7 @@ import {
 import type { UndoRedoState, UndoAction } from '@/lib/takeoff/undo-redo'
 import { AISuggestionsPanel } from './ai-suggestions-panel'
 import { analyzeDrawingWithAI, estimateProjectCosts } from '@/app/actions/ai-takeoff'
-import type { AIFullAnalysis, AIDetectedElement, AIBOQItem } from '@/app/actions/ai-takeoff'
+import type { AIFullAnalysis, AIDetectedElement, AIBOQItem } from '@/lib/ai/types'
 import { AlertTriangle, PanelRightClose, PanelRightOpen, Keyboard, Link2 } from 'lucide-react'
 import { linkDrawingMeasurementsToBOQ } from '@/app/actions/measurements'
 import { createBOQItem } from '@/app/actions/boq'
