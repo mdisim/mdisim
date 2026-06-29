@@ -10,9 +10,11 @@ import { Modal } from '@/components/ui/modal'
 import { FolderKanban, Plus, Trash2, MapPin, User, Calendar, Search, LayoutGrid, List, DollarSign } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useI18n } from '@/lib/i18n'
 
 export default function ProjectsPage() {
   const router = useRouter()
+  const { t } = useI18n()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
@@ -96,7 +98,7 @@ export default function ProjectsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Projects</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t.projects.title}</h1>
           <span className="inline-flex items-center justify-center h-6 min-w-[1.5rem] px-2 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-semibold">
             {projects.length}
           </span>
@@ -121,7 +123,7 @@ export default function ProjectsPage() {
           </div>
           <Button onClick={() => setShowCreate(true)}>
             <Plus size={16} />
-            New Project
+            {t.projects.createProject}
           </Button>
         </div>
       </div>

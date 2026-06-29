@@ -33,6 +33,7 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
+import { useI18n } from '@/lib/i18n'
 import { getDashboardSummaries } from '@/app/actions/dashboard'
 import type { ProjectSummary } from '@/app/actions/dashboard'
 import type { Project } from '@/lib/types'
@@ -45,6 +46,7 @@ import { CardSkeleton } from '@/components/ui/skeleton'
 
 export default function DashboardPage() {
   const router = useRouter()
+  const { t } = useI18n()
   const [projects, setProjects] = useState<Project[]>([])
   const [summaries, setSummaries] = useState<ProjectSummary[]>([])
   const [loading, setLoading] = useState(true)
@@ -285,8 +287,8 @@ export default function DashboardPage() {
         <div className="mx-auto max-w-7xl space-y-6">
           <PageHeader
             icon={Activity}
-            title="Executive Dashboard"
-            subtitle="Portfolio overview"
+            title={t.dashboard.title}
+            subtitle={t.dashboard.subtitle}
             gradient="from-indigo-500 to-indigo-600"
           />
           <EmptyState
@@ -313,8 +315,8 @@ export default function DashboardPage() {
         <motion.div variants={fadeUp}>
           <PageHeader
             icon={Activity}
-            title="Executive Dashboard"
-            subtitle={`Portfolio overview across ${totalProjects} project${totalProjects !== 1 ? 's' : ''}`}
+            title={t.dashboard.title}
+            subtitle={t.dashboard.subtitle}
             gradient="from-indigo-500 to-indigo-600"
             actions={
               <button
@@ -331,10 +333,10 @@ export default function DashboardPage() {
         {/* ── KPI Row ── */}
         <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-5">
           {([
-            { label: 'Total Projects', value: totalProjects, icon: FolderKanban, gradient: 'from-violet-600 to-indigo-600' },
-            { label: 'Total Budget', value: totalContractValue, icon: Briefcase, gradient: 'from-blue-600 to-cyan-600', prefix: '$', decimals: 2 },
-            { label: 'Active Tenders', value: activeTenders, icon: Receipt, gradient: 'from-purple-600 to-fuchsia-600' },
-            { label: 'Total Payments', value: totalPaid, icon: DollarSign, gradient: 'from-emerald-600 to-teal-600', prefix: '$', decimals: 2 },
+            { label: t.dashboard.totalProjects, value: totalProjects, icon: FolderKanban, gradient: 'from-violet-600 to-indigo-600' },
+            { label: t.dashboard.totalBudget, value: totalContractValue, icon: Briefcase, gradient: 'from-blue-600 to-cyan-600', prefix: '$', decimals: 2 },
+            { label: t.dashboard.activeTenders, value: activeTenders, icon: Receipt, gradient: 'from-purple-600 to-fuchsia-600' },
+            { label: t.dashboard.totalPayments, value: totalPaid, icon: DollarSign, gradient: 'from-emerald-600 to-teal-600', prefix: '$', decimals: 2 },
             { label: 'Completion Rate', value: completionRate, icon: Target, gradient: 'from-amber-600 to-orange-600', suffix: '%', decimals: 1 },
           ] as const).map((kpi, index) => (
             <motion.div key={kpi.label} variants={fadeUp}>
@@ -357,7 +359,7 @@ export default function DashboardPage() {
           <div className="space-y-6 lg:col-span-2">
             {/* Budget Overview */}
             <motion.div variants={fadeUp}>
-              <SectionCard title="Budget Overview" icon={Layers} iconColor="text-rose-500">
+              <SectionCard title={t.dashboard.budgetOverview} icon={Layers} iconColor="text-rose-500">
                 {budgetSegments.length > 0 ? (
                   <div className="flex flex-col items-center">
                     <DonutChart segments={budgetSegments} size={200} showLegend />
@@ -384,7 +386,7 @@ export default function DashboardPage() {
 
             {/* Recent Activity */}
             <motion.div variants={fadeUp}>
-              <SectionCard title="Recent Activity" icon={Clock} iconColor="text-blue-500" noPadding>
+              <SectionCard title={t.dashboard.recentActivity} icon={Clock} iconColor="text-blue-500" noPadding>
                 {recentActivity.length > 0 ? (
                   <div className="divide-y divide-slate-100 dark:divide-slate-700/30">
                     {recentActivity.map((item, i) => (
@@ -411,7 +413,7 @@ export default function DashboardPage() {
           <div className="space-y-6">
             {/* Project Health */}
             <motion.div variants={fadeUp}>
-              <SectionCard title="Project Health" icon={Activity} iconColor="text-cyan-500">
+              <SectionCard title={t.dashboard.projectHealth} icon={Activity} iconColor="text-cyan-500">
                 <div className="flex flex-wrap justify-center gap-6">
                   {summaries.map(s => (
                     <ProgressRing
@@ -470,7 +472,7 @@ export default function DashboardPage() {
 
         {/* ── Bottom Row: Financial Summary ── */}
         <motion.div variants={fadeUp}>
-          <SectionCard title="Financial Summary" icon={DollarSign} iconColor="text-emerald-500">
+          <SectionCard title={t.dashboard.financialSummary} icon={DollarSign} iconColor="text-emerald-500">
             <SimpleBarChart
               bars={financialData.map(d => ({
                 label: d.name.length > 15 ? d.name.slice(0, 15) + '...' : d.name,

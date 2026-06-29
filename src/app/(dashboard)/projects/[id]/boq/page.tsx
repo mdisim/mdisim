@@ -34,6 +34,7 @@ import { SectionCard } from '@/components/ui/section-card'
 import { DonutChart, SimpleBarChart, ProgressRing } from '@/components/ui/mini-chart'
 import { EmptyState } from '@/components/ui/empty-state'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/lib/i18n'
 import { VirtualTable } from '@/components/ui/virtual-table'
 import type { VirtualTableColumn } from '@/components/ui/virtual-table'
 import {
@@ -60,6 +61,7 @@ const EDITABLE_FIELDS: (keyof BOQItem)[] = ['code', 'description', 'unit', 'quan
 
 export default function BOQPage() {
   const { id: projectId } = useParams<{ id: string }>()
+  const { t } = useI18n()
   const [items, setItems] = useState<BOQItem[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
@@ -407,7 +409,7 @@ export default function BOQPage() {
     <div className="p-6 md:p-8">
       <PageHeader
         icon={FileSpreadsheet}
-        title="Bill of Quantities"
+        title={t.boq.title}
         subtitle={items.length > 0 ? `${items.length} items · ${allSections.length} sections` : 'Manage your project quantities and costs'}
         gradient="from-blue-500 to-blue-600"
         badge={items.length > 0 ? (
@@ -424,7 +426,7 @@ export default function BOQPage() {
                 onChange={(e) => setSectionFilter(e.target.value)}
                 className="px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
               >
-                <option value="">All Sections</option>
+                <option value="">{t.boq.allSections}</option>
                 {allSections.map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
@@ -432,20 +434,20 @@ export default function BOQPage() {
             </div>
           )}
           <Button variant="outline" size="sm" onClick={() => { setShowImport(true); setImportRows([]); setImportError(null) }}>
-            <Upload size={15} /> Import
+            <Upload size={15} /> {t.boq.importExcel}
           </Button>
           <Button variant="outline" size="sm" onClick={async () => {
             try { const project = await getProject(projectId); if (project) await exportBOQToExcel(items, project.name, project.currency, vatPct) } catch (e) { setError(e instanceof Error ? e.message : 'Failed to export Excel') }
           }} disabled={items.length === 0}>
-            <Download size={15} /> Excel
+            <Download size={15} /> {t.boq.exportExcel}
           </Button>
           <Button variant="outline" size="sm" onClick={async () => {
             try { const project = await getProject(projectId); if (project) exportBOQToPDF(items, project.name, project.currency, vatPct) } catch (e) { setError(e instanceof Error ? e.message : 'Failed to export PDF') }
           }} disabled={items.length === 0}>
-            <FileText size={15} /> PDF
+            <FileText size={15} /> {t.boq.exportPdf}
           </Button>
           <Button size="sm" onClick={() => setShowCreate(true)}>
-            <Plus size={15} /> Add Item
+            <Plus size={15} /> {t.boq.addItem}
           </Button>
         </>}
       />
@@ -745,7 +747,7 @@ export default function BOQPage() {
                 </tr>
                 <tr className="border-t-2 border-slate-300 dark:border-slate-600 bg-slate-50/80 dark:bg-slate-900/80">
                   <td colSpan={8} className="px-4 py-3 text-right font-semibold text-slate-500 dark:text-slate-400 text-sm uppercase tracking-wide">
-                    Subtotal
+                    {t.boq.subtotal}
                   </td>
                   <td className="px-4 py-3 text-right font-bold text-slate-900 dark:text-white tabular-nums">
                     {formatCurrency(subtotal)}

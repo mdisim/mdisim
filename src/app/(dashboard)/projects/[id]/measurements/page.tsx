@@ -29,6 +29,9 @@ import { MeasurementToolbar } from '@/components/measurements/measurement-toolba
 import { GenerateBOQDialog } from '@/components/measurements/generate-boq-dialog'
 import { Ruler, Plus, Link2, Image, ArrowRight, BarChart3, GitBranch, FileText, Layers } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/lib/i18n'
+import { PageHeader } from '@/components/ui/page-header'
+import { StatCard } from '@/components/ui/stat-card'
 import { getProject } from '@/app/actions/projects'
 import { exportMeasurementsToExcel } from '@/lib/export/measurements-excel'
 import { exportMeasurementsToPDF } from '@/lib/export/measurements-pdf'
@@ -44,6 +47,7 @@ const MEASUREMENT_TYPE_DEFAULT_UNIT: Record<MeasurementType, string> = {
 
 export default function MeasurementsPage() {
   const { id: projectId } = useParams<{ id: string }>()
+  const { t } = useI18n()
 
   const [items, setItems] = useState<MeasurementItem[]>([])
   const [boqItems, setBoqItems] = useState<BOQItem[]>([])
@@ -280,6 +284,7 @@ export default function MeasurementsPage() {
   if (loading) {
     return (
       <div className="p-4 md:p-8">
+        <PageHeader icon={Ruler} title={t.measurements.title} subtitle={t.measurements.totalMeasured} gradient="from-blue-500 to-cyan-600" />
         <TableSkeleton rows={6} columns={4} />
       </div>
     )
@@ -288,6 +293,7 @@ export default function MeasurementsPage() {
   if (error && !loading && items.length === 0) {
     return (
       <div className="p-4 md:p-8">
+        <PageHeader icon={Ruler} title={t.measurements.title} subtitle={t.measurements.totalMeasured} gradient="from-blue-500 to-cyan-600" />
         <div className="flex flex-col items-center justify-center py-12 gap-3">
           <p className="text-sm text-red-500">{error}</p>
           <button onClick={load} className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700">Retry</button>
@@ -299,6 +305,7 @@ export default function MeasurementsPage() {
   if (items.length === 0) {
     return (
       <div className="p-4 md:p-8">
+        <PageHeader icon={Ruler} title={t.measurements.title} subtitle={t.measurements.noMeasurements} gradient="from-blue-500 to-cyan-600" />
         <div className="text-center py-20">
           <Ruler size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
           <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-1">
@@ -330,6 +337,8 @@ export default function MeasurementsPage() {
 
   return (
     <div className="p-4 md:p-8">
+      <PageHeader icon={Ruler} title={t.measurements.title} subtitle={`${items.length} items · ${lineCount} lines`} gradient="from-blue-500 to-cyan-600" />
+
       <MeasurementToolbar
         itemCount={items.length}
         lineCount={lineCount}
@@ -361,6 +370,13 @@ export default function MeasurementsPage() {
         totalDeductions={totalDeductions}
         netQuantity={netQuantity}
       />
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <StatCard label="Items" value={items.length} icon={Layers} gradient="from-blue-500 to-blue-600" />
+        <StatCard label="Lines" value={lineCount} icon={FileText} gradient="from-indigo-500 to-indigo-600" />
+        <StatCard label="Additions" value={totalAdditions} decimals={2} icon={Plus} gradient="from-green-500 to-emerald-600" />
+        <StatCard label="Net Quantity" value={netQuantity} decimals={2} icon={BarChart3} gradient="from-purple-500 to-purple-600" />
+      </div>
 
       {/* Tab bar */}
       <div className="flex gap-1 mb-4 border-b border-slate-200 dark:border-slate-700">

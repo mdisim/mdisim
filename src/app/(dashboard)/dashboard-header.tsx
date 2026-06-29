@@ -4,23 +4,23 @@ import { useState, useEffect } from 'react'
 import { Sun, Moon, ChevronDown, Globe, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CommandPalette } from '@/components/ui/command-palette'
+import { useI18n } from '@/lib/i18n'
+import type { Locale } from '@/lib/i18n'
 
 const LANGUAGES = [
-  { code: 'en', label: 'EN', dir: 'ltr' },
-  { code: 'ar', label: 'AR', dir: 'rtl' },
-  { code: 'he', label: 'HE', dir: 'rtl' },
+  { code: 'en', label: 'EN' },
+  { code: 'ar', label: 'AR' },
+  { code: 'he', label: 'HE' },
 ]
 
 export function DashboardHeader() {
   const [dark, setDark] = useState(false)
   const [langOpen, setLangOpen] = useState(false)
-  const [currentLang, setCurrentLang] = useState('en')
+  const { locale, setLocale } = useI18n()
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark')
     setDark(isDark)
-    const savedLang = localStorage.getItem('angel-dc-language') || 'en'
-    setCurrentLang(savedLang)
   }, [])
 
   const toggleTheme = () => {
@@ -32,13 +32,6 @@ export function DashboardHeader() {
       document.documentElement.classList.remove('dark')
     }
     window.dispatchEvent(new CustomEvent('theme-change', { detail: { dark: next } }))
-  }
-
-  const setLanguage = (lang: typeof LANGUAGES[0]) => {
-    setCurrentLang(lang.code)
-    localStorage.setItem('angel-dc-language', lang.code)
-    document.documentElement.setAttribute('dir', lang.dir)
-    setLangOpen(false)
   }
 
   return (
@@ -62,7 +55,7 @@ export function DashboardHeader() {
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors"
           >
             <Globe size={14} />
-            <span className="text-xs uppercase">{currentLang}</span>
+            <span className="text-xs uppercase">{locale}</span>
             <ChevronDown size={12} className={cn('transition-transform', langOpen && 'rotate-180')} />
           </button>
           {langOpen && (
@@ -72,10 +65,10 @@ export function DashboardHeader() {
                 {LANGUAGES.map((lang) => (
                   <button
                     key={lang.code}
-                    onClick={() => setLanguage(lang)}
+                    onClick={() => { setLocale(lang.code as Locale); setLangOpen(false) }}
                     className={cn(
                       'w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors',
-                      currentLang === lang.code
+                      locale === lang.code
                         ? 'text-blue-500 font-medium'
                         : 'text-slate-600 dark:text-slate-300'
                     )}

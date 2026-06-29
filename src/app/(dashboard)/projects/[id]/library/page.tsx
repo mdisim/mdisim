@@ -18,6 +18,7 @@ import {
   Menu,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/lib/i18n'
 import {
   getLibraryCategories,
   createLibraryCategory,
@@ -36,6 +37,7 @@ interface EditingCell {
 
 export default function LibraryPage() {
   const { id: _projectId } = useParams<{ id: string }>()
+  const { t } = useI18n()
   const [categories, setCategories] = useState<LibraryCategory[]>([])
   const [items, setItems] = useState<LibraryItem[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -284,7 +286,7 @@ export default function LibraryPage() {
           <BookOpen size={22} />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Pricing Library</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t.library.title}</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400">Manage reusable rate items and categories</p>
         </div>
       </div>
