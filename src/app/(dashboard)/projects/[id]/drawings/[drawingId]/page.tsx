@@ -7,6 +7,8 @@ import type { Drawing } from '@/lib/types'
 import { DRAWING_TYPES } from '@/lib/types'
 import { ArrowLeft, Maximize2, Minimize2 } from 'lucide-react'
 import { TakeoffViewer } from '@/components/takeoff/takeoff-viewer'
+import { DwgViewer } from '@/components/takeoff/dwg-viewer'
+import { ImageViewer } from '@/components/takeoff/image-viewer'
 
 export default function TakeoffPage() {
   const { id: projectId, drawingId } = useParams<{ id: string; drawingId: string }>()
@@ -126,14 +128,33 @@ export default function TakeoffPage() {
 
       {/* Takeoff workspace */}
       <div className="flex-1 min-h-0">
-        <TakeoffViewer
-          drawingId={drawing.id}
-          projectId={projectId}
-          drawingUrl={drawingUrl}
-          pageCount={drawing.page_count}
-          drawingName={drawing.name}
-          drawingType={drawing.drawing_type}
-        />
+        {drawing.file_type === 'pdf' ? (
+          <TakeoffViewer
+            drawingId={drawing.id}
+            projectId={projectId}
+            drawingUrl={drawingUrl}
+            pageCount={drawing.page_count}
+            drawingName={drawing.name}
+            drawingType={drawing.drawing_type}
+          />
+        ) : drawing.file_type === 'dwg' || drawing.file_type === 'dxf' ? (
+          <DwgViewer
+            drawingId={drawing.id}
+            projectId={projectId}
+            drawingUrl={drawingUrl}
+            drawingName={drawing.name}
+            drawingType={drawing.drawing_type}
+            fileType={drawing.file_type}
+          />
+        ) : (
+          <ImageViewer
+            drawingId={drawing.id}
+            projectId={projectId}
+            drawingUrl={drawingUrl}
+            drawingName={drawing.name}
+            drawingType={drawing.drawing_type}
+          />
+        )}
       </div>
     </div>
   )

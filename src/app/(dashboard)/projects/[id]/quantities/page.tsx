@@ -52,8 +52,12 @@ export default function QuantitiesPage() {
       ])
       const withMeasurements = await Promise.all(
         drawings.map(async (d) => {
-          const measurements = await getDrawingMeasurements(d.id)
-          return { ...d, measurements }
+          try {
+            const measurements = await getDrawingMeasurements(d.id)
+            return { ...d, measurements }
+          } catch {
+            return { ...d, measurements: [] as import('@/lib/types').DrawingMeasurement[] }
+          }
         })
       )
       setDrawingsData(withMeasurements.filter(d => d.measurements.length > 0))

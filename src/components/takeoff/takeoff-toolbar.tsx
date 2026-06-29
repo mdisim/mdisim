@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   MousePointer2,
   Hand,
@@ -186,7 +186,7 @@ function SnapMenu({ config, onChange }: { config: SnapConfig; onChange: (c: Snap
   )
 }
 
-export function TakeoffToolbar({
+export const TakeoffToolbar = React.memo(function TakeoffToolbar({
   activeTool,
   onToolChange,
   onCalibrate,
@@ -208,8 +208,8 @@ export function TakeoffToolbar({
   onAIAnalyze,
   isAIAnalyzing,
 }: TakeoffToolbarProps) {
-  const navTools = TOOLS.filter((t) => t.group === 'nav')
-  const measureTools = TOOLS.filter((t) => t.group === 'measure')
+  const navTools = useMemo(() => TOOLS.filter((t) => t.group === 'nav'), [])
+  const measureTools = useMemo(() => TOOLS.filter((t) => t.group === 'measure'), [])
 
   return (
     <div className="flex items-center gap-1 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-3 py-1.5 flex-wrap shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
@@ -352,4 +352,4 @@ export function TakeoffToolbar({
       </div>
     </div>
   )
-}
+})

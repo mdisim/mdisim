@@ -25,6 +25,8 @@ import {
   BookOpen,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { VirtualTable } from '@/components/ui/virtual-table'
+import type { VirtualTableColumn } from '@/components/ui/virtual-table'
 import {
   getBOQItems,
   createBOQItem,
@@ -339,6 +341,15 @@ export default function BOQPage() {
 
   const formatCurrency = (n: number) =>
     n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  const importPreviewColumns: VirtualTableColumn<ImportedBOQRow>[] = [
+    { key: 'code', header: <span className="px-2 py-1.5 font-medium text-slate-500 text-xs">Code</span>, width: '80px', render: (row) => <span className="px-2 py-1 text-xs text-slate-600 dark:text-slate-300">{row.code ?? '-'}</span> },
+    { key: 'description', header: <span className="px-2 py-1.5 font-medium text-slate-500 text-xs">Description</span>, render: (row) => <span className="px-2 py-1 text-xs text-slate-700 dark:text-slate-200 truncate block max-w-[200px]">{row.description}</span> },
+    { key: 'unit', header: <span className="px-2 py-1.5 font-medium text-slate-500 text-xs">Unit</span>, width: '60px', render: (row) => <span className="px-2 py-1 text-xs text-slate-500">{row.unit}</span> },
+    { key: 'quantity', header: <span className="px-2 py-1.5 font-medium text-slate-500 text-xs text-right block">Qty</span>, width: '80px', render: (row) => <span className="px-2 py-1 text-xs text-right tabular-nums text-slate-600 dark:text-slate-300 block">{row.quantity}</span> },
+    { key: 'unit_rate', header: <span className="px-2 py-1.5 font-medium text-slate-500 text-xs text-right block">Rate</span>, width: '80px', render: (row) => <span className="px-2 py-1 text-xs text-right tabular-nums text-slate-600 dark:text-slate-300 block">{row.unit_rate}</span> },
+    { key: 'section', header: <span className="px-2 py-1.5 font-medium text-slate-500 text-xs">Section</span>, width: '100px', render: (row) => <span className="px-2 py-1 text-xs text-slate-500">{row.section ?? '-'}</span> },
+  ]
 
   const renderCell = (item: BOQItem, field: keyof BOQItem, value: string | number | null, isNumeric = false, readOnly = false) => {
     const isEditing = editingCell?.itemId === item.id && editingCell?.field === field
@@ -763,36 +774,14 @@ export default function BOQPage() {
               <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
                 Preview: {importRows.length} items found
               </div>
-              <div className="max-h-[300px] overflow-auto border border-slate-200 dark:border-slate-700 rounded-lg">
-                <table className="w-full text-xs">
-                  <thead className="bg-slate-50 dark:bg-slate-900 sticky top-0">
-                    <tr>
-                      <th className="text-left px-2 py-1.5 font-medium text-slate-500">Code</th>
-                      <th className="text-left px-2 py-1.5 font-medium text-slate-500">Description</th>
-                      <th className="text-left px-2 py-1.5 font-medium text-slate-500">Unit</th>
-                      <th className="text-right px-2 py-1.5 font-medium text-slate-500">Qty</th>
-                      <th className="text-right px-2 py-1.5 font-medium text-slate-500">Rate</th>
-                      <th className="text-left px-2 py-1.5 font-medium text-slate-500">Section</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {importRows.slice(0, 50).map((row, i) => (
-                      <tr key={i} className="border-t border-slate-100 dark:border-slate-700">
-                        <td className="px-2 py-1 text-slate-600 dark:text-slate-300">{row.code ?? '-'}</td>
-                        <td className="px-2 py-1 text-slate-700 dark:text-slate-200 max-w-[200px] truncate">{row.description}</td>
-                        <td className="px-2 py-1 text-slate-500">{row.unit}</td>
-                        <td className="px-2 py-1 text-right tabular-nums text-slate-600 dark:text-slate-300">{row.quantity}</td>
-                        <td className="px-2 py-1 text-right tabular-nums text-slate-600 dark:text-slate-300">{row.unit_rate}</td>
-                        <td className="px-2 py-1 text-slate-500">{row.section ?? '-'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {importRows.length > 50 && (
-                  <div className="px-2 py-1.5 text-xs text-slate-400 text-center border-t border-slate-100 dark:border-slate-700">
-                    Showing first 50 of {importRows.length} rows
-                  </div>
-                )}
+              <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                <VirtualTable<ImportedBOQRow>
+                  columns={importPreviewColumns}
+                  data={importRows}
+                  rowHeight={32}
+                  height={Math.min(300, importRows.length * 32 + 4)}
+                  headerClassName="bg-slate-50 dark:bg-slate-900 text-xs"
+                />
               </div>
             </>
           )}

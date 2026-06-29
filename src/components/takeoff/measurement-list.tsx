@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import {
   Ruler,
   Spline,
@@ -46,7 +46,7 @@ function groupTotal(items: TakeoffMeasurement[]): number {
   return items.reduce((s, m) => s + m.quantity, 0)
 }
 
-export function MeasurementList({
+export const MeasurementList = React.memo(function MeasurementList({
   measurements,
   activeMeasurementId,
   onSelect,
@@ -65,23 +65,23 @@ export function MeasurementList({
   const selectedIds = externalSelectedIds ? new Set(externalSelectedIds) : internalSelectedIds
   const setSelectedIds = externalSelectedIds ? (() => {}) as typeof setInternalSelectedIds : setInternalSelectedIds
 
-  const groups = measurements.reduce<Record<string, TakeoffMeasurement[]>>((acc, m) => {
+  const groups = useMemo(() => measurements.reduce<Record<string, TakeoffMeasurement[]>>((acc, m) => {
     const key = m.tool_type
     if (!acc[key]) acc[key] = []
     acc[key].push(m)
     return acc
-  }, {})
+  }, {}), [measurements])
 
   const totalCount = measurements.length
-  const totalLengths = measurements
-    .filter((m) => m.tool_type === 'line' || m.tool_type === 'polyline')
-    .reduce((s, m) => s + m.quantity, 0)
-  const totalAreas = measurements
-    .filter((m) => m.tool_type === 'area' || m.tool_type === 'rectangle' || m.tool_type === 'circle')
-    .reduce((s, m) => s + m.quantity, 0)
-  const totalCounts = measurements
-    .filter((m) => m.tool_type === 'count')
-    .reduce((s, m) => s + m.quantity, 0)
+  const { totalLengths, totalAreas, totalCounts } = useMemo(() => {
+    let lengths = 0, areas = 0, counts = 0
+    for (const m of measurements) {
+      if (m.tool_type === 'line' || m.tool_type === 'polyline') lengths += m.quantity
+      else if (m.tool_type === 'area' || m.tool_type === 'rectangle' || m.tool_type === 'circle') areas += m.quantity
+      else if (m.tool_type === 'count') counts += m.quantity
+    }
+    return { totalLengths: lengths, totalAreas: areas, totalCounts: counts }
+  }, [measurements])
 
   const startEdit = (m: TakeoffMeasurement) => {
     setEditingId(m.id)
@@ -374,4 +374,4 @@ export function MeasurementList({
       )}
     </div>
   )
-}
+})

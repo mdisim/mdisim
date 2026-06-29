@@ -103,7 +103,10 @@ export async function deleteDrawing(id: string): Promise<{ error?: string }> {
     .single()
 
   if (drawing?.file_path) {
-    await supabase.storage.from('qb-drawings').remove([drawing.file_path])
+    const { error: storageError } = await supabase.storage.from('qb-drawings').remove([drawing.file_path])
+    if (storageError) {
+      console.error('[deleteDrawing] Storage cleanup failed:', storageError.message)
+    }
   }
 
   const { error } = await supabase.from('qb_drawings').delete().eq('id', id)

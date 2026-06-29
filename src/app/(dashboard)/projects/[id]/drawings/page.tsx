@@ -173,11 +173,9 @@ export default function DrawingsPage() {
                 </p>
               </div>
               <div className="flex items-center gap-1">
-                {d.file_type === 'pdf' && (
-                  <button onClick={() => handleView(d)} className="p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 transition-colors" title="View">
-                    <Eye size={16} />
-                  </button>
-                )}
+                <button onClick={() => handleView(d)} className="p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 transition-colors" title="View">
+                  <Eye size={16} />
+                </button>
                 <button onClick={() => handleDelete(d.id)} className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors" title="Delete">
                   <Trash2 size={16} />
                 </button>
