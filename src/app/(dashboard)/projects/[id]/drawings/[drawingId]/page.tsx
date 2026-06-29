@@ -145,6 +145,7 @@ export default function TakeoffPage() {
             drawingName={drawing.name}
             drawingType={drawing.drawing_type}
             fileType={drawing.file_type}
+            filePath={drawing.file_path}
           />
         ) : (
           <ImageViewer

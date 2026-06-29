@@ -14,15 +14,15 @@ export interface AIProviderResponse {
 
 export interface AIProvider {
   name: string
-  analyze(messages: AIMessage[], options?: { maxTokens?: number }): Promise<AIProviderResponse>
+  analyze(messages: AIMessage[], options?: { maxTokens?: number; apiKey?: string }): Promise<AIProviderResponse>
 }
 
 export class AnthropicProvider implements AIProvider {
   name = 'anthropic'
 
-  async analyze(messages: AIMessage[], options?: { maxTokens?: number }): Promise<AIProviderResponse> {
-    const apiKey = process.env.ANTHROPIC_API_KEY
-    if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not configured')
+  async analyze(messages: AIMessage[], options?: { maxTokens?: number; apiKey?: string }): Promise<AIProviderResponse> {
+    const apiKey = options?.apiKey || process.env.ANTHROPIC_API_KEY
+    if (!apiKey) throw new Error('API key is not configured. Configure your API key in the copilot settings.')
     const Anthropic = (await import('@anthropic-ai/sdk')).default
     const client = new Anthropic({ apiKey })
 

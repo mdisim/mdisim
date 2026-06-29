@@ -27,6 +27,8 @@ import {
   Users,
   GitCommit,
   Trash2,
+  Settings,
+  Key,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { sendCopilotMessage } from '@/app/actions/ai-copilot'
@@ -138,6 +140,82 @@ function MessageBubble({ message }: { message: CopilotMessage }) {
   )
 }
 
+function ApiKeyDialog({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClose: () => void; onSuccess: () => void }) {
+  const [apiKey, setApiKey] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [dialogError, setDialogError] = useState<string | null>(null)
+
+  if (!isOpen) return null
+
+  const handleSave = async () => {
+    if (!apiKey.startsWith('sk-ant-')) {
+      setDialogError('API key must start with sk-ant-')
+      return
+    }
+    setSaving(true)
+    setDialogError(null)
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setDialogError(data.error || 'Failed to save API key')
+        return
+      }
+      setApiKey('')
+      onSuccess()
+      onClose()
+    } catch {
+      setDialogError('Failed to save API key. Please try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/30 backdrop-blur-sm rounded-2xl">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg mx-4 w-full max-w-sm border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+          <div className="flex items-center gap-2">
+            <Key size={16} className="text-violet-500" />
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">API Key Setup</h3>
+          </div>
+          <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+            <X size={14} />
+          </button>
+        </div>
+        <div className="p-4 space-y-3">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">
+            Enter your Anthropic API key to use the AI Copilot. Your key is stored securely in an HTTP-only cookie.
+          </p>
+          <input
+            type="password"
+            value={apiKey}
+            onChange={e => setApiKey(e.target.value)}
+            placeholder="sk-ant-..."
+            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:border-violet-400 dark:focus:border-violet-600 text-slate-800 dark:text-slate-200 placeholder-slate-400"
+            onKeyDown={e => { if (e.key === 'Enter') handleSave() }}
+          />
+          {dialogError && (
+            <p className="text-[11px] text-red-500">{dialogError}</p>
+          )}
+          <button
+            onClick={handleSave}
+            disabled={!apiKey.trim() || saving}
+            className="w-full py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 rounded-lg transition-colors flex items-center justify-center gap-2"
+          >
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Key size={14} />}
+            {saving ? 'Saving...' : 'Save API Key'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function CopilotChat({ projectId, projectName, currentPage }: CopilotChatProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
@@ -145,10 +223,20 @@ export function CopilotChat({ projectId, projectName, currentPage }: CopilotChat
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showApiKeyDialog, setShowApiKeyDialog] = useState(false)
+  const [apiKeyConfigured, setApiKeyConfigured] = useState<boolean | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   const quickActions = getCopilotQuickActions(currentPage)
+
+  // Check API key status on mount
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => setApiKeyConfigured(data.configured))
+      .catch(() => setApiKeyConfigured(false))
+  }, [])
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -166,6 +254,13 @@ export function CopilotChat({ projectId, projectName, currentPage }: CopilotChat
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isLoading) return
+
+    // If key not configured, show setup dialog
+    if (apiKeyConfigured === false) {
+      setShowApiKeyDialog(true)
+      return
+    }
+
     setError(null)
 
     const userMsg: CopilotMessage = {
@@ -196,7 +291,7 @@ export function CopilotChat({ projectId, projectName, currentPage }: CopilotChat
     } finally {
       setIsLoading(false)
     }
-  }, [isLoading, messages, projectId, currentPage])
+  }, [isLoading, messages, projectId, currentPage, apiKeyConfigured])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -250,6 +345,9 @@ export function CopilotChat({ projectId, projectName, currentPage }: CopilotChat
           </div>
         </div>
         <div className="flex items-center gap-1">
+          <button onClick={() => setShowApiKeyDialog(true)} className="p-1.5 text-slate-400 hover:text-violet-500 transition-colors" title="API Key Settings">
+            <Settings size={14} />
+          </button>
           {messages.length > 0 && (
             <button onClick={handleClearChat} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors" title="Clear chat">
               <Trash2 size={14} />
@@ -357,6 +455,13 @@ export function CopilotChat({ projectId, projectName, currentPage }: CopilotChat
           AI may make mistakes. Verify important engineering data.
         </p>
       </div>
+
+      {/* API Key Setup Dialog */}
+      <ApiKeyDialog
+        isOpen={showApiKeyDialog}
+        onClose={() => setShowApiKeyDialog(false)}
+        onSuccess={() => setApiKeyConfigured(true)}
+      />
     </div>
   )
 }

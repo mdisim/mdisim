@@ -1,5 +1,6 @@
 'use server'
 
+import { cookies } from 'next/headers'
 import { getProvider } from '@/lib/ai/provider'
 import type { AIMessage } from '@/lib/ai/provider'
 import { gatherProjectContext, buildContextPrompt } from '@/lib/ai/context'
@@ -46,9 +47,11 @@ export async function sendCopilotMessage(
   messages: CopilotMessage[],
   userMessage: string,
 ): Promise<{ reply: string; error?: string }> {
-  const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) {
-    return { reply: '', error: 'ANTHROPIC_API_KEY is not configured. Add it to your environment variables to use the AI Copilot.' }
+  const cookieStore = await cookies()
+  const runtimeKey = cookieStore.get('angel-dc-api-key')?.value
+
+  if (!runtimeKey && !process.env.ANTHROPIC_API_KEY) {
+    return { reply: '', error: 'Configure your API key in the copilot settings.' }
   }
 
   const supabase = await createClient()
@@ -75,7 +78,7 @@ export async function sendCopilotMessage(
   apiMessages.push({ role: 'user', content: userMessage })
 
   try {
-    const response = await provider.analyze(apiMessages, { maxTokens: 4096 })
+    const response = await provider.analyze(apiMessages, { maxTokens: 4096, apiKey: runtimeKey })
     return { reply: response.text }
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Unknown error'

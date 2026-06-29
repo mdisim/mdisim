@@ -64,6 +64,7 @@ interface DwgViewerProps {
   drawingName?: string
   drawingType?: string
   fileType: string // 'dwg' | 'dxf'
+  filePath?: string // storage path for DWG-to-DXF conversion
 }
 
 type ToolType = DrawingToolType | 'select' | 'pan' | 'polygon' | 'wall'
@@ -103,16 +104,52 @@ function measurementsToSnapGeometry(measurements: DrawingMeasurement[]): SnapGeo
   return result
 }
 
-export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawingType, fileType }: DwgViewerProps) {
+export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawingType, fileType, filePath }: DwgViewerProps) {
   const [parsedDxf, setParsedDxf] = useState<ParsedDxf | null>(null)
   const [loading, setLoading] = useState(true)
   const [parseError, setParseError] = useState<string | null>(null)
+  const [converting, setConverting] = useState(false)
+  const [convertError, setConvertError] = useState<string | null>(null)
+  const [convertedDxfUrl, setConvertedDxfUrl] = useState<string | null>(null)
   const [zoom, setZoom] = useState(1)
   const [offset, setOffset] = useState<Point>({ x: 0, y: 0 })
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
 
-  // DWG unsupported message
   const isDwg = fileType === 'dwg'
+
+  // ── DWG-to-DXF auto-conversion ─────────────────────────────────────
+  useEffect(() => {
+    if (!isDwg || !filePath) return
+    let cancelled = false
+    async function convert() {
+      setConverting(true)
+      setConvertError(null)
+      try {
+        const res = await fetch('/api/convert-dwg', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filePath, projectId }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Conversion failed')
+        if (cancelled) return
+        // Get a signed URL for the converted DXF
+        const { getDrawingUrl } = await import('@/app/actions/drawings')
+        const url = await getDrawingUrl(data.dxfPath)
+        if (cancelled) return
+        if (!url) throw new Error('Could not get URL for converted file')
+        setConvertedDxfUrl(url)
+      } catch (e) {
+        if (!cancelled) {
+          setConvertError(e instanceof Error ? e.message : 'Failed to convert DWG file')
+        }
+      } finally {
+        if (!cancelled) setConverting(false)
+      }
+    }
+    convert()
+    return () => { cancelled = true }
+  }, [isDwg, filePath, projectId])
 
   // Tools state
   const [activeTool, setActiveTool] = useState<ToolType | null>('select')
@@ -169,8 +206,15 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
   const renderQueued = useRef(false)
 
   // ── Load DXF file ───────────────────────────────────────────────────
+  const effectiveUrl = isDwg ? convertedDxfUrl : drawingUrl
+
   useEffect(() => {
-    if (isDwg) {
+    if (isDwg && !convertedDxfUrl) {
+      // Still converting or conversion failed — don't try to load
+      setLoading(false)
+      return
+    }
+    if (!effectiveUrl) {
       setLoading(false)
       return
     }
@@ -179,7 +223,7 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
       try {
         setLoading(true)
         setParseError(null)
-        const response = await fetch(drawingUrl)
+        const response = await fetch(effectiveUrl!)
         if (!response.ok) throw new Error(`Failed to fetch file: ${response.status}`)
         const text = await response.text()
         const parsed = parseDxfContent(text)
@@ -196,7 +240,7 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
     }
     load()
     return () => { cancelled = true }
-  }, [drawingUrl, isDwg])
+  }, [effectiveUrl, isDwg, convertedDxfUrl])
 
   // ── Load measurements + scale ────────────────────────────────────────
   const loadData = useCallback(async () => {
@@ -719,33 +763,37 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
     quantity: m.quantity, unit: m.unit, color: m.color, label: m.label,
   })), [measurements])
 
-  // ── DWG unsupported message ─────────────────────────────────────────
-  if (isDwg) {
-    return (
-      <div className="flex flex-col h-full items-center justify-center gap-6 p-8">
-        <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
-          <FileWarning size={32} className="text-amber-500" />
+  // ── DWG conversion states ────────────────────────────────────────────
+  if (isDwg && (converting || convertError) && !convertedDxfUrl) {
+    if (converting) {
+      return (
+        <div className="flex flex-col h-full items-center justify-center gap-6 p-8">
+          <div className="animate-spin h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full" />
+          <div className="text-center max-w-md">
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">Converting DWG to DXF...</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              Automatically converting your DWG file so it can be viewed in the browser. This may take a moment.
+            </p>
+          </div>
         </div>
-        <div className="text-center max-w-md">
-          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">DWG Format Not Supported</h3>
-          <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-            DWG is a proprietary binary format that cannot be viewed directly in the browser.
-            Please convert the file to DXF format using AutoCAD, the free ODA File Converter,
-            or any other DWG-to-DXF conversion tool, then re-upload the DXF version.
-          </p>
+      )
+    }
+    if (convertError) {
+      return (
+        <div className="flex flex-col h-full items-center justify-center gap-6 p-8">
+          <div className="w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+            <FileWarning size={32} className="text-red-500" />
+          </div>
+          <div className="text-center max-w-md">
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">DWG Conversion Failed</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              Failed to convert DWG file. Please try uploading a DXF version.
+            </p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">{convertError}</p>
+          </div>
         </div>
-        <div className="flex gap-3">
-          <a
-            href="https://www.opendesign.com/guestfiles/oda_file_converter"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Download ODA File Converter
-          </a>
-        </div>
-      </div>
-    )
+      )
+    }
   }
 
   return (

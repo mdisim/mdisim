@@ -243,6 +243,7 @@ export async function analyzeDrawing(
   drawingType: string,
   pageNumber: number,
   corrections: UserCorrection[] = [],
+  apiKey?: string,
 ): Promise<AIFullAnalysis> {
   const provider = getProvider()
 
@@ -262,7 +263,7 @@ export async function analyzeDrawing(
   ]
 
   try {
-    const response = await provider.analyze(messages, { maxTokens: 8192 })
+    const response = await provider.analyze(messages, { maxTokens: 8192, apiKey })
     return parseAnalysisResponse(response.text)
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Unknown error'
@@ -279,6 +280,7 @@ export async function analyzeDrawing(
 export async function estimateCosts(
   boqItems: { code: string; description: string; unit: string; quantity: number }[],
   projectContext: string,
+  apiKey?: string,
 ): Promise<AICostEstimate[]> {
   const provider = getProvider()
 
@@ -300,7 +302,7 @@ Return JSON array (no markdown fences):
 }]`
 
   try {
-    const response = await provider.analyze([{ role: 'user', content: prompt }], { maxTokens: 4096 })
+    const response = await provider.analyze([{ role: 'user', content: prompt }], { maxTokens: 4096, apiKey })
     let jsonStr = response.text.trim()
     const fenced = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/)
     if (fenced) jsonStr = fenced[1]
