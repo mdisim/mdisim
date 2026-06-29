@@ -4,17 +4,52 @@ import { writeFile, readFile, unlink, mkdtemp } from 'fs/promises'
 import { join } from 'path'
 import { tmpdir } from 'os'
 
+const CONVERT_SCRIPT = `
+import sys, os
+
+input_path = sys.argv[1]
+output_path = sys.argv[2]
+
+# Try ODA File Converter via ezdxf first (handles real DWG)
+try:
+    from ezdxf.addons import odafc
+    doc = odafc.readfile(input_path)
+    doc.saveas(output_path)
+    print("OK:odafc")
+    sys.exit(0)
+except Exception as e:
+    oda_err = str(e)
+
+# Fallback: try ezdxf.readfile (works if file is actually DXF-format despite .dwg extension)
+try:
+    import ezdxf
+    doc = ezdxf.readfile(input_path)
+    doc.saveas(output_path)
+    print("OK:ezdxf-direct")
+    sys.exit(0)
+except Exception as e:
+    dxf_err = str(e)
+
+# Fallback: try ezdxf.recover (handles corrupted/non-standard DXF)
+try:
+    from ezdxf import recover
+    doc, auditor = recover.readfile(input_path)
+    doc.saveas(output_path)
+    print("OK:ezdxf-recover")
+    sys.exit(0)
+except Exception as e:
+    recover_err = str(e)
+
+print(f"FAIL: ODA={oda_err} | ezdxf={dxf_err} | recover={recover_err}", file=sys.stderr)
+sys.exit(1)
+`
+
 function runPython(inputPath: string, outputPath: string): Promise<string> {
   return new Promise((resolve, reject) => {
     execFile(
       'python3',
-      [
-        '-c',
-        'import sys, ezdxf; doc = ezdxf.readfile(sys.argv[1]); doc.saveas(sys.argv[2]); print("OK")',
-        inputPath,
-        outputPath,
-      ],
-      { timeout: 60_000 },
+      ['-c', CONVERT_SCRIPT, inputPath, outputPath],
+      { timeout: 120_000 },
       (error, stdout, stderr) => {
         if (error) {
           reject(new Error(stderr || error.message))
@@ -40,11 +75,9 @@ export async function POST(request: Request) {
       )
     }
 
-    // Use the authenticated server client (reads user cookies)
     const supabase = await createClient()
     log.push('[2] Supabase client created (authenticated via cookies)')
 
-    // Verify user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       log.push(`[2a] Auth failed: ${authError?.message ?? 'no user session'}`)
@@ -55,7 +88,6 @@ export async function POST(request: Request) {
     }
     log.push(`[2b] Authenticated as: ${user.email}`)
 
-    // Build the DXF path
     const dxfPath = filePath.replace(/\.dwg$/i, '.dxf')
     log.push(`[3] DXF target path: "${dxfPath}"`)
 
@@ -79,7 +111,7 @@ export async function POST(request: Request) {
       return Response.json({ dxfPath, log, cached: true })
     }
 
-    // Download the DWG file directly via Supabase storage download
+    // Download the DWG file
     log.push(`[5] Downloading DWG from storage: "${filePath}"`)
     const { data: downloadData, error: downloadError } = await supabase.storage
       .from('qb-drawings')
@@ -88,7 +120,6 @@ export async function POST(request: Request) {
     if (downloadError || !downloadData) {
       log.push(`[5a] Download failed: ${downloadError?.message ?? 'no data returned'}`)
 
-      // Try signed URL as fallback
       log.push('[5b] Trying signed URL fallback...')
       const { data: signedUrlData, error: urlError } = await supabase.storage
         .from('qb-drawings')
@@ -97,7 +128,6 @@ export async function POST(request: Request) {
       if (urlError || !signedUrlData?.signedUrl) {
         log.push(`[5c] Signed URL also failed: ${urlError?.message ?? 'no URL'}`)
 
-        // List bucket to debug
         const { data: bucketFiles, error: bucketErr } = await supabase.storage
           .from('qb-drawings')
           .list(dirPath)
@@ -114,7 +144,7 @@ export async function POST(request: Request) {
         )
       }
 
-      log.push(`[5e] Got signed URL, fetching...`)
+      log.push('[5e] Got signed URL, fetching...')
       const dwgResponse = await fetch(signedUrlData.signedUrl)
       if (!dwgResponse.ok) {
         log.push(`[5f] Fetch from signed URL failed: HTTP ${dwgResponse.status}`)
@@ -151,7 +181,6 @@ async function convertAndUpload(
   dxfPath: string,
   log: string[],
 ): Promise<Response> {
-  // Write to temp, convert, read result
   const tempDir = await mkdtemp(join(tmpdir(), 'dwg-convert-'))
   const inputPath = join(tempDir, 'input.dwg')
   const outputPath = join(tempDir, 'output.dxf')
@@ -161,14 +190,13 @@ async function convertAndUpload(
     await writeFile(inputPath, dwgBuffer)
     log.push(`[7] Wrote DWG to disk: ${dwgBuffer.length} bytes`)
 
-    log.push('[8] Starting Python ezdxf conversion...')
+    log.push('[8] Starting Python conversion (ODA → ezdxf → recover)...')
     const pyResult = await runPython(inputPath, outputPath)
     log.push(`[8a] Python result: "${pyResult}"`)
 
     const dxfBuffer = await readFile(outputPath)
     log.push(`[9] Read converted DXF: ${dxfBuffer.length} bytes`)
 
-    // Upload converted DXF
     log.push(`[10] Uploading DXF to storage: "${dxfPath}"`)
     const { error: uploadError } = await supabase.storage
       .from('qb-drawings')

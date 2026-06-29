@@ -112,6 +112,7 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
   const [convertError, setConvertError] = useState<string | null>(null)
   const [convertLog, setConvertLog] = useState<string[]>([])
   const [convertedDxfUrl, setConvertedDxfUrl] = useState<string | null>(null)
+  const [convertRetry, setConvertRetry] = useState(0)
   const [zoom, setZoom] = useState(1)
   const [offset, setOffset] = useState<Point>({ x: 0, y: 0 })
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
@@ -151,7 +152,7 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
     }
     convert()
     return () => { cancelled = true }
-  }, [isDwg, filePath, projectId])
+  }, [isDwg, filePath, projectId, convertRetry])
 
   // Tools state
   const [activeTool, setActiveTool] = useState<ToolType | null>('select')
@@ -789,6 +790,12 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
           <div className="text-center max-w-lg">
             <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">DWG Conversion Failed</h3>
             <p className="text-sm text-red-600 dark:text-red-400 mb-3">{convertError}</p>
+            <button
+              onClick={() => { setConvertError(null); setConvertLog([]); setConvertedDxfUrl(null); setConvertRetry(r => r + 1); }}
+              className="px-4 py-2 mb-3 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Retry Conversion
+            </button>
             {convertLog.length > 0 && (
               <div className="text-left bg-slate-900 dark:bg-slate-950 rounded-lg p-3 max-h-64 overflow-y-auto">
                 <p className="text-[10px] font-semibold text-slate-400 uppercase mb-1.5">Pipeline Log</p>
