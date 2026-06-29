@@ -25,15 +25,20 @@ export default function RegisterPage() {
     setLoading(true)
     setError(null)
 
-    const result = await signUp(email, password)
+    try {
+      const result = await signUp(email, password)
 
-    if (result.error) {
-      setError(result.error)
+      if (result.error) {
+        setError(result.error)
+        setLoading(false)
+      } else if (result.confirmed) {
+        router.push('/onboarding')
+      } else {
+        setSuccess(true)
+      }
+    } catch {
+      setError('Unable to connect to the server. Please check your connection and try again.')
       setLoading(false)
-    } else if (result.confirmed) {
-      router.push('/onboarding')
-    } else {
-      setSuccess(true)
     }
   }
 

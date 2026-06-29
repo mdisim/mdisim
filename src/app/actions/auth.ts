@@ -3,39 +3,50 @@
 import { createClient } from '@/lib/supabase/server'
 import { headers } from 'next/headers'
 
+function friendlyAuthError(msg: string): string {
+  if (msg.includes('Unexpected token') || msg.includes('fetch') || msg.includes('ECONNREFUSED') || msg.includes('Host not'))
+    return 'Unable to connect to the authentication service. Please try again.'
+  return msg
+}
+
 export async function signIn(email: string, password: string) {
-  const supabase = await createClient()
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
-  if (error) return { error: error.message }
+    if (error) return { error: friendlyAuthError(error.message) }
 
-  // Ensure profile exists (fallback if DB trigger didn't fire)
-  await ensureProfileExists(supabase, data.user!)
+    await ensureProfileExists(supabase, data.user!)
 
-  const role = data.user?.user_metadata?.role
-  return { success: true, role: role as string | undefined }
+    const role = data.user?.user_metadata?.role
+    return { success: true, role: role as string | undefined }
+  } catch (e) {
+    return { error: 'Unable to connect to the authentication service. Please try again.' }
+  }
 }
 
 export async function signUp(email: string, password: string) {
-  const supabase = await createClient()
-  const headersList = await headers()
-  const origin = headersList.get('origin') || headersList.get('referer')?.replace(/\/register.*/, '') || ''
+  try {
+    const supabase = await createClient()
+    const headersList = await headers()
+    const origin = headersList.get('origin') || headersList.get('referer')?.replace(/\/register.*/, '') || ''
 
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: { emailRedirectTo: `${origin}/api/auth/callback` },
-  })
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${origin}/api/auth/callback` },
+    })
 
-  if (error) return { error: error.message }
+    if (error) return { error: friendlyAuthError(error.message) }
 
-  // If the user was auto-confirmed (no email verification required),
-  // ensure the profile row exists immediately
-  if (data.user && data.session) {
-    await ensureProfileExists(supabase, data.user)
+    if (data.user && data.session) {
+      await ensureProfileExists(supabase, data.user)
+    }
+
+    return { success: true, confirmed: !!data.session }
+  } catch (e) {
+    return { error: 'Unable to connect to the authentication service. Please try again.' }
   }
-
-  return { success: true, confirmed: !!data.session }
 }
 
 export async function completeOnboarding(role: string) {

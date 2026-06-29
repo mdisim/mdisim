@@ -19,14 +19,19 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
 
-    const result = await signIn(email, password)
+    try {
+      const result = await signIn(email, password)
 
-    if (result.error) {
-      setError(result.error)
+      if (result.error) {
+        setError(result.error)
+        setLoading(false)
+      } else {
+        router.push('/projects')
+        router.refresh()
+      }
+    } catch {
+      setError('Unable to connect to the server. Please check your connection and try again.')
       setLoading(false)
-    } else {
-      router.push('/projects')
-      router.refresh()
     }
   }
 
