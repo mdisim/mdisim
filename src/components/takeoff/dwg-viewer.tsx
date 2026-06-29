@@ -110,6 +110,7 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
   const [parseError, setParseError] = useState<string | null>(null)
   const [converting, setConverting] = useState(false)
   const [convertError, setConvertError] = useState<string | null>(null)
+  const [convertLog, setConvertLog] = useState<string[]>([])
   const [convertedDxfUrl, setConvertedDxfUrl] = useState<string | null>(null)
   const [zoom, setZoom] = useState(1)
   const [offset, setOffset] = useState<Point>({ x: 0, y: 0 })
@@ -124,6 +125,7 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
     async function convert() {
       setConverting(true)
       setConvertError(null)
+      setConvertLog([])
       try {
         const res = await fetch('/api/convert-dwg', {
           method: 'POST',
@@ -131,9 +133,9 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
           body: JSON.stringify({ filePath, projectId }),
         })
         const data = await res.json()
+        if (data.log) setConvertLog(data.log)
         if (!res.ok) throw new Error(data.error || 'Conversion failed')
         if (cancelled) return
-        // Get a signed URL for the converted DXF
         const { getDrawingUrl } = await import('@/app/actions/drawings')
         const url = await getDrawingUrl(data.dxfPath)
         if (cancelled) return
@@ -784,12 +786,17 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
           <div className="w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
             <FileWarning size={32} className="text-red-500" />
           </div>
-          <div className="text-center max-w-md">
+          <div className="text-center max-w-lg">
             <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">DWG Conversion Failed</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Failed to convert DWG file. Please try uploading a DXF version.
-            </p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">{convertError}</p>
+            <p className="text-sm text-red-600 dark:text-red-400 mb-3">{convertError}</p>
+            {convertLog.length > 0 && (
+              <div className="text-left bg-slate-900 dark:bg-slate-950 rounded-lg p-3 max-h-64 overflow-y-auto">
+                <p className="text-[10px] font-semibold text-slate-400 uppercase mb-1.5">Pipeline Log</p>
+                {convertLog.map((line, i) => (
+                  <p key={i} className="text-[11px] font-mono text-slate-300 leading-relaxed">{line}</p>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )
