@@ -35,25 +35,9 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
-import { getProjects } from '@/app/actions/projects'
-import { getBOQItems } from '@/app/actions/boq'
-import { getMeasurementItems } from '@/app/actions/measurements'
-import { getVariations, getContract, getCostEntries, getCashflow } from '@/app/actions/cost-control'
-import { getPaymentCerts } from '@/app/actions/payments'
-import { getTenders } from '@/app/actions/tenders'
-import type { Project, BOQItem, MeasurementItem, Variation, Contract, CostEntry, PaymentCert, Tender, CashflowEntry } from '@/lib/types'
-
-interface ProjectSummary {
-  project: Project
-  boqItems: BOQItem[]
-  measurementItems: MeasurementItem[]
-  variations: Variation[]
-  contract: Contract | null
-  costEntries: CostEntry[]
-  paymentCerts: PaymentCert[]
-  tenders: Tender[]
-  cashflow: CashflowEntry[]
-}
+import { getDashboardSummaries } from '@/app/actions/dashboard'
+import type { ProjectSummary } from '@/app/actions/dashboard'
+import type { Project } from '@/lib/types'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -63,26 +47,15 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function load() {
-      const allProjects = await getProjects()
-      setProjects(allProjects)
-
-      const results = await Promise.all(
-        allProjects.slice(0, 10).map(async (project) => {
-          const [boqItems, measurementItems, variations, contract, costEntries, paymentCerts, tenders, cashflow] = await Promise.all([
-            getBOQItems(project.id).catch(() => [] as BOQItem[]),
-            getMeasurementItems(project.id).catch(() => [] as MeasurementItem[]),
-            getVariations(project.id).catch(() => [] as Variation[]),
-            getContract(project.id).catch(() => null),
-            getCostEntries(project.id).catch(() => [] as CostEntry[]),
-            getPaymentCerts(project.id).catch(() => [] as PaymentCert[]),
-            getTenders(project.id).catch(() => [] as Tender[]),
-            getCashflow(project.id).catch(() => [] as CashflowEntry[]),
-          ])
-          return { project, boqItems, measurementItems, variations, contract, costEntries, paymentCerts, tenders, cashflow }
-        })
-      )
-      setSummaries(results)
-      setLoading(false)
+      try {
+        const { projects: allProjects, summaries: results } = await getDashboardSummaries()
+        setProjects(allProjects)
+        setSummaries(results)
+      } catch {
+        // Silently handle — empty dashboard
+      } finally {
+        setLoading(false)
+      }
     }
     load()
   }, [])
