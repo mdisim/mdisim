@@ -35,6 +35,7 @@ import {
   PieChart,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/lib/i18n'
 import { motion } from 'framer-motion'
 import { StatCard } from '@/components/ui/stat-card'
 import { SectionCard } from '@/components/ui/section-card'
@@ -52,6 +53,7 @@ const VAR_STATUS_META: Record<VariationStatus, { label: string; color: string }>
 
 export default function CostControlPage() {
   const { id: projectId } = useParams<{ id: string }>()
+  const { t } = useI18n()
   const [contract, setContract] = useState<Contract | null>(null)
   const [variations, setVariations] = useState<Variation[]>([])
   const [costEntries, setCostEntries] = useState<CostEntry[]>([])
@@ -193,7 +195,7 @@ export default function CostControlPage() {
   if (!contract && variations.length === 0 && costEntries.length === 0 && cashflow.length === 0) {
     return (
       <div className="p-6 md:p-8 max-w-7xl mx-auto">
-        <PageHeader icon={DollarSign} title="Cost Control" subtitle="Budget, variations, cost tracking & forecasting" gradient="from-rose-500 to-rose-600" />
+        <PageHeader icon={DollarSign} title={t.costControl.title} subtitle="Budget, variations, cost tracking & forecasting" gradient="from-rose-500 to-rose-600" />
         <EmptyState
           icon={BarChart3}
           title="No cost control data available"
@@ -232,7 +234,7 @@ export default function CostControlPage() {
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
       <PageHeader
         icon={DollarSign}
-        title="Cost Control"
+        title={t.costControl.title}
         subtitle="Budget, variations, cost tracking & forecasting"
         gradient="from-rose-500 to-rose-600"
         actions={
@@ -244,19 +246,19 @@ export default function CostControlPage() {
 
       {/* KPI Cards */}
       <motion.div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8" initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.08 } } }}>
-        <StatCard label="Contract Value" value={revisedContract} decimals={2} icon={DollarSign} gradient="from-blue-500 to-blue-600" />
-        <StatCard label="Spent to Date" value={actualCost} decimals={2} icon={TrendingDown} gradient="from-red-500 to-red-600" />
-        <StatCard label="Remaining Budget" value={Math.max(revisedContract - totalExposure, 0)} decimals={2} icon={Shield} gradient="from-emerald-500 to-emerald-600" />
-        <StatCard label="Budget Health" value={revisedContract > 0 ? ((revisedContract - totalExposure) / revisedContract) * 100 : 0} suffix="%" decimals={1} icon={TrendingUp} gradient={projectedProfit >= 0 ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-rose-600'} />
+        <StatCard label={t.costControl.contractValue} value={revisedContract} decimals={2} icon={DollarSign} gradient="from-blue-500 to-blue-600" />
+        <StatCard label={t.costControl.spentToDate} value={actualCost} decimals={2} icon={TrendingDown} gradient="from-red-500 to-red-600" />
+        <StatCard label={t.costControl.remainingBudget} value={Math.max(revisedContract - totalExposure, 0)} decimals={2} icon={Shield} gradient="from-emerald-500 to-emerald-600" />
+        <StatCard label={t.costControl.budgetHealth} value={revisedContract > 0 ? ((revisedContract - totalExposure) / revisedContract) * 100 : 0} suffix="%" decimals={1} icon={TrendingUp} gradient={projectedProfit >= 0 ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-rose-600'} />
       </motion.div>
 
       {/* Tabs */}
       <div className="flex gap-1 mb-4 border-b border-slate-200 dark:border-slate-700">
         {(['overview', 'variations', 'costs', 'cashflow'] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} className={cn(
-            'px-4 py-2 text-sm font-medium border-b-2 transition-colors capitalize',
+            'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
             activeTab === tab ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700'
-          )}>{tab}</button>
+          )}>{t.costControl[tab]}</button>
         ))}
       </div>
 

@@ -756,7 +756,7 @@ export default function BOQPage() {
                 </tr>
                 <tr className="bg-slate-50/80 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-800">
                   <td colSpan={7} className="px-4 py-3 text-right font-semibold text-slate-500 dark:text-slate-400 text-sm uppercase tracking-wide">
-                    VAT
+                    {t.boq.vat}
                   </td>
                   <td className="px-1 py-2">
                     <div className="flex items-center justify-end gap-1">
@@ -776,7 +776,7 @@ export default function BOQPage() {
                 </tr>
                 <tr className="bg-gradient-to-r from-blue-50 to-blue-100/80 dark:from-blue-900/30 dark:to-blue-800/20 border-t-2 border-blue-300 dark:border-blue-700">
                   <td colSpan={8} className="px-4 py-4 text-right font-bold text-blue-900 dark:text-blue-100 text-base uppercase tracking-wide">
-                    Grand Total
+                    {t.boq.grandTotal}
                   </td>
                   <td className="px-4 py-4 text-right font-black text-lg text-blue-900 dark:text-blue-100 tabular-nums">
                     {formatCurrency(grandTotal)}
@@ -924,7 +924,7 @@ export default function BOQPage() {
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
             <Button onClick={handleCreate} loading={creating} disabled={!form.description.trim()}>
-              Add Item
+              {t.boq.addItem}
             </Button>
           </div>
         </div>
