@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Sun, Moon, Search, ChevronDown, Globe, Bell } from 'lucide-react'
+import { Sun, Moon, ChevronDown, Globe, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { CommandPalette } from '@/components/ui/command-palette'
 
 const LANGUAGES = [
   { code: 'en', label: 'EN', dir: 'ltr' },
@@ -51,12 +52,8 @@ export function DashboardHeader() {
 
       {/* Right side controls */}
       <div className="flex items-center gap-2">
-        {/* Search placeholder */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.06] text-slate-400 dark:text-slate-500 text-sm w-56">
-          <Search size={14} />
-          <span>Search...</span>
-          <kbd className="ml-auto text-[10px] bg-slate-200 dark:bg-white/[0.06] px-1.5 py-0.5 rounded font-mono">/</kbd>
-        </div>
+        {/* Command Palette */}
+        <CommandPalette />
 
         {/* Language selector */}
         <div className="relative">

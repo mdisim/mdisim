@@ -15,10 +15,18 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useI18n } from '@/lib/i18n'
+import type { Locale } from '@/lib/i18n'
 
 const NAV_ITEMS = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/projects', icon: FolderKanban, label: 'Projects' },
+  { href: '/dashboard', icon: LayoutDashboard, labelKey: 'dashboard' as const },
+  { href: '/projects', icon: FolderKanban, labelKey: 'projects' as const },
+]
+
+const LANGUAGES: { code: Locale; label: string }[] = [
+  { code: 'en', label: 'EN' },
+  { code: 'ar', label: 'AR' },
+  { code: 'he', label: 'HE' },
 ]
 
 interface AppSidebarProps {
@@ -30,6 +38,7 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { t, locale, setLocale } = useI18n()
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -54,7 +63,7 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
         )}
       >
         <Icon size={18} className={cn(isActive ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300')} />
-        {!collapsed && <span className="flex-1">{item.label}</span>}
+        {!collapsed && <span className="flex-1">{t.nav[item.labelKey]}</span>}
       </Link>
     )
   }
@@ -97,6 +106,27 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
         </div>
 
       </nav>
+
+      {/* Language switcher */}
+      <div className={cn(
+        'px-3 py-2 border-t border-white/[0.06] flex items-center gap-1',
+        collapsed ? 'px-2 flex-col' : 'justify-center'
+      )}>
+        {LANGUAGES.map((lang) => (
+          <button
+            key={lang.code}
+            onClick={() => setLocale(lang.code)}
+            className={cn(
+              'px-2 py-1 rounded text-[10px] font-bold tracking-wide transition-all',
+              locale === lang.code
+                ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                : 'text-slate-500 hover:text-slate-300 hover:bg-white/[0.04] border border-transparent'
+            )}
+          >
+            {lang.label}
+          </button>
+        ))}
+      </div>
 
       {/* User area */}
       <div className={cn(
