@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Sun, Moon, Search, ChevronDown, Globe } from 'lucide-react'
+import { Sun, Moon, Search, ChevronDown, Globe, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const LANGUAGES = [
@@ -90,6 +90,14 @@ export function DashboardHeader() {
             </>
           )}
         </div>
+
+        {/* Notifications */}
+        <button
+          className="relative p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors"
+          title="Notifications"
+        >
+          <Bell size={16} />
+        </button>
 
         {/* Theme toggle */}
         <button
