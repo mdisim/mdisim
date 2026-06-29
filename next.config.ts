@@ -18,7 +18,7 @@ const securityHeaders = [
       "img-src 'self' data: blob: https:",
       // cdn.jsdelivr.net needed for Tesseract.js WASM core (tesseract-core.wasm)
       // langPath is local (/tesseract), so traineddata does NOT go to CDN
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://sentry.io https://o*.ingest.sentry.io https://cdn.jsdelivr.net",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://*.sentry.io https://*.ingest.sentry.io https://cdn.jsdelivr.net",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
