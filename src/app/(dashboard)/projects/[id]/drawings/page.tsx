@@ -40,10 +40,10 @@ export default function DrawingsPage() {
       setDrawings(data)
       setError(null)
     } catch (e) {
-      setError?.(e instanceof Error ? e.message : 'Failed to load drawings')
+      setError(e instanceof Error ? e.message : 'Failed to load drawings')
+    } finally {
       setLoading(false)
     }
-    setLoading(false)
   }, [projectId])
 
   useEffect(() => { load() }, [load])
@@ -82,6 +82,7 @@ export default function DrawingsPage() {
     })
 
     if (result.error) {
+      supabase.storage.from('qb-drawings').remove([filePath]).catch(() => {})
       setError(result.error)
       setUploading(false)
       return

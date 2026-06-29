@@ -270,7 +270,8 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
     canvas.width = w
     canvas.height = h
     setCanvasSize({ width: w, height: h })
-    const ctx = canvas.getContext('2d')!
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
     renderDxfToCanvas(ctx, parsedDxf, w, h)
   }, [parsedDxf, zoom])
 

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { execFile } from 'child_process'
-import { writeFile, readFile, unlink, mkdtemp } from 'fs/promises'
+import { writeFile, readFile, unlink, mkdtemp, rmdir } from 'fs/promises'
 import { join } from 'path'
 import { tmpdir } from 'os'
 
@@ -219,5 +219,6 @@ async function convertAndUpload(
   } finally {
     await unlink(inputPath).catch(() => {})
     await unlink(outputPath).catch(() => {})
+    await rmdir(tempDir).catch(() => {})
   }
 }
