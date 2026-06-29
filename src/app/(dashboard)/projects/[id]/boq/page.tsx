@@ -428,9 +428,13 @@ export default function BOQPage() {
           <Button
             variant="outline"
             onClick={async () => {
-              const project = await getProject(projectId)
-              if (project) {
-                await exportBOQToExcel(items, project.name, project.currency, vatPct)
+              try {
+                const project = await getProject(projectId)
+                if (project) {
+                  await exportBOQToExcel(items, project.name, project.currency, vatPct)
+                }
+              } catch (e) {
+                setError(e instanceof Error ? e.message : 'Failed to export Excel')
               }
             }}
             disabled={items.length === 0}
@@ -441,9 +445,13 @@ export default function BOQPage() {
           <Button
             variant="outline"
             onClick={async () => {
-              const project = await getProject(projectId)
-              if (project) {
-                exportBOQToPDF(items, project.name, project.currency, vatPct)
+              try {
+                const project = await getProject(projectId)
+                if (project) {
+                  exportBOQToPDF(items, project.name, project.currency, vatPct)
+                }
+              } catch (e) {
+                setError(e instanceof Error ? e.message : 'Failed to export PDF')
               }
             }}
             disabled={items.length === 0}
