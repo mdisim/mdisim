@@ -1275,18 +1275,17 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
   }, [page])
 
   const handleAIApproveElement = useCallback(async (element: AIDetectedElement, quantity: number, unit: string, boqDescription: string) => {
-    const result = await createBOQItem({
+    await createBOQItem({
       project_id: projectId,
       description: boqDescription,
       unit,
       quantity,
       unit_rate: 0,
     })
-    if (result.error) console.error('Failed to create BOQ item:', result.error)
   }, [projectId])
 
   const handleAIApproveBOQItem = useCallback(async (item: AIBOQItem) => {
-    const result = await createBOQItem({
+    await createBOQItem({
       project_id: projectId,
       code: item.code,
       description: item.description,
@@ -1294,7 +1293,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
       quantity: item.quantity,
       unit_rate: item.unitRate ?? 0,
     })
-    if (result.error) console.error('Failed to create BOQ item:', result.error)
+    // Error is silently ignored — BOQ item creation is best-effort from AI detection
   }, [projectId])
 
   const handleAIApproveAll = useCallback(async (elements: AIDetectedElement[]) => {

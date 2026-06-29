@@ -35,7 +35,7 @@ interface EditingCell {
 }
 
 export default function LibraryPage() {
-  const { id: projectId } = useParams<{ id: string }>()
+  const { id: _projectId } = useParams<{ id: string }>()
   const [categories, setCategories] = useState<LibraryCategory[]>([])
   const [items, setItems] = useState<LibraryItem[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -120,8 +120,7 @@ export default function LibraryPage() {
         setCreating(false)
         return
       }
-    } catch (e) {
-      console.error('Failed to create library category:', e)
+    } catch {
       setError('Failed to create category')
       setCreating(false)
       return
@@ -146,8 +145,7 @@ export default function LibraryPage() {
         setCreating(false)
         return
       }
-    } catch (e) {
-      console.error('Failed to update library category:', e)
+    } catch {
       setError('Failed to update category')
       setCreating(false)
       return
@@ -190,8 +188,7 @@ export default function LibraryPage() {
         setCreating(false)
         return
       }
-    } catch (e) {
-      console.error('Failed to create library item:', e)
+    } catch {
       setError('Failed to create item')
       setCreating(false)
       return

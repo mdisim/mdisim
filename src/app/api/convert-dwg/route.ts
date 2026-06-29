@@ -215,7 +215,6 @@ export async function POST(request: Request) {
     }
 
     log.push('[9] DXF uploaded successfully')
-    console.log('[convert-dwg] Success:', log.join(' | '))
     return Response.json({ dxfPath, log, cached: false })
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)

@@ -124,8 +124,7 @@ export default function BOQPage() {
         setCreating(false)
         return
       }
-    } catch (e) {
-      console.error('Failed to create BOQ item:', e)
+    } catch {
       setError('Failed to create item')
       setCreating(false)
       return

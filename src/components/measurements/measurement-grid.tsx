@@ -53,8 +53,7 @@ function calcQuantity(
         if (!sanitized) return 0
         const result = Function(`"use strict"; return (${sanitized})`)()
         return typeof result === 'number' && isFinite(result) ? result : 0
-      } catch (e) {
-        console.error('Failed to evaluate formula expression:', e)
+      } catch {
         return 0
       }
     }
