@@ -1,15 +1,20 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from './workspace-context'
+import { generateEvidenceReport } from '@/lib/export/evidence-report'
+import { getProfile } from '@/app/actions/profile'
+import { getProject } from '@/app/actions/projects'
+import { useParams } from 'next/navigation'
 import {
   FileSpreadsheet, Ruler, ImageIcon, DollarSign,
   GitCompare, ArrowRight, Hash, Calculator, Package,
   TrendingUp, TrendingDown, Info, Sparkles,
   Activity, Layers, Eye, BarChart3, ChevronRight,
   Clock, Users, Truck, Hammer, CreditCard,
+  FileDown, Loader2,
 } from 'lucide-react'
 
 function SectionTitle({ icon: Icon, title, count, color }: {
@@ -77,14 +82,49 @@ const RESOURCE_ICONS = {
 } as const
 
 export function EvidenceCenter() {
+  const { id: projectId } = useParams<{ id: string }>()
   const {
-    selection, linkedMeasurements, linkedRateAnalysis,
+    data, selection, linkedMeasurements, linkedRateAnalysis,
     linkedSourceDrawings, linkedQuantityChanges, linkedVariations,
-    linkedPayments, linkedCostEntries,
+    linkedPayments, linkedCostEntries, linkedDrawingMeasurements,
     fmt, selectMeasurement, selectDrawing,
   } = useWorkspace()
 
   const item = selection.boqItem
+  const [generating, setGenerating] = useState(false)
+
+  const handleGenerateReport = async () => {
+    if (!item) return
+    setGenerating(true)
+    try {
+      const [profileData, project] = await Promise.all([
+        getProfile(),
+        getProject(projectId),
+      ])
+      const company = profileData?.profile?.companies ?? null
+      const engineerName = profileData?.profile?.full_name ?? ''
+      const currency = project?.currency ?? 'USD'
+
+      generateEvidenceReport({
+        boqItem: item,
+        projectName: project?.name ?? 'Project',
+        measurements: linkedMeasurements,
+        sourceDrawings: linkedSourceDrawings,
+        quantityChanges: linkedQuantityChanges,
+        rateAnalysis: linkedRateAnalysis,
+        costEntries: linkedCostEntries,
+        payments: linkedPayments,
+        drawingMeasurements: linkedDrawingMeasurements,
+        company,
+        engineerName,
+        currency,
+      })
+    } catch {
+      // Pop-up blocked or other error — silent
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   const allLines = useMemo(() =>
     linkedMeasurements.flatMap(m => m.lines ?? []),
@@ -143,6 +183,14 @@ export function EvidenceCenter() {
         <div className="flex items-center gap-2">
           <Layers size={13} className="text-blue-500" />
           <span className="text-[10px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-[0.08em]">Evidence Center</span>
+          <button
+            onClick={handleGenerateReport}
+            disabled={generating}
+            className="ml-auto flex items-center gap-1 px-2 py-1 text-[9px] font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md hover:from-blue-700 hover:to-indigo-700 transition-all shadow-sm disabled:opacity-60"
+          >
+            {generating ? <Loader2 size={10} className="animate-spin" /> : <FileDown size={10} />}
+            Evidence Report
+          </button>
         </div>
       </div>
 
