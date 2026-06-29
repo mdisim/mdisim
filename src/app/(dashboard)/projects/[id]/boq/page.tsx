@@ -142,7 +142,7 @@ export default function BOQPage() {
       onConfirm: async () => {
         try {
           await deleteBOQItem(id)
-        } catch (e) { console.error('Failed to delete BOQ item:', e) }
+        } catch { setError('Failed to delete BOQ item.') }
         load()
       },
     })
@@ -204,7 +204,7 @@ export default function BOQPage() {
 
     try {
       await updateBOQItem(itemId, { [field]: val })
-    } catch (e) { console.error('Failed to update BOQ item:', e) }
+    } catch { setError('Failed to save changes.') }
 
     setEditingCell(null)
   }
@@ -273,8 +273,8 @@ export default function BOQPage() {
         section: item.section ?? undefined,
         notes: item.notes ?? undefined,
       })
-      if (!result.error) load()
-    } catch (e) { console.error('Failed to duplicate BOQ item:', e) }
+      if (result.error) { setError(result.error) } else { load() }
+    } catch { setError('Failed to duplicate item.') }
   }
 
   const handleOpenLibraryLink = async (boqItemId: string) => {
@@ -384,7 +384,7 @@ export default function BOQPage() {
   return (
     <div className="p-4 md:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20">
             <FileSpreadsheet size={22} />

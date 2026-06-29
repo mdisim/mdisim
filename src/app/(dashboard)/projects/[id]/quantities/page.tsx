@@ -55,7 +55,8 @@ export default function QuantitiesPage() {
           try {
             const measurements = await getDrawingMeasurements(d.id)
             return { ...d, measurements }
-          } catch {
+          } catch (err) {
+            setError(`Failed to load measurements for drawing "${d.name}"`)
             return { ...d, measurements: [] as import('@/lib/types').DrawingMeasurement[] }
           }
         })
@@ -328,7 +329,7 @@ export default function QuantitiesPage() {
                       {agg.boqItem.quantity !== agg.grandTotal && (
                         <div className="flex items-center gap-2 text-xs py-1 text-amber-600 dark:text-amber-400">
                           <ArrowUpDown size={12} />
-                          BOQ Quantity: {fmt(agg.boqItem.quantity)} (difference: {fmt(agg.grandTotal - agg.boqItem.quantity)})
+                          BOQ Quantity: {fmt(agg.boqItem.quantity)} (difference: {fmt((agg.grandTotal - agg.boqItem.quantity) || 0)})
                         </div>
                       )}
                     </div>

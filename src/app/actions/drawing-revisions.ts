@@ -29,11 +29,12 @@ export async function createDrawingRevision(fields: {
   if (!user) throw new Error('Not authenticated')
 
   if (fields.status === 'current') {
-    await supabase
+    const { error: supersededError } = await supabase
       .from('qb_drawing_revisions')
       .update({ status: 'superseded' })
       .eq('drawing_id', fields.drawing_id)
       .eq('status', 'current')
+    if (supersededError) return { error: 'Failed to supersede existing revisions: ' + supersededError.message }
   }
 
   const { data, error } = await supabase

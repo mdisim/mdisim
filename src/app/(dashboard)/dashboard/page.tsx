@@ -44,6 +44,7 @@ export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [summaries, setSummaries] = useState<ProjectSummary[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -52,7 +53,7 @@ export default function DashboardPage() {
         setProjects(allProjects)
         setSummaries(results)
       } catch {
-        // Silently handle — empty dashboard
+        setError('Failed to load dashboard data. Please refresh the page.')
       } finally {
         setLoading(false)
       }
@@ -188,6 +189,21 @@ export default function DashboardPage() {
               <div key={i} className="h-64 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 animate-pulse" />
             ))}
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-8">
+        <div className="text-center max-w-md">
+          <AlertTriangle size={40} className="text-amber-500 mx-auto mb-4" />
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">Dashboard Unavailable</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{error}</p>
+          <button onClick={() => window.location.reload()} className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
+            Retry
+          </button>
         </div>
       </div>
     )

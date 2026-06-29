@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils'
 import { X } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 
 interface ModalProps {
   isOpen: boolean
@@ -14,6 +14,8 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children, className, size = 'md' }: ModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -28,6 +30,46 @@ export function Modal({ isOpen, onClose, title, children, className, size = 'md'
     }
   }, [isOpen, onClose])
 
+  // Focus trap: cycle Tab within modal
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key !== 'Tab' || !modalRef.current) return
+    const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), textarea, input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )
+    if (focusable.length === 0) return
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    if (e.shiftKey) {
+      if (document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      }
+    } else {
+      if (document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isOpen) return
+    document.addEventListener('keydown', handleKeyDown)
+    // Auto-focus the first focusable element
+    const timer = setTimeout(() => {
+      if (modalRef.current) {
+        const first = modalRef.current.querySelector<HTMLElement>(
+          'a[href], button:not([disabled]), textarea, input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+        first?.focus()
+      }
+    }, 50)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      clearTimeout(timer)
+    }
+  }, [isOpen, handleKeyDown])
+
   if (!isOpen) return null
 
   const sizes = {
@@ -38,12 +80,14 @@ export function Modal({ isOpen, onClose, title, children, className, size = 'md'
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title ?? 'Dialog'}>
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm dark:bg-black/70"
         onClick={onClose}
+        aria-hidden="true"
       />
       <div
+        ref={modalRef}
         className={cn(
           'relative bg-white rounded-xl shadow-xl w-full max-h-[90vh] overflow-y-auto',
           'animate-in fade-in zoom-in-95 duration-200',

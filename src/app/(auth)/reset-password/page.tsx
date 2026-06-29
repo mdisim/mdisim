@@ -32,6 +32,8 @@ function ResetPasswordForm() {
       } else {
         setSessionReady(true)
       }
+    }).catch(() => {
+      setError('Unable to verify reset link. Please try again.')
     })
   }, [searchParams])
 
@@ -49,16 +51,20 @@ function ResetPasswordForm() {
     setLoading(true)
     setError(null)
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.updateUser({ password })
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.updateUser({ password })
 
-    if (error) {
-      setError(error.message)
+      if (error) {
+        setError(error.message)
+      } else {
+        setSuccess(true)
+        setTimeout(() => router.push('/login'), 2500)
+      }
+    } catch {
+      setError('Unable to connect to the server. Please try again.')
+    } finally {
       setLoading(false)
-    } else {
-      setSuccess(true)
-      setLoading(false)
-      setTimeout(() => router.push('/login'), 2500)
     }
   }
 

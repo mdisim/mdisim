@@ -194,6 +194,46 @@ export default function CostControlPage() {
     )
   }
 
+  if (!contract && variations.length === 0 && costEntries.length === 0 && cashflow.length === 0) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <div className="text-center py-20">
+          <BarChart3 size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+          <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-1">No cost control data available</h3>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
+            Create a BOQ and tender to get started.
+          </p>
+          <Button onClick={() => setShowContractEdit(true)}>
+            <DollarSign size={16} /> Set Up Contract
+          </Button>
+        </div>
+
+        {/* Contract Edit Modal */}
+        <Modal isOpen={showContractEdit} onClose={() => setShowContractEdit(false)} title="Contract Details" size="md">
+          <div className="space-y-4">
+            <Input label="Contract Value" type="number" value={contractForm.contract_value} onChange={e => setContractForm({ ...contractForm, contract_value: e.target.value })} />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <Input label="Contingency %" type="number" value={contractForm.contingency_pct} onChange={e => setContractForm({ ...contractForm, contingency_pct: e.target.value })} />
+              <Input label="Retention %" type="number" value={contractForm.retention_pct} onChange={e => setContractForm({ ...contractForm, retention_pct: e.target.value })} />
+              <Input label="Advance %" type="number" value={contractForm.advance_pct} onChange={e => setContractForm({ ...contractForm, advance_pct: e.target.value })} />
+              <Input label="VAT %" type="number" value={contractForm.vat_pct} onChange={e => setContractForm({ ...contractForm, vat_pct: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Input label="Start Date" type="date" value={contractForm.start_date} onChange={e => setContractForm({ ...contractForm, start_date: e.target.value })} />
+              <Input label="End Date" type="date" value={contractForm.end_date} onChange={e => setContractForm({ ...contractForm, end_date: e.target.value })} />
+              <Input label="Duration (months)" type="number" value={contractForm.duration_months} onChange={e => setContractForm({ ...contractForm, duration_months: e.target.value })} />
+            </div>
+            {error && <p className="text-sm text-red-500">{error}</p>}
+            <div className="flex justify-end gap-3 pt-2">
+              <Button variant="ghost" onClick={() => setShowContractEdit(false)}>Cancel</Button>
+              <Button onClick={handleSaveContract}>Save</Button>
+            </div>
+          </div>
+        </Modal>
+      </div>
+    )
+  }
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">

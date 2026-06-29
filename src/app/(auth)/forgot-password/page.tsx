@@ -16,15 +16,19 @@ export default function ForgotPasswordPage() {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    const supabase = createClient()
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    })
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-    } else {
-      setSent(true)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      })
+      if (error) {
+        setError(error.message)
+      } else {
+        setSent(true)
+      }
+    } catch {
+      setError('Unable to connect to the authentication service. Please try again.')
+    } finally {
       setLoading(false)
     }
   }

@@ -79,7 +79,7 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
         )}
         <button
           onClick={() => setMobileOpen(false)}
-          className="lg:hidden p-1 rounded text-white/40 hover:text-white transition-colors"
+          className="lg:hidden p-3 min-h-11 min-w-11 rounded text-white/40 hover:text-white transition-colors"
         >
           <X size={18} />
         </button>
@@ -139,7 +139,7 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
         <button
           onClick={() => setCollapsed(!collapsed)}
           className={cn(
-            'flex items-center gap-2 px-3 py-2 w-full rounded-lg text-slate-500 hover:bg-white/[0.04] hover:text-slate-300 transition-all text-xs',
+            'flex items-center gap-2 px-3 py-2 min-h-11 min-w-11 w-full rounded-lg text-slate-500 hover:bg-white/[0.04] hover:text-slate-300 transition-all text-xs',
             collapsed && 'justify-center'
           )}
         >
@@ -154,7 +154,7 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
       {/* Mobile toggle */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed top-4 left-4 z-40 lg:hidden p-2.5 bg-[#0B1120] rounded-lg text-white shadow-lg shadow-black/20 border border-white/[0.06]"
+        className="fixed top-4 left-4 z-40 lg:hidden p-3 min-h-11 min-w-11 bg-[#0B1120] rounded-lg text-white shadow-lg shadow-black/20 border border-white/[0.06]"
       >
         <Menu size={20} />
       </button>

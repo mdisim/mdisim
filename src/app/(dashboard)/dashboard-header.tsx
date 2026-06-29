@@ -93,8 +93,10 @@ export function DashboardHeader() {
 
         {/* Notifications */}
         <button
-          className="relative p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors"
-          title="Notifications"
+          className="relative p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors cursor-default opacity-60"
+          title="Notifications — Coming soon"
+          aria-label="Notifications — Coming soon"
+          disabled
         >
           <Bell size={16} />
         </button>

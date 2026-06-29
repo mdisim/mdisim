@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,8 +16,8 @@ import {
 interface MeasurementToolbarProps {
   onAddItem: () => void
   onGenerateBOQ: () => void
-  onExport?: () => void
-  onExportPDF?: () => void
+  onExport?: () => Promise<void> | void
+  onExportPDF?: () => Promise<void> | void
   selectedCount: number
   sections: string[]
   activeSection: string | null
@@ -48,6 +49,20 @@ export function MeasurementToolbar({
   netQuantity = 0,
 }: MeasurementToolbarProps) {
   const sectionCount = sections.length
+  const [exportingExcel, setExportingExcel] = useState(false)
+  const [exportingPDF, setExportingPDF] = useState(false)
+
+  const handleExportExcel = async () => {
+    if (!onExport || exportingExcel) return
+    setExportingExcel(true)
+    try { await onExport() } finally { setExportingExcel(false) }
+  }
+
+  const handleExportPDF = async () => {
+    if (!onExportPDF || exportingPDF) return
+    setExportingPDF(true)
+    try { await onExportPDF() } finally { setExportingPDF(false) }
+  }
 
   return (
     <div className="mb-6 space-y-0">
@@ -69,13 +84,13 @@ export function MeasurementToolbar({
 
         <div className="flex items-center gap-2 flex-wrap">
           {onExport && (
-            <Button size="sm" variant="outline" onClick={onExport} disabled={itemCount === 0}>
+            <Button size="sm" variant="outline" onClick={handleExportExcel} disabled={itemCount === 0 || exportingExcel} loading={exportingExcel}>
               <Download size={14} />
               Export Excel
             </Button>
           )}
           {onExportPDF && (
-            <Button size="sm" variant="outline" onClick={onExportPDF} disabled={itemCount === 0}>
+            <Button size="sm" variant="outline" onClick={handleExportPDF} disabled={itemCount === 0 || exportingPDF} loading={exportingPDF}>
               <FileText size={14} />
               Export PDF
             </Button>

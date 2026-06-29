@@ -66,8 +66,12 @@ export default function ProjectsPage() {
     setConfirmAction({
       message: 'Delete this project and all its data?',
       onConfirm: async () => {
-        await deleteProject(id)
-        loadProjects()
+        try {
+          await deleteProject(id)
+          loadProjects()
+        } catch {
+          setError('Failed to delete project. Please try again.')
+        }
       },
     })
   }

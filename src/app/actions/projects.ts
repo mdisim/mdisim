@@ -27,6 +27,7 @@ export async function getProject(id: string): Promise<Project | null> {
     .from('projects')
     .select('*')
     .eq('id', id)
+    .eq('created_by', user.id)
     .single()
 
   return data as Project | null

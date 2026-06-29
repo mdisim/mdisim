@@ -127,17 +127,21 @@ export default function TendersPage() {
     if (r.error) { setError(r.error); return }
 
     if (boqItems.length > 0 && r.data) {
-      await bulkCreateBids(
-        tenderId,
-        r.data.id,
-        boqItems.map(b => ({
-          boq_item_id: b.id,
-          description: b.description,
-          unit: b.unit,
-          quantity: b.quantity,
-          unit_rate: 0,
-        }))
-      )
+      try {
+        await bulkCreateBids(
+          tenderId,
+          r.data.id,
+          boqItems.map(b => ({
+            boq_item_id: b.id,
+            description: b.description,
+            unit: b.unit,
+            quantity: b.quantity,
+            unit_rate: 0,
+          }))
+        )
+      } catch {
+        setError('Bidder created but failed to populate bid lines.')
+      }
     }
 
     setShowAddBidder(null)
@@ -146,7 +150,11 @@ export default function TendersPage() {
   }
 
   const handleUpdateBid = async (bidId: string, unitRate: number) => {
-    await updateBid(bidId, { unit_rate: unitRate })
+    try {
+      await updateBid(bidId, { unit_rate: unitRate })
+    } catch {
+      setError('Failed to update bid.')
+    }
     load()
   }
 

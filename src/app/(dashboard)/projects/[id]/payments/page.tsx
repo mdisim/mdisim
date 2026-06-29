@@ -92,7 +92,11 @@ export default function PaymentsPage() {
     if (r.error) { setError(r.error); return }
 
     if (r.data) {
-      await populateCertFromBOQ(r.data.id, projectId, previousCert?.id)
+      try {
+        await populateCertFromBOQ(r.data.id, projectId, previousCert?.id)
+      } catch {
+        setError('Certificate created but failed to populate lines from BOQ.')
+      }
     }
 
     setShowCreate(false)
@@ -101,7 +105,11 @@ export default function PaymentsPage() {
   }
 
   const handleUpdateLine = async (lineId: string, currentQty: number) => {
-    await updatePaymentLine(lineId, { current_qty: currentQty })
+    try {
+      await updatePaymentLine(lineId, { current_qty: currentQty })
+    } catch {
+      setError('Failed to update line item.')
+    }
     load()
   }
 

@@ -126,14 +126,19 @@ export default function RateAnalysisPage() {
     setConfirmAction({
       message: 'Delete this rate analysis?',
       onConfirm: async () => {
-        await deleteRateAnalysis(id)
+        try {
+          await deleteRateAnalysis(id)
+        } catch { setError('Failed to delete rate analysis.') }
         load()
       },
     })
   }
 
   const handleUpdateAnalysis = async (id: string, fields: Partial<RateAnalysis>) => {
-    await updateRateAnalysis(id, fields)
+    try {
+      const result = await updateRateAnalysis(id, fields)
+      if (result.error) setError(result.error)
+    } catch { setError('Failed to update rate analysis.') }
     load()
   }
 

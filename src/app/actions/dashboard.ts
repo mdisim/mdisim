@@ -23,6 +23,7 @@ export async function getDashboardSummaries(): Promise<{ projects: Project[]; su
   const { data: projects } = await supabase
     .from('projects')
     .select('*')
+    .eq('created_by', user.id)
     .order('updated_at', { ascending: false })
 
   const allProjects = (projects ?? []) as Project[]

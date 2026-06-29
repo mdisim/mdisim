@@ -126,7 +126,9 @@ export default function MeasurementsPage() {
 
   const handleUpdateItem = useCallback(
     async (id: string, fields: Partial<MeasurementItem>) => {
-      await updateMeasurementItem(id, fields)
+      try {
+        await updateMeasurementItem(id, fields)
+      } catch { setError('Failed to update measurement item.') }
       load()
     },
     [load],
@@ -189,10 +191,17 @@ export default function MeasurementsPage() {
   const handleGenerateBOQ = useCallback(
     async (_options: { linkLibrary: boolean; copyRates: boolean }) => {
       const ids = Array.from(selectedItems)
-      if (ids.length === 0) return
-      await generateBOQFromMeasurements(projectId, ids)
-      setShowGenerateBOQ(false)
-      setSelectedItems(new Set())
+      if (ids.length === 0) {
+        setError('Please select at least one measurement item to generate BOQ.')
+        return
+      }
+      try {
+        await generateBOQFromMeasurements(projectId, ids)
+        setShowGenerateBOQ(false)
+        setSelectedItems(new Set())
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to generate BOQ')
+      }
     },
     [projectId, selectedItems],
   )
@@ -320,12 +329,20 @@ export default function MeasurementsPage() {
         onAddItem={() => setShowCreateItem(true)}
         onGenerateBOQ={() => setShowGenerateBOQ(true)}
         onExport={async () => {
-          const project = await getProject(projectId)
-          if (project) await exportMeasurementsToExcel(items, project.name)
+          try {
+            const project = await getProject(projectId)
+            if (project) await exportMeasurementsToExcel(items, project.name)
+          } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to export Excel')
+          }
         }}
         onExportPDF={async () => {
-          const project = await getProject(projectId)
-          if (project) exportMeasurementsToPDF(items, project.name)
+          try {
+            const project = await getProject(projectId)
+            if (project) exportMeasurementsToPDF(items, project.name)
+          } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to export PDF')
+          }
         }}
         totalAdditions={totalAdditions}
         totalDeductions={totalDeductions}
