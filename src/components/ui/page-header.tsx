@@ -1,0 +1,46 @@
+'use client'
+import { cn } from '@/lib/utils'
+import { motion } from 'framer-motion'
+import { LucideIcon } from 'lucide-react'
+import { ReactNode } from 'react'
+
+interface PageHeaderProps {
+  icon: LucideIcon
+  title: string
+  subtitle?: string
+  gradient: string
+  badge?: ReactNode
+  actions?: ReactNode
+  className?: string
+}
+
+export function PageHeader({ icon: Icon, title, subtitle, gradient, badge, actions, className }: PageHeaderProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+      className={cn('flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8', className)}
+    >
+      <div className="flex items-center gap-4">
+        <div className={cn('p-3 rounded-2xl bg-gradient-to-br text-white shadow-lg', gradient)}>
+          <Icon size={24} />
+        </div>
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{title}</h1>
+            {badge}
+          </div>
+          {subtitle && (
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>
+          )}
+        </div>
+      </div>
+      {actions && (
+        <div className="flex items-center gap-2 flex-wrap">
+          {actions}
+        </div>
+      )}
+    </motion.div>
+  )
+}

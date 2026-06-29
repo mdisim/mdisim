@@ -11,6 +11,11 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
 import { TableSkeleton } from '@/components/ui/skeleton'
+import { StatCard } from '@/components/ui/stat-card'
+import { SectionCard } from '@/components/ui/section-card'
+import { PageHeader } from '@/components/ui/page-header'
+import { SimpleBarChart } from '@/components/ui/mini-chart'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   getTenders,
   createTender,
@@ -46,6 +51,8 @@ import {
   Mail,
   Phone,
   Hash,
+  DollarSign,
+  Target,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -105,9 +112,55 @@ export default function TendersPage() {
 
   const stats = useMemo(() => {
     const totalBidders = tenders.reduce((s, t) => s + (t.bidders?.length ?? 0), 0)
-    const awarded = tenders.filter(t => t.status === 'awarded').length
+    const awarded = tenders.filter(t => t.status === 'awarded')
     const active = tenders.filter(t => t.status === 'issued' || t.status === 'draft').length
-    return { total: tenders.length, totalBidders, awarded, active }
+
+    // Awarded value: sum of winning bidder totals
+    const awardedValue = awarded.reduce((sum, t) => {
+      const winner = (t.bidders ?? []).find(b => b.id === t.awarded_bidder_id)
+      if (!winner) return sum
+      return sum + (winner.bids ?? []).reduce((s, bid) => s + bid.amount, 0)
+    }, 0)
+
+    // Average bid across all bidders with totals > 0
+    const allBidderTotals = tenders.flatMap(t =>
+      (t.bidders ?? []).map(b => (b.bids ?? []).reduce((s, bid) => s + bid.amount, 0))
+    ).filter(total => total > 0)
+    const avgBid = allBidderTotals.length > 0
+      ? allBidderTotals.reduce((a, b) => a + b, 0) / allBidderTotals.length
+      : 0
+
+    // Bid comparison data per tender (for chart)
+    const bidComparison = tenders.map(t => {
+      const bidderTotals = (t.bidders ?? [])
+        .map(b => (b.bids ?? []).reduce((s, bid) => s + bid.amount, 0))
+        .filter(total => total > 0)
+      return {
+        label: t.title.length > 20 ? t.title.slice(0, 20) + '...' : t.title,
+        lowest: bidderTotals.length > 0 ? Math.min(...bidderTotals) : 0,
+        average: bidderTotals.length > 0 ? bidderTotals.reduce((a, b) => a + b, 0) / bidderTotals.length : 0,
+        highest: bidderTotals.length > 0 ? Math.max(...bidderTotals) : 0,
+      }
+    }).filter(t => t.lowest > 0)
+
+    // Contractor ranking from awarded tenders
+    const contractors = awarded.map(t => {
+      const winner = (t.bidders ?? []).find(b => b.id === t.awarded_bidder_id)
+      if (!winner) return null
+      const total = (winner.bids ?? []).reduce((s, bid) => s + bid.amount, 0)
+      return { name: winner.name, company: winner.company, total, tenderTitle: t.title }
+    }).filter(Boolean) as { name: string; company: string | null; total: number; tenderTitle: string }[]
+
+    return {
+      total: tenders.length,
+      totalBidders,
+      awardedCount: awarded.length,
+      active,
+      awardedValue,
+      avgBid,
+      bidComparison,
+      contractors,
+    }
   }, [tenders])
 
   const handleCreateTender = async () => {
@@ -170,38 +223,104 @@ export default function TendersPage() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-[1600px] mx-auto">
-      {/* Page Header */}
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-            Tender Management
-          </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Compare bids, analyze variances, and award tenders
-          </p>
-        </div>
-        <Button onClick={() => setShowCreate(true)}>
-          <Plus size={16} /> New Tender
-        </Button>
-      </div>
+    <div className="p-6 md:p-8 max-w-[1600px] mx-auto">
+      <PageHeader
+        icon={Users}
+        title="Tender Management"
+        subtitle="Compare bids, analyze variances, and award tenders"
+        gradient="from-violet-500 to-violet-600"
+        actions={
+          <Button onClick={() => setShowCreate(true)}>
+            <Plus size={16} /> New Tender
+          </Button>
+        }
+      />
 
-      {/* Summary Stats */}
+      {/* Statistics Dashboard */}
       {!loading && tenders.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 * 0.06 }}>
-            <StatCard icon={FileSpreadsheet} label="Total Tenders" value={stats.total} color="text-slate-600 dark:text-slate-300" bg="bg-slate-100 dark:bg-slate-700" />
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 * 0.06 }}>
-            <StatCard icon={Gavel} label="Active" value={stats.active} color="text-blue-600 dark:text-blue-400" bg="bg-blue-50 dark:bg-blue-900/30" />
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2 * 0.06 }}>
-            <StatCard icon={Users} label="Total Bidders" value={stats.totalBidders} color="text-purple-600 dark:text-purple-400" bg="bg-purple-50 dark:bg-purple-900/30" />
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 3 * 0.06 }}>
-            <StatCard icon={Trophy} label="Awarded" value={stats.awarded} color="text-green-600 dark:text-green-400" bg="bg-green-50 dark:bg-green-900/30" />
-          </motion.div>
-        </div>
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+            <StatCard
+              icon={FileSpreadsheet}
+              label="Total Tenders"
+              value={stats.total}
+              gradient="from-violet-500 to-violet-600"
+            />
+            <StatCard
+              icon={Gavel}
+              label="Active Bids"
+              value={stats.active}
+              gradient="from-blue-500 to-blue-600"
+            />
+            <StatCard
+              icon={DollarSign}
+              label="Awarded Value"
+              value={stats.awardedValue}
+              prefix=""
+              decimals={2}
+              gradient="from-emerald-500 to-emerald-600"
+            />
+            <StatCard
+              icon={Target}
+              label="Average Bid"
+              value={stats.avgBid}
+              decimals={2}
+              gradient="from-amber-500 to-amber-600"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Bid Comparison Chart */}
+            {stats.bidComparison.length > 0 && (
+              <SectionCard title="Bid Comparison" icon={BarChart3} iconColor="text-violet-500">
+                <SimpleBarChart
+                  bars={stats.bidComparison.flatMap(t => [
+                    { label: `${t.label} (Low)`, value: t.lowest, color: '#22c55e' },
+                    { label: `${t.label} (Avg)`, value: t.average, color: '#6366f1' },
+                    { label: `${t.label} (High)`, value: t.highest, color: '#ef4444' },
+                  ])}
+                  horizontal
+                />
+              </SectionCard>
+            )}
+
+            {/* Contractor Ranking */}
+            {stats.contractors.length > 0 && (
+              <SectionCard title="Contractor Ranking" icon={Trophy} iconColor="text-amber-500">
+                <div className="space-y-3">
+                  {stats.contractors
+                    .sort((a, b) => b.total - a.total)
+                    .map((c, i) => (
+                      <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-700/30">
+                        <div className={cn(
+                          'w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0',
+                          i === 0 ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' :
+                          i === 1 ? 'bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300' :
+                          'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
+                        )}>
+                          #{i + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm text-slate-900 dark:text-white truncate">{c.name}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                            {c.company ? `${c.company} · ` : ''}{c.tenderTitle}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-sm font-bold tabular-nums text-slate-900 dark:text-white">{fmt(c.total)}</div>
+                          {i === 0 && (
+                            <Badge variant="success" className="text-[10px] mt-0.5">
+                              <Trophy size={10} className="mr-0.5" /> Winner
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </SectionCard>
+            )}
+          </div>
+        </>
       )}
 
       {/* Content */}
@@ -213,26 +332,22 @@ export default function TendersPage() {
           <Button onClick={() => load()}>Retry</Button>
         </div>
       ) : tenders.length === 0 ? (
-        <Card className="border-dashed">
-          <div className="text-center py-20 px-6">
-            <div className="mx-auto w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center mb-5">
-              <FileSpreadsheet size={28} className="text-slate-400 dark:text-slate-500" />
-            </div>
-            <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-2">
-              No tenders yet
-            </h3>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mb-8 max-w-sm mx-auto">
-              Create your first tender to start collecting and comparing bids from contractors.
-            </p>
-            <Button onClick={() => setShowCreate(true)}>
-              <Plus size={16} /> Create First Tender
-            </Button>
-          </div>
-        </Card>
+        <EmptyState
+          icon={FileSpreadsheet}
+          title="No tenders yet"
+          description="Create your first tender to start collecting and comparing bids from contractors."
+          actionLabel="Create First Tender"
+          onAction={() => setShowCreate(true)}
+        />
       ) : (
         <div className="space-y-4">
           {tenders.map((tender, idx) => (
-            <motion.div key={tender.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}>
+            <motion.div
+              key={tender.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.06, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+            >
             <TenderCard
               tender={tender}
               boqItems={boqItems}
@@ -370,30 +485,6 @@ export default function TendersPage() {
         </div>
       </Modal>
     </div>
-  )
-}
-
-/* ── Stat Card ─────────────────────────────────────────────── */
-
-function StatCard({ icon: Icon, label, value, color, bg }: {
-  icon: React.ComponentType<{ size?: number; className?: string }>
-  label: string
-  value: number
-  color: string
-  bg: string
-}) {
-  return (
-    <Card className="!shadow-sm hover:!shadow-md">
-      <CardContent className="!px-4 !py-4 flex items-center gap-3">
-        <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center shrink-0', bg)}>
-          <Icon size={18} className={color} />
-        </div>
-        <div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">{value}</div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">{label}</div>
-        </div>
-      </CardContent>
-    </Card>
   )
 }
 

@@ -29,15 +29,19 @@ import {
   Sparkles,
   Target,
   Wallet,
+  FolderOpen,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Legend } from 'recharts'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
 import { getDashboardSummaries } from '@/app/actions/dashboard'
 import type { ProjectSummary } from '@/app/actions/dashboard'
 import type { Project } from '@/lib/types'
+import { StatCard } from '@/components/ui/stat-card'
+import { SectionCard } from '@/components/ui/section-card'
+import { PageHeader } from '@/components/ui/page-header'
+import { DonutChart, SimpleBarChart, ProgressRing } from '@/components/ui/mini-chart'
+import { EmptyState } from '@/components/ui/empty-state'
+import { CardSkeleton } from '@/components/ui/skeleton'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -191,19 +195,68 @@ export default function DashboardPage() {
   } : null
   }, [summaries])
 
+  // Completion rate across projects
+  const completionRate = useMemo(() => {
+    if (projects.length === 0) return 0
+    return projects.reduce((sum, p) => sum + (p.progress ?? 0), 0) / projects.length
+  }, [projects])
+
+  // Budget breakdown for donut chart
+  const budgetSegments = useMemo(() => [
+    { value: totalActualCost, color: '#f43f5e', label: 'Actual Cost' },
+    { value: totalCommitted, color: '#f59e0b', label: 'Committed' },
+    { value: Math.max(0, totalContractValue - totalActualCost - totalCommitted), color: '#10b981', label: 'Remaining' },
+  ].filter(s => s.value > 0), [totalActualCost, totalCommitted, totalContractValue])
+
+  // Recent activity timeline
+  const recentActivity = useMemo(() => {
+    const items: { label: string; detail: string; time: string; color: string }[] = []
+    for (const s of summaries) {
+      for (const cert of s.paymentCerts.slice(-2)) {
+        items.push({
+          label: `Payment ${cert.status === 'paid' ? 'completed' : 'submitted'}`,
+          detail: `${s.project.name} - IPC #${cert.cert_number}`,
+          time: cert.created_at ?? s.project.updated_at,
+          color: cert.status === 'paid' ? 'bg-emerald-500' : 'bg-amber-500',
+        })
+      }
+      for (const v of s.variations.slice(-2)) {
+        items.push({
+          label: `Variation ${v.status}`,
+          detail: `${s.project.name} - ${v.title ?? v.variation_no}`,
+          time: v.created_at ?? s.project.updated_at,
+          color: v.status === 'approved' ? 'bg-blue-500' : 'bg-orange-500',
+        })
+      }
+    }
+    return items
+      .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+      .slice(0, 6)
+  }, [summaries])
+
+  // Stagger animation container
+  const stagger = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.05 } },
+  }
+  const fadeUp = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+  }
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-        <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-          <div className="h-8 w-48 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[1,2,3,4].map(i => (
-              <div key={i} className="h-28 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 animate-pulse" />
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-6 md:p-8">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <div className="h-10 w-64 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse" />
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+            {[1,2,3,4,5].map(i => (
+              <CardSkeleton key={i} />
             ))}
           </div>
-          <div className="grid gap-4 lg:grid-cols-2">
-            {[1,2].map(i => (
-              <div key={i} className="h-64 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 animate-pulse" />
+          <div className="grid gap-6 lg:grid-cols-3">
+            {[1,2,3].map(i => (
+              <CardSkeleton key={i} />
             ))}
           </div>
         </div>
@@ -226,665 +279,223 @@ export default function DashboardPage() {
     )
   }
 
+  if (summaries.length === 0) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-6 md:p-8">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <PageHeader
+            icon={Activity}
+            title="Executive Dashboard"
+            subtitle="Portfolio overview"
+            gradient="from-indigo-500 to-indigo-600"
+          />
+          <EmptyState
+            icon={FolderOpen}
+            title="No projects yet"
+            description="Create your first project to start tracking budgets, measurements, and payments."
+            actionLabel="Go to Projects"
+            onAction={() => router.push('/projects')}
+          />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-
-        {/* Header */}
-        <div className="flex items-end justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Executive Dashboard
-            </h1>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Portfolio overview across {totalProjects} project{totalProjects !== 1 ? 's' : ''}
-            </p>
-          </div>
-          {/* Quick Actions */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => router.push('/projects')}
-              className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-blue-500/40 hover:brightness-110"
-            >
-              <Plus size={16} />
-              New Project
-            </button>
-          </div>
-        </div>
-
-        {/* Portfolio KPI Cards */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-          {([
-            {
-              label: 'Total Projects',
-              value: loading ? '...' : String(totalProjects),
-              subtitle: `${summaries.filter(s => (s.project.progress ?? 0) > 0 && (s.project.progress ?? 0) < 100).length} in progress`,
-              icon: FolderKanban,
-              gradient: 'from-violet-600 to-indigo-600',
-            },
-            {
-              label: 'Contract Value',
-              value: loading ? '...' : fmtCompact(totalContractValue),
-              subtitle: 'Total portfolio',
-              icon: Briefcase,
-              gradient: 'from-blue-600 to-cyan-600',
-            },
-            {
-              label: 'BOQ Value',
-              value: loading ? '...' : fmtCompact(totalBOQValue),
-              subtitle: `${summaries.reduce((s, p) => s + p.boqItems.length, 0)} line items`,
-              icon: FileSpreadsheet,
-              gradient: 'from-emerald-600 to-teal-600',
-            },
-            {
-              label: 'Actual Cost',
-              value: loading ? '...' : fmtCompact(totalActualCost),
-              subtitle: totalContractValue > 0 ? `${((totalActualCost / totalContractValue) * 100).toFixed(1)}% of contract` : 'No contract set',
-              icon: DollarSign,
-              gradient: 'from-rose-600 to-pink-600',
-            },
-            {
-              label: 'Forecast Cost',
-              value: loading ? '...' : fmtCompact(totalForecastCost),
-              subtitle: totalContractValue > 0 ? `${((totalForecastCost / totalContractValue) * 100).toFixed(1)}% of contract` : 'N/A',
-              icon: Target,
-              gradient: 'from-amber-600 to-orange-600',
-            },
-            {
-              label: 'Projected Profit',
-              value: loading ? '...' : fmtCompact(projectedProfit),
-              subtitle: totalContractValue > 0 ? `${profitMargin.toFixed(1)}% margin` : 'N/A',
-              icon: projectedProfit >= 0 ? TrendingUp : TrendingDown,
-              gradient: projectedProfit >= 0 ? 'from-green-600 to-emerald-600' : 'from-red-600 to-rose-600',
-            },
-          ]).map((kpi, index) => (
-            <motion.div
-              key={kpi.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: index * 0.08 }}
-              className={cn(
-                'relative overflow-hidden rounded-xl bg-gradient-to-br p-4 shadow-lg',
-                kpi.gradient
-              )}
-            >
-              {/* Background icon watermark */}
-              <kpi.icon
-                size={80}
-                className="absolute -right-3 -top-3 rotate-12 opacity-[0.08] text-white"
-                strokeWidth={1}
-              />
-              <div className="relative z-10">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="rounded-lg bg-white/20 dark:bg-white/15 p-1.5 backdrop-blur-sm">
-                    <kpi.icon size={16} className="text-white" />
-                  </div>
-                </div>
-                <div className="text-2xl font-bold tabular-nums text-white tracking-tight">
-                  {kpi.value}
-                </div>
-                <div className="text-[11px] font-medium text-white/70 mt-0.5">{kpi.label}</div>
-                <div className="text-[10px] text-white/50 mt-0.5">{kpi.subtitle}</div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Secondary KPI Strip */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
-          {([
-            { label: 'Total Paid', value: fmtCompact(totalPaid), icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400', dotColor: 'bg-emerald-500 dark:bg-emerald-400' },
-            { label: 'Pending Payments', value: fmtCompact(pendingPayments), icon: Clock, color: 'text-amber-600 dark:text-amber-400', dotColor: 'bg-amber-500 dark:bg-amber-400' },
-            { label: 'Approved VOs', value: fmtCompact(approvedVariations), icon: CheckCircle2, color: 'text-blue-600 dark:text-blue-400', dotColor: 'bg-blue-500 dark:bg-blue-400' },
-            { label: 'Pending VOs', value: fmtCompact(pendingVariations), icon: AlertTriangle, color: 'text-orange-600 dark:text-orange-400', dotColor: 'bg-orange-500 dark:bg-orange-400' },
-            { label: 'Active Tenders', value: fmt(activeTenders), icon: Receipt, color: 'text-purple-600 dark:text-purple-400', dotColor: 'bg-purple-500 dark:bg-purple-400' },
-            { label: 'Measurements', value: `${fmt(totalMeasurements)}`, icon: Ruler, color: 'text-sky-600 dark:text-sky-400', dotColor: 'bg-sky-500 dark:bg-sky-400' },
-          ] as const).map(kpi => (
-            <div
-              key={kpi.label}
-              className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-3 shadow-sm dark:shadow-none"
-            >
-              <div className="flex items-center gap-2">
-                <div className={cn('h-1.5 w-1.5 rounded-full', kpi.dotColor)} />
-                <span className={cn('text-sm font-bold tabular-nums', kpi.color)}>
-                  {loading ? '...' : kpi.value}
-                </span>
-              </div>
-              <div className="mt-1 text-[10px] font-medium uppercase tracking-wider text-slate-500">
-                {kpi.label}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* ── Charts ── */}
-        {!loading && summaries.length > 0 && (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {/* Portfolio Cost Breakdown */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-              <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm dark:shadow-none">
-                <CardHeader className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80">
-                  <div className="flex items-center gap-2">
-                    <Layers size={18} className="text-rose-600 dark:text-rose-400" />
-                    <CardTitle className="text-slate-900 dark:text-slate-100">Portfolio Cost Breakdown</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4">
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={[
-                          { name: 'Actual Cost', value: totalActualCost },
-                          { name: 'Committed', value: totalCommitted },
-                          { name: 'Remaining Budget', value: Math.max(0, totalContractValue - totalActualCost - totalCommitted) },
-                        ]}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={110}
-                        paddingAngle={2}
-                        dataKey="value"
-                        label={({ name, value }) => `${name}: ${fmtCompact(value)}`}
-                      >
-                        <Cell fill="#f43f5e" />
-                        <Cell fill="#f59e0b" />
-                        <Cell fill="#10b981" />
-                      </Pie>
-                      <Tooltip formatter={(value) => fmtCompact(Number(value))} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="mt-2 flex items-center justify-center gap-6 text-xs">
-                    <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-rose-500" />Actual Cost</span>
-                    <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" />Committed</span>
-                    <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />Remaining</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Project Health Overview */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.35 }}>
-              <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm dark:shadow-none">
-                <CardHeader className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80">
-                  <div className="flex items-center gap-2">
-                    <BarChart3 size={18} className="text-blue-600 dark:text-blue-400" />
-                    <CardTitle className="text-slate-900 dark:text-slate-100">Project Health Overview</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4">
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart
-                      data={financialData.map(d => ({
-                        name: d.name.length > 12 ? d.name.slice(0, 12) + '...' : d.name,
-                        'Contract Value': d.contractVal,
-                        'Actual Cost': d.actual,
-                        'Forecast': d.forecast,
-                      }))}
-                      margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
-                    >
-                      <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'currentColor' }} className="text-slate-500 dark:text-slate-400" />
-                      <YAxis tickFormatter={(v: number) => fmtCompact(v)} tick={{ fontSize: 10, fill: 'currentColor' }} className="text-slate-500 dark:text-slate-400" />
-                      <Tooltip formatter={(value) => fmtCompact(Number(value))} />
-                      <Legend wrapperStyle={{ fontSize: 11 }} />
-                      <Bar dataKey="Contract Value" fill="#3b82f6" radius={[2, 2, 0, 0]} />
-                      <Bar dataKey="Actual Cost" fill="#f43f5e" radius={[2, 2, 0, 0]} />
-                      <Bar dataKey="Forecast" fill="#f59e0b" radius={[2, 2, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
-        )}
-
-        {/* ── Earned Value Metrics ── */}
-        {!loading && earnedValueData.length > 0 && (
-          <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm dark:shadow-none">
-            <CardHeader className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80">
-              <div className="flex items-center gap-2">
-                <Activity size={18} className="text-cyan-600 dark:text-cyan-400" />
-                <CardTitle className="text-slate-900 dark:text-slate-100">Earned Value Analysis</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-700 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                      <th className="px-4 py-3">Project</th>
-                      <th className="px-4 py-3 text-right">BAC</th>
-                      <th className="px-4 py-3 text-right">% Comp</th>
-                      <th className="px-4 py-3 text-right">EV</th>
-                      <th className="px-4 py-3 text-right">PV</th>
-                      <th className="px-4 py-3 text-right">AC</th>
-                      <th className="px-4 py-3 text-right">SPI</th>
-                      <th className="px-4 py-3 text-right">CPI</th>
-                      <th className="px-4 py-3 text-right">EAC</th>
-                      <th className="px-4 py-3 text-right">VAC</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {earnedValueData.map((ev, i) => (
-                      <tr
-                        key={i}
-                        className="border-b border-slate-100 dark:border-slate-700/20 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/20"
-                      >
-                        <td className="px-4 py-2.5 font-medium text-slate-700 dark:text-slate-200 max-w-[200px] truncate">{ev.name}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{fmtCompact(ev.BAC)}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{fmtPct(ev.percentComplete)}%</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{fmtCompact(ev.EV)}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{fmtCompact(ev.PV)}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{fmtCompact(ev.AC)}</td>
-                        <td className={cn(
-                          'px-4 py-2.5 text-right tabular-nums font-semibold',
-                          ev.SPI >= 1 ? 'text-emerald-600 dark:text-emerald-400' : ev.SPI >= 0.9 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'
-                        )}>
-                          {fmtPct(ev.SPI)}
-                        </td>
-                        <td className={cn(
-                          'px-4 py-2.5 text-right tabular-nums font-semibold',
-                          ev.CPI >= 1 ? 'text-emerald-600 dark:text-emerald-400' : ev.CPI >= 0.9 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'
-                        )}>
-                          {fmtPct(ev.CPI)}
-                        </td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{fmtCompact(ev.EAC)}</td>
-                        <td className={cn(
-                          'px-4 py-2.5 text-right tabular-nums font-semibold',
-                          ev.VAC >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-                        )}>
-                          {fmtCompact(ev.VAC)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {/* Legend */}
-              <div className="flex flex-wrap gap-x-6 gap-y-1 border-t border-slate-200 dark:border-slate-700 px-4 py-2.5 text-[10px] text-slate-500">
-                <span>BAC = Budget at Completion</span>
-                <span>EV = Earned Value</span>
-                <span>PV = Planned Value</span>
-                <span>AC = Actual Cost</span>
-                <span>SPI = Schedule Perf. Index</span>
-                <span>CPI = Cost Perf. Index</span>
-                <span>EAC = Estimate at Completion</span>
-                <span>VAC = Variance at Completion</span>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* ── Project Financial Summary ── */}
-        {!loading && summaries.length > 0 && (
-          <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm dark:shadow-none">
-            <CardHeader className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80">
-              <div className="flex items-center gap-2">
-                <BarChart3 size={18} className="text-blue-600 dark:text-blue-400" />
-                <CardTitle className="text-slate-900 dark:text-slate-100">Project Financial Summary</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-700 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                      <th className="px-4 py-3">Project</th>
-                      <th className="px-4 py-3 text-right">Contract</th>
-                      <th className="px-4 py-3 text-right">Approved VOs</th>
-                      <th className="px-4 py-3 text-right">Revised Value</th>
-                      <th className="px-4 py-3 text-right">Actual Cost</th>
-                      <th className="px-4 py-3 text-right">Committed</th>
-                      <th className="px-4 py-3 text-right">Forecast Total</th>
-                      <th className="px-4 py-3 text-right">Profit</th>
-                      <th className="px-4 py-3 text-right">Margin %</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {financialData.map(row => (
-                      <tr
-                        key={row.id}
-                        role="row"
-                        tabIndex={0}
-                        className="border-b border-slate-100 dark:border-slate-700/20 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/20 cursor-pointer"
-                        onClick={() => router.push(`/projects/${row.id}/measurements`)}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/projects/${row.id}/measurements`) } }}
-                      >
-                        <td className="px-4 py-2.5 font-medium text-slate-700 dark:text-slate-200 max-w-[200px] truncate">{row.name}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{row.contractVal > 0 ? fmtCompact(row.contractVal) : '-'}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-blue-600 dark:text-blue-400">{row.varApproved > 0 ? fmtCompact(row.varApproved) : '-'}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-700 dark:text-slate-200 font-semibold">{row.revisedValue > 0 ? fmtCompact(row.revisedValue) : '-'}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-rose-600 dark:text-rose-400">{row.actual > 0 ? fmtCompact(row.actual) : '-'}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-amber-600 dark:text-amber-400">{row.committed > 0 ? fmtCompact(row.committed) : '-'}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{row.forecast > 0 ? fmtCompact(row.forecast) : '-'}</td>
-                        <td className={cn(
-                          'px-4 py-2.5 text-right tabular-nums font-semibold',
-                          row.profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-                        )}>
-                          {row.revisedValue > 0 ? fmtCompact(row.profit) : '-'}
-                        </td>
-                        <td className={cn(
-                          'px-4 py-2.5 text-right tabular-nums font-semibold',
-                          row.margin >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-                        )}>
-                          {row.revisedValue > 0 ? `${row.margin.toFixed(1)}%` : '-'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  {/* Totals row */}
-                  <tfoot>
-                    <tr className="border-t-2 border-slate-300 dark:border-slate-600/50 bg-slate-50 dark:bg-slate-800/80 font-semibold">
-                      <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">Portfolio Total</td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-slate-700 dark:text-slate-200">{fmtCompact(financialData.reduce((s, r) => s + r.contractVal, 0))}</td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-blue-600 dark:text-blue-400">{fmtCompact(financialData.reduce((s, r) => s + r.varApproved, 0))}</td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-slate-900 dark:text-slate-100">{fmtCompact(financialData.reduce((s, r) => s + r.revisedValue, 0))}</td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-rose-600 dark:text-rose-400">{fmtCompact(financialData.reduce((s, r) => s + r.actual, 0))}</td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-amber-600 dark:text-amber-400">{fmtCompact(financialData.reduce((s, r) => s + r.committed, 0))}</td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{fmtCompact(financialData.reduce((s, r) => s + r.forecast, 0))}</td>
-                      <td className={cn(
-                        'px-4 py-2.5 text-right tabular-nums',
-                        financialData.reduce((s, r) => s + r.profit, 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-                      )}>
-                        {fmtCompact(financialData.reduce((s, r) => s + r.profit, 0))}
-                      </td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-slate-500 dark:text-slate-400">
-                        {(() => {
-                          const totalRev = financialData.reduce((s, r) => s + r.revisedValue, 0)
-                          const totalProf = financialData.reduce((s, r) => s + r.profit, 0)
-                          return totalRev > 0 ? `${((totalProf / totalRev) * 100).toFixed(1)}%` : '-'
-                        })()}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* ── Cash Position ── */}
-        {!loading && cashSummary && (
-          <Card className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm dark:shadow-none">
-            <CardHeader className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80">
-              <div className="flex items-center gap-2">
-                <Wallet size={18} className="text-emerald-600 dark:text-emerald-400" />
-                <CardTitle className="text-slate-900 dark:text-slate-100">Cash Position</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="p-4">
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                {([
-                  { label: 'Planned Income', value: cashSummary.plannedIncome, color: 'text-blue-600 dark:text-blue-400' },
-                  { label: 'Actual Income', value: cashSummary.actualIncome, color: 'text-emerald-600 dark:text-emerald-400' },
-                  { label: 'Planned Expense', value: cashSummary.plannedExpense, color: 'text-amber-600 dark:text-amber-400' },
-                  { label: 'Actual Expense', value: cashSummary.actualExpense, color: 'text-rose-600 dark:text-rose-400' },
-                ]).map(item => (
-                  <div key={item.label} className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900/50 p-3">
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{item.label}</div>
-                    <div className={cn('mt-1 text-lg font-bold tabular-nums', item.color)}>
-                      {fmtCompact(item.value)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {/* Net position */}
-              <div className="mt-4 flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900/50 px-4 py-3">
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Net Cash Position (Actual Income - Actual Expense)</span>
-                <span className={cn(
-                  'text-lg font-bold tabular-nums',
-                  (cashSummary.actualIncome - cashSummary.actualExpense) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-                )}>
-                  {fmtCompact(cashSummary.actualIncome - cashSummary.actualExpense)}
-                </span>
-              </div>
-              {/* Variance bars */}
-              <div className="mt-3 grid grid-cols-2 gap-4">
-                <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900/50 p-3">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Income Variance</div>
-                  <div className={cn(
-                    'mt-1 text-sm font-bold tabular-nums',
-                    (cashSummary.actualIncome - cashSummary.plannedIncome) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-                  )}>
-                    {fmtCompact(cashSummary.actualIncome - cashSummary.plannedIncome)}
-                    <span className="ml-1 text-[10px] font-normal text-slate-500">
-                      ({cashSummary.plannedIncome > 0 ? `${(((cashSummary.actualIncome - cashSummary.plannedIncome) / cashSummary.plannedIncome) * 100).toFixed(1)}%` : 'N/A'})
-                    </span>
-                  </div>
-                </div>
-                <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900/50 p-3">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Expense Variance</div>
-                  <div className={cn(
-                    'mt-1 text-sm font-bold tabular-nums',
-                    (cashSummary.actualExpense - cashSummary.plannedExpense) <= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-                  )}>
-                    {fmtCompact(cashSummary.actualExpense - cashSummary.plannedExpense)}
-                    <span className="ml-1 text-[10px] font-normal text-slate-500">
-                      ({cashSummary.plannedExpense > 0 ? `${(((cashSummary.actualExpense - cashSummary.plannedExpense) / cashSummary.plannedExpense) * 100).toFixed(1)}%` : 'N/A'})
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Project Cards Section */}
-        <section>
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Projects</h2>
-              <span className="rounded-full bg-slate-200 dark:bg-slate-700/50 px-2.5 py-0.5 text-xs font-medium tabular-nums text-slate-500 dark:text-slate-400">
-                {totalProjects}
-              </span>
-            </div>
-            {projects.length > 0 && (
+      <motion.div
+        className="mx-auto max-w-7xl space-y-6 p-6 md:p-8"
+        variants={stagger}
+        initial="hidden"
+        animate="show"
+      >
+        {/* ── Page Header ── */}
+        <motion.div variants={fadeUp}>
+          <PageHeader
+            icon={Activity}
+            title="Executive Dashboard"
+            subtitle={`Portfolio overview across ${totalProjects} project${totalProjects !== 1 ? 's' : ''}`}
+            gradient="from-indigo-500 to-indigo-600"
+            actions={
               <button
                 onClick={() => router.push('/projects')}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 transition-colors hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-900 dark:hover:text-white"
+                className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-indigo-500/40 hover:brightness-110"
               >
-                View all <ArrowUpRight size={12} />
+                <Plus size={16} />
+                New Project
               </button>
-            )}
-          </div>
+            }
+          />
+        </motion.div>
 
-          {loading ? (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {[1, 2, 3].map(i => (
-                <div
-                  key={i}
-                  className="h-56 animate-pulse rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-                />
-              ))}
-            </div>
-          ) : summaries.length === 0 ? (
-            /* Premium Empty State */
-            <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-white to-slate-50 dark:from-slate-800/80 dark:to-slate-900/80 px-8 py-16 text-center shadow-sm dark:shadow-none">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-600/5 dark:from-blue-600/10 via-transparent to-transparent" />
-              <div className="relative z-10">
-                <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 ring-1 ring-blue-500/20">
-                  <Building2 size={36} className="text-blue-600 dark:text-blue-400" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Start Your First Project</h3>
-                <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-                  Create a project to begin managing BOQs, measurements, cost control, and payment certificates -- all in one place.
-                </p>
-                <div className="mt-8 flex items-center justify-center gap-3">
-                  <button
-                    onClick={() => router.push('/projects')}
-                    className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-blue-500/40"
-                  >
-                    <Plus size={16} />
-                    Create Project
-                  </button>
-                </div>
-                <div className="mt-8 grid grid-cols-3 gap-6 border-t border-slate-200 dark:border-slate-700 pt-8">
-                  {[
-                    { icon: FileSpreadsheet, label: 'Bill of Quantities', desc: 'Structured BOQ management' },
-                    { icon: Ruler, label: 'Measurements', desc: 'Accurate quantity tracking' },
-                    { icon: BarChart3, label: 'Cost Control', desc: 'Budget & forecast analytics' },
-                  ].map(f => (
-                    <div key={f.label} className="text-center">
-                      <f.icon size={20} className="mx-auto mb-2 text-slate-400 dark:text-slate-500" />
-                      <div className="text-xs font-semibold text-slate-600 dark:text-slate-300">{f.label}</div>
-                      <div className="mt-0.5 text-[10px] text-slate-500">{f.desc}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {summaries.map(s => {
-                const boqTotal = s.boqItems.reduce((a, b) => a + (b.total_amount ?? 0), 0)
-                const contractVal = s.contract?.contract_value ?? 0
-                const actual = s.costEntries.filter(c => c.category === 'actual').reduce((a, b) => a + b.amount, 0)
-                const paid = s.paymentCerts.filter(c => c.status === 'paid').reduce((a, b) => a + b.net_payable, 0)
-                const varApproved = s.variations.filter(v => v.status === 'approved').reduce((a, b) => a + (b.approved_amount ?? b.amount), 0)
-                const progress = s.project.progress ?? 0
-                const statusColor = progress >= 100
-                  ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-emerald-500/20'
-                  : progress > 0
-                    ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 ring-blue-500/20'
-                    : 'bg-slate-500/15 text-slate-500 dark:text-slate-400 ring-slate-500/20'
-                const statusLabel = progress >= 100 ? 'Complete' : progress > 0 ? 'In Progress' : 'Not Started'
+        {/* ── KPI Row ── */}
+        <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-5">
+          {([
+            { label: 'Total Projects', value: totalProjects, icon: FolderKanban, gradient: 'from-violet-600 to-indigo-600' },
+            { label: 'Total Budget', value: totalContractValue, icon: Briefcase, gradient: 'from-blue-600 to-cyan-600', prefix: '$', decimals: 2 },
+            { label: 'Active Tenders', value: activeTenders, icon: Receipt, gradient: 'from-purple-600 to-fuchsia-600' },
+            { label: 'Total Payments', value: totalPaid, icon: DollarSign, gradient: 'from-emerald-600 to-teal-600', prefix: '$', decimals: 2 },
+            { label: 'Completion Rate', value: completionRate, icon: Target, gradient: 'from-amber-600 to-orange-600', suffix: '%', decimals: 1 },
+          ] as const).map((kpi, index) => (
+            <motion.div key={kpi.label} variants={fadeUp}>
+              <StatCard
+                label={kpi.label}
+                value={kpi.value}
+                icon={kpi.icon}
+                gradient={kpi.gradient}
+                prefix={'prefix' in kpi ? kpi.prefix : undefined}
+                suffix={'suffix' in kpi ? kpi.suffix : undefined}
+                decimals={'decimals' in kpi ? kpi.decimals : 0}
+              />
+            </motion.div>
+          ))}
+        </div>
 
-                return (
-                  <div
-                    key={s.project.id}
-                    className="group relative overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm dark:shadow-none transition-all hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/5"
-                  >
-                    {/* Card Header */}
-                    <div className="border-b border-slate-200 dark:border-slate-700/30 p-4 pb-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <h3 className="truncate text-sm font-bold text-slate-900 dark:text-white">
-                            {s.project.name}
-                          </h3>
-                          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                            {s.project.client_name && (
-                              <span className="flex items-center gap-1">
-                                <Users size={10} className="text-slate-400 dark:text-slate-500" />
-                                {s.project.client_name}
-                              </span>
-                            )}
-                            {s.project.location && (
-                              <span className="flex items-center gap-1">
-                                <MapPin size={10} className="text-slate-400 dark:text-slate-500" />
-                                {s.project.location}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <span className={cn(
-                          'inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ring-inset',
-                          statusColor
-                        )}>
-                          {statusLabel}
-                        </span>
+        {/* ── Two-column layout ── */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Left column (wider) */}
+          <div className="space-y-6 lg:col-span-2">
+            {/* Budget Overview */}
+            <motion.div variants={fadeUp}>
+              <SectionCard title="Budget Overview" icon={Layers} iconColor="text-rose-500">
+                {budgetSegments.length > 0 ? (
+                  <div className="flex flex-col items-center">
+                    <DonutChart segments={budgetSegments} size={200} showLegend />
+                    <div className="mt-4 grid grid-cols-3 gap-4 w-full text-center">
+                      <div>
+                        <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Actual</div>
+                        <div className="text-sm font-bold tabular-nums text-rose-600 dark:text-rose-400">{fmtCompact(totalActualCost)}</div>
                       </div>
-
-                      {/* Progress bar */}
-                      <div className="mt-3">
-                        <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
-                          <span>Progress</span>
-                          <span className="font-semibold tabular-nums text-slate-600 dark:text-slate-300">{progress}%</span>
-                        </div>
-                        <div className="h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700/50">
-                          <div
-                            className={cn(
-                              'h-full rounded-full transition-all duration-500',
-                              progress >= 100
-                                ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
-                                : progress > 50
-                                  ? 'bg-gradient-to-r from-blue-500 to-cyan-400'
-                                  : 'bg-gradient-to-r from-blue-600 to-blue-400'
-                            )}
-                            style={{ width: `${Math.min(100, Math.max(progress, 0))}%` }}
-                          />
-                        </div>
+                      <div>
+                        <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Committed</div>
+                        <div className="text-sm font-bold tabular-nums text-amber-600 dark:text-amber-400">{fmtCompact(totalCommitted)}</div>
                       </div>
-                    </div>
-
-                    {/* Metrics */}
-                    <div className="p-4 pt-3">
-                      <div className="space-y-1.5 text-xs">
-                        {contractVal > 0 && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-500">Contract</span>
-                            <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{fmtFull(contractVal)}</span>
-                          </div>
-                        )}
-                        {boqTotal > 0 && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-500">BOQ Total</span>
-                            <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{fmtFull(boqTotal)}</span>
-                          </div>
-                        )}
-                        {actual > 0 && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-500">Actual Cost</span>
-                            <span className="font-semibold tabular-nums text-rose-600 dark:text-rose-400">{fmtFull(actual)}</span>
-                          </div>
-                        )}
-                        {paid > 0 && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-500">Paid</span>
-                            <span className="font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">{fmtFull(paid)}</span>
-                          </div>
-                        )}
-                        {varApproved > 0 && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-500">Approved VOs</span>
-                            <span className="font-semibold tabular-nums text-blue-600 dark:text-blue-400">{fmtFull(varApproved)}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Footer with stats + action buttons */}
-                    <div className="border-t border-slate-200 dark:border-slate-700/30 px-4 py-2.5">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3 text-[10px] tabular-nums text-slate-500">
-                          <span>{s.boqItems.length} BOQ</span>
-                          <span>{s.measurementItems.length} Meas</span>
-                          <span>{s.paymentCerts.length} IPC</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); router.push(`/projects/${s.project.id}/measurements`) }}
-                            className="rounded-md px-2 py-1 text-[10px] font-semibold text-blue-600 dark:text-blue-400 transition-colors hover:bg-blue-500/10"
-                            title="Open"
-                          >
-                            Open
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); router.push(`/projects/${s.project.id}/boq`) }}
-                            className="rounded-md px-2 py-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-500/10 hover:text-slate-700 dark:hover:text-slate-300"
-                            title="BOQ"
-                          >
-                            BOQ
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); router.push(`/projects/${s.project.id}/drawings`) }}
-                            className="rounded-md px-2 py-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-500/10 hover:text-slate-700 dark:hover:text-slate-300"
-                            title="Drawings"
-                          >
-                            Dwg
-                          </button>
-                        </div>
-                      </div>
-                      <div className="mt-1.5 flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-600">
-                        <Clock size={9} />
-                        <span>Updated {formatDate(s.project.updated_at)}</span>
+                      <div>
+                        <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Remaining</div>
+                        <div className="text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{fmtCompact(Math.max(0, totalContractValue - totalActualCost - totalCommitted))}</div>
                       </div>
                     </div>
                   </div>
-                )
-              })}
+                ) : (
+                  <p className="text-sm text-slate-500 text-center py-8">No budget data available</p>
+                )}
+              </SectionCard>
+            </motion.div>
+
+            {/* Recent Activity */}
+            <motion.div variants={fadeUp}>
+              <SectionCard title="Recent Activity" icon={Clock} iconColor="text-blue-500" noPadding>
+                {recentActivity.length > 0 ? (
+                  <div className="divide-y divide-slate-100 dark:divide-slate-700/30">
+                    {recentActivity.map((item, i) => (
+                      <div key={i} className="flex items-start gap-3 px-6 py-3">
+                        <div className={cn('mt-1.5 h-2 w-2 shrink-0 rounded-full', item.color)} />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{item.label}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{item.detail}</div>
+                        </div>
+                        <div className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0 tabular-nums">
+                          {formatDate(item.time)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500 text-center py-8 px-6">No recent activity</p>
+                )}
+              </SectionCard>
+            </motion.div>
+          </div>
+
+          {/* Right column (narrower) */}
+          <div className="space-y-6">
+            {/* Project Health */}
+            <motion.div variants={fadeUp}>
+              <SectionCard title="Project Health" icon={Activity} iconColor="text-cyan-500">
+                <div className="flex flex-wrap justify-center gap-6">
+                  {summaries.map(s => (
+                    <ProgressRing
+                      key={s.project.id}
+                      value={s.project.progress ?? 0}
+                      size={72}
+                      color={
+                        (s.project.progress ?? 0) >= 100
+                          ? '#10b981'
+                          : (s.project.progress ?? 0) > 50
+                            ? '#3b82f6'
+                            : '#f59e0b'
+                      }
+                      label={s.project.name.length > 10 ? s.project.name.slice(0, 10) + '...' : s.project.name}
+                    />
+                  ))}
+                </div>
+              </SectionCard>
+            </motion.div>
+
+            {/* EVM Summary */}
+            <motion.div variants={fadeUp}>
+              <SectionCard title="EVM Summary" icon={BarChart3} iconColor="text-indigo-500">
+                {earnedValueData.length > 0 ? (
+                  <div className="space-y-4">
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">SPI by Project</div>
+                      <SimpleBarChart
+                        bars={earnedValueData.map(ev => ({
+                          label: ev.name.length > 12 ? ev.name.slice(0, 12) + '...' : ev.name,
+                          value: parseFloat(ev.SPI.toFixed(2)),
+                          color: ev.SPI >= 1 ? '#10b981' : ev.SPI >= 0.9 ? '#f59e0b' : '#f43f5e',
+                        }))}
+                        horizontal
+                      />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">CPI by Project</div>
+                      <SimpleBarChart
+                        bars={earnedValueData.map(ev => ({
+                          label: ev.name.length > 12 ? ev.name.slice(0, 12) + '...' : ev.name,
+                          value: parseFloat(ev.CPI.toFixed(2)),
+                          color: ev.CPI >= 1 ? '#10b981' : ev.CPI >= 0.9 ? '#f59e0b' : '#f43f5e',
+                        }))}
+                        horizontal
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500 text-center py-8">No EVM data available</p>
+                )}
+              </SectionCard>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* ── Bottom Row: Financial Summary ── */}
+        <motion.div variants={fadeUp}>
+          <SectionCard title="Financial Summary" icon={DollarSign} iconColor="text-emerald-500">
+            <SimpleBarChart
+              bars={financialData.map(d => ({
+                label: d.name.length > 15 ? d.name.slice(0, 15) + '...' : d.name,
+                value: d.revisedValue,
+                color: '#3b82f6',
+              }))}
+              horizontal
+            />
+            <div className="mt-4">
+              <SimpleBarChart
+                bars={financialData.map(d => ({
+                  label: d.name.length > 15 ? d.name.slice(0, 15) + '...' : d.name,
+                  value: d.actual,
+                  color: '#f43f5e',
+                }))}
+                horizontal
+              />
             </div>
-          )}
-        </section>
-      </div>
+            <div className="mt-3 flex items-center justify-center gap-6 text-xs text-slate-500">
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-blue-500" />Budget (Revised)</span>
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-rose-500" />Actual Cost</span>
+            </div>
+          </SectionCard>
+        </motion.div>
+      </motion.div>
     </div>
   )
 }

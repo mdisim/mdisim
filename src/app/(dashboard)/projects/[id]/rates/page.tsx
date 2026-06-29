@@ -40,6 +40,11 @@ import {
   PieChart,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { StatCard } from '@/components/ui/stat-card'
+import { SectionCard } from '@/components/ui/section-card'
+import { PageHeader } from '@/components/ui/page-header'
+import { DonutChart, SimpleBarChart } from '@/components/ui/mini-chart'
+import { EmptyState } from '@/components/ui/empty-state'
 
 const RESOURCE_ICONS: Record<ResourceType, React.ComponentType<{ size?: number; className?: string }>> = {
   material: Package,
@@ -191,31 +196,28 @@ export default function RateAnalysisPage() {
       })
     })
 
-    return { totalDirectCost, totalResources, avgUnitRate, linkedCount, byType }
+    const totalByType = Object.values(byType).reduce((a, b) => a + b, 0)
+    const materialPct = totalByType > 0 ? (byType.material / totalByType) * 100 : 0
+    const laborPct = totalByType > 0 ? (byType.labor / totalByType) * 100 : 0
+    const equipmentPct = totalByType > 0 ? (byType.equipment / totalByType) * 100 : 0
+
+    return { totalDirectCost, totalResources, avgUnitRate, linkedCount, byType, totalByType, materialPct, laborPct, equipmentPct }
   }, [analyses])
 
   return (
-    <div className="p-4 md:p-8 max-w-[1400px] mx-auto">
-      {/* Page Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/20">
-            <Calculator size={22} />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Rate Analysis</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Build up unit rates from materials, labor, equipment &amp; subcontractors
-            </p>
-          </div>
-        </div>
-        {activeTab === 'analyses' && (
+    <div className="p-6 md:p-8 max-w-[1400px] mx-auto">
+      <PageHeader
+        icon={Calculator}
+        title="Rate Analysis"
+        subtitle="Build up unit rates from materials, labor, equipment & subcontractors"
+        gradient="from-amber-500 to-amber-600"
+        actions={activeTab === 'analyses' ? (
           <Button onClick={() => setShowCreate(true)}>
             <Plus size={16} />
             New Analysis
           </Button>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       {/* Tabs */}
       <div className="flex items-center gap-1 mb-8 border-b border-slate-200 dark:border-slate-700">
@@ -251,123 +253,46 @@ export default function RateAnalysisPage() {
       <>
       {/* Summary Metrics */}
       {!loading && analyses.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card className="!shadow-sm hover:!shadow-md">
-            <div className="px-5 py-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30">
-                  <Layers size={18} className="text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Analyses</p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white tabular-nums">{analyses.length}</p>
-                </div>
-              </div>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-2">
-                {metrics.linkedCount} linked to BOQ
-              </p>
-            </div>
-          </Card>
-
-          <Card className="!shadow-sm hover:!shadow-md">
-            <div className="px-5 py-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/30">
-                  <DollarSign size={18} className="text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Avg Unit Rate</p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white tabular-nums">{fmt(metrics.avgUnitRate)}</p>
-                </div>
-              </div>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-2">
-                Across all analyses
-              </p>
-            </div>
-          </Card>
-
-          <Card className="!shadow-sm hover:!shadow-md">
-            <div className="px-5 py-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/30">
-                  <BarChart3 size={18} className="text-amber-600 dark:text-amber-400" />
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Resources</p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white tabular-nums">{metrics.totalResources}</p>
-                </div>
-              </div>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-2">
-                Items across all rates
-              </p>
-            </div>
-          </Card>
-
-          <Card className="!shadow-sm hover:!shadow-md">
-            <div className="px-5 py-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-900/30">
-                  <TrendingUp size={18} className="text-purple-600 dark:text-purple-400" />
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Direct Cost</p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white tabular-nums">{fmt(metrics.totalDirectCost)}</p>
-                </div>
-              </div>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-2">
-                Total across analyses
-              </p>
-            </div>
-          </Card>
-        </div>
+        <motion.div
+          className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+          initial="hidden" animate="visible"
+          variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
+        >
+          <StatCard label="Total Rate Items" value={analyses.length} icon={Layers} gradient="from-blue-500 to-blue-600" />
+          <StatCard label="Average Rate" value={metrics.avgUnitRate} prefix="" decimals={2} icon={DollarSign} gradient="from-emerald-500 to-emerald-600" />
+          <StatCard label="Material Cost" value={metrics.materialPct} suffix="%" decimals={1} icon={Package} gradient="from-purple-500 to-purple-600" />
+          <StatCard label="Labor Cost" value={metrics.laborPct} suffix="%" decimals={1} icon={Users} gradient="from-amber-500 to-amber-600" />
+        </motion.div>
       )}
 
-      {/* Cost Composition Bar */}
-      {!loading && analyses.length > 0 && (() => {
-        const total = Object.values(metrics.byType).reduce((a, b) => a + b, 0)
-        if (total === 0) return null
-        return (
-          <Card className="!shadow-sm mb-8">
-            <div className="px-5 py-4">
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Cost Composition</p>
-              <div className="flex h-3 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-700">
-                {RESOURCE_TYPES.map(rt => {
-                  const pct = (metrics.byType[rt.value] / total) * 100
-                  if (pct < 0.5) return null
-                  const colors: Record<ResourceType, string> = {
-                    material: 'bg-blue-500',
-                    labor: 'bg-amber-500',
-                    equipment: 'bg-purple-500',
-                    subcontractor: 'bg-emerald-500',
-                  }
-                  return (
-                    <div
-                      key={rt.value}
-                      className={cn(colors[rt.value], 'transition-all duration-500')}
-                      style={{ width: `${pct}%` }}
-                      title={`${rt.label}: ${fmt(metrics.byType[rt.value])} (${pct.toFixed(1)}%)`}
-                    />
-                  )
-                })}
-              </div>
-              <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3">
-                {RESOURCE_TYPES.map(rt => {
-                  const pct = total > 0 ? (metrics.byType[rt.value] / total) * 100 : 0
-                  const Icon = RESOURCE_ICONS[rt.value]
-                  return (
-                    <div key={rt.value} className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
-                      <Icon size={12} className={RESOURCE_COLORS[rt.value]} />
-                      <span className="font-medium">{rt.label}</span>
-                      <span className="text-slate-400 tabular-nums">{pct.toFixed(1)}%</span>
-                      <span className="text-slate-400 tabular-nums">({fmt(metrics.byType[rt.value])})</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </Card>
-        )
-      })()}
+      {/* Cost Distribution & Rate Comparison Charts */}
+      {!loading && analyses.length > 0 && metrics.totalByType > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <SectionCard title="Cost Distribution" icon={PieChart} iconColor="text-purple-500">
+            <DonutChart
+              segments={[
+                { value: metrics.byType.material, color: '#3b82f6', label: 'Material' },
+                { value: metrics.byType.labor, color: '#f59e0b', label: 'Labor' },
+                { value: metrics.byType.equipment, color: '#8b5cf6', label: 'Equipment' },
+                { value: metrics.byType.subcontractor, color: '#10b981', label: 'Subcontractor' },
+              ].filter(s => s.value > 0)}
+            />
+          </SectionCard>
+          <SectionCard title="Rate Comparison" icon={BarChart3} iconColor="text-amber-500">
+            <SimpleBarChart
+              bars={[...analyses]
+                .sort((a, b) => b.unit_rate - a.unit_rate)
+                .slice(0, 5)
+                .map((ra, i) => ({
+                  label: ra.description.length > 25 ? ra.description.slice(0, 25) + '...' : ra.description,
+                  value: ra.unit_rate,
+                  color: ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#f43f5e'][i] || '#3b82f6',
+                }))}
+              horizontal
+            />
+          </SectionCard>
+        </div>
+      )}
 
       {/* Search Bar */}
       {!loading && analyses.length > 0 && (
@@ -396,26 +321,19 @@ export default function RateAnalysisPage() {
           <Button onClick={() => load()}>Retry</Button>
         </div>
       ) : analyses.length === 0 ? (
-        <Card className="!shadow-sm">
-          <div className="text-center py-20">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
-              <Calculator size={28} className="text-slate-400 dark:text-slate-500" />
-            </div>
-            <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-1">No rate analyses yet</h3>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 max-w-sm mx-auto">
-              Create rate analyses to build up unit rates for your BOQ items. Each analysis breaks down costs into materials, labor, equipment, and subcontractor components.
-            </p>
-            <Button onClick={() => setShowCreate(true)}>
-              <Plus size={16} />
-              Create First Analysis
-            </Button>
-          </div>
-        </Card>
+        <EmptyState
+          icon={Calculator}
+          title="No rate analyses yet"
+          description="Create rate analyses to build up unit rates for your BOQ items. Each analysis breaks down costs into materials, labor, equipment, and subcontractor components."
+          actionLabel="Create First Analysis"
+          onAction={() => setShowCreate(true)}
+        />
       ) : filteredAnalyses.length === 0 ? (
-        <div className="text-center py-16">
-          <Search size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-          <p className="text-sm text-slate-500 dark:text-slate-400">No analyses match &quot;{searchQuery}&quot;</p>
-        </div>
+        <EmptyState
+          icon={Search}
+          title={`No analyses match "${searchQuery}"`}
+          compact
+        />
       ) : (
         <div className="space-y-3">
           {filteredAnalyses.map((ra, idx) => (
@@ -423,7 +341,7 @@ export default function RateAnalysisPage() {
               key={ra.id}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, delay: idx * 0.04 }}
+              transition={{ duration: 0.25, delay: idx * 0.06 }}
             >
             <RateAnalysisCard
               analysis={ra}

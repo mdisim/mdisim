@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useParams } from 'next/navigation'
 import type { PaymentCert, PaymentLine, PaymentCertStatus } from '@/lib/types'
@@ -8,6 +8,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { TableSkeleton } from '@/components/ui/skeleton'
+import { StatCard } from '@/components/ui/stat-card'
+import { SectionCard } from '@/components/ui/section-card'
+import { PageHeader } from '@/components/ui/page-header'
+import { SimpleBarChart } from '@/components/ui/mini-chart'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   getPaymentCerts,
   createPaymentCert,
@@ -30,6 +35,9 @@ import {
   CreditCard,
   Banknote,
   ArrowUpRight,
+  Shield,
+  Hash,
+  ArrowRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -40,6 +48,14 @@ const CERT_STATUS: Record<PaymentCertStatus, { label: string; color: string; ico
   approved: { label: 'Approved', color: 'text-green-600 bg-green-50 dark:bg-green-900/30', icon: CheckCircle2 },
   paid: { label: 'Paid', color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30', icon: CreditCard },
 }
+
+const STATUS_FLOW: { key: PaymentCertStatus; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
+  { key: 'draft', label: 'Draft', icon: Clock },
+  { key: 'submitted', label: 'Submitted', icon: Send },
+  { key: 'checked', label: 'Checked', icon: FileCheck },
+  { key: 'approved', label: 'Approved', icon: CheckCircle2 },
+  { key: 'paid', label: 'Paid', icon: CreditCard },
+]
 
 export default function PaymentsPage() {
   const { id: projectId } = useParams<{ id: string }>()
@@ -72,6 +88,28 @@ export default function PaymentsPage() {
   useEffect(() => { load() }, [load])
 
   const fmt = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  const stats = useMemo(() => {
+    const totalCertified = certs.reduce((s, c) => s + c.gross_amount, 0)
+    const totalPaid = certs.filter(c => c.status === 'paid').reduce((s, c) => s + c.net_payable, 0)
+    const totalRetention = certs.reduce((s, c) => s + c.current_retention, 0)
+
+    // Payment progress bars: certified vs paid per cert
+    const progressBars = certs.map(c => ({
+      certNumber: c.cert_number,
+      certified: c.gross_amount,
+      paid: c.status === 'paid' ? c.net_payable : 0,
+      status: c.status,
+    }))
+
+    // Status counts for timeline
+    const statusCounts: Record<PaymentCertStatus, number> = {
+      draft: 0, submitted: 0, checked: 0, approved: 0, paid: 0,
+    }
+    certs.forEach(c => { statusCounts[c.status]++ })
+
+    return { totalCertified, totalPaid, totalRetention, count: certs.length, progressBars, statusCounts }
+  }, [certs])
 
   const handleCreate = async () => {
     if (!form.period_from || !form.period_to) return
@@ -113,51 +151,109 @@ export default function PaymentsPage() {
     load()
   }
 
-  const totalPaid = certs.filter(c => c.status === 'paid').reduce((s, c) => s + c.net_payable, 0)
-  const totalPending = certs.filter(c => c.status !== 'paid').reduce((s, c) => s + c.net_payable, 0)
-
-  const totalGross = certs.reduce((s, c) => s + c.gross_amount, 0)
-  const totalRetention = certs.reduce((s, c) => s + c.current_retention, 0)
-
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/20">
-            <Banknote size={22} />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Payment Certificates</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Interim Payment Certificates (IPC) &amp; contractor payments</p>
-          </div>
-        </div>
-        <Button onClick={() => setShowCreate(true)}><Plus size={16} /> New Certificate</Button>
-      </div>
+    <div className="p-6 md:p-8 max-w-7xl mx-auto">
+      <PageHeader
+        icon={CreditCard}
+        title="Payment Certificates"
+        subtitle="Interim Payment Certificates (IPC) & contractor payments"
+        gradient="from-emerald-500 to-emerald-600"
+        actions={
+          <Button onClick={() => setShowCreate(true)}>
+            <Plus size={16} /> New Certificate
+          </Button>
+        }
+      />
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        {([
-          { label: 'Certificates', value: String(certs.length), icon: Receipt, gradient: 'from-blue-500 to-blue-600', isCurrency: false },
-          { label: 'Gross Value', value: fmt(totalGross), icon: ArrowUpRight, gradient: 'from-indigo-500 to-indigo-600', isCurrency: true },
-          { label: 'Total Paid', value: fmt(totalPaid), icon: CreditCard, gradient: 'from-emerald-500 to-emerald-600', isCurrency: true },
-          { label: 'Pending', value: fmt(totalPending), icon: Clock, gradient: 'from-amber-500 to-amber-600', isCurrency: true },
-        ] as const).map((kpi, idx) => (
-          <motion.div key={kpi.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.06 }}>
-            <Card className="relative overflow-hidden">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className={cn('p-1 rounded-md bg-gradient-to-br text-white', kpi.gradient)}>
-                    <kpi.icon size={12} />
-                  </div>
-                  <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{kpi.label}</span>
-                </div>
-                <div className="text-lg font-bold tabular-nums text-slate-900 dark:text-white">{kpi.value}</div>
-                <kpi.icon size={48} className="absolute -bottom-2 -right-2 text-slate-100 dark:text-slate-700/30" />
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
+      {/* Statistics Dashboard */}
+      {!loading && certs.length > 0 && (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+            <StatCard
+              icon={ArrowUpRight}
+              label="Total Certified"
+              value={stats.totalCertified}
+              decimals={2}
+              gradient="from-indigo-500 to-indigo-600"
+            />
+            <StatCard
+              icon={CreditCard}
+              label="Total Paid"
+              value={stats.totalPaid}
+              decimals={2}
+              gradient="from-emerald-500 to-emerald-600"
+            />
+            <StatCard
+              icon={Shield}
+              label="Retention Held"
+              value={stats.totalRetention}
+              decimals={2}
+              gradient="from-amber-500 to-amber-600"
+            />
+            <StatCard
+              icon={Receipt}
+              label="Certificates Count"
+              value={stats.count}
+              gradient="from-blue-500 to-blue-600"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Payment Progress */}
+            {stats.progressBars.length > 0 && (
+              <SectionCard title="Payment Progress" icon={Banknote} iconColor="text-emerald-500">
+                <SimpleBarChart
+                  bars={stats.progressBars.flatMap(p => [
+                    { label: `IPC #${p.certNumber} (Certified)`, value: p.certified, color: '#6366f1' },
+                    { label: `IPC #${p.certNumber} (Paid)`, value: p.paid, color: '#10b981' },
+                  ])}
+                  horizontal
+                />
+              </SectionCard>
+            )}
+
+            {/* Payment Timeline */}
+            <SectionCard title="Payment Timeline" icon={Clock} iconColor="text-blue-500">
+              <div className="flex items-center justify-between gap-1">
+                {STATUS_FLOW.map((step, i) => {
+                  const count = stats.statusCounts[step.key]
+                  const StepIcon = step.icon
+                  const isActive = count > 0
+                  return (
+                    <div key={step.key} className="flex items-center flex-1">
+                      <div className="flex flex-col items-center flex-1">
+                        <div className={cn(
+                          'w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-all',
+                          isActive
+                            ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/20'
+                            : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500'
+                        )}>
+                          <StepIcon size={18} />
+                        </div>
+                        <span className={cn(
+                          'text-xs font-medium',
+                          isActive ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'
+                        )}>
+                          {step.label}
+                        </span>
+                        <span className={cn(
+                          'text-lg font-bold tabular-nums mt-0.5',
+                          isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-300 dark:text-slate-600'
+                        )}>
+                          {count}
+                        </span>
+                      </div>
+                      {i < STATUS_FLOW.length - 1 && (
+                        <ArrowRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0 mx-1 -mt-6" />
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </SectionCard>
+          </div>
+        </>
+      )}
 
       {loading ? (
         <TableSkeleton rows={6} columns={4} />
@@ -167,16 +263,22 @@ export default function PaymentsPage() {
           <Button onClick={() => load()}>Retry</Button>
         </div>
       ) : certs.length === 0 ? (
-        <div className="text-center py-20">
-          <Receipt size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
-          <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-1">No payment certificates yet</h3>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Create a certificate to start the payment workflow.</p>
-          <Button onClick={() => setShowCreate(true)}><Plus size={16} /> Create IPC #1</Button>
-        </div>
+        <EmptyState
+          icon={Receipt}
+          title="No payment certificates yet"
+          description="Create a certificate to start the payment workflow."
+          actionLabel="Create IPC #1"
+          onAction={() => setShowCreate(true)}
+        />
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {certs.map((cert, idx) => (
-            <motion.div key={cert.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}>
+            <motion.div
+              key={cert.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.06, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+            >
             <CertCard
               cert={cert}
               isExpanded={expandedId === cert.id}

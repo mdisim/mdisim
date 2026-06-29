@@ -23,7 +23,16 @@ import {
   ChevronRight,
   Copy,
   BookOpen,
+  Layers,
+  DollarSign,
+  Hash,
+  PieChart,
 } from 'lucide-react'
+import { PageHeader } from '@/components/ui/page-header'
+import { StatCard } from '@/components/ui/stat-card'
+import { SectionCard } from '@/components/ui/section-card'
+import { DonutChart, SimpleBarChart, ProgressRing } from '@/components/ui/mini-chart'
+import { EmptyState } from '@/components/ui/empty-state'
 import { cn } from '@/lib/utils'
 import { VirtualTable } from '@/components/ui/virtual-table'
 import type { VirtualTableColumn } from '@/components/ui/virtual-table'
@@ -380,35 +389,40 @@ export default function BOQPage() {
     )
   }
 
+  const sectionBreakdown = allSections.length > 0
+    ? allSections.map((s, i) => {
+        const colors = ['#2563EB', '#059669', '#D97706', '#DC2626', '#7C3AED', '#0891B2', '#BE185D', '#4338CA']
+        return {
+          value: items.filter(it => it.section === s).reduce((sum, it) => sum + (it.total_amount ?? 0), 0),
+          color: colors[i % colors.length],
+          label: s,
+        }
+      }).filter(s => s.value > 0)
+    : []
+
+  const avgRate = items.length > 0 ? items.reduce((s, i) => s + (i.unit_rate ?? 0), 0) / items.length : 0
+  const budgetUsed = grandTotal > 0 ? (subtotal / grandTotal) * 100 : 0
+
   return (
-    <div className="p-4 md:p-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20">
-            <FileSpreadsheet size={22} />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Bill of Quantities</h2>
-            <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
-              <span>{items.length} item{items.length !== 1 ? 's' : ''}</span>
-              {!loading && items.length > 0 && (
-                <>
-                  <span className="text-slate-300 dark:text-slate-600">|</span>
-                  <span className="font-medium text-slate-700 dark:text-slate-200 tabular-nums">{formatCurrency(grandTotal)}</span>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+    <div className="p-6 md:p-8">
+      <PageHeader
+        icon={FileSpreadsheet}
+        title="Bill of Quantities"
+        subtitle={items.length > 0 ? `${items.length} items · ${allSections.length} sections` : 'Manage your project quantities and costs'}
+        gradient="from-blue-500 to-blue-600"
+        badge={items.length > 0 ? (
+          <span className="px-3 py-1 text-sm font-bold tabular-nums text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 rounded-full">
+            {formatCurrency(grandTotal)}
+          </span>
+        ) : undefined}
+        actions={<>
           {allSections.length > 0 && (
             <div className="flex items-center gap-1.5">
               <Filter size={14} className="text-slate-400 dark:text-slate-500" />
               <select
                 value={sectionFilter}
                 onChange={(e) => setSectionFilter(e.target.value)}
-                className="px-2 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
               >
                 <option value="">All Sections</option>
                 {allSections.map((s) => (
@@ -417,83 +431,97 @@ export default function BOQPage() {
               </select>
             </div>
           )}
-          <Button
-            variant="outline"
-            onClick={() => { setShowImport(true); setImportRows([]); setImportError(null) }}
-          >
-            <Upload size={16} />
-            Import Excel
+          <Button variant="outline" size="sm" onClick={() => { setShowImport(true); setImportRows([]); setImportError(null) }}>
+            <Upload size={15} /> Import
           </Button>
-          <Button
-            variant="outline"
-            onClick={async () => {
-              try {
-                const project = await getProject(projectId)
-                if (project) {
-                  await exportBOQToExcel(items, project.name, project.currency, vatPct)
-                }
-              } catch (e) {
-                setError(e instanceof Error ? e.message : 'Failed to export Excel')
-              }
-            }}
-            disabled={items.length === 0}
-          >
-            <Download size={16} />
-            Export Excel
+          <Button variant="outline" size="sm" onClick={async () => {
+            try { const project = await getProject(projectId); if (project) await exportBOQToExcel(items, project.name, project.currency, vatPct) } catch (e) { setError(e instanceof Error ? e.message : 'Failed to export Excel') }
+          }} disabled={items.length === 0}>
+            <Download size={15} /> Excel
           </Button>
-          <Button
-            variant="outline"
-            onClick={async () => {
-              try {
-                const project = await getProject(projectId)
-                if (project) {
-                  exportBOQToPDF(items, project.name, project.currency, vatPct)
-                }
-              } catch (e) {
-                setError(e instanceof Error ? e.message : 'Failed to export PDF')
-              }
-            }}
-            disabled={items.length === 0}
-          >
-            <FileText size={16} />
-            Export PDF
+          <Button variant="outline" size="sm" onClick={async () => {
+            try { const project = await getProject(projectId); if (project) exportBOQToPDF(items, project.name, project.currency, vatPct) } catch (e) { setError(e instanceof Error ? e.message : 'Failed to export PDF') }
+          }} disabled={items.length === 0}>
+            <FileText size={15} /> PDF
           </Button>
-          <Button onClick={() => setShowCreate(true)}>
-            <Plus size={16} />
-            Add Item
+          <Button size="sm" onClick={() => setShowCreate(true)}>
+            <Plus size={15} /> Add Item
           </Button>
-        </div>
-      </div>
+        </>}
+      />
 
-      {/* Table */}
+      {/* Error banner */}
+      {error && (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex items-center gap-3 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300">
+          <span className="flex-1">{error}</span>
+          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600">&times;</button>
+        </motion.div>
+      )}
+
+      {/* Loading */}
       {loading ? (
-        <TableSkeleton rows={8} columns={6} />
-      ) : error && !loading && items.length === 0 ? (
-        <div className="text-center py-20">
-          <div className="inline-block p-3 rounded-xl bg-red-100 dark:bg-red-900/30 mb-4">
-            <FileSpreadsheet size={48} className="text-red-500 dark:text-red-400" />
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[1,2,3,4].map(i => <div key={i} className="h-28 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 animate-pulse" />)}
           </div>
-          <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-1">Failed to load BOQ items</h3>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
-            {error}
-          </p>
-          <Button onClick={load}>
-            Try Again
-          </Button>
+          <TableSkeleton rows={8} columns={6} />
         </div>
       ) : items.length === 0 ? (
-        <div className="text-center py-20">
-          <FileSpreadsheet size={48} className="mx-auto text-slate-300 dark:text-slate-500 mb-4" />
-          <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-1">No BOQ items yet</h3>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
-            Add items to build your Bill of Quantities.
-          </p>
-          <Button onClick={() => setShowCreate(true)}>
-            <Plus size={16} />
-            Add First Item
-          </Button>
+        <EmptyState
+          icon={FileSpreadsheet}
+          title="No BOQ items yet"
+          description="Start building your Bill of Quantities by adding items manually or importing from Excel."
+          actionLabel="Add First Item"
+          onAction={() => setShowCreate(true)}
+        />
+      ) : (<>
+        {/* KPI Statistics */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <StatCard label="Total Items" value={items.length} icon={Hash} gradient="from-blue-500 to-blue-600" compact />
+          <StatCard label="Sections" value={allSections.length} icon={Layers} gradient="from-violet-500 to-violet-600" compact />
+          <StatCard label="Subtotal" value={subtotal} prefix="" decimals={2} icon={DollarSign} gradient="from-emerald-500 to-emerald-600" compact />
+          <StatCard label="Avg Rate" value={avgRate} decimals={2} icon={PieChart} gradient="from-amber-500 to-amber-600" compact />
         </div>
-      ) : (
+
+        {/* Charts Row */}
+        {sectionBreakdown.length > 1 && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <SectionCard title="Cost Breakdown by Section" icon={PieChart} iconColor="text-blue-500">
+              <DonutChart segments={sectionBreakdown} size={140} strokeWidth={20} />
+            </SectionCard>
+            <SectionCard title="Section Comparison" icon={Layers} iconColor="text-violet-500">
+              <SimpleBarChart bars={sectionBreakdown.slice(0, 6).map(s => ({ label: s.label, value: s.value, color: s.color }))} />
+            </SectionCard>
+          </div>
+        )}
+
+        {/* Budget Progress */}
+        <div className="mb-6">
+          <div className="bg-white dark:bg-slate-800/80 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Budget Composition</span>
+              <span className="text-xs text-slate-400 tabular-nums">VAT {vatPct}%: {formatCurrency(vatAmount)}</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <div className="h-3 bg-slate-100 dark:bg-slate-700/50 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${budgetUsed}%` }}
+                    transition={{ duration: 1, ease: 'easeOut' }}
+                  />
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-bold tabular-nums text-slate-900 dark:text-white">{formatCurrency(grandTotal)}</div>
+                <div className="text-[10px] text-slate-400 uppercase tracking-wider">Grand Total</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Table */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
           <div className="overflow-x-auto max-h-[calc(100vh-220px)]">
             <table className="w-full text-sm">
@@ -757,7 +785,7 @@ export default function BOQPage() {
             </table>
           </div>
         </motion.div>
-      )}
+      </>)}
 
       {/* Import Modal */}
 

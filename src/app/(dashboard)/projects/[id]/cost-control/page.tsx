@@ -19,7 +19,6 @@ import {
   deleteCostEntry,
   getCashflow,
 } from '@/app/actions/cost-control'
-import { Card, CardContent } from '@/components/ui/card'
 import {
   Plus,
   Trash2,
@@ -33,10 +32,15 @@ import {
   XCircle,
   BarChart3,
   Shield,
+  PieChart,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Legend } from 'recharts'
+import { StatCard } from '@/components/ui/stat-card'
+import { SectionCard } from '@/components/ui/section-card'
+import { PageHeader } from '@/components/ui/page-header'
+import { DonutChart, SimpleBarChart } from '@/components/ui/mini-chart'
+import { EmptyState } from '@/components/ui/empty-state'
 
 const VAR_STATUS_META: Record<VariationStatus, { label: string; color: string }> = {
   pending: { label: 'Pending', color: 'text-slate-500 bg-slate-100 dark:bg-slate-700' },
@@ -171,21 +175,13 @@ export default function CostControlPage() {
   const contingency = contractValue * ((contract?.contingency_pct ?? 0) / 100)
   const projectedProfit = revisedContract - totalExposure
 
-  const costBreakdown = totalExposure > 0
-    ? [
-        { label: 'Actual', pct: (actualCost / totalExposure) * 100, color: 'bg-red-500' },
-        { label: 'Committed', pct: (committedCost / totalExposure) * 100, color: 'bg-amber-500' },
-        { label: 'Forecast', pct: (forecastCost / totalExposure) * 100, color: 'bg-blue-400' },
-      ]
-    : []
-
   if (loading) {
-    return <div className="p-4 md:p-8 max-w-7xl mx-auto"><TableSkeleton rows={6} columns={4} /></div>
+    return <div className="p-6 md:p-8 max-w-7xl mx-auto"><TableSkeleton rows={6} columns={4} /></div>
   }
 
   if (error && !contract && variations.length === 0 && costEntries.length === 0) {
     return (
-      <div className="p-4 md:p-8 max-w-7xl mx-auto">
+      <div className="p-6 md:p-8 max-w-7xl mx-auto">
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
           <p className="text-red-600 dark:text-red-400 font-medium mb-4">{error}</p>
           <Button onClick={() => load()}>Retry</Button>
@@ -196,17 +192,15 @@ export default function CostControlPage() {
 
   if (!contract && variations.length === 0 && costEntries.length === 0 && cashflow.length === 0) {
     return (
-      <div className="p-4 md:p-8 max-w-7xl mx-auto">
-        <div className="text-center py-20">
-          <BarChart3 size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
-          <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-1">No cost control data available</h3>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
-            Create a BOQ and tender to get started.
-          </p>
-          <Button onClick={() => setShowContractEdit(true)}>
-            <DollarSign size={16} /> Set Up Contract
-          </Button>
-        </div>
+      <div className="p-6 md:p-8 max-w-7xl mx-auto">
+        <PageHeader icon={DollarSign} title="Cost Control" subtitle="Budget, variations, cost tracking & forecasting" gradient="from-rose-500 to-rose-600" />
+        <EmptyState
+          icon={BarChart3}
+          title="No cost control data available"
+          description="Create a BOQ and tender to get started, or set up a contract to begin tracking costs."
+          actionLabel="Set Up Contract"
+          onAction={() => setShowContractEdit(true)}
+        />
 
         {/* Contract Edit Modal */}
         <Modal isOpen={showContractEdit} onClose={() => setShowContractEdit(false)} title="Contract Details" size="md">
@@ -235,107 +229,26 @@ export default function CostControlPage() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20">
-            <BarChart3 size={22} />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Cost Control</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Budget, variations, cost tracking &amp; forecasting</p>
-          </div>
-        </div>
-        <Button variant="outline" onClick={() => setShowContractEdit(true)}>
-          <DollarSign size={16} /> {contract ? 'Edit Contract' : 'Set Contract'}
-        </Button>
-      </div>
+    <div className="p-6 md:p-8 max-w-7xl mx-auto">
+      <PageHeader
+        icon={DollarSign}
+        title="Cost Control"
+        subtitle="Budget, variations, cost tracking & forecasting"
+        gradient="from-rose-500 to-rose-600"
+        actions={
+          <Button variant="outline" onClick={() => setShowContractEdit(true)}>
+            <DollarSign size={16} /> {contract ? 'Edit Contract' : 'Set Contract'}
+          </Button>
+        }
+      />
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-        {([
-          { label: 'Contract Value', value: contractValue, icon: DollarSign, gradient: 'from-blue-500 to-blue-600' },
-          { label: 'Approved Variations', value: approvedVariations, icon: FileText, gradient: 'from-green-500 to-emerald-600' },
-          { label: 'Revised Contract', value: revisedContract, icon: TrendingUp, gradient: 'from-indigo-500 to-indigo-600' },
-          { label: 'Actual Cost', value: actualCost, icon: TrendingDown, gradient: 'from-red-500 to-red-600' },
-          { label: 'Contingency', value: contingency, icon: Shield, gradient: 'from-amber-500 to-amber-600' },
-          { label: 'Projected Profit', value: projectedProfit, icon: DollarSign, gradient: projectedProfit >= 0 ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-rose-600' },
-        ] as const).map((kpi, idx) => (
-          <motion.div key={kpi.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.06 }}>
-            <Card className="relative overflow-hidden">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className={cn('p-1 rounded-md bg-gradient-to-br text-white', kpi.gradient)}>
-                    <kpi.icon size={12} />
-                  </div>
-                  <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{kpi.label}</span>
-                </div>
-                <div className="text-lg font-bold tabular-nums text-slate-900 dark:text-white">{fmt(kpi.value)}</div>
-                <kpi.icon size={48} className="absolute -bottom-2 -right-2 text-slate-100 dark:text-slate-700/30" />
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Cost Breakdown Bar */}
-      {costBreakdown.length > 0 && (
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Cost Composition</span>
-              <span className="text-xs text-slate-500 tabular-nums">Total Exposure: {fmt(totalExposure)}</span>
-            </div>
-            <div className="h-3 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden flex">
-              {costBreakdown.map(s => (
-                <div key={s.label} className={cn('h-full', s.color)} style={{ width: `${s.pct}%` }} />
-              ))}
-            </div>
-            <div className="flex gap-4 mt-2">
-              {costBreakdown.map(s => (
-                <div key={s.label} className="flex items-center gap-1.5 text-xs text-slate-500">
-                  <span className={cn('w-2 h-2 rounded-full', s.color)} />
-                  {s.label} ({s.pct.toFixed(1)}%)
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Cost Composition Donut Chart */}
-      {totalExposure > 0 && (
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Cost Composition</span>
-            <div className="h-64 mt-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={[
-                      { name: 'Actual', value: actualCost },
-                      { name: 'Committed', value: committedCost },
-                      { name: 'Forecast', value: forecastCost },
-                    ]}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    <Cell fill="#f43f5e" />
-                    <Cell fill="#f59e0b" />
-                    <Cell fill="#60a5fa" />
-                  </Pie>
-                  <Tooltip formatter={(value) => fmt(Number(value))} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <motion.div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8" initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.08 } } }}>
+        <StatCard label="Contract Value" value={revisedContract} decimals={2} icon={DollarSign} gradient="from-blue-500 to-blue-600" />
+        <StatCard label="Spent to Date" value={actualCost} decimals={2} icon={TrendingDown} gradient="from-red-500 to-red-600" />
+        <StatCard label="Remaining Budget" value={Math.max(revisedContract - totalExposure, 0)} decimals={2} icon={Shield} gradient="from-emerald-500 to-emerald-600" />
+        <StatCard label="Budget Health" value={revisedContract > 0 ? ((revisedContract - totalExposure) / revisedContract) * 100 : 0} suffix="%" decimals={1} icon={TrendingUp} gradient={projectedProfit >= 0 ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-rose-600'} />
+      </motion.div>
 
       {/* Tabs */}
       <div className="flex gap-1 mb-4 border-b border-slate-200 dark:border-slate-700">
@@ -349,106 +262,130 @@ export default function CostControlPage() {
 
       {/* Overview tab */}
       {activeTab === 'overview' && (
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden overflow-x-auto">
-          <table className="w-full text-sm min-w-[500px]">
-            <tbody>
-              {[
-                { label: 'Original Contract Value', value: contractValue },
-                { label: 'Approved Variations', value: approvedVariations },
-                { label: 'Pending Variations', value: pendingVariations, muted: true },
-                { label: 'Revised Contract Value', value: revisedContract, bold: true },
-                { label: 'Actual Cost to Date', value: actualCost },
-                { label: 'Committed Cost', value: committedCost },
-                { label: 'Forecast to Complete', value: forecastCost },
-                { label: 'Total Exposure', value: totalExposure, bold: true },
-                { label: 'Contingency', value: contingency },
-                { label: 'Projected Profit/Loss', value: projectedProfit, bold: true, highlight: true },
-              ].map(row => (
-                <tr key={row.label} className={cn('border-b border-slate-100 dark:border-slate-700', row.bold && 'bg-slate-50/50 dark:bg-slate-900/30')}>
-                  <td className={cn('px-4 py-2.5', row.bold ? 'font-semibold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300', row.muted && 'text-slate-400 italic')}>{row.label}</td>
-                  <td className={cn('px-4 py-2.5 text-right tabular-nums', row.bold ? 'font-bold text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-200',
-                    row.highlight && (projectedProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400')
-                  )}>{fmt(row.value)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-6">
+          {/* Budget charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <SectionCard title="Budget Breakdown" icon={PieChart} iconColor="text-purple-500">
+              <DonutChart segments={[
+                { value: actualCost, color: '#ef4444', label: 'Actual Cost' },
+                { value: committedCost, color: '#f59e0b', label: 'Committed' },
+                { value: forecastCost, color: '#60a5fa', label: 'Forecast' },
+                { value: Math.max(revisedContract - totalExposure, 0), color: '#10b981', label: 'Remaining' },
+              ].filter(s => s.value > 0)} />
+            </SectionCard>
+            <SectionCard title="Cost Variance" icon={BarChart3} iconColor="text-amber-500">
+              <SimpleBarChart bars={[
+                { label: 'Contract Value', value: contractValue, color: '#3b82f6' },
+                { label: 'Approved Var.', value: approvedVariations, color: '#10b981' },
+                { label: 'Actual Cost', value: actualCost, color: '#ef4444' },
+                { label: 'Committed', value: committedCost, color: '#f59e0b' },
+                { label: 'Forecast', value: forecastCost, color: '#60a5fa' },
+              ]} horizontal />
+            </SectionCard>
+          </div>
+          {/* Financial Summary table */}
+          <SectionCard title="Financial Summary" icon={FileText} iconColor="text-blue-500" noPadding>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[500px]">
+                <tbody>
+                  {[
+                    { label: 'Original Contract Value', value: contractValue },
+                    { label: 'Approved Variations', value: approvedVariations },
+                    { label: 'Pending Variations', value: pendingVariations, muted: true },
+                    { label: 'Revised Contract Value', value: revisedContract, bold: true },
+                    { label: 'Actual Cost to Date', value: actualCost },
+                    { label: 'Committed Cost', value: committedCost },
+                    { label: 'Forecast to Complete', value: forecastCost },
+                    { label: 'Total Exposure', value: totalExposure, bold: true },
+                    { label: 'Contingency', value: contingency },
+                    { label: 'Projected Profit/Loss', value: projectedProfit, bold: true, highlight: true },
+                  ].map(row => (
+                    <tr key={row.label} className={cn('border-b border-slate-100 dark:border-slate-700', row.bold && 'bg-slate-50/50 dark:bg-slate-900/30')}>
+                      <td className={cn('px-4 py-2.5', row.bold ? 'font-semibold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300', row.muted && 'text-slate-400 italic')}>{row.label}</td>
+                      <td className={cn('px-4 py-2.5 text-right tabular-nums', row.bold ? 'font-bold text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-200',
+                        row.highlight && (projectedProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400')
+                      )}>{fmt(row.value)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </SectionCard>
         </div>
       )}
 
       {/* Variations tab */}
       {activeTab === 'variations' && (
-        <div>
-          <div className="flex justify-end mb-3">
-            <Button size="sm" onClick={() => setShowAddVariation(true)}><Plus size={14} /> Add Variation</Button>
-          </div>
+        <SectionCard title="Variations Register" icon={FileText} iconColor="text-blue-500" noPadding
+          actions={<Button size="sm" onClick={() => setShowAddVariation(true)}><Plus size={14} /> Add Variation</Button>}>
           {variations.length === 0 ? (
-            <div className="text-center py-12 text-sm text-slate-400">No variations recorded yet.</div>
+            <EmptyState icon={FileText} title="No variations recorded yet" description="Add variation orders to track scope changes and their financial impact." compact />
           ) : (
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-                    <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">No.</th>
-                    <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Title</th>
-                    <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Type</th>
-                    <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Status</th>
-                    <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Amount</th>
-                    <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Approved</th>
-                    <th className="w-[60px]" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {variations.map(v => (
-                    <tr key={v.id} className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-750">
-                      <td className="px-3 py-2 font-mono text-xs text-slate-500">{v.variation_no}</td>
-                      <td className="px-3 py-2 text-slate-700 dark:text-slate-200">{v.title}</td>
-                      <td className="px-3 py-2 text-xs capitalize text-slate-500">{v.variation_type}</td>
-                      <td className="px-3 py-2">
-                        <select
-                          value={v.status}
-                          onChange={async e => { await updateVariation(v.id, { status: e.target.value as VariationStatus }); load() }}
-                          className={cn('text-xs px-2 py-0.5 rounded-full border-0 font-medium', VAR_STATUS_META[v.status].color)}
-                        >
-                          {Object.entries(VAR_STATUS_META).map(([k, m]) => <option key={k} value={k}>{m.label}</option>)}
-                        </select>
-                      </td>
-                      <td className="px-3 py-2 text-right tabular-nums">{fmt(v.amount)}</td>
-                      <td className="px-3 py-2 text-right tabular-nums font-medium">{v.approved_amount != null ? fmt(v.approved_amount) : '-'}</td>
-                      <td className="px-3 py-1">
-                        <button onClick={async () => { await deleteVariation(v.id); load() }} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-300 hover:text-red-500">
-                          <Trash2 size={14} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="bg-slate-50 dark:bg-slate-900 border-t-2 border-slate-300 dark:border-slate-600">
-                    <td colSpan={4} className="px-3 py-2 font-semibold text-slate-700 dark:text-slate-200">Total</td>
-                    <td className="px-3 py-2 text-right font-bold tabular-nums">{fmt(variations.reduce((s, v) => s + v.amount, 0))}</td>
-                    <td className="px-3 py-2 text-right font-bold tabular-nums text-green-600 dark:text-green-400">
-                      {fmt(variations.filter(v => v.approved_amount != null).reduce((s, v) => s + (v.approved_amount ?? 0), 0))}
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+                  <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">No.</th>
+                  <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Title</th>
+                  <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Type</th>
+                  <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Status</th>
+                  <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Amount</th>
+                  <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Approved</th>
+                  <th className="w-[60px]" />
+                </tr>
+              </thead>
+              <tbody>
+                {variations.map(v => (
+                  <tr key={v.id} className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-750">
+                    <td className="px-3 py-2 font-mono text-xs text-slate-500">{v.variation_no}</td>
+                    <td className="px-3 py-2 text-slate-700 dark:text-slate-200">{v.title}</td>
+                    <td className="px-3 py-2 text-xs capitalize text-slate-500">{v.variation_type}</td>
+                    <td className="px-3 py-2">
+                      <select
+                        value={v.status}
+                        onChange={async e => { await updateVariation(v.id, { status: e.target.value as VariationStatus }); load() }}
+                        className={cn('text-xs px-2 py-0.5 rounded-full border-0 font-medium', VAR_STATUS_META[v.status].color)}
+                      >
+                        {Object.entries(VAR_STATUS_META).map(([k, m]) => <option key={k} value={k}>{m.label}</option>)}
+                      </select>
                     </td>
-                    <td />
+                    <td className="px-3 py-2 text-right tabular-nums">{fmt(v.amount)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums font-medium">{v.approved_amount != null ? fmt(v.approved_amount) : '-'}</td>
+                    <td className="px-3 py-1">
+                      <button onClick={async () => { await deleteVariation(v.id); load() }} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-300 hover:text-red-500">
+                        <Trash2 size={14} />
+                      </button>
+                    </td>
                   </tr>
-                </tfoot>
-              </table>
-            </div>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="bg-slate-50 dark:bg-slate-900 border-t-2 border-slate-300 dark:border-slate-600">
+                  <td colSpan={4} className="px-3 py-2 font-semibold text-slate-700 dark:text-slate-200">Total</td>
+                  <td className="px-3 py-2 text-right font-bold tabular-nums">{fmt(variations.reduce((s, v) => s + v.amount, 0))}</td>
+                  <td className="px-3 py-2 text-right font-bold tabular-nums text-green-600 dark:text-green-400">
+                    {fmt(variations.filter(v => v.approved_amount != null).reduce((s, v) => s + (v.approved_amount ?? 0), 0))}
+                  </td>
+                  <td />
+                </tr>
+              </tfoot>
+            </table>
           )}
-        </div>
+        </SectionCard>
       )}
 
       {/* Cost entries tab */}
       {activeTab === 'costs' && (
-        <div>
-          <div className="flex justify-end mb-3">
-            <Button size="sm" onClick={() => setShowAddCost(true)}><Plus size={14} /> Add Entry</Button>
-          </div>
-          {costEntries.length === 0 ? (
-            <div className="text-center py-12 text-sm text-slate-400">No cost entries recorded yet.</div>
-          ) : (
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div className="space-y-6">
+          <motion.div className="grid grid-cols-2 lg:grid-cols-3 gap-6" initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.08 } } }}>
+            <StatCard label="Actual Cost" value={actualCost} decimals={2} icon={TrendingDown} gradient="from-red-500 to-red-600" compact />
+            <StatCard label="Committed" value={committedCost} decimals={2} icon={Clock} gradient="from-amber-500 to-amber-600" compact />
+            <StatCard label="Forecast" value={forecastCost} decimals={2} icon={TrendingUp} gradient="from-blue-500 to-blue-600" compact />
+          </motion.div>
+          <SectionCard title="Cost Entries" icon={DollarSign} iconColor="text-rose-500" noPadding
+            actions={<Button size="sm" onClick={() => setShowAddCost(true)}><Plus size={14} /> Add Entry</Button>}>
+            {costEntries.length === 0 ? (
+              <EmptyState icon={DollarSign} title="No cost entries recorded yet" description="Track actual, committed, and forecast costs for this project." compact />
+            ) : (
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
@@ -477,39 +414,30 @@ export default function CostControlPage() {
                   ))}
                 </tbody>
               </table>
-            </div>
-          )}
+            )}
+          </SectionCard>
         </div>
       )}
 
       {/* Cashflow tab */}
       {activeTab === 'cashflow' && (
-        <div>
+        <div className="space-y-6">
           {cashflow.length > 0 && (
-            <Card className="mb-4">
-              <CardContent className="p-4">
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Cashflow Overview</span>
-                <div className="h-72 mt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={cashflow.map(cf => ({ period: cf.period_date, 'Planned Income': cf.planned_income, 'Actual Income': cf.actual_income, 'Planned Expense': cf.planned_expense, 'Actual Expense': cf.actual_expense }))}>
-                      <XAxis dataKey="period" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} />
-                      <Tooltip formatter={(value) => fmt(Number(value))} />
-                      <Legend />
-                      <Bar dataKey="Planned Income" fill="#86efac" />
-                      <Bar dataKey="Actual Income" fill="#22c55e" />
-                      <Bar dataKey="Planned Expense" fill="#fca5a5" />
-                      <Bar dataKey="Actual Expense" fill="#ef4444" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+            <SectionCard title="Monthly Cashflow" icon={BarChart3} iconColor="text-green-500">
+              <SimpleBarChart
+                bars={cashflow.map(cf => ({
+                  label: cf.period_date,
+                  value: cf.actual_income - cf.actual_expense,
+                  color: (cf.actual_income - cf.actual_expense) >= 0 ? '#10b981' : '#ef4444',
+                }))}
+                horizontal={false}
+              />
+            </SectionCard>
           )}
-          {cashflow.length === 0 ? (
-            <div className="text-center py-12 text-sm text-slate-400">No cash flow data yet. Cash flow is populated from payment certificates and cost entries.</div>
-          ) : (
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <SectionCard title="Cashflow Details" icon={DollarSign} iconColor="text-blue-500" noPadding>
+            {cashflow.length === 0 ? (
+              <EmptyState icon={BarChart3} title="No cash flow data yet" description="Cash flow is populated from payment certificates and cost entries." compact />
+            ) : (
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
@@ -537,8 +465,8 @@ export default function CostControlPage() {
                   })}
                 </tbody>
               </table>
-            </div>
-          )}
+            )}
+          </SectionCard>
         </div>
       )}
 
