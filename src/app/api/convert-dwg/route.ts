@@ -17,7 +17,9 @@ function runPython(inputPath: string, outputPath: string): Promise<void> {
       'python3',
       [
         '-c',
-        `import ezdxf; doc = ezdxf.readfile('${inputPath}'); doc.saveas('${outputPath}')`,
+        'import sys, ezdxf; doc = ezdxf.readfile(sys.argv[1]); doc.saveas(sys.argv[2])',
+        inputPath,
+        outputPath,
       ],
       { timeout: 60_000 },
       (error, _stdout, stderr) => {
