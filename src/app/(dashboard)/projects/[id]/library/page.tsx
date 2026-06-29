@@ -26,6 +26,7 @@ import {
   updateLibraryItem,
   deleteLibraryItem,
   deleteLibraryCategory,
+  updateLibraryCategory,
 } from '@/app/actions/library'
 
 interface EditingCell {
@@ -126,6 +127,32 @@ export default function LibraryPage() {
       return
     }
     setShowCreateCategory(false)
+    setCategoryForm({ name: '', description: '' })
+    setCreating(false)
+    loadCategories()
+  }
+
+  const handleEditCategory = async () => {
+    if (!editingCategory || !categoryForm.name.trim()) return
+    setCreating(true)
+    setError(null)
+    try {
+      const result = await updateLibraryCategory(editingCategory.id, {
+        name: categoryForm.name,
+        description: categoryForm.description || undefined,
+      })
+      if (result?.error) {
+        setError(result.error)
+        setCreating(false)
+        return
+      }
+    } catch (e) {
+      console.error('Failed to update library category:', e)
+      setError('Failed to update category')
+      setCreating(false)
+      return
+    }
+    setEditingCategory(null)
     setCategoryForm({ name: '', description: '' })
     setCreating(false)
     loadCategories()
@@ -325,6 +352,7 @@ export default function LibraryPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
+                        setCategoryForm({ name: cat.name, description: cat.description ?? '' })
                         setEditingCategory(cat)
                       }}
                       className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400"
@@ -483,6 +511,31 @@ export default function LibraryPage() {
             <Button variant="ghost" onClick={() => setShowCreateCategory(false)}>Cancel</Button>
             <Button onClick={handleCreateCategory} loading={creating} disabled={!categoryForm.name.trim()}>
               Create
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Category Modal */}
+      <Modal isOpen={!!editingCategory} onClose={() => { setEditingCategory(null); setCategoryForm({ name: '', description: '' }) }} title="Edit Category" size="sm">
+        <div className="space-y-4">
+          <Input
+            label="Category Name"
+            value={categoryForm.name}
+            onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+            placeholder="e.g. Earthworks"
+          />
+          <Input
+            label="Description"
+            value={categoryForm.description}
+            onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+            placeholder="Optional description"
+          />
+          {error && <p className="text-sm text-red-500">{error}</p>}
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => { setEditingCategory(null); setCategoryForm({ name: '', description: '' }) }}>Cancel</Button>
+            <Button onClick={handleEditCategory} loading={creating} disabled={!categoryForm.name.trim()}>
+              Save
             </Button>
           </div>
         </div>
