@@ -203,7 +203,11 @@ export default function LibraryPage() {
     )
 
     try {
-      await updateLibraryItem(itemId, { [field]: val })
+      const result = await updateLibraryItem(itemId, { [field]: val })
+      if (result?.error) {
+        setError(result.error)
+        if (selectedCategory) loadItems(selectedCategory)
+      }
     } catch (e) { setError(e instanceof Error ? e.message : 'Failed to update item') }
 
     setEditingCell(null)

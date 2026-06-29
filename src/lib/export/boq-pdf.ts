@@ -85,6 +85,8 @@ export function exportBOQToPDF(
   if (win) {
     win.document.write(html)
     win.document.close()
+  } else {
+    throw new Error('Pop-up blocked. Please allow pop-ups for this site to export PDF.')
   }
 }
 

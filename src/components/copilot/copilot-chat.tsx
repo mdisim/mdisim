@@ -274,7 +274,7 @@ export function CopilotChat({ projectId, projectName, currentPage }: CopilotChat
     setIsLoading(true)
 
     try {
-      const { reply, error: err } = await sendCopilotMessage(projectId, currentPage, messages, text.trim())
+      const { reply, error: err } = await sendCopilotMessage(projectId, currentPage, [...messages, userMsg], text.trim())
       if (err) {
         setError(err)
       } else {
