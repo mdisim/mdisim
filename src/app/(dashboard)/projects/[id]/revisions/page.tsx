@@ -10,6 +10,7 @@ import { getBOQItems } from '@/app/actions/boq'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { TableSkeleton } from '@/components/ui/skeleton'
 import {
   GitCompare,
   Clock,
@@ -36,6 +37,7 @@ export default function RevisionsPage() {
   const [revisionMap, setRevisionMap] = useState<Record<string, DrawingRevision[]>>({})
   const [changes, setChanges] = useState<QuantityChange[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [selectedDrawingId, setSelectedDrawingId] = useState<string>('')
   const [revA, setRevA] = useState<string>('')
   const [revB, setRevB] = useState<string>('')
@@ -43,22 +45,28 @@ export default function RevisionsPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [drawingList, qtyChanges] = await Promise.all([
-      getDrawings(projectId),
-      getQuantityChanges(projectId),
-    ])
-    setDrawings(drawingList)
-    setChanges(qtyChanges)
+    setError(null)
+    try {
+      const [drawingList, qtyChanges] = await Promise.all([
+        getDrawings(projectId),
+        getQuantityChanges(projectId),
+      ])
+      setDrawings(drawingList)
+      setChanges(qtyChanges)
 
-    const revMap: Record<string, DrawingRevision[]> = {}
-    await Promise.all(
-      drawingList.map(async (d) => {
-        const revs = await getDrawingRevisions(d.id)
-        if (revs.length > 0) revMap[d.id] = revs
-      })
-    )
-    setRevisionMap(revMap)
-    setLoading(false)
+      const revMap: Record<string, DrawingRevision[]> = {}
+      await Promise.all(
+        drawingList.map(async (d) => {
+          const revs = await getDrawingRevisions(d.id)
+          if (revs.length > 0) revMap[d.id] = revs
+        })
+      )
+      setRevisionMap(revMap)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load revisions')
+    } finally {
+      setLoading(false)
+    }
   }, [projectId])
 
   useEffect(() => { load() }, [load])
@@ -102,7 +110,18 @@ export default function RevisionsPage() {
   if (loading) {
     return (
       <div className="p-4 md:p-8 max-w-7xl mx-auto">
-        <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-20 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 animate-pulse" />)}</div>
+        <TableSkeleton rows={6} columns={4} />
+      </div>
+    )
+  }
+
+  if (error && !loading && drawings.length === 0) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <div className="flex flex-col items-center justify-center py-12 gap-3">
+          <p className="text-sm text-red-500">{error}</p>
+          <button onClick={load} className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700">Retry</button>
+        </div>
       </div>
     )
   }

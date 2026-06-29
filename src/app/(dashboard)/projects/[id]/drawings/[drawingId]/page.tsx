@@ -16,27 +16,40 @@ export default function TakeoffPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [fullscreen, setFullscreen] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
     let cancelled = false
     async function load() {
-      setLoading(true)
-      const d = await getDrawing(drawingId)
-      if (cancelled) return
-      if (!d) {
-        setError('Drawing not found')
+      try {
+        setLoading(true)
+        setError(null)
+        const d = await getDrawing(drawingId)
+        if (cancelled) return
+        if (!d) {
+          setError('Drawing not found')
+          setLoading(false)
+          return
+        }
+        setDrawing(d)
+        const url = await getDrawingUrl(d.file_path)
+        if (cancelled) return
+        if (!url) {
+          setError('Could not generate file URL. The file may have been deleted from storage.')
+          setLoading(false)
+          return
+        }
+        setDrawingUrl(url)
         setLoading(false)
-        return
+      } catch (e) {
+        if (cancelled) return
+        setError(e instanceof Error ? e.message : 'Failed to load drawing')
+        setLoading(false)
       }
-      setDrawing(d)
-      const url = await getDrawingUrl(d.file_path)
-      if (cancelled) return
-      setDrawingUrl(url)
-      setLoading(false)
     }
     load()
     return () => { cancelled = true }
-  }, [drawingId])
+  }, [drawingId, retryCount])
 
   const typeLabel = (t: string) => DRAWING_TYPES.find((d) => d.value === t)?.label ?? t
 
@@ -51,13 +64,24 @@ export default function TakeoffPage() {
   if (error || !drawing || !drawingUrl) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-120px)] gap-4">
+        <div className="w-12 h-12 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+          <ArrowLeft size={20} className="text-red-400 rotate-[135deg]" />
+        </div>
         <p className="text-sm text-red-500 dark:text-red-400">{error ?? 'Failed to load drawing'}</p>
-        <button
-          onClick={() => router.push(`/projects/${projectId}/drawings`)}
-          className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-        >
-          Back to drawings
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setRetryCount(c => c + 1)}
+            className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Retry
+          </button>
+          <button
+            onClick={() => router.push(`/projects/${projectId}/drawings`)}
+            className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          >
+            Back to drawings
+          </button>
+        </div>
       </div>
     )
   }

@@ -6,6 +6,7 @@ import type { Contract, Variation, CostEntry, CashflowEntry, VariationType, Vari
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
+import { TableSkeleton } from '@/components/ui/skeleton'
 import {
   getContract,
   upsertContract,
@@ -71,23 +72,33 @@ export default function CostControlPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [c, v, ce, cf] = await Promise.all([
-      getContract(projectId), getVariations(projectId),
-      getCostEntries(projectId), getCashflow(projectId),
-    ])
-    setContract(c)
-    setVariations(v)
-    setCostEntries(ce)
-    setCashflow(cf)
-    if (c) {
-      setContractForm({
-        contract_value: String(c.contract_value), contingency_pct: String(c.contingency_pct),
-        retention_pct: String(c.retention_pct), advance_pct: String(c.advance_pct),
-        vat_pct: String(c.vat_pct), start_date: c.start_date ?? '', end_date: c.end_date ?? '',
-        duration_months: c.duration_months ? String(c.duration_months) : '', notes: c.notes ?? '',
-      })
+    try {
+      const [c, v, ce, cf] = await Promise.all([
+        getContract(projectId), getVariations(projectId),
+        getCostEntries(projectId), getCashflow(projectId),
+      ])
+      setContract(c)
+      setVariations(v)
+      setCostEntries(ce)
+      setCashflow(cf)
+      if (c) {
+        setContractForm({
+          contract_value: String(c.contract_value), contingency_pct: String(c.contingency_pct),
+          retention_pct: String(c.retention_pct), advance_pct: String(c.advance_pct),
+          vat_pct: String(c.vat_pct), start_date: c.start_date ?? '', end_date: c.end_date ?? '',
+          duration_months: c.duration_months ? String(c.duration_months) : '', notes: c.notes ?? '',
+        })
+      }
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load cost control data')
+      setContract(null)
+      setVariations([])
+      setCostEntries([])
+      setCashflow([])
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }, [projectId])
 
   useEffect(() => { load() }, [load])
@@ -169,7 +180,18 @@ export default function CostControlPage() {
     : []
 
   if (loading) {
-    return <div className="p-4 md:p-8 max-w-7xl mx-auto"><div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-20 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 animate-pulse" />)}</div></div>
+    return <div className="p-4 md:p-8 max-w-7xl mx-auto"><TableSkeleton rows={6} columns={4} /></div>
+  }
+
+  if (error && !contract && variations.length === 0 && costEntries.length === 0) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
+          <p className="text-red-600 dark:text-red-400 font-medium mb-4">{error}</p>
+          <Button onClick={() => load()}>Retry</Button>
+        </div>
+      </div>
+    )
   }
 
   return (

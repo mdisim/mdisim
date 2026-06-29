@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { Card } from '@/components/ui/card'
+import { TableSkeleton } from '@/components/ui/skeleton'
 import {
   getRateAnalyses,
   createRateAnalysis,
@@ -84,13 +85,21 @@ export default function RateAnalysisPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [ra, boq] = await Promise.all([
-      getRateAnalyses(projectId),
-      getBOQItems(projectId),
-    ])
-    setAnalyses(ra)
-    setBOQItems(boq)
-    setLoading(false)
+    try {
+      const [ra, boq] = await Promise.all([
+        getRateAnalyses(projectId),
+        getBOQItems(projectId),
+      ])
+      setAnalyses(ra)
+      setBOQItems(boq)
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load rate analyses')
+      setAnalyses([])
+      setBOQItems([])
+    } finally {
+      setLoading(false)
+    }
   }, [projectId])
 
   useEffect(() => { load() }, [load])
@@ -375,10 +384,11 @@ export default function RateAnalysisPage() {
       )}
 
       {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="h-20 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 animate-pulse" />
-          ))}
+        <TableSkeleton rows={6} columns={4} />
+      ) : error && analyses.length === 0 ? (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
+          <p className="text-red-600 dark:text-red-400 font-medium mb-4">{error}</p>
+          <Button onClick={() => load()}>Retry</Button>
         </div>
       ) : analyses.length === 0 ? (
         <Card className="!shadow-sm">

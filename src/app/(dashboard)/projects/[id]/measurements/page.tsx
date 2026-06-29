@@ -23,6 +23,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { Select } from '@/components/ui/select'
+import { TableSkeleton } from '@/components/ui/skeleton'
 import { MeasurementGrid } from '@/components/measurements/measurement-grid'
 import { MeasurementToolbar } from '@/components/measurements/measurement-toolbar'
 import { GenerateBOQDialog } from '@/components/measurements/generate-boq-dialog'
@@ -73,17 +74,23 @@ export default function MeasurementsPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [data, boq, dwgs, rates] = await Promise.all([
-      getMeasurementItems(projectId),
-      getBOQItems(projectId),
-      getDrawings(projectId),
-      getRateAnalyses(projectId),
-    ])
-    setItems(data)
-    setBoqItems(boq)
-    setDrawings(dwgs)
-    setRateAnalyses(rates)
-    setLoading(false)
+    setError(null)
+    try {
+      const [data, boq, dwgs, rates] = await Promise.all([
+        getMeasurementItems(projectId),
+        getBOQItems(projectId),
+        getDrawings(projectId),
+        getRateAnalyses(projectId),
+      ])
+      setItems(data)
+      setBoqItems(boq)
+      setDrawings(dwgs)
+      setRateAnalyses(rates)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load measurements')
+    } finally {
+      setLoading(false)
+    }
   }, [projectId])
 
   useEffect(() => {
@@ -251,23 +258,17 @@ export default function MeasurementsPage() {
   if (loading) {
     return (
       <div className="p-4 md:p-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <div className="h-6 w-48 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
-            <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mt-2" />
-          </div>
-          <div className="h-9 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
-        </div>
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 animate-pulse"
-            >
-              <div className="h-5 bg-slate-200 rounded w-1/2" />
-              <div className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-1/3 mt-2" />
-            </div>
-          ))}
+        <TableSkeleton rows={6} columns={4} />
+      </div>
+    )
+  }
+
+  if (error && !loading && items.length === 0) {
+    return (
+      <div className="p-4 md:p-8">
+        <div className="flex flex-col items-center justify-center py-12 gap-3">
+          <p className="text-sm text-red-500">{error}</p>
+          <button onClick={load} className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700">Retry</button>
         </div>
       </div>
     )

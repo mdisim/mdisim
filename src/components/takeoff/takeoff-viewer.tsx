@@ -150,6 +150,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
   const [zoom, setZoom] = useState(1.5)
   const [offset, setOffset] = useState<Point>({ x: 0, y: 0 })
   const [loading, setLoading] = useState(true)
+  const [pdfError, setPdfError] = useState<string | null>(null)
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
 
   // Tools state
@@ -227,6 +228,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
     async function load() {
       try {
         setLoading(true)
+        setPdfError(null)
         const pdfjsLib = await import('pdfjs-dist')
         pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
         const doc = await pdfjsLib.getDocument({ url: drawingUrl }).promise
@@ -236,7 +238,10 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
         }
       } catch (e) {
         console.error('Failed to load PDF document:', e)
-        setLoading(false)
+        if (!cancelled) {
+          setPdfError(e instanceof Error ? e.message : 'Failed to load PDF')
+          setLoading(false)
+        }
       }
     }
     load()
@@ -1455,7 +1460,18 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
           >
             {loading ? (
               <div className="flex items-center justify-center h-full">
-                <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+                <div className="flex flex-col items-center gap-3">
+                  <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+                  <p className="text-xs text-slate-400">Loading drawing...</p>
+                </div>
+              </div>
+            ) : pdfError ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="flex flex-col items-center gap-3 text-center px-6">
+                  <AlertTriangle size={28} className="text-amber-500" />
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Failed to load drawing</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">{pdfError}</p>
+                </div>
               </div>
             ) : (
               <div

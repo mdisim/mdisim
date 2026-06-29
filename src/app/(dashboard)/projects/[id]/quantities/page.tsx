@@ -8,6 +8,7 @@ import { getDrawings, getDrawingMeasurements } from '@/app/actions/drawings'
 import { getBOQItems } from '@/app/actions/boq'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { TableSkeleton } from '@/components/ui/skeleton'
 import {
   BarChart3,
   Ruler,
@@ -34,6 +35,7 @@ export default function QuantitiesPage() {
   const [drawingsData, setDrawingsData] = useState<DrawingWithMeasurements[]>([])
   const [boqItems, setBOQItems] = useState<BOQItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'dashboard' | 'by-drawing' | 'by-boq' | 'compare'>('dashboard')
   const [expandedDrawings, setExpandedDrawings] = useState<Set<string>>(new Set())
   const [expandedBOQ, setExpandedBOQ] = useState<Set<string>>(new Set())
@@ -42,19 +44,25 @@ export default function QuantitiesPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [drawings, boq] = await Promise.all([
-      getDrawings(projectId),
-      getBOQItems(projectId),
-    ])
-    const withMeasurements = await Promise.all(
-      drawings.map(async (d) => {
-        const measurements = await getDrawingMeasurements(d.id)
-        return { ...d, measurements }
-      })
-    )
-    setDrawingsData(withMeasurements.filter(d => d.measurements.length > 0))
-    setBOQItems(boq)
-    setLoading(false)
+    setError(null)
+    try {
+      const [drawings, boq] = await Promise.all([
+        getDrawings(projectId),
+        getBOQItems(projectId),
+      ])
+      const withMeasurements = await Promise.all(
+        drawings.map(async (d) => {
+          const measurements = await getDrawingMeasurements(d.id)
+          return { ...d, measurements }
+        })
+      )
+      setDrawingsData(withMeasurements.filter(d => d.measurements.length > 0))
+      setBOQItems(boq)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load quantities')
+    } finally {
+      setLoading(false)
+    }
   }, [projectId])
 
   useEffect(() => { load() }, [load])
@@ -89,7 +97,18 @@ export default function QuantitiesPage() {
   if (loading) {
     return (
       <div className="p-4 md:p-8 max-w-7xl mx-auto">
-        <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-20 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 animate-pulse" />)}</div>
+        <TableSkeleton rows={6} columns={4} />
+      </div>
+    )
+  }
+
+  if (error && !loading && drawingsData.length === 0) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <div className="flex flex-col items-center justify-center py-12 gap-3">
+          <p className="text-sm text-red-500">{error}</p>
+          <button onClick={load} className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700">Retry</button>
+        </div>
       </div>
     )
   }

@@ -8,6 +8,7 @@ import { DRAWING_TYPES } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
+import { CardSkeleton } from '@/components/ui/skeleton'
 import { createClient } from '@/lib/supabase/client'
 import { Upload, Trash2, FileText, Eye, Plus, Brain, ChevronDown, ChevronRight, ImageIcon } from 'lucide-react'
 import { formatDate, cn } from '@/lib/utils'
@@ -34,8 +35,14 @@ export default function DrawingsPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const data = await getDrawings(projectId)
-    setDrawings(data)
+    try {
+      const data = await getDrawings(projectId)
+      setDrawings(data)
+      setError(null)
+    } catch (e) {
+      setError?.(e instanceof Error ? e.message : 'Failed to load drawings')
+      setLoading(false)
+    }
     setLoading(false)
   }, [projectId])
 
@@ -122,12 +129,17 @@ export default function DrawingsPage() {
       </div>
 
       {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 animate-pulse">
-              <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-1/3" />
-            </div>
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}
+        </div>
+      ) : error && !loading ? (
+        <div className="text-center py-20">
+          <div className="bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-200 dark:border-red-800 p-6 mb-4 max-w-md mx-auto">
+            <p className="text-red-700 dark:text-red-400 font-medium mb-4">{error}</p>
+            <Button onClick={() => load()} variant="ghost">
+              Try Again
+            </Button>
+          </div>
         </div>
       ) : drawings.length === 0 ? (
         <div className="text-center py-20">

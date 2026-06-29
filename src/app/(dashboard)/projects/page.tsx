@@ -31,10 +31,16 @@ export default function ProjectsPage() {
   })
 
   const loadProjects = useCallback(async () => {
-    setLoading(true)
-    const data = await getProjects()
-    setProjects(data)
-    setLoading(false)
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await getProjects()
+      setProjects(data)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load projects')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { loadProjects() }, [loadProjects])

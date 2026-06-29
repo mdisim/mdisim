@@ -180,30 +180,63 @@ export default function ProjectIntelligencePage() {
   const [health, setHealth] = useState<HealthScore | null>(null)
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
-    setLoading(true)
-    const [h, p] = await Promise.all([
-      getProjectHealth(projectId),
-      getProject(projectId),
-    ])
-    setHealth(h)
-    setProject(p)
-    setLoading(false)
+    try {
+      setLoading(true)
+      setError(null)
+      const [h, p] = await Promise.all([
+        getProjectHealth(projectId),
+        getProject(projectId),
+      ])
+      setHealth(h)
+      setProject(p)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load project health')
+    } finally {
+      setLoading(false)
+    }
   }, [projectId])
 
   useEffect(() => { load() }, [load])
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="flex flex-col items-center gap-3">
-          <div className="relative">
-            <div className="w-16 h-16 rounded-full border-4 border-violet-200 dark:border-violet-800 border-t-violet-600 dark:border-t-violet-400 animate-spin" />
-            <Activity size={24} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-violet-600" />
-          </div>
-          <p className="text-sm text-slate-500">Analyzing project health...</p>
+      <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
+        <div className="flex items-center gap-2 mb-1">
+          <Activity size={20} className="text-violet-600" />
+          <div className="h-6 w-48 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
         </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 flex flex-col items-center gap-4">
+            <div className="w-[120px] h-[120px] rounded-full border-4 border-slate-200 dark:border-slate-700 animate-pulse" />
+            <div className="h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+          </div>
+          <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-12 bg-slate-100 dark:bg-slate-700/50 rounded-lg animate-pulse" />
+            ))}
+          </div>
+        </div>
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-8 bg-slate-100 dark:bg-slate-700/50 rounded animate-pulse" />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] gap-3">
+        <AlertTriangle size={28} className="text-amber-500" />
+        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Failed to load project health</p>
+        <p className="text-xs text-slate-500 max-w-sm text-center">{error}</p>
+        <button onClick={load} className="mt-2 px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          Retry
+        </button>
       </div>
     )
   }

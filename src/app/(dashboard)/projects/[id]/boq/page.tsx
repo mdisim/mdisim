@@ -8,6 +8,7 @@ import { MEASUREMENT_UNITS } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
+import { TableSkeleton } from '@/components/ui/skeleton'
 import {
   Plus,
   FileSpreadsheet,
@@ -85,9 +86,15 @@ export default function BOQPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const data = await getBOQItems(projectId)
-    setItems(data)
-    setLoading(false)
+    setError(null)
+    try {
+      const data = await getBOQItems(projectId)
+      setItems(data)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load BOQ items')
+    } finally {
+      setLoading(false)
+    }
   }, [projectId])
 
   useEffect(() => { load() }, [load])
@@ -442,12 +449,19 @@ export default function BOQPage() {
 
       {/* Table */}
       {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 animate-pulse">
-              <div className="h-5 bg-slate-200 dark:bg-slate-600 rounded w-3/4" />
-            </div>
-          ))}
+        <TableSkeleton rows={8} columns={6} />
+      ) : error && !loading && items.length === 0 ? (
+        <div className="text-center py-20">
+          <div className="inline-block p-3 rounded-xl bg-red-100 dark:bg-red-900/30 mb-4">
+            <FileSpreadsheet size={48} className="text-red-500 dark:text-red-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-1">Failed to load BOQ items</h3>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
+            {error}
+          </p>
+          <Button onClick={load}>
+            Try Again
+          </Button>
         </div>
       ) : items.length === 0 ? (
         <div className="text-center py-20">

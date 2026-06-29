@@ -10,6 +10,7 @@ import { Modal } from '@/components/ui/modal'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
+import { TableSkeleton } from '@/components/ui/skeleton'
 import {
   getTenders,
   createTender,
@@ -84,10 +85,18 @@ export default function TendersPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [t, b] = await Promise.all([getTenders(projectId), getBOQItems(projectId)])
-    setTenders(t)
-    setBOQItems(b)
-    setLoading(false)
+    try {
+      const [t, b] = await Promise.all([getTenders(projectId), getBOQItems(projectId)])
+      setTenders(t)
+      setBOQItems(b)
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load tenders')
+      setTenders([])
+      setBOQItems([])
+    } finally {
+      setLoading(false)
+    }
   }, [projectId])
 
   useEffect(() => { load() }, [load])
@@ -189,21 +198,11 @@ export default function TendersPage() {
 
       {/* Content */}
       {loading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map(i => (
-            <Card key={i} className="animate-pulse">
-              <div className="px-6 py-5">
-                <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-xl bg-slate-200 dark:bg-slate-700" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 w-48 bg-slate-200 dark:bg-slate-700 rounded" />
-                    <div className="h-3 w-32 bg-slate-100 dark:bg-slate-700/60 rounded" />
-                  </div>
-                  <div className="h-6 w-16 bg-slate-200 dark:bg-slate-700 rounded-full" />
-                </div>
-              </div>
-            </Card>
-          ))}
+        <TableSkeleton rows={6} columns={4} />
+      ) : error && tenders.length === 0 ? (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
+          <p className="text-red-600 dark:text-red-400 font-medium mb-4">{error}</p>
+          <Button onClick={() => load()}>Retry</Button>
         </div>
       ) : tenders.length === 0 ? (
         <Card className="border-dashed">

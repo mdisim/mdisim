@@ -8,6 +8,7 @@ import { MEASUREMENT_UNITS } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
+import { TableSkeleton } from '@/components/ui/skeleton'
 import {
   Plus,
   BookOpen,
@@ -63,16 +64,28 @@ export default function LibraryPage() {
 
   const loadCategories = useCallback(async () => {
     setLoading(true)
-    const data = await getLibraryCategories()
-    setCategories(data)
-    setLoading(false)
+    setError(null)
+    try {
+      const data = await getLibraryCategories()
+      setCategories(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load categories')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   const loadItems = useCallback(async (categoryId: string) => {
     setLoadingItems(true)
-    const data = await getLibraryItems(categoryId)
-    setItems(data)
-    setLoadingItems(false)
+    setError(null)
+    try {
+      const data = await getLibraryItems(categoryId)
+      setItems(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load items')
+    } finally {
+      setLoadingItems(false)
+    }
   }, [])
 
   useEffect(() => { loadCategories() }, [loadCategories])
@@ -270,10 +283,8 @@ export default function LibraryPage() {
         </div>
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="p-4 space-y-2">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-10 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />
-              ))}
+            <div className="p-4">
+              <TableSkeleton rows={3} columns={1} />
             </div>
           ) : categories.length === 0 ? (
             <div className="p-4 text-center text-sm text-slate-500 dark:text-slate-400">
@@ -365,10 +376,13 @@ export default function LibraryPage() {
               </p>
             </div>
           ) : loadingItems ? (
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-10 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />
-              ))}
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+              <TableSkeleton rows={6} columns={4} />
+            </div>
+          ) : error && items.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <p className="text-sm text-red-500">{error}</p>
+              <button onClick={() => selectedCategory && loadItems(selectedCategory)} className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700">Retry</button>
             </div>
           ) : items.length === 0 ? (
             <div className="text-center py-20">

@@ -7,6 +7,7 @@ import type { PaymentCert, PaymentLine, PaymentCertStatus } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
+import { TableSkeleton } from '@/components/ui/skeleton'
 import {
   getPaymentCerts,
   createPaymentCert,
@@ -56,9 +57,16 @@ export default function PaymentsPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const data = await getPaymentCerts(projectId)
-    setCerts(data)
-    setLoading(false)
+    try {
+      const data = await getPaymentCerts(projectId)
+      setCerts(data)
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load payment certificates')
+      setCerts([])
+    } finally {
+      setLoading(false)
+    }
   }, [projectId])
 
   useEffect(() => { load() }, [load])
@@ -144,7 +152,12 @@ export default function PaymentsPage() {
       </div>
 
       {loading ? (
-        <div className="space-y-3">{[1,2].map(i => <div key={i} className="h-16 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 animate-pulse" />)}</div>
+        <TableSkeleton rows={6} columns={4} />
+      ) : error && certs.length === 0 ? (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
+          <p className="text-red-600 dark:text-red-400 font-medium mb-4">{error}</p>
+          <Button onClick={() => load()}>Retry</Button>
+        </div>
       ) : certs.length === 0 ? (
         <div className="text-center py-20">
           <Receipt size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
