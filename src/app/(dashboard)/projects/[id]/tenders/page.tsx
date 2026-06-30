@@ -121,14 +121,12 @@ export default function TendersPage() {
     const awarded = tenders.filter(t => t.status === 'awarded')
     const active = tenders.filter(t => t.status === 'issued' || t.status === 'draft').length
 
-    // Awarded value: sum of winning bidder totals
     const awardedValue = awarded.reduce((sum, t) => {
       const winner = (t.bidders ?? []).find(b => b.id === t.awarded_bidder_id)
       if (!winner) return sum
       return sum + (winner.bids ?? []).reduce((s, bid) => s + bid.amount, 0)
     }, 0)
 
-    // Average bid across all bidders with totals > 0
     const allBidderTotals = tenders.flatMap(t =>
       (t.bidders ?? []).map(b => (b.bids ?? []).reduce((s, bid) => s + bid.amount, 0))
     ).filter(total => total > 0)
@@ -136,7 +134,6 @@ export default function TendersPage() {
       ? allBidderTotals.reduce((a, b) => a + b, 0) / allBidderTotals.length
       : 0
 
-    // Bid comparison data per tender (for chart)
     const bidComparison = tenders.map(t => {
       const bidderTotals = (t.bidders ?? [])
         .map(b => (b.bids ?? []).reduce((s, bid) => s + bid.amount, 0))
@@ -149,7 +146,6 @@ export default function TendersPage() {
       }
     }).filter(t => t.lowest > 0)
 
-    // Contractor ranking from awarded tenders
     const contractors = awarded.map(t => {
       const winner = (t.bidders ?? []).find(b => b.id === t.awarded_bidder_id)
       if (!winner) return null
@@ -254,91 +250,110 @@ export default function TendersPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-[1600px] mx-auto">
-      <PageHeader
-        icon={Users}
-        title={t.tenders.title}
-        subtitle={t.tenders.subtitle}
-        gradient="from-violet-500 to-violet-600"
-        actions={
-          <Button onClick={() => setShowCreate(true)}>
-            <Plus size={16} /> {t.tenders.newTender}
-          </Button>
-        }
-      />
+    <div className="p-6 md:p-8 max-w-[1600px] mx-auto space-y-8">
+      {/* Page Header */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--color-text)] tracking-tight">{t.tenders.title}</h1>
+          <p className="text-sm text-[var(--color-text-secondary)] mt-1">{t.tenders.subtitle}</p>
+        </div>
+        <Button onClick={() => setShowCreate(true)}>
+          <Plus size={16} /> {t.tenders.newTender}
+        </Button>
+      </div>
 
       {/* Statistics Dashboard */}
       {!loading && tenders.length > 0 && (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-            <StatCard
-              icon={FileSpreadsheet}
-              label={t.tenders.totalTenders}
-              value={stats.total}
-              gradient="from-violet-500 to-violet-600"
-            />
-            <StatCard
-              icon={Gavel}
-              label={t.tenders.activeBids}
-              value={stats.active}
-              gradient="from-blue-500 to-blue-600"
-            />
-            <StatCard
-              icon={DollarSign}
-              label={t.tenders.awardedValue}
-              value={stats.awardedValue}
-              prefix=""
-              decimals={2}
-              gradient="from-emerald-500 to-emerald-600"
-            />
-            <StatCard
-              icon={Target}
-              label={t.tenders.avgBid}
-              value={stats.avgBid}
-              decimals={2}
-              gradient="from-amber-500 to-amber-600"
-            />
+          {/* KPI Cards — Stitch summary header pattern */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Total Tenders */}
+            <div className="bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-2xl p-6 flex flex-col justify-between min-h-[140px] relative overflow-hidden group">
+              <div className="absolute top-4 end-4 opacity-[0.06] group-hover:opacity-[0.12] transition-opacity">
+                <FileSpreadsheet size={64} />
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.tenders.totalTenders}</p>
+                <h3 className="text-3xl font-bold text-[var(--color-text)] mt-2 tabular-nums">{stats.total}</h3>
+              </div>
+              <div className="flex items-center gap-2 mt-4">
+                <span className="text-xs font-mono text-[var(--color-text-muted)]">{t.tenders.activeBids}: {stats.active}</span>
+              </div>
+            </div>
+
+            {/* Lowest Bid / Awarded Value */}
+            <div className="bg-[var(--color-surface-elevated)] border border-s-4 border-[var(--color-border)] border-s-[var(--color-amber)]/60 rounded-2xl p-6 flex flex-col justify-between min-h-[140px] relative overflow-hidden">
+              <div>
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.tenders.awardedValue}</p>
+                  {stats.awardedCount > 0 && (
+                    <span className="bg-[var(--color-amber)]/10 text-[var(--color-amber)] text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">
+                      {t.tenders.statusAwarded}
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-3xl font-bold text-[var(--color-amber)] mt-2 tabular-nums font-mono">{fmt(stats.awardedValue)}</h3>
+              </div>
+              <div className="flex items-center gap-2 mt-4">
+                <span className="text-xs font-mono text-[var(--color-amber)]">{stats.awardedCount} {t.tenders.statusAwarded}</span>
+              </div>
+            </div>
+
+            {/* Avg Bid */}
+            <div className="bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-2xl p-6 flex flex-col justify-between min-h-[140px] relative overflow-hidden">
+              <div>
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.tenders.avgBid}</p>
+                  <span className="bg-[var(--color-info-bg)] text-[var(--color-info)] text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">
+                    {stats.totalBidders} {t.tenders.biddersLabel}
+                  </span>
+                </div>
+                <h3 className="text-3xl font-bold text-[var(--color-text)] mt-2 tabular-nums font-mono">{fmt(stats.avgBid)}</h3>
+              </div>
+              <div className="flex items-center gap-2 mt-4">
+                <span className="text-xs font-mono text-[var(--color-text-muted)]">{t.tenders.totalTenders}: {stats.total}</span>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Bid Comparison Chart */}
+          {/* Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {stats.bidComparison.length > 0 && (
-              <SectionCard title={t.tenders.bidComparison} icon={BarChart3} iconColor="text-violet-500">
+              <SectionCard title={t.tenders.bidComparison} icon={BarChart3} iconColor="text-[var(--color-amber)]">
                 <SimpleBarChart
                   bars={stats.bidComparison.flatMap(t => [
-                    { label: `${t.label} (Low)`, value: t.lowest, color: '#22c55e' },
-                    { label: `${t.label} (Avg)`, value: t.average, color: '#6366f1' },
-                    { label: `${t.label} (High)`, value: t.highest, color: '#ef4444' },
+                    { label: `${t.label} (Low)`, value: t.lowest, color: 'var(--color-success)' },
+                    { label: `${t.label} (Avg)`, value: t.average, color: 'var(--color-amber)' },
+                    { label: `${t.label} (High)`, value: t.highest, color: 'var(--color-danger)' },
                   ])}
                   horizontal
                 />
               </SectionCard>
             )}
 
-            {/* Contractor Ranking */}
             {stats.contractors.length > 0 && (
-              <SectionCard title={t.tenders.contractorRanking} icon={Trophy} iconColor="text-amber-500">
+              <SectionCard title={t.tenders.contractorRanking} icon={Trophy} iconColor="text-[var(--color-amber)]">
                 <div className="space-y-3">
                   {stats.contractors
                     .sort((a, b) => b.total - a.total)
                     .map((c, i) => (
-                      <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-700/30">
+                      <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-[var(--color-surface-hover)]">
                         <div className={cn(
-                          'w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0',
-                          i === 0 ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' :
-                          i === 1 ? 'bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300' :
-                          'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
+                          'w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0',
+                          i === 0
+                            ? 'bg-[var(--color-amber)]/10 text-[var(--color-amber)] border border-[var(--color-amber)]/30'
+                            : 'bg-[var(--color-surface-active)] text-[var(--color-text-secondary)]'
                         )}>
                           #{i + 1}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm text-slate-900 dark:text-white truncate">{c.name}</div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                          <div className="font-semibold text-sm text-[var(--color-text)] truncate">{c.name}</div>
+                          <div className="text-xs text-[var(--color-text-muted)] truncate">
                             {c.company ? `${c.company} · ` : ''}{c.tenderTitle}
                           </div>
                         </div>
                         <div className="text-end shrink-0">
-                          <div className="text-sm font-bold tabular-nums text-slate-900 dark:text-white">{fmt(c.total)}</div>
+                          <div className="text-sm font-bold tabular-nums font-mono text-[var(--color-text)]">{fmt(c.total)}</div>
                           {i === 0 && (
                             <Badge variant="success" className="text-[10px] mt-0.5">
                               <Trophy size={10} className="me-0.5" /> {t.tenders.winner}
@@ -358,8 +373,8 @@ export default function TendersPage() {
       {loading ? (
         <TableSkeleton rows={6} columns={4} />
       ) : error && tenders.length === 0 ? (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
-          <p className="text-red-600 dark:text-red-400 font-medium mb-4">{error}</p>
+        <div className="bg-[var(--color-danger-bg)] border border-[var(--color-danger)]/30 rounded-2xl p-6 text-center">
+          <p className="text-[var(--color-danger)] font-medium mb-4">{error}</p>
           <Button onClick={() => load()}>{t.tenders.retry}</Button>
         </div>
       ) : tenders.length === 0 ? (
@@ -379,50 +394,50 @@ export default function TendersPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.06, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
             >
-            <TenderCard
-              tender={tender}
-              boqItems={boqItems}
-              isExpanded={expandedId === tender.id}
-              onToggle={() => setExpandedId(expandedId === tender.id ? null : tender.id)}
-              onDelete={() => setConfirmAction({
-                message: t.tenders.deleteTenderConfirm,
-                onConfirm: async () => {
+              <TenderCard
+                tender={tender}
+                boqItems={boqItems}
+                isExpanded={expandedId === tender.id}
+                onToggle={() => setExpandedId(expandedId === tender.id ? null : tender.id)}
+                onDelete={() => setConfirmAction({
+                  message: t.tenders.deleteTenderConfirm,
+                  onConfirm: async () => {
+                    try {
+                      await deleteTender(tender.id)
+                      toast({ title: t.tenders.deleteTenderSuccess, variant: 'success' })
+                      load()
+                    } catch {
+                      toast({ title: t.tenders.deleteTenderError, variant: 'danger' })
+                    }
+                  },
+                })}
+                onStatusChange={async (s) => {
                   try {
-                    await deleteTender(tender.id)
-                    toast({ title: t.tenders.deleteTenderSuccess, variant: 'success' })
+                    await updateTender(tender.id, { status: s })
+                    toast({ title: t.tenders.statusUpdateSuccess, variant: 'success' })
                     load()
                   } catch {
-                    toast({ title: t.tenders.deleteTenderError, variant: 'danger' })
+                    toast({ title: t.tenders.statusUpdateError, variant: 'danger' })
                   }
-                },
-              })}
-              onStatusChange={async (s) => {
-                try {
-                  await updateTender(tender.id, { status: s })
-                  toast({ title: t.tenders.statusUpdateSuccess, variant: 'success' })
-                  load()
-                } catch {
-                  toast({ title: t.tenders.statusUpdateError, variant: 'danger' })
-                }
-              }}
-              onAddBidder={() => setShowAddBidder(tender.id)}
-              onDeleteBidder={(id) => setConfirmAction({
-                message: t.tenders.removeBidderConfirm,
-                onConfirm: async () => {
-                  try {
-                    await deleteBidder(id)
-                    toast({ title: t.tenders.deleteBidderSuccess, variant: 'success' })
-                    load()
-                  } catch {
-                    toast({ title: t.tenders.deleteBidderError, variant: 'danger' })
-                  }
-                },
-              })}
-              onUpdateBid={handleUpdateBid}
-              onAward={(bidderId) => handleAward(tender.id, bidderId)}
-              fmt={fmt}
-              t={t}
-            />
+                }}
+                onAddBidder={() => setShowAddBidder(tender.id)}
+                onDeleteBidder={(id) => setConfirmAction({
+                  message: t.tenders.removeBidderConfirm,
+                  onConfirm: async () => {
+                    try {
+                      await deleteBidder(id)
+                      toast({ title: t.tenders.deleteBidderSuccess, variant: 'success' })
+                      load()
+                    } catch {
+                      toast({ title: t.tenders.deleteBidderError, variant: 'danger' })
+                    }
+                  },
+                })}
+                onUpdateBid={handleUpdateBid}
+                onAward={(bidderId) => handleAward(tender.id, bidderId)}
+                fmt={fmt}
+                t={t}
+              />
             </motion.div>
           ))}
         </div>
@@ -458,7 +473,7 @@ export default function TendersPage() {
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            <label className="text-sm font-medium text-[var(--color-text-secondary)]">
               {t.tenders.descriptionLabel}
             </label>
             <textarea
@@ -466,16 +481,16 @@ export default function TendersPage() {
               onChange={e => setTenderForm({ ...tenderForm, description: e.target.value })}
               rows={3}
               placeholder={t.tenders.descriptionPlaceholder}
-              className="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none placeholder:text-slate-400"
+              className="w-full px-3 py-2.5 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]/40 focus:border-transparent resize-none placeholder:text-[var(--color-text-muted)]"
             />
           </div>
           {error && (
-            <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2.5">
+            <div className="flex items-center gap-2 text-sm text-[var(--color-danger)] bg-[var(--color-danger-bg)] rounded-xl px-3 py-2.5">
               <AlertCircle size={14} />
               {error}
             </div>
           )}
-          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+          <div className="flex justify-end gap-3 pt-3 border-t border-[var(--color-border)]">
             <Button variant="ghost" onClick={() => { setShowCreate(false); setError(null) }}>
               {t.tenders.cancel}
             </Button>
@@ -516,19 +531,19 @@ export default function TendersPage() {
               placeholder="+1 234 567 890"
             />
           </div>
-          <div className="flex items-start gap-2 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/40 rounded-lg px-3 py-2.5">
+          <div className="flex items-start gap-2 text-xs text-[var(--color-text-muted)] bg-[var(--color-surface-hover)] rounded-xl px-3 py-2.5">
             <BarChart3 size={14} className="mt-0.5 shrink-0" />
             {boqItems.length > 0
               ? `${boqItems.length} ${t.tenders.boqAutoPopulateInfo}`
               : t.tenders.noBoqItemsInfo}
           </div>
           {error && (
-            <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2.5">
+            <div className="flex items-center gap-2 text-sm text-[var(--color-danger)] bg-[var(--color-danger-bg)] rounded-xl px-3 py-2.5">
               <AlertCircle size={14} />
               {error}
             </div>
           )}
-          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+          <div className="flex justify-end gap-3 pt-3 border-t border-[var(--color-border)]">
             <Button variant="ghost" onClick={() => { setShowAddBidder(null); setError(null) }}>
               {t.tenders.cancel}
             </Button>
@@ -540,7 +555,7 @@ export default function TendersPage() {
       </Modal>
 
       <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title={t.tenders.confirmTitle} size="sm">
-        <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{confirmAction?.message}</p>
+        <p className="text-sm text-[var(--color-text-secondary)] mb-4">{confirmAction?.message}</p>
         <div className="flex justify-end gap-3">
           <Button variant="ghost" onClick={() => setConfirmAction(null)}>{t.tenders.cancel}</Button>
           <Button variant={confirmAction?.isDestructive === false ? 'primary' : 'danger'} onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>{t.tenders.confirm}</Button>
@@ -613,13 +628,15 @@ function TenderCard({
     : null
 
   return (
-    <Card className={cn(
-      '!rounded-2xl transition-all duration-200',
-      isExpanded && '!shadow-xl ring-1 ring-slate-200 dark:ring-slate-600'
+    <div className={cn(
+      'bg-[var(--color-surface-elevated)] border rounded-2xl overflow-hidden transition-all duration-200',
+      isExpanded
+        ? 'border-[var(--color-border-strong)] shadow-lg shadow-black/10'
+        : 'border-[var(--color-border)] hover:border-[var(--color-border-strong)]'
     )}>
       {/* Card Header */}
       <div
-        className="flex items-center gap-4 px-6 py-4 cursor-pointer select-none group"
+        className="flex items-center gap-4 px-6 py-4 cursor-pointer select-none group hover:bg-[var(--color-surface-hover)] transition-colors"
         role="button"
         tabIndex={0}
         onClick={onToggle}
@@ -627,27 +644,27 @@ function TenderCard({
         aria-expanded={isExpanded}
       >
         <div className={cn(
-          'w-8 h-8 rounded-lg flex items-center justify-center transition-colors',
-          'bg-slate-100 dark:bg-slate-700 group-hover:bg-slate-200 dark:group-hover:bg-slate-600'
+          'w-8 h-8 rounded-xl flex items-center justify-center transition-colors shrink-0',
+          'bg-[var(--color-surface-hover)] group-hover:bg-[var(--color-surface-active)]'
         )}>
           {isExpanded
-            ? <ChevronDown size={16} className="text-slate-500 dark:text-slate-400" />
-            : <ChevronRight size={16} className="text-slate-500 dark:text-slate-400" />
+            ? <ChevronDown size={16} className="text-[var(--color-text-muted)]" />
+            : <ChevronRight size={16} className="text-[var(--color-text-muted)]" />
           }
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-slate-900 dark:text-white truncate">
+            <h3 className="font-semibold text-[var(--color-text)] truncate">
               {tender.title}
             </h3>
             {tender.tender_number && (
-              <span className="text-xs text-slate-400 dark:text-slate-500 font-mono shrink-0">
+              <span className="text-xs text-[var(--color-text-muted)] font-mono shrink-0">
                 {tender.tender_number}
               </span>
             )}
           </div>
-          <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-3 mt-1 text-xs text-[var(--color-text-muted)]">
             <span className="inline-flex items-center gap-1">
               <Users size={12} />
               {bidders.length} {bidders.length !== 1 ? t.tenders.biddersLabel : t.tenders.bidderLabel}
@@ -659,7 +676,7 @@ function TenderCard({
               </span>
             )}
             {lowestBidder && (
-              <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400">
+              <span className="inline-flex items-center gap-1 text-[var(--color-success)]">
                 <TrendingDown size={12} />
                 {t.tenders.lowest}: {fmt(lowestBidder.total)}
               </span>
@@ -674,7 +691,7 @@ function TenderCard({
 
         <button
           onClick={e => { e.stopPropagation(); onDelete() }}
-          className="p-2 rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors opacity-0 group-hover:opacity-100"
+          className="p-2 rounded-xl opacity-0 group-hover:opacity-100 text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-all"
           title={t.tenders.deleteTender}
           aria-label={t.tenders.deleteTender}
         >
@@ -684,9 +701,9 @@ function TenderCard({
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="border-t border-slate-100 dark:border-slate-700">
+        <div className="border-t border-[var(--color-border)]">
           {/* Toolbar */}
-          <div className="flex items-center gap-3 px-6 py-3 bg-slate-50/80 dark:bg-slate-900/40">
+          <div className="flex items-center gap-3 px-6 py-3 bg-[var(--color-surface-hover)] border-b border-[var(--color-border)]">
             <Select
               value={tender.status}
               onChange={e => onStatusChange(e.target.value as TenderStatus)}
@@ -697,33 +714,41 @@ function TenderCard({
               <Users size={14} /> {t.tenders.addBidder}
             </Button>
             {tender.description && (
-              <p className="ms-auto text-xs text-slate-400 dark:text-slate-500 italic truncate max-w-xs">
+              <p className="ms-auto text-xs text-[var(--color-text-muted)] italic truncate max-w-xs">
                 {tender.description}
               </p>
             )}
           </div>
 
-          {/* Bid Comparison Table */}
+          {/* Bid Comparison Table — Stitch winner highlight in amber */}
           {bidders.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-900/60 border-y border-slate-100 dark:border-slate-700">
-                    <th className="text-start px-4 py-2.5 font-semibold text-slate-600 dark:text-slate-300 sticky start-0 bg-slate-50 dark:bg-slate-900/60 min-w-[220px]">
+                  <tr className="bg-[var(--color-surface-hover)] border-b border-[var(--color-border)]">
+                    <th className="text-start px-5 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)] sticky start-0 bg-[var(--color-surface-hover)] min-w-[220px]">
                       {t.tenders.colDescription}
                     </th>
-                    <th className="text-center px-3 py-2.5 font-semibold text-slate-600 dark:text-slate-300 w-[70px]">{t.tenders.colUnit}</th>
-                    <th className="text-end px-3 py-2.5 font-semibold text-slate-600 dark:text-slate-300 w-[80px]">{t.tenders.colQty}</th>
+                    <th className="text-center px-3 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)] w-[70px]">{t.tenders.colUnit}</th>
+                    <th className="text-end px-3 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)] w-[80px]">{t.tenders.colQty}</th>
                     {bidderTotals.map(b => (
-                      <th key={b.id} className="text-end px-3 py-2.5 font-semibold text-slate-600 dark:text-slate-300 min-w-[140px]">
+                      <th
+                        key={b.id}
+                        className={cn(
+                          'text-end px-3 py-3 text-[10px] font-semibold uppercase tracking-widest min-w-[140px]',
+                          b.id === lowestBidder?.id
+                            ? 'text-[var(--color-amber)] bg-[var(--color-amber)]/5'
+                            : 'text-[var(--color-text-muted)]'
+                        )}
+                      >
                         <div className="flex items-center justify-end gap-1.5">
                           {b.id === lowestBidder?.id && (
-                            <Trophy size={11} className="text-amber-500 shrink-0" />
+                            <Trophy size={11} className="text-[var(--color-amber)] shrink-0" />
                           )}
                           <span className="truncate max-w-[110px]" title={b.name}>{b.name}</span>
                           <button
                             onClick={() => onDeleteBidder(b.id)}
-                            className="p-0.5 rounded text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                            className="p-0.5 rounded text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-colors"
                             title={t.tenders.removeBidder}
                             aria-label={t.tenders.removeBidder}
                           >
@@ -731,7 +756,7 @@ function TenderCard({
                           </button>
                         </div>
                         {b.company && (
-                          <div className="text-[10px] font-normal text-slate-400 dark:text-slate-500 mt-0.5 text-end">
+                          <div className="text-[10px] font-normal text-[var(--color-text-muted)] mt-0.5 text-end">
                             {b.company}
                           </div>
                         )}
@@ -739,28 +764,31 @@ function TenderCard({
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                <tbody className="divide-y divide-[var(--color-border)]">
                   {boqItems.map((item, idx) => (
-                    <tr key={item.id} className={cn(
-                      'hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors',
-                      idx % 2 === 0 ? 'bg-white dark:bg-slate-800/50' : 'bg-slate-50/30 dark:bg-slate-800/30'
-                    )}>
-                      <td className="px-4 py-2 text-slate-700 dark:text-slate-300 sticky start-0 bg-inherit">
+                    <tr
+                      key={item.id}
+                      className={cn(
+                        'hover:bg-[var(--color-surface-hover)] transition-colors',
+                        idx % 2 === 0 ? 'bg-transparent' : 'bg-[var(--color-surface-hover)]/40'
+                      )}
+                    >
+                      <td className="px-5 py-2 text-[var(--color-text-secondary)] sticky start-0 bg-inherit">
                         <div className="truncate max-w-[220px]" title={item.description}>
                           {item.code && (
-                            <span className="text-slate-400 dark:text-slate-500 font-mono me-1.5">{item.code}</span>
+                            <span className="text-[var(--color-text-muted)] font-mono me-1.5">{item.code}</span>
                           )}
                           {item.description}
                         </div>
                       </td>
-                      <td className="px-3 py-2 text-center text-slate-500 dark:text-slate-400">{item.unit}</td>
-                      <td className="px-3 py-2 text-end tabular-nums text-slate-600 dark:text-slate-300 font-mono">
+                      <td className="px-3 py-2 text-center text-[var(--color-text-muted)]">{item.unit}</td>
+                      <td className="px-3 py-2 text-end tabular-nums font-mono text-[var(--color-text-secondary)]">
                         {fmt(item.quantity)}
                       </td>
                       {bidderTotals.map(bidder => {
                         const bid = (bidder.bids ?? []).find(b => b.boq_item_id === item.id)
                         if (!bid) return (
-                          <td key={bidder.id} className="px-3 py-2 text-center text-slate-300 dark:text-slate-600">
+                          <td key={bidder.id} className="px-3 py-2 text-center text-[var(--color-text-muted)]">
                             --
                           </td>
                         )
@@ -774,24 +802,30 @@ function TenderCard({
                         const isHighest = bid.unit_rate === maxRate && allRates.length > 1 && bid.unit_rate > 0
 
                         return (
-                          <td key={bidder.id} className="px-3 py-1">
+                          <td
+                            key={bidder.id}
+                            className={cn(
+                              'px-3 py-1',
+                              bidder.id === lowestBidder?.id && 'bg-[var(--color-amber)]/5'
+                            )}
+                          >
                             <div className="flex items-center justify-end gap-1.5">
                               <input
                                 type="number"
                                 value={bid.unit_rate || ''}
                                 onChange={e => onUpdateBid(bid.id, parseFloat(e.target.value) || 0)}
                                 className={cn(
-                                  'w-[80px] px-2 py-1 text-xs text-end border rounded-md bg-transparent dark:text-white tabular-nums font-mono',
-                                  'focus:outline-none focus:ring-1 focus:ring-blue-400 transition-colors',
+                                  'w-[80px] px-2 py-1 text-xs text-end border rounded-lg bg-transparent text-[var(--color-text)] tabular-nums font-mono',
+                                  'focus:outline-none focus:ring-1 focus:ring-[var(--color-amber)]/40 transition-colors',
                                   isLowest
-                                    ? 'border-green-300 dark:border-green-700 bg-green-50/60 dark:bg-green-900/20'
+                                    ? 'border-[var(--color-success)]/40 bg-[var(--color-success-bg)]'
                                     : isHighest
-                                    ? 'border-red-300 dark:border-red-700 bg-red-50/60 dark:bg-red-900/20'
-                                    : 'border-slate-200 dark:border-slate-600'
+                                    ? 'border-[var(--color-danger)]/40 bg-[var(--color-danger-bg)]'
+                                    : 'border-[var(--color-border)]'
                                 )}
                                 step="any"
                               />
-                              <span className="text-[10px] tabular-nums text-slate-400 dark:text-slate-500 w-[65px] text-end font-mono">
+                              <span className="text-[10px] tabular-nums text-[var(--color-text-muted)] w-[65px] text-end font-mono">
                                 {fmt(bid.amount)}
                               </span>
                             </div>
@@ -802,25 +836,31 @@ function TenderCard({
                   ))}
                 </tbody>
                 <tfoot>
-                  {/* Total row */}
-                  <tr className="border-t-2 border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/60">
-                    <td colSpan={3} className="px-4 py-3 font-bold text-sm text-slate-700 dark:text-slate-200 sticky start-0 bg-slate-50 dark:bg-slate-900/60">
+                  {/* Total row — Stitch statistical summary */}
+                  <tr className="border-t-2 border-[var(--color-border-strong)] bg-[var(--color-surface-hover)]">
+                    <td colSpan={3} className="px-5 py-3 font-bold text-sm text-[var(--color-text)] sticky start-0 bg-[var(--color-surface-hover)]">
                       {t.tenders.totalBidAmount}
                     </td>
                     {bidderTotals.map(b => (
-                      <td key={b.id} className="px-3 py-3 text-end">
+                      <td
+                        key={b.id}
+                        className={cn(
+                          'px-3 py-3 text-end',
+                          b.id === lowestBidder?.id && 'bg-[var(--color-amber)]/5'
+                        )}
+                      >
                         <div className={cn(
                           'text-sm font-bold tabular-nums font-mono',
                           b.id === lowestBidder?.id
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-slate-900 dark:text-white'
+                            ? 'text-[var(--color-amber)]'
+                            : 'text-[var(--color-text)]'
                         )}>
                           {fmt(b.total)}
                         </div>
                         {b.id === lowestBidder?.id && (
                           <div className="flex items-center justify-end gap-0.5 mt-0.5">
-                            <CheckCircle2 size={10} className="text-green-500" />
-                            <span className="text-[10px] text-green-600 dark:text-green-400 font-semibold">
+                            <CheckCircle2 size={10} className="text-[var(--color-amber)]" />
+                            <span className="text-[10px] text-[var(--color-amber)] font-semibold">
                               {t.tenders.lowestBid}
                             </span>
                           </div>
@@ -831,8 +871,8 @@ function TenderCard({
 
                   {/* Variance row */}
                   {lowestBidder && bidderTotals.length > 1 && (
-                    <tr className="bg-slate-50/80 dark:bg-slate-900/40">
-                      <td colSpan={3} className="px-4 py-2 text-xs text-slate-500 dark:text-slate-400 sticky start-0 bg-slate-50/80 dark:bg-slate-900/40">
+                    <tr className="bg-[var(--color-surface-hover)]/60">
+                      <td colSpan={3} className="px-5 py-2 text-xs text-[var(--color-text-muted)] sticky start-0 bg-[var(--color-surface-hover)]/60">
                         <span className="inline-flex items-center gap-1">
                           <TrendingDown size={12} />
                           {t.tenders.varianceFromLowest}
@@ -844,9 +884,9 @@ function TenderCard({
                         return (
                           <td key={b.id} className="px-3 py-2 text-end text-xs tabular-nums font-mono">
                             {diff === 0 ? (
-                              <span className="text-green-600 dark:text-green-400 font-medium">{t.tenders.baseline}</span>
+                              <span className="text-[var(--color-amber)] font-medium">{t.tenders.baseline}</span>
                             ) : (
-                              <span className="text-red-600 dark:text-red-400">
+                              <span className="text-[var(--color-danger)]">
                                 +{fmt(diff)} <span className="text-[10px]">({pct.toFixed(1)}%)</span>
                               </span>
                             )}
@@ -858,8 +898,8 @@ function TenderCard({
 
                   {/* Award row */}
                   {tender.status !== 'awarded' && bidderTotals.length > 0 && (
-                    <tr className="bg-slate-50/50 dark:bg-slate-900/30 border-t border-slate-100 dark:border-slate-700">
-                      <td colSpan={3} className="px-4 py-3 text-xs font-medium text-slate-600 dark:text-slate-300 sticky start-0 bg-slate-50/50 dark:bg-slate-900/30">
+                    <tr className="bg-[var(--color-surface-hover)]/50 border-t border-[var(--color-border)]">
+                      <td colSpan={3} className="px-5 py-3 text-xs font-medium text-[var(--color-text-secondary)] sticky start-0 bg-[var(--color-surface-hover)]/50">
                         <span className="inline-flex items-center gap-1">
                           <Award size={12} />
                           {t.tenders.awardTenderLabel}
@@ -870,10 +910,10 @@ function TenderCard({
                           <button
                             onClick={() => onAward(b.id)}
                             className={cn(
-                              'inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg font-medium transition-all',
+                              'inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-xl font-medium transition-all',
                               b.id === lowestBidder?.id
-                                ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/60 ring-1 ring-green-200 dark:ring-green-800'
-                                : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                                ? 'bg-[var(--color-amber)]/10 text-[var(--color-amber)] hover:bg-[var(--color-amber)]/20 border border-[var(--color-amber)]/30'
+                                : 'bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-active)]'
                             )}
                           >
                             <Award size={12} /> {t.tenders.award}
@@ -885,9 +925,9 @@ function TenderCard({
 
                   {/* Awarded indicator */}
                   {tender.status === 'awarded' && tender.awarded_bidder_id && (
-                    <tr className="bg-green-50/80 dark:bg-green-900/20 border-t border-green-200 dark:border-green-800">
-                      <td colSpan={3} className="px-4 py-3 sticky start-0 bg-green-50/80 dark:bg-green-900/20">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 dark:text-green-300">
+                    <tr className="bg-[var(--color-amber)]/5 border-t border-[var(--color-amber)]/20">
+                      <td colSpan={3} className="px-5 py-3 sticky start-0 bg-[var(--color-amber)]/5">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--color-amber)]">
                           <Trophy size={14} />
                           {t.tenders.awardedTo}
                         </span>
@@ -895,11 +935,11 @@ function TenderCard({
                       {bidderTotals.map(b => (
                         <td key={b.id} className="px-3 py-3 text-center">
                           {b.id === tender.awarded_bidder_id ? (
-                            <span className="inline-flex items-center gap-1 text-xs font-bold text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/40 px-3 py-1.5 rounded-lg">
+                            <span className="inline-flex items-center gap-1 text-xs font-bold text-[var(--color-amber)] bg-[var(--color-amber)]/10 px-3 py-1.5 rounded-xl border border-[var(--color-amber)]/30">
                               <Trophy size={12} /> {t.tenders.winner}
                             </span>
                           ) : (
-                            <span className="text-xs text-slate-400">--</span>
+                            <span className="text-xs text-[var(--color-text-muted)]">--</span>
                           )}
                         </td>
                       ))}
@@ -910,13 +950,13 @@ function TenderCard({
             </div>
           ) : (
             <div className="px-6 py-12 text-center">
-              <div className="mx-auto w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center mb-3">
-                <Users size={20} className="text-slate-400 dark:text-slate-500" />
+              <div className="mx-auto w-12 h-12 rounded-2xl bg-[var(--color-surface-hover)] flex items-center justify-center mb-3">
+                <Users size={20} className="text-[var(--color-text-muted)]" />
               </div>
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
+              <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t.tenders.noBiddersYet}
               </p>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">
+              <p className="text-xs text-[var(--color-text-muted)] mb-4">
                 {t.tenders.addBiddersToStart}
               </p>
               <Button size="sm" variant="outline" onClick={onAddBidder}>
@@ -926,6 +966,6 @@ function TenderCard({
           )}
         </div>
       )}
-    </Card>
+    </div>
   )
 }

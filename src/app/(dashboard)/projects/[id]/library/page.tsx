@@ -255,7 +255,7 @@ export default function LibraryPage() {
       return (
         <input
           autoFocus
-          className="w-full px-2 py-1 text-sm border border-blue-400 rounded bg-white dark:bg-slate-800 outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full px-2 py-1 text-sm border border-[color:var(--color-amber)] rounded bg-[color:var(--color-surface-elevated)] outline-none focus:ring-1 focus:ring-[color:var(--color-amber)] text-[color:var(--color-text)]"
           value={editValue}
           onChange={(e) => setEditValue(e.target.value)}
           onBlur={commitEdit}
@@ -268,8 +268,8 @@ export default function LibraryPage() {
     return (
       <div
         className={cn(
-          'px-2 py-1.5 cursor-pointer rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 min-h-[32px] flex items-center',
-          isNumeric && 'justify-end tabular-nums'
+          'px-2 py-1.5 cursor-pointer rounded hover:bg-[color:var(--color-amber)]/10 min-h-[32px] flex items-center transition-colors text-[color:var(--color-text)]',
+          isNumeric && 'justify-end tabular-nums font-mono text-xs'
         )}
         onClick={() => startEdit(item.id, field, value)}
       >
@@ -281,213 +281,237 @@ export default function LibraryPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-120px)]">
       {/* Page Header */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-        <div className="p-2.5 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/20">
-          <BookOpen size={22} />
+      <div className="flex items-center gap-3 px-5 py-4 border-b border-[color:var(--color-border)] bg-[color:var(--color-surface-elevated)]">
+        <div className="w-8 h-8 rounded-lg bg-[color:var(--color-amber)]/10 flex items-center justify-center">
+          <BookOpen size={16} className="text-[color:var(--color-amber)]" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t.library.title}</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Manage reusable rate items and categories</p>
-        </div>
-      </div>
-      <div className="flex flex-1 overflow-hidden">
-      {/* Mobile sidebar toggle */}
-      <button
-        onClick={() => setSidebarOpen((v) => !v)}
-        className="md:hidden fixed top-[130px] left-2 z-30 p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm"
-        aria-label="Toggle categories sidebar"
-      >
-        <Menu size={18} />
-      </button>
-      {/* Left panel — Categories */}
-      <div className={cn('border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex flex-col shrink-0', sidebarOpen ? 'w-[300px]' : 'hidden', 'md:block md:w-[300px]')}>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Categories</h3>
-          <button
-            onClick={() => setShowCreateCategory(true)}
-            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-            title="Add category"
-          >
-            <Plus size={16} />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          {loading ? (
-            <div className="p-4">
-              <TableSkeleton rows={3} columns={1} />
-            </div>
-          ) : categories.length === 0 ? (
-            <div className="p-4 text-center text-sm text-slate-500 dark:text-slate-400">
-              No categories yet
-            </div>
-          ) : (
-            <div className="py-1">
-              {categories.map((cat, idx) => (
-                <motion.div
-                  key={cat.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25, delay: idx * 0.04 }}
-                >
-                <div
-                  className={cn(
-                    'group flex items-center gap-2 px-4 py-2.5 cursor-pointer transition-colors',
-                    selectedCategory === cat.id
-                      ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-r-2 border-blue-600 dark:border-blue-400'
-                      : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
-                  )}
-                  onClick={() => setSelectedCategory(cat.id)}
-                >
-                  <FolderOpen size={16} className={cn(
-                    selectedCategory === cat.id ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'
-                  )} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{cat.name}</p>
-                    {cat.description && (
-                      <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{cat.description}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setCategoryForm({ name: cat.name, description: cat.description ?? '' })
-                        setEditingCategory(cat)
-                      }}
-                      className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400"
-                      title="Edit"
-                    >
-                      <Pencil size={12} />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDeleteCategory(cat.id)
-                      }}
-                      className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 dark:text-slate-500 hover:text-red-500"
-                      title="Delete"
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
-                </div>
-                </motion.div>
-              ))}
-            </div>
-          )}
+          <h2 className="text-2xl font-bold text-[color:var(--color-text)]">{t.library.title}</h2>
+          <p className="text-sm text-[color:var(--color-text-secondary)]">Manage reusable rate items and categories</p>
         </div>
       </div>
 
-      {/* Right panel — Items */}
-      <div className="flex-1 flex flex-col bg-slate-50 dark:bg-slate-900 overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-              {selectedCategoryData?.name ?? 'Select a Category'}
-            </h2>
-            {selectedCategoryData?.description && (
-              <p className="text-sm text-slate-500 dark:text-slate-400">{selectedCategoryData.description}</p>
+      <div className="flex flex-1 overflow-hidden">
+        {/* Mobile sidebar toggle */}
+        <button
+          onClick={() => setSidebarOpen((v) => !v)}
+          className="md:hidden fixed top-[130px] start-2 z-30 p-2 rounded-lg bg-[color:var(--color-surface-elevated)] border border-[color:var(--color-border)] shadow-sm text-[color:var(--color-text-secondary)]"
+          aria-label="Toggle categories sidebar"
+        >
+          <Menu size={18} />
+        </button>
+
+        {/* Left panel — Categories */}
+        <div className={cn(
+          'border-e border-[color:var(--color-border)] bg-[color:var(--color-surface-elevated)] flex flex-col shrink-0',
+          sidebarOpen ? 'w-[280px]' : 'hidden',
+          'md:block md:w-[280px]'
+        )}>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[color:var(--color-border)]">
+            <h3 className="text-sm font-bold text-[color:var(--color-text)] uppercase tracking-wider font-mono">Categories</h3>
+            <button
+              onClick={() => setShowCreateCategory(true)}
+              className="p-1.5 rounded-lg hover:bg-[color:var(--color-amber)]/10 text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-amber)] transition-colors"
+              title="Add category"
+            >
+              <Plus size={16} />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {loading ? (
+              <div className="p-4">
+                <TableSkeleton rows={3} columns={1} />
+              </div>
+            ) : categories.length === 0 ? (
+              <div className="p-4 text-center text-sm text-[color:var(--color-text-secondary)]">
+                No categories yet
+              </div>
+            ) : (
+              <div className="py-2 space-y-0.5 px-2">
+                {categories.map((cat, idx) => (
+                  <motion.div
+                    key={cat.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, delay: idx * 0.04 }}
+                  >
+                    <div
+                      className={cn(
+                        'group flex items-center gap-2 px-3 py-2.5 cursor-pointer transition-colors rounded-xl',
+                        selectedCategory === cat.id
+                          ? 'bg-[color:var(--color-amber)]/10 text-[color:var(--color-amber)] border-e-2 border-[color:var(--color-amber)]'
+                          : 'text-[color:var(--color-text)] hover:bg-[color:var(--color-surface)]'
+                      )}
+                      onClick={() => setSelectedCategory(cat.id)}
+                    >
+                      <FolderOpen size={16} className={cn(
+                        selectedCategory === cat.id ? 'text-[color:var(--color-amber)]' : 'text-[color:var(--color-text-secondary)]'
+                      )} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{cat.name}</p>
+                        {cat.description && (
+                          <p className="text-xs text-[color:var(--color-text-secondary)] truncate">{cat.description}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setCategoryForm({ name: cat.name, description: cat.description ?? '' })
+                            setEditingCategory(cat)
+                          }}
+                          className="p-1 rounded hover:bg-[color:var(--color-amber)]/10 text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-amber)] transition-colors"
+                          title="Edit"
+                        >
+                          <Pencil size={12} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeleteCategory(cat.id)
+                          }}
+                          className="p-1 rounded hover:bg-red-500/10 text-[color:var(--color-text-secondary)] hover:text-red-400 transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             )}
           </div>
-          {selectedCategory && (
-            <Button onClick={() => setShowCreateItem(true)} size="sm">
-              <Plus size={16} />
-              Add Item
-            </Button>
-          )}
         </div>
 
-        <div className="flex-1 overflow-auto p-6">
-          {!selectedCategory ? (
-            <div className="text-center py-20">
-              <BookOpen size={48} className="mx-auto text-slate-300 dark:text-slate-500 mb-4" />
-              <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-1">Pricing Library</h3>
-              <p className="text-slate-500 dark:text-slate-400 text-sm">
-                Select a category to view and manage rate items.
-              </p>
+        {/* Right panel — Items */}
+        <div className="flex-1 flex flex-col bg-[color:var(--background)] overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 bg-[color:var(--color-surface-elevated)] border-b border-[color:var(--color-border)]">
+            <div>
+              <h2 className="text-lg font-bold text-[color:var(--color-text)]">
+                {selectedCategoryData?.name ?? 'Select a Category'}
+              </h2>
+              {selectedCategoryData?.description && (
+                <p className="text-sm text-[color:var(--color-text-secondary)]">{selectedCategoryData.description}</p>
+              )}
             </div>
-          ) : loadingItems ? (
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-              <TableSkeleton rows={6} columns={4} />
-            </div>
-          ) : error && items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <p className="text-sm text-red-500">{error}</p>
-              <button onClick={() => selectedCategory && loadItems(selectedCategory)} className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700">Retry</button>
-            </div>
-          ) : items.length === 0 ? (
-            <div className="text-center py-20">
-              <BookOpen size={48} className="mx-auto text-slate-300 dark:text-slate-500 mb-4" />
-              <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-1">No items in this category</h3>
-              <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
-                Add rate items to build your pricing catalog.
-              </p>
-              <Button onClick={() => setShowCreateItem(true)}>
-                <Plus size={16} />
-                Add First Item
-              </Button>
-            </div>
-          ) : (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-                      <th className="text-left px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[80px]">Code</th>
-                      <th className="text-left px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 min-w-[200px]">Description</th>
-                      <th className="text-left px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[60px]">Unit</th>
-                      <th className="text-right px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[100px]">Rate</th>
-                      <th className="text-right px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[100px]">Material</th>
-                      <th className="text-right px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[100px]">Labor</th>
-                      <th className="text-right px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[100px]">Equipment</th>
-                      <th className="w-[40px]" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item) => (
-                      <tr
-                        key={item.id}
-                        className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group"
-                      >
-                        <td className="px-1 py-0.5">
-                          {renderCell(item, 'code', item.code)}
-                        </td>
-                        <td className="px-1 py-0.5">
-                          {renderCell(item, 'description', item.description)}
-                        </td>
-                        <td className="px-1 py-0.5">
-                          {renderCell(item, 'unit', item.unit)}
-                        </td>
-                        <td className="px-1 py-0.5">
-                          {renderCell(item, 'default_rate', item.default_rate, true)}
-                        </td>
-                        <td className="px-1 py-0.5">
-                          {renderCell(item, 'material_rate', item.material_rate, true)}
-                        </td>
-                        <td className="px-1 py-0.5">
-                          {renderCell(item, 'labor_rate', item.labor_rate, true)}
-                        </td>
-                        <td className="px-1 py-0.5">
-                          {renderCell(item, 'equipment_rate', item.equipment_rate, true)}
-                        </td>
-                        <td className="px-1 py-0.5">
-                          <button
-                            onClick={() => handleDeleteItem(item.id)}
-                            className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-300 dark:text-slate-500 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                            title="Delete"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {selectedCategory && (
+              <button
+                onClick={() => setShowCreateItem(true)}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-xl bg-[color:var(--color-amber)] text-[color:var(--color-on-amber)] hover:opacity-90 transition-opacity shadow-sm"
+              >
+                <Plus size={15} />
+                Add Item
+              </button>
+            )}
+          </div>
+
+          <div className="flex-1 overflow-auto p-5">
+            {!selectedCategory ? (
+              <div className="text-center py-20">
+                <div className="w-14 h-14 rounded-2xl bg-[color:var(--color-amber)]/10 flex items-center justify-center mx-auto mb-4">
+                  <BookOpen size={28} className="text-[color:var(--color-amber)]" />
+                </div>
+                <h3 className="text-lg font-semibold text-[color:var(--color-text)] mb-1">Pricing Library</h3>
+                <p className="text-[color:var(--color-text-secondary)] text-sm">
+                  Select a category to view and manage rate items.
+                </p>
               </div>
-            </motion.div>
-          )}
+            ) : loadingItems ? (
+              <div className="bg-[color:var(--color-surface-elevated)] rounded-2xl border border-[color:var(--color-border)] p-4">
+                <TableSkeleton rows={6} columns={4} />
+              </div>
+            ) : error && items.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-3">
+                <p className="text-sm text-red-400">{error}</p>
+                <button onClick={() => selectedCategory && loadItems(selectedCategory)} className="px-4 py-2 text-sm font-medium bg-[color:var(--color-amber)] text-[color:var(--color-on-amber)] rounded-xl hover:opacity-90">Retry</button>
+              </div>
+            ) : items.length === 0 ? (
+              <div className="text-center py-20">
+                <div className="w-14 h-14 rounded-2xl bg-[color:var(--color-amber)]/10 flex items-center justify-center mx-auto mb-4">
+                  <BookOpen size={28} className="text-[color:var(--color-amber)]" />
+                </div>
+                <h3 className="text-lg font-semibold text-[color:var(--color-text)] mb-1">No items in this category</h3>
+                <p className="text-[color:var(--color-text-secondary)] text-sm mb-6">
+                  Add rate items to build your pricing catalog.
+                </p>
+                <button
+                  onClick={() => setShowCreateItem(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-xl bg-[color:var(--color-amber)] text-[color:var(--color-on-amber)] hover:opacity-90 transition-opacity mx-auto"
+                >
+                  <Plus size={15} />
+                  Add First Item
+                </button>
+              </div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                className="bg-[color:var(--color-surface-elevated)] rounded-2xl border border-[color:var(--color-border)] overflow-hidden"
+              >
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-[color:var(--color-surface)] border-b border-[color:var(--color-border)]">
+                        <th className="text-start px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)] w-[80px]">Code</th>
+                        <th className="text-start px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)] min-w-[200px]">Description</th>
+                        <th className="text-start px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)] w-[60px]">Unit</th>
+                        <th className="text-end px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)] w-[100px]">Rate</th>
+                        <th className="text-end px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)] w-[100px]">Material</th>
+                        <th className="text-end px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)] w-[100px]">Labor</th>
+                        <th className="text-end px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)] w-[100px]">Equipment</th>
+                        <th className="w-[40px]" />
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[color:var(--color-border)]/50">
+                      {items.map((item, idx) => (
+                        <tr
+                          key={item.id}
+                          className={cn(
+                            'hover:bg-[color:var(--color-amber)]/5 transition-colors group',
+                            idx % 2 === 1 && 'bg-[color:var(--color-surface)]/30'
+                          )}
+                        >
+                          <td className="px-1 py-0.5">
+                            {renderCell(item, 'code', item.code)}
+                          </td>
+                          <td className="px-1 py-0.5">
+                            {renderCell(item, 'description', item.description)}
+                          </td>
+                          <td className="px-1 py-0.5">
+                            {renderCell(item, 'unit', item.unit)}
+                          </td>
+                          <td className="px-1 py-0.5">
+                            {renderCell(item, 'default_rate', item.default_rate, true)}
+                          </td>
+                          <td className="px-1 py-0.5">
+                            {renderCell(item, 'material_rate', item.material_rate, true)}
+                          </td>
+                          <td className="px-1 py-0.5">
+                            {renderCell(item, 'labor_rate', item.labor_rate, true)}
+                          </td>
+                          <td className="px-1 py-0.5">
+                            {renderCell(item, 'equipment_rate', item.equipment_rate, true)}
+                          </td>
+                          <td className="px-1 py-0.5">
+                            <button
+                              onClick={() => handleDeleteItem(item.id)}
+                              className="p-1.5 rounded hover:bg-red-500/10 text-[color:var(--color-border)] hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                              title="Delete"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </motion.div>
+            )}
+          </div>
         </div>
-      </div>
       </div>
 
       {/* Create Category Modal */}
@@ -505,7 +529,7 @@ export default function LibraryPage() {
             onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
             placeholder="Optional description"
           />
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="text-sm text-red-400">{error}</p>}
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowCreateCategory(false)}>Cancel</Button>
             <Button onClick={handleCreateCategory} loading={creating} disabled={!categoryForm.name.trim()}>
@@ -530,7 +554,7 @@ export default function LibraryPage() {
             onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
             placeholder="Optional description"
           />
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="text-sm text-red-400">{error}</p>}
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => { setEditingCategory(null); setCategoryForm({ name: '', description: '' }) }}>Cancel</Button>
             <Button onClick={handleEditCategory} loading={creating} disabled={!categoryForm.name.trim()}>
@@ -561,11 +585,11 @@ export default function LibraryPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Unit</label>
+              <label className="text-sm font-medium text-[color:var(--color-text)]">Unit</label>
               <select
                 value={itemForm.unit}
                 onChange={(e) => setItemForm({ ...itemForm, unit: e.target.value })}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface-elevated)] text-[color:var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-amber)]/30"
               >
                 {MEASUREMENT_UNITS.map((u) => (
                   <option key={u.value} value={u.value}>{u.label}</option>
@@ -604,15 +628,15 @@ export default function LibraryPage() {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Notes</label>
+            <label className="text-sm font-medium text-[color:var(--color-text)]">Notes</label>
             <textarea
               value={itemForm.notes}
               onChange={(e) => setItemForm({ ...itemForm, notes: e.target.value })}
               rows={2}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface-elevated)] text-[color:var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-amber)]/30 resize-none"
             />
           </div>
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="text-sm text-red-400">{error}</p>}
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowCreateItem(false)}>Cancel</Button>
             <Button onClick={handleCreateItem} loading={creating} disabled={!itemForm.description.trim()}>
@@ -623,7 +647,7 @@ export default function LibraryPage() {
       </Modal>
 
       <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title="Confirm" size="sm">
-        <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{confirmAction?.message}</p>
+        <p className="text-sm text-[color:var(--color-text-secondary)] mb-4">{confirmAction?.message}</p>
         <div className="flex justify-end gap-3">
           <Button variant="ghost" onClick={() => setConfirmAction(null)}>Cancel</Button>
           <Button variant="danger" onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>Confirm</Button>

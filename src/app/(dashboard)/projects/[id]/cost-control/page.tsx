@@ -45,11 +45,11 @@ import { DonutChart, SimpleBarChart } from '@/components/ui/mini-chart'
 import { EmptyState } from '@/components/ui/empty-state'
 
 const VAR_STATUS_COLOR: Record<VariationStatus, string> = {
-  pending: 'text-slate-500 bg-slate-100 dark:bg-slate-700',
-  submitted: 'text-blue-600 bg-blue-50 dark:bg-blue-900/30',
-  approved: 'text-green-600 bg-green-50 dark:bg-green-900/30',
-  rejected: 'text-red-600 bg-red-50 dark:bg-red-900/30',
-  withdrawn: 'text-slate-400 bg-slate-50 dark:bg-slate-800',
+  pending:   'bg-[var(--color-warning-bg)] text-[var(--color-warning)] border border-[var(--color-warning)]/30',
+  submitted: 'bg-[var(--color-info-bg)] text-[var(--color-info)] border border-[var(--color-info)]/30',
+  approved:  'bg-[var(--color-success-bg)] text-[var(--color-success)] border border-[var(--color-success)]/30',
+  rejected:  'bg-[var(--color-danger-bg)] text-[var(--color-danger)] border border-[var(--color-danger)]/30',
+  withdrawn: 'bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] border border-[var(--color-border)]',
 }
 
 export default function CostControlPage() {
@@ -276,8 +276,8 @@ export default function CostControlPage() {
   if (error && !contract && variations.length === 0 && costEntries.length === 0) {
     return (
       <div className="p-6 md:p-8 max-w-7xl mx-auto">
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
-          <p className="text-red-600 dark:text-red-400 font-medium mb-4">{error}</p>
+        <div className="bg-[var(--color-danger-bg)] border border-[var(--color-danger)]/30 rounded-2xl p-6 text-center">
+          <p className="text-[var(--color-danger)] font-medium mb-4">{error}</p>
           <Button onClick={() => load()}>{t.common.retry}</Button>
         </div>
       </div>
@@ -287,7 +287,7 @@ export default function CostControlPage() {
   if (!contract && variations.length === 0 && costEntries.length === 0 && cashflow.length === 0) {
     return (
       <div className="p-6 md:p-8 max-w-7xl mx-auto">
-        <PageHeader icon={DollarSign} title={t.costControl.title} subtitle={t.costControl.subtitle} gradient="from-rose-500 to-rose-600" />
+        <PageHeader icon={DollarSign} title={t.costControl.title} subtitle={t.costControl.subtitle} gradient="from-[var(--color-amber)] to-[var(--color-amber-dark)]" />
         <EmptyState
           icon={BarChart3}
           title={t.costControl.noDataTitle}
@@ -311,7 +311,7 @@ export default function CostControlPage() {
               <Input label={t.costControl.endDate} type="date" value={contractForm.end_date} onChange={e => setContractForm({ ...contractForm, end_date: e.target.value })} />
               <Input label={t.costControl.durationMonths} type="number" value={contractForm.duration_months} onChange={e => setContractForm({ ...contractForm, duration_months: e.target.value })} />
             </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
             <div className="flex justify-end gap-3 pt-2">
               <Button variant="ghost" onClick={() => setShowContractEdit(false)}>{t.common.cancel}</Button>
               <Button onClick={handleSaveContract}>{t.common.save}</Button>
@@ -322,63 +322,158 @@ export default function CostControlPage() {
     )
   }
 
-  return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
-      <PageHeader
-        icon={DollarSign}
-        title={t.costControl.title}
-        subtitle={t.costControl.subtitle}
-        gradient="from-rose-500 to-rose-600"
-        actions={
-          <Button variant="outline" onClick={() => setShowContractEdit(true)}>
-            <DollarSign size={16} /> {contract ? t.costControl.editContract : t.costControl.setContract}
-          </Button>
-        }
-      />
+  const budgetHealthPct = revisedContract > 0 ? ((revisedContract - totalExposure) / revisedContract) * 100 : 0
 
-      {/* KPI Cards */}
-      <motion.div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8" initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.08 } } }}>
-        <StatCard label={t.costControl.contractValue} value={revisedContract} decimals={2} icon={DollarSign} gradient="from-blue-500 to-blue-600" />
-        <StatCard label={t.costControl.spentToDate} value={actualCost} decimals={2} icon={TrendingDown} gradient="from-red-500 to-red-600" />
-        <StatCard label={t.costControl.remainingBudget} value={Math.max(revisedContract - totalExposure, 0)} decimals={2} icon={Shield} gradient="from-emerald-500 to-emerald-600" />
-        <StatCard label={t.costControl.budgetHealth} value={revisedContract > 0 ? ((revisedContract - totalExposure) / revisedContract) * 100 : 0} suffix="%" decimals={1} icon={TrendingUp} gradient={projectedProfit >= 0 ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-rose-600'} />
+  return (
+    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
+      {/* Page Header */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--color-text)] tracking-tight">{t.costControl.title}</h1>
+          <p className="text-sm text-[var(--color-text-secondary)] mt-1">{t.costControl.subtitle}</p>
+        </div>
+        <Button variant="outline" onClick={() => setShowContractEdit(true)}>
+          <DollarSign size={16} /> {contract ? t.costControl.editContract : t.costControl.setContract}
+        </Button>
+      </div>
+
+      {/* KPI Strip — glass cards matching Stitch "Hero Stats Row" */}
+      <motion.div
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+        initial="hidden" animate="visible"
+        variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
+      >
+        {/* Contract Value */}
+        <motion.div
+          variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+          className="bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-2xl p-5 space-y-2"
+        >
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.costControl.contractValue}</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-[var(--color-amber)]">{fmt(revisedContract)}</span>
+          </div>
+          <div className="w-full h-1 rounded-full bg-[var(--color-surface-hover)] overflow-hidden">
+            <div className="bg-[var(--color-amber)] h-full" style={{ width: '100%' }} />
+          </div>
+        </motion.div>
+
+        {/* Spent to Date */}
+        <motion.div
+          variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+          className="bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-2xl p-5 space-y-2"
+        >
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.costControl.spentToDate}</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-[var(--color-text)]">{fmt(actualCost)}</span>
+            {revisedContract > 0 && (
+              <span className="text-xs text-[var(--color-danger)]">
+                {((actualCost / revisedContract) * 100).toFixed(1)}%
+              </span>
+            )}
+          </div>
+          <div className="w-full h-1 rounded-full bg-[var(--color-surface-hover)] overflow-hidden">
+            <div
+              className="bg-[var(--color-danger)] h-full transition-all"
+              style={{ width: revisedContract > 0 ? `${Math.min((actualCost / revisedContract) * 100, 100)}%` : '0%' }}
+            />
+          </div>
+        </motion.div>
+
+        {/* Remaining Budget */}
+        <motion.div
+          variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+          className="bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-2xl p-5 space-y-2"
+        >
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.costControl.remainingBudget}</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-[var(--color-text)]">{fmt(Math.max(revisedContract - totalExposure, 0))}</span>
+          </div>
+          <div className="w-full h-1 rounded-full bg-[var(--color-surface-hover)] overflow-hidden">
+            <div
+              className="bg-[var(--color-success)] h-full transition-all"
+              style={{ width: revisedContract > 0 ? `${Math.max(Math.min(((revisedContract - totalExposure) / revisedContract) * 100, 100), 0)}%` : '0%' }}
+            />
+          </div>
+        </motion.div>
+
+        {/* Budget Health */}
+        <motion.div
+          variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+          className={cn(
+            'rounded-2xl p-5 space-y-2 border',
+            projectedProfit >= 0
+              ? 'bg-[var(--color-amber)]/5 border-[var(--color-amber)]/20'
+              : 'bg-[var(--color-danger-bg)] border-[var(--color-danger)]/20'
+          )}
+        >
+          <span className={cn(
+            'text-[10px] font-semibold uppercase tracking-widest',
+            projectedProfit >= 0 ? 'text-[var(--color-amber)]' : 'text-[var(--color-danger)]'
+          )}>{t.costControl.budgetHealth}</span>
+          <div className="flex items-baseline gap-1">
+            <span className={cn(
+              'text-2xl font-bold',
+              projectedProfit >= 0 ? 'text-[var(--color-amber)]' : 'text-[var(--color-danger)]'
+            )}>
+              {budgetHealthPct.toFixed(1)}%
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs">
+            {projectedProfit >= 0 ? (
+              <CheckCircle2 size={13} className="text-[var(--color-amber)]" />
+            ) : (
+              <AlertTriangle size={13} className="text-[var(--color-danger)]" />
+            )}
+            <span className={projectedProfit >= 0 ? 'text-[var(--color-amber)]' : 'text-[var(--color-danger)]'}>
+              {projectedProfit >= 0 ? 'On Track' : 'Over Budget'}
+            </span>
+          </div>
+        </motion.div>
       </motion.div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-4 border-b border-slate-200 dark:border-slate-700">
+      <div className="flex gap-1 border-b border-[var(--color-border)]">
         {(['overview', 'variations', 'costs', 'cashflow'] as const).map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} className={cn(
-            'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
-            activeTab === tab ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700'
-          )}>{t.costControl[tab]}</button>
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={cn(
+              'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px',
+              activeTab === tab
+                ? 'border-[var(--color-amber)] text-[var(--color-amber)]'
+                : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
+            )}
+          >
+            {t.costControl[tab]}
+          </button>
         ))}
       </div>
 
       {/* Overview tab */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          {/* Budget charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SectionCard title={t.costControl.budgetBreakdown} icon={PieChart} iconColor="text-purple-500">
+            <SectionCard title={t.costControl.budgetBreakdown} icon={PieChart} iconColor="text-[var(--color-amber)]">
               <DonutChart segments={[
-                { value: actualCost, color: '#ef4444', label: t.costControl.actualCost },
-                { value: committedCost, color: '#f59e0b', label: t.costControl.committed },
-                { value: forecastCost, color: '#60a5fa', label: t.costControl.forecast },
-                { value: Math.max(revisedContract - totalExposure, 0), color: '#10b981', label: t.costControl.remaining },
+                { value: actualCost, color: 'var(--color-danger)', label: t.costControl.actualCost },
+                { value: committedCost, color: 'var(--color-warning)', label: t.costControl.committed },
+                { value: forecastCost, color: 'var(--color-info)', label: t.costControl.forecast },
+                { value: Math.max(revisedContract - totalExposure, 0), color: 'var(--color-success)', label: t.costControl.remaining },
               ].filter(s => s.value > 0)} />
             </SectionCard>
-            <SectionCard title={t.costControl.costVariance} icon={BarChart3} iconColor="text-amber-500">
+            <SectionCard title={t.costControl.costVariance} icon={BarChart3} iconColor="text-[var(--color-amber)]">
               <SimpleBarChart bars={[
-                { label: t.costControl.contractValue, value: contractValue, color: '#3b82f6' },
-                { label: t.costControl.approvedVarShort, value: approvedVariations, color: '#10b981' },
-                { label: t.costControl.actualCost, value: actualCost, color: '#ef4444' },
-                { label: t.costControl.committed, value: committedCost, color: '#f59e0b' },
-                { label: t.costControl.forecast, value: forecastCost, color: '#60a5fa' },
+                { label: t.costControl.contractValue, value: contractValue, color: 'var(--color-amber)' },
+                { label: t.costControl.approvedVarShort, value: approvedVariations, color: 'var(--color-success)' },
+                { label: t.costControl.actualCost, value: actualCost, color: 'var(--color-danger)' },
+                { label: t.costControl.committed, value: committedCost, color: 'var(--color-warning)' },
+                { label: t.costControl.forecast, value: forecastCost, color: 'var(--color-info)' },
               ]} horizontal />
             </SectionCard>
           </div>
-          {/* Financial Summary table */}
-          <SectionCard title={t.costControl.financialSummary} icon={FileText} iconColor="text-blue-500" noPadding>
+
+          {/* Financial Summary */}
+          <SectionCard title={t.costControl.financialSummary} icon={FileText} iconColor="text-[var(--color-amber)]" noPadding>
             <div className="overflow-x-auto">
               <table className="w-full text-sm min-w-[500px]">
                 <tbody>
@@ -394,11 +489,27 @@ export default function CostControlPage() {
                     { label: t.costControl.rowContingency, value: contingency },
                     { label: t.costControl.rowProjectedProfitLoss, value: projectedProfit, bold: true, highlight: true },
                   ].map(row => (
-                    <tr key={row.label} className={cn('border-b border-slate-100 dark:border-slate-700', row.bold && 'bg-slate-50/50 dark:bg-slate-900/30')}>
-                      <td className={cn('px-4 py-2.5', row.bold ? 'font-semibold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300', row.muted && 'text-slate-400 italic')}>{row.label}</td>
-                      <td className={cn('px-4 py-2.5 text-end tabular-nums', row.bold ? 'font-bold text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-200',
-                        row.highlight && (projectedProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400')
-                      )}>{fmt(row.value)}</td>
+                    <tr
+                      key={row.label}
+                      className={cn(
+                        'border-b border-[var(--color-border)]',
+                        row.bold && 'bg-[var(--color-surface-hover)]'
+                      )}
+                    >
+                      <td className={cn(
+                        'px-5 py-3',
+                        row.bold ? 'font-semibold text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]',
+                        row.muted && 'text-[var(--color-text-muted)] italic'
+                      )}>
+                        {row.label}
+                      </td>
+                      <td className={cn(
+                        'px-5 py-3 text-end tabular-nums font-mono text-sm',
+                        row.bold ? 'font-bold text-[var(--color-text)]' : 'text-[var(--color-text)]',
+                        row.highlight && (projectedProfit >= 0 ? 'text-[var(--color-success)] font-bold' : 'text-[var(--color-danger)] font-bold')
+                      )}>
+                        {fmt(row.value)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -410,107 +521,64 @@ export default function CostControlPage() {
 
       {/* Variations tab */}
       {activeTab === 'variations' && (
-        <SectionCard title={t.costControl.variationsRegister} icon={FileText} iconColor="text-blue-500" noPadding
-          actions={<Button size="sm" onClick={() => setShowAddVariation(true)}><Plus size={14} /> {t.costControl.addVariation}</Button>}>
+        <SectionCard
+          title={t.costControl.variationsRegister}
+          icon={FileText}
+          iconColor="text-[var(--color-amber)]"
+          noPadding
+          actions={
+            <Button size="sm" onClick={() => setShowAddVariation(true)}>
+              <Plus size={14} /> {t.costControl.addVariation}
+            </Button>
+          }
+        >
           {variations.length === 0 ? (
             <EmptyState icon={FileText} title={t.costControl.noVariationsTitle} description={t.costControl.noVariationsDesc} compact />
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-                  <th className="text-start px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.costControl.colVariationNo}</th>
-                  <th className="text-start px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.costControl.colTitle}</th>
-                  <th className="text-start px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.costControl.colType}</th>
-                  <th className="text-start px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.costControl.colStatus}</th>
-                  <th className="text-end px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.costControl.colAmount}</th>
-                  <th className="text-end px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.costControl.colApproved}</th>
-                  <th className="w-[60px]" />
-                </tr>
-              </thead>
-              <tbody>
-                {variations.map(v => (
-                  <tr key={v.id} className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-750">
-                    <td className="px-3 py-2 font-mono text-xs text-slate-500">{v.variation_no}</td>
-                    <td className="px-3 py-2 text-slate-700 dark:text-slate-200">{v.title}</td>
-                    <td className="px-3 py-2 text-xs capitalize text-slate-500">{v.variation_type}</td>
-                    <td className="px-3 py-2">
-                      <select
-                        value={v.status}
-                        onChange={e => handleUpdateVariationStatus(v.id, e.target.value as VariationStatus)}
-                        aria-label={t.costControl.colStatus}
-                        className={cn('text-xs px-2 py-0.5 rounded-full border-0 font-medium', VAR_STATUS_COLOR[v.status])}
-                      >
-                        {(Object.keys(VAR_STATUS_COLOR) as VariationStatus[]).map(k => <option key={k} value={k}>{VAR_STATUS_LABEL[k]}</option>)}
-                      </select>
-                    </td>
-                    <td className="px-3 py-2 text-end tabular-nums">{fmt(v.amount)}</td>
-                    <td className="px-3 py-2 text-end tabular-nums font-medium">{v.approved_amount != null ? fmt(v.approved_amount) : '-'}</td>
-                    <td className="px-3 py-1">
-                      <button
-                        onClick={() => handleDeleteVariation(v.id)}
-                        className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-300 hover:text-red-500"
-                        title={t.costControl.deleteVariation}
-                        aria-label={t.costControl.deleteVariation}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="bg-slate-50 dark:bg-slate-900 border-t-2 border-slate-300 dark:border-slate-600">
-                  <td colSpan={4} className="px-3 py-2 font-semibold text-slate-700 dark:text-slate-200">{t.costControl.total}</td>
-                  <td className="px-3 py-2 text-end font-bold tabular-nums">{fmt(variations.reduce((s, v) => s + v.amount, 0))}</td>
-                  <td className="px-3 py-2 text-end font-bold tabular-nums text-green-600 dark:text-green-400">
-                    {fmt(variations.filter(v => v.approved_amount != null).reduce((s, v) => s + (v.approved_amount ?? 0), 0))}
-                  </td>
-                  <td />
-                </tr>
-              </tfoot>
-            </table>
-          )}
-        </SectionCard>
-      )}
-
-      {/* Cost entries tab */}
-      {activeTab === 'costs' && (
-        <div className="space-y-6">
-          <motion.div className="grid grid-cols-2 lg:grid-cols-3 gap-6" initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.08 } } }}>
-            <StatCard label={t.costControl.actualCost} value={actualCost} decimals={2} icon={TrendingDown} gradient="from-red-500 to-red-600" compact />
-            <StatCard label={t.costControl.committed} value={committedCost} decimals={2} icon={Clock} gradient="from-amber-500 to-amber-600" compact />
-            <StatCard label={t.costControl.forecast} value={forecastCost} decimals={2} icon={TrendingUp} gradient="from-blue-500 to-blue-600" compact />
-          </motion.div>
-          <SectionCard title={t.costControl.costEntries} icon={DollarSign} iconColor="text-rose-500" noPadding
-            actions={<Button size="sm" onClick={() => setShowAddCost(true)}><Plus size={14} /> {t.costControl.addEntry}</Button>}>
-            {costEntries.length === 0 ? (
-              <EmptyState icon={DollarSign} title={t.costControl.noCostEntriesTitle} description={t.costControl.noCostEntriesDesc} compact />
-            ) : (
+            <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-                    <th className="text-start px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.costControl.colDate}</th>
-                    <th className="text-start px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.costControl.colDescription}</th>
-                    <th className="text-start px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.costControl.colCategory}</th>
-                    <th className="text-start px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.costControl.colType}</th>
-                    <th className="text-end px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.costControl.colAmount}</th>
-                    <th className="w-[40px]" />
+                  <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-hover)]">
+                    <th className="text-start px-5 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.costControl.colVariationNo}</th>
+                    <th className="text-start px-5 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.costControl.colTitle}</th>
+                    <th className="text-start px-5 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.costControl.colType}</th>
+                    <th className="text-start px-5 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.costControl.colStatus}</th>
+                    <th className="text-end px-5 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.costControl.colAmount}</th>
+                    <th className="text-end px-5 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.costControl.colApproved}</th>
+                    <th className="w-[50px]" />
                   </tr>
                 </thead>
                 <tbody>
-                  {costEntries.map(ce => (
-                    <tr key={ce.id} className="border-b border-slate-100 dark:border-slate-700">
-                      <td className="px-3 py-2 text-xs text-slate-500">{ce.period_date}</td>
-                      <td className="px-3 py-2 text-slate-700 dark:text-slate-200">{ce.description}</td>
-                      <td className="px-3 py-2 text-xs capitalize text-slate-500">{ce.category}</td>
-                      <td className="px-3 py-2 text-xs capitalize text-slate-500">{ce.cost_type}</td>
-                      <td className="px-3 py-2 text-end tabular-nums font-medium">{fmt(ce.amount)}</td>
-                      <td className="px-3 py-1">
+                  {variations.map(v => (
+                    <tr key={v.id} className="border-b border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] transition-colors">
+                      <td className="px-5 py-3 font-mono text-xs text-[var(--color-text-muted)]">{v.variation_no}</td>
+                      <td className="px-5 py-3 text-[var(--color-text)]">{v.title}</td>
+                      <td className="px-5 py-3 text-xs capitalize text-[var(--color-text-secondary)]">{v.variation_type}</td>
+                      <td className="px-5 py-3">
+                        <select
+                          value={v.status}
+                          onChange={e => handleUpdateVariationStatus(v.id, e.target.value as VariationStatus)}
+                          aria-label={t.costControl.colStatus}
+                          className={cn(
+                            'text-xs px-2 py-0.5 rounded-full border-0 font-medium cursor-pointer focus:outline-none',
+                            VAR_STATUS_COLOR[v.status]
+                          )}
+                        >
+                          {(Object.keys(VAR_STATUS_COLOR) as VariationStatus[]).map(k => (
+                            <option key={k} value={k}>{VAR_STATUS_LABEL[k]}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="px-5 py-3 text-end tabular-nums font-mono text-sm text-[var(--color-text)]">{fmt(v.amount)}</td>
+                      <td className="px-5 py-3 text-end tabular-nums font-mono text-sm font-medium text-[var(--color-success)]">
+                        {v.approved_amount != null ? fmt(v.approved_amount) : '-'}
+                      </td>
+                      <td className="px-5 py-2 text-center">
                         <button
-                          onClick={() => handleDeleteCostEntry(ce.id)}
-                          className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-300 hover:text-red-500"
-                          title={t.costControl.deleteCostEntry}
-                          aria-label={t.costControl.deleteCostEntry}
+                          onClick={() => handleDeleteVariation(v.id)}
+                          className="p-1.5 rounded-lg hover:bg-[var(--color-danger-bg)] text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-colors"
+                          title={t.costControl.deleteVariation}
+                          aria-label={t.costControl.deleteVariation}
                         >
                           <Trash2 size={14} />
                         </button>
@@ -518,7 +586,86 @@ export default function CostControlPage() {
                     </tr>
                   ))}
                 </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-[var(--color-border-strong)] bg-[var(--color-surface-hover)]">
+                    <td colSpan={4} className="px-5 py-3 font-semibold text-[var(--color-text)]">{t.costControl.total}</td>
+                    <td className="px-5 py-3 text-end font-bold tabular-nums font-mono text-[var(--color-text)]">
+                      {fmt(variations.reduce((s, v) => s + v.amount, 0))}
+                    </td>
+                    <td className="px-5 py-3 text-end font-bold tabular-nums font-mono text-[var(--color-success)]">
+                      {fmt(variations.filter(v => v.approved_amount != null).reduce((s, v) => s + (v.approved_amount ?? 0), 0))}
+                    </td>
+                    <td />
+                  </tr>
+                </tfoot>
               </table>
+            </div>
+          )}
+        </SectionCard>
+      )}
+
+      {/* Cost entries tab */}
+      {activeTab === 'costs' && (
+        <div className="space-y-6">
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-3 gap-4"
+            initial="hidden" animate="visible"
+            variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
+          >
+            <StatCard label={t.costControl.actualCost} value={actualCost} decimals={2} icon={TrendingDown} gradient="from-[var(--color-danger)] to-rose-700" compact />
+            <StatCard label={t.costControl.committed} value={committedCost} decimals={2} icon={Clock} gradient="from-[var(--color-warning)] to-orange-600" compact />
+            <StatCard label={t.costControl.forecast} value={forecastCost} decimals={2} icon={TrendingUp} gradient="from-[var(--color-info)] to-blue-700" compact />
+          </motion.div>
+
+          <SectionCard
+            title={t.costControl.costEntries}
+            icon={DollarSign}
+            iconColor="text-[var(--color-amber)]"
+            noPadding
+            actions={
+              <Button size="sm" onClick={() => setShowAddCost(true)}>
+                <Plus size={14} /> {t.costControl.addEntry}
+              </Button>
+            }
+          >
+            {costEntries.length === 0 ? (
+              <EmptyState icon={DollarSign} title={t.costControl.noCostEntriesTitle} description={t.costControl.noCostEntriesDesc} compact />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-hover)]">
+                      <th className="text-start px-5 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.costControl.colDate}</th>
+                      <th className="text-start px-5 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.costControl.colDescription}</th>
+                      <th className="text-start px-5 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.costControl.colCategory}</th>
+                      <th className="text-start px-5 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.costControl.colType}</th>
+                      <th className="text-end px-5 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.costControl.colAmount}</th>
+                      <th className="w-[50px]" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {costEntries.map(ce => (
+                      <tr key={ce.id} className="border-b border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] transition-colors">
+                        <td className="px-5 py-3 text-xs font-mono text-[var(--color-text-muted)]">{ce.period_date}</td>
+                        <td className="px-5 py-3 text-[var(--color-text)]">{ce.description}</td>
+                        <td className="px-5 py-3 text-xs capitalize text-[var(--color-text-secondary)]">{ce.category}</td>
+                        <td className="px-5 py-3 text-xs capitalize text-[var(--color-text-secondary)]">{ce.cost_type}</td>
+                        <td className="px-5 py-3 text-end tabular-nums font-mono text-sm font-medium text-[var(--color-text)]">{fmt(ce.amount)}</td>
+                        <td className="px-5 py-2 text-center">
+                          <button
+                            onClick={() => handleDeleteCostEntry(ce.id)}
+                            className="p-1.5 rounded-lg hover:bg-[var(--color-danger-bg)] text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-colors"
+                            title={t.costControl.deleteCostEntry}
+                            aria-label={t.costControl.deleteCostEntry}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </SectionCard>
         </div>
@@ -528,48 +675,55 @@ export default function CostControlPage() {
       {activeTab === 'cashflow' && (
         <div className="space-y-6">
           {cashflow.length > 0 && (
-            <SectionCard title={t.costControl.monthlyCashflow} icon={BarChart3} iconColor="text-green-500">
+            <SectionCard title={t.costControl.monthlyCashflow} icon={BarChart3} iconColor="text-[var(--color-success)]">
               <SimpleBarChart
                 bars={cashflow.map(cf => ({
                   label: cf.period_date,
                   value: cf.actual_income - cf.actual_expense,
-                  color: (cf.actual_income - cf.actual_expense) >= 0 ? '#10b981' : '#ef4444',
+                  color: (cf.actual_income - cf.actual_expense) >= 0 ? 'var(--color-success)' : 'var(--color-danger)',
                 }))}
                 horizontal={false}
               />
             </SectionCard>
           )}
-          <SectionCard title={t.costControl.cashflowDetails} icon={DollarSign} iconColor="text-blue-500" noPadding>
+          <SectionCard title={t.costControl.cashflowDetails} icon={DollarSign} iconColor="text-[var(--color-amber)]" noPadding>
             {cashflow.length === 0 ? (
               <EmptyState icon={BarChart3} title={t.costControl.noCashflowTitle} description={t.costControl.noCashflowDesc} compact />
             ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-                    <th className="text-start px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.costControl.colPeriod}</th>
-                    <th className="text-end px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.costControl.colPlanIncome}</th>
-                    <th className="text-end px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.costControl.colActualIncome}</th>
-                    <th className="text-end px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.costControl.colPlanExpense}</th>
-                    <th className="text-end px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.costControl.colActualExpense}</th>
-                    <th className="text-end px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.costControl.colNet}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {cashflow.map(cf => {
-                    const net = cf.actual_income - cf.actual_expense
-                    return (
-                      <tr key={cf.id} className="border-b border-slate-100 dark:border-slate-700">
-                        <td className="px-3 py-2 text-xs text-slate-500">{cf.period_date}</td>
-                        <td className="px-3 py-2 text-end tabular-nums">{fmt(cf.planned_income)}</td>
-                        <td className="px-3 py-2 text-end tabular-nums">{fmt(cf.actual_income)}</td>
-                        <td className="px-3 py-2 text-end tabular-nums">{fmt(cf.planned_expense)}</td>
-                        <td className="px-3 py-2 text-end tabular-nums">{fmt(cf.actual_expense)}</td>
-                        <td className={cn('px-3 py-2 text-end tabular-nums font-medium', net >= 0 ? 'text-green-600' : 'text-red-600')}>{fmt(net)}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-hover)]">
+                      <th className="text-start px-5 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.costControl.colPeriod}</th>
+                      <th className="text-end px-5 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.costControl.colPlanIncome}</th>
+                      <th className="text-end px-5 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.costControl.colActualIncome}</th>
+                      <th className="text-end px-5 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.costControl.colPlanExpense}</th>
+                      <th className="text-end px-5 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.costControl.colActualExpense}</th>
+                      <th className="text-end px-5 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.costControl.colNet}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cashflow.map(cf => {
+                      const net = cf.actual_income - cf.actual_expense
+                      return (
+                        <tr key={cf.id} className="border-b border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] transition-colors">
+                          <td className="px-5 py-3 text-xs font-mono text-[var(--color-text-muted)]">{cf.period_date}</td>
+                          <td className="px-5 py-3 text-end tabular-nums font-mono text-sm text-[var(--color-text)]">{fmt(cf.planned_income)}</td>
+                          <td className="px-5 py-3 text-end tabular-nums font-mono text-sm text-[var(--color-text)]">{fmt(cf.actual_income)}</td>
+                          <td className="px-5 py-3 text-end tabular-nums font-mono text-sm text-[var(--color-text)]">{fmt(cf.planned_expense)}</td>
+                          <td className="px-5 py-3 text-end tabular-nums font-mono text-sm text-[var(--color-text)]">{fmt(cf.actual_expense)}</td>
+                          <td className={cn(
+                            'px-5 py-3 text-end tabular-nums font-mono text-sm font-bold',
+                            net >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'
+                          )}>
+                            {fmt(net)}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             )}
           </SectionCard>
         </div>
@@ -590,7 +744,7 @@ export default function CostControlPage() {
             <Input label={t.costControl.endDate} type="date" value={contractForm.end_date} onChange={e => setContractForm({ ...contractForm, end_date: e.target.value })} />
             <Input label={t.costControl.durationMonths} type="number" value={contractForm.duration_months} onChange={e => setContractForm({ ...contractForm, duration_months: e.target.value })} />
           </div>
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowContractEdit(false)}>{t.common.cancel}</Button>
             <Button onClick={handleSaveContract}>{t.common.save}</Button>
@@ -609,8 +763,12 @@ export default function CostControlPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t.costControl.typeLabel}</label>
-              <select value={varForm.variation_type} onChange={e => setVarForm({ ...varForm, variation_type: e.target.value as VariationType })} className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <label className="text-sm font-medium text-[var(--color-text-secondary)]">{t.costControl.typeLabel}</label>
+              <select
+                value={varForm.variation_type}
+                onChange={e => setVarForm({ ...varForm, variation_type: e.target.value as VariationType })}
+                className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]/40"
+              >
                 <option value="addition">{t.costControl.typeAddition}</option>
                 <option value="omission">{t.costControl.typeOmission}</option>
                 <option value="substitution">{t.costControl.typeSubstitution}</option>
@@ -618,7 +776,7 @@ export default function CostControlPage() {
             </div>
             <Input label={t.costControl.amountLabel} type="number" value={varForm.amount} onChange={e => setVarForm({ ...varForm, amount: e.target.value })} />
           </div>
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowAddVariation(false)}>{t.common.cancel}</Button>
             <Button onClick={handleAddVariation} disabled={!varForm.title.trim()}>{t.common.add}</Button>
@@ -633,22 +791,32 @@ export default function CostControlPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input label={t.costControl.dateLabel} type="date" value={costForm.period_date} onChange={e => setCostForm({ ...costForm, period_date: e.target.value })} />
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t.costControl.categoryLabel}</label>
-              <select value={costForm.category} onChange={e => setCostForm({ ...costForm, category: e.target.value })} className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <label className="text-sm font-medium text-[var(--color-text-secondary)]">{t.costControl.categoryLabel}</label>
+              <select
+                value={costForm.category}
+                onChange={e => setCostForm({ ...costForm, category: e.target.value })}
+                className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]/40"
+              >
                 <option value="actual">{t.costControl.categoryActual}</option>
                 <option value="committed">{t.costControl.categoryCommitted}</option>
                 <option value="forecast">{t.costControl.categoryForecast}</option>
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t.costControl.typeLabel}</label>
-              <select value={costForm.cost_type} onChange={e => setCostForm({ ...costForm, cost_type: e.target.value })} className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                {['direct','indirect','material','labor','equipment','subcontractor','overhead','other'].map(ct => <option key={ct} value={ct}>{ct}</option>)}
+              <label className="text-sm font-medium text-[var(--color-text-secondary)]">{t.costControl.typeLabel}</label>
+              <select
+                value={costForm.cost_type}
+                onChange={e => setCostForm({ ...costForm, cost_type: e.target.value })}
+                className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]/40"
+              >
+                {['direct','indirect','material','labor','equipment','subcontractor','overhead','other'].map(ct => (
+                  <option key={ct} value={ct}>{ct}</option>
+                ))}
               </select>
             </div>
           </div>
           <Input label={t.costControl.amountLabel} type="number" value={costForm.amount} onChange={e => setCostForm({ ...costForm, amount: e.target.value })} />
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowAddCost(false)}>{t.common.cancel}</Button>
             <Button onClick={handleAddCost} disabled={!costForm.description.trim()}>{t.common.add}</Button>

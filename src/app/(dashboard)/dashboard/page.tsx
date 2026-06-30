@@ -34,13 +34,13 @@ function CashFlowChart({ data }: { data: { month: string; income: number; expens
         {data.map((d, i) => (
           <div key={i} className="flex-1 flex items-end gap-0.5 h-full">
             <motion.div
-              className="flex-1 rounded-t-md bg-gradient-to-t from-emerald-500 to-emerald-400 opacity-80"
+              className="flex-1 rounded-t-sm bg-[var(--color-amber)] opacity-80"
               initial={{ height: 0 }}
               animate={{ height: `${(d.income / max) * 100}%` }}
               transition={{ duration: 0.8, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
             />
             <motion.div
-              className="flex-1 rounded-t-md bg-gradient-to-t from-rose-500 to-rose-400 opacity-80"
+              className="flex-1 rounded-t-sm bg-[#60a5fa] opacity-60"
               initial={{ height: 0 }}
               animate={{ height: `${(d.expense / max) * 100}%` }}
               transition={{ duration: 0.8, delay: i * 0.05 + 0.1, ease: [0.16, 1, 0.3, 1] }}
@@ -50,7 +50,7 @@ function CashFlowChart({ data }: { data: { month: string; income: number; expens
       </div>
       <div className="absolute bottom-0 left-0 right-0 flex justify-between px-1">
         {data.map((d, i) => (
-          <span key={i} className="flex-1 text-center text-[8px] text-slate-400 mt-1">{d.month}</span>
+          <span key={i} className="flex-1 text-center text-[8px] text-[var(--color-text-muted)] mt-1">{d.month}</span>
         ))}
       </div>
     </div>
@@ -69,67 +69,74 @@ function ProjectCard({ project, summary, onClick, t }: { project: Project; summa
 
   return (
     <motion.div
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      whileHover={{ y: -2, transition: { duration: 0.2 } }}
       onClick={onClick}
-      className="group relative rounded-2xl bg-white dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/40 p-4 cursor-pointer transition-all duration-300 hover:shadow-xl hover:border-indigo-200 dark:hover:border-indigo-500/30"
+      className="group relative rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] p-4 cursor-pointer transition-all duration-300 hover:border-[var(--color-amber)]/40 hover:bg-[var(--color-surface-elevated)]"
     >
-      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-2xl" />
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-[var(--color-amber)] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-2xl" />
 
       <div className="flex items-start justify-between mb-3">
         <div className="min-w-0 flex-1">
-          <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate">{project.name}</h4>
-          <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{project.location ?? t.dashboard.noLocation}</p>
+          <h4 className="text-sm font-bold text-[var(--foreground)] truncate">{project.name}</h4>
+          <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">{project.location ?? t.dashboard.noLocation}</p>
         </div>
         <div className={cn(
           'px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider',
-          project.status === 'active' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' :
-          project.status === 'completed' ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' :
-          'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+          project.status === 'active'
+            ? 'bg-[var(--color-amber)]/10 text-[var(--color-amber)] border border-[var(--color-amber)]/20'
+            : project.status === 'completed'
+            ? 'bg-[#60a5fa]/10 text-[#60a5fa] border border-[#60a5fa]/20'
+            : 'bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)] border border-[var(--color-border)]'
         )}>
           {project.status}
         </div>
       </div>
 
       <div className="flex items-center gap-3 mb-3">
-        <ProgressRing value={progress} size={44} strokeWidth={5} color={progress >= 80 ? '#10b981' : progress >= 40 ? '#3b82f6' : '#f59e0b'} />
+        <ProgressRing
+          value={progress}
+          size={44}
+          strokeWidth={5}
+          color={progress >= 80 ? '#22c55e' : progress >= 40 ? '#eab308' : '#f87171'}
+        />
         <div className="flex-1 space-y-1.5">
           <div className="flex justify-between text-[10px]">
-            <span className="text-slate-400">{t.dashboard.contract}</span>
-            <span className="font-semibold text-slate-700 dark:text-slate-300 tabular-nums">${fmtCompact(contractVal)}</span>
+            <span className="text-[var(--color-text-muted)]">{t.dashboard.contract}</span>
+            <span className="font-semibold text-[var(--foreground)] tabular-nums">${fmtCompact(contractVal)}</span>
           </div>
           <div className="flex justify-between text-[10px]">
-            <span className="text-slate-400">{t.dashboard.spent}</span>
-            <span className="font-semibold text-rose-500 tabular-nums">${fmtCompact(actual)}</span>
+            <span className="text-[var(--color-text-muted)]">{t.dashboard.spent}</span>
+            <span className="font-semibold text-[#f87171] tabular-nums">${fmtCompact(actual)}</span>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700/40">
-        <div className="flex items-center gap-3 text-[10px] text-slate-400">
+      <div className="flex items-center justify-between pt-2 border-t border-[var(--color-border)]">
+        <div className="flex items-center gap-3 text-[10px] text-[var(--color-text-muted)]">
           <span className="flex items-center gap-0.5"><FileSpreadsheet size={10} />{summary.boqItems.length}</span>
           <span className="flex items-center gap-0.5"><Ruler size={10} />{summary.measurementItems.length}</span>
           <span className="flex items-center gap-0.5"><Receipt size={10} />{summary.paymentCerts.length}</span>
         </div>
-        <ArrowUpRight size={14} className="text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 transition-colors" />
+        <ArrowUpRight size={14} className="text-[var(--color-text-muted)] group-hover:text-[var(--color-amber)] transition-colors" />
       </div>
     </motion.div>
   )
 }
 
-function InsightCard({ icon: Icon, title, value, subtitle, gradient }: { icon: LucideIcon; title: string; value: string; subtitle: string; gradient: string }) {
+function InsightCard({ icon: Icon, title, value, subtitle, color }: { icon: LucideIcon; title: string; value: string; subtitle: string; color: string }) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="flex items-start gap-3 p-3 rounded-xl bg-slate-50/80 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.04]"
+      className="flex items-start gap-3 p-3 rounded-xl bg-[var(--color-surface-elevated)] border border-[var(--color-border)]"
     >
-      <div className={cn('p-2 rounded-lg bg-gradient-to-br text-white shrink-0', gradient)}>
-        <Icon size={14} />
+      <div className="p-2 rounded-lg shrink-0" style={{ background: `${color}20`, border: `1px solid ${color}30` }}>
+        <Icon size={14} style={{ color }} />
       </div>
       <div className="min-w-0">
-        <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">{title}</div>
-        <div className="text-sm font-bold text-slate-900 dark:text-white">{value}</div>
-        <div className="text-[10px] text-slate-400 mt-0.5">{subtitle}</div>
+        <div className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider">{title}</div>
+        <div className="text-sm font-bold text-[var(--foreground)]">{value}</div>
+        <div className="text-[10px] text-[var(--color-text-muted)] mt-0.5">{subtitle}</div>
       </div>
     </motion.div>
   )
@@ -285,9 +292,9 @@ export default function DashboardPage() {
   }, [projects])
 
   const budgetSegments = useMemo(() => [
-    { value: totalActualCost, color: '#f43f5e', label: 'Actual Cost' },
-    { value: totalCommitted, color: '#f59e0b', label: 'Committed' },
-    { value: Math.max(0, totalContractValue - totalActualCost - totalCommitted), color: '#10b981', label: 'Remaining' },
+    { value: totalActualCost, color: '#f87171', label: 'Actual Cost' },
+    { value: totalCommitted, color: '#eab308', label: 'Committed' },
+    { value: Math.max(0, totalContractValue - totalActualCost - totalCommitted), color: '#22c55e', label: 'Remaining' },
   ].filter(s => s.value > 0), [totalActualCost, totalCommitted, totalContractValue])
 
   const recentActivity = useMemo(() => {
@@ -298,7 +305,7 @@ export default function DashboardPage() {
           label: `Payment ${cert.status === 'paid' ? 'completed' : 'submitted'}`,
           detail: `${s.project.name} - IPC #${cert.cert_number}`,
           time: cert.created_at ?? s.project.updated_at,
-          color: cert.status === 'paid' ? 'from-emerald-500 to-teal-500' : 'from-amber-500 to-orange-500',
+          color: cert.status === 'paid' ? '#22c55e' : '#eab308',
           icon: cert.status === 'paid' ? CheckCircle2 : Clock,
         })
       }
@@ -307,7 +314,7 @@ export default function DashboardPage() {
           label: `Variation ${v.status}`,
           detail: `${s.project.name} - ${v.title ?? v.variation_no}`,
           time: v.created_at ?? s.project.updated_at,
-          color: v.status === 'approved' ? 'from-blue-500 to-indigo-500' : 'from-orange-500 to-red-500',
+          color: v.status === 'approved' ? '#60a5fa' : '#f87171',
           icon: v.status === 'approved' ? CheckCircle2 : AlertTriangle,
         })
       }
@@ -322,20 +329,20 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-[#0a0b0f] dark:via-[#0f1117] dark:to-[#0a0b0f]">
+      <div className="min-h-screen bg-[var(--background)]">
         <div className="mx-auto max-w-[1400px] p-6 md:p-8 space-y-6">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 animate-pulse" />
+            <div className="w-14 h-14 rounded-2xl bg-[var(--color-amber)]/10 animate-pulse" />
             <div className="space-y-2">
-              <div className="h-7 w-48 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
-              <div className="h-4 w-64 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+              <div className="h-7 w-48 bg-[var(--color-surface)] rounded-lg animate-pulse" />
+              <div className="h-4 w-64 bg-[var(--color-surface)] rounded animate-pulse" />
             </div>
           </div>
           <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
             {[1,2,3,4,5].map(i => <CardSkeleton key={i} />)}
           </div>
           <div className="grid gap-6 lg:grid-cols-3">
-            {[1,2,3].map(i => <div key={i} className="h-64 rounded-2xl bg-slate-100 dark:bg-slate-800/50 animate-pulse" />)}
+            {[1,2,3].map(i => <div key={i} className="h-64 rounded-2xl bg-[var(--color-surface)] animate-pulse" />)}
           </div>
         </div>
       </div>
@@ -344,14 +351,14 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-[#0a0b0f] dark:via-[#0f1117] dark:to-[#0a0b0f] flex items-center justify-center p-8">
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-8">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-md">
-          <div className="w-16 h-16 rounded-2xl bg-red-100 dark:bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-4">
             <AlertTriangle size={28} className="text-red-500" />
           </div>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{t.dashboard.dashboardUnavailable}</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{error}</p>
-          <button onClick={() => window.location.reload()} className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all">
+          <h2 className="text-lg font-bold text-[var(--foreground)] mb-2">{t.dashboard.dashboardUnavailable}</h2>
+          <p className="text-sm text-[var(--color-text-muted)] mb-6">{error}</p>
+          <button onClick={() => window.location.reload()} className="px-5 py-2.5 bg-[var(--color-amber)] text-[var(--color-on-amber)] text-sm font-bold rounded-xl hover:opacity-90 transition-all">
             {t.dashboard.retry}
           </button>
         </motion.div>
@@ -361,9 +368,9 @@ export default function DashboardPage() {
 
   if (summaries.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-[#0a0b0f] dark:via-[#0f1117] dark:to-[#0a0b0f] p-6 md:p-8">
+      <div className="min-h-screen bg-[var(--background)] p-6 md:p-8">
         <div className="mx-auto max-w-[1400px] space-y-6">
-          <PageHeader icon={Activity} title={t.dashboard.title} subtitle={t.dashboard.subtitle} gradient="from-indigo-500 to-indigo-600" />
+          <PageHeader icon={Activity} title={t.dashboard.title} subtitle={t.dashboard.subtitle} gradient="from-[var(--color-amber)] to-[var(--color-amber-dark)]" />
           <EmptyState
             icon={FolderOpen}
             title={t.dashboard.noProjectsYet}
@@ -377,49 +384,42 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-[#0a0b0f] dark:via-[#0f1117] dark:to-[#0a0b0f]">
+    <div className="min-h-screen bg-[var(--background)]">
       <motion.div
         className="mx-auto max-w-[1400px] space-y-6 p-6 md:p-8"
         variants={stagger}
         initial="hidden"
         animate="show"
       >
-        {/* ── Hero Header ── */}
-        <motion.div variants={fadeUp} className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800 p-8 text-white">
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/[0.04] rounded-full blur-3xl" />
-            <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-3xl" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-400/[0.03] rounded-full" />
-          </div>
+        {/* ── Hero Header — Obsidian & Amber ── */}
+        <motion.div variants={fadeUp} className="relative overflow-hidden rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] p-6 md:p-8">
+          {/* Subtle amber glow top-right */}
+          <div className="absolute -top-20 -right-20 w-64 h-64 bg-[var(--color-amber)]/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[var(--color-amber)]/40 to-transparent" />
 
           <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2, duration: 0.5 }}
-                className="flex items-center gap-2 mb-3"
-              >
-                <div className="px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/10 text-[10px] font-semibold tracking-wider uppercase flex items-center gap-1.5">
-                  <Sparkles size={10} className="text-amber-300" />
+              <div className="flex items-center gap-2 mb-3">
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-amber)]/10 border border-[var(--color-amber)]/20 text-[10px] font-bold tracking-widest uppercase text-[var(--color-amber)]">
+                  <span className="w-1 h-1 rounded-full bg-[var(--color-amber)] animate-ping" />
                   {t.dashboard.brandTag}
-                </div>
-              </motion.div>
-              <h1 className="text-3xl md:text-4xl font-black tracking-tight">{t.dashboard.title}</h1>
-              <p className="text-white/60 mt-1 text-sm">{t.dashboard.subtitle}</p>
+                </span>
+              </div>
+              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--foreground)]">{t.dashboard.title}</h1>
+              <p className="text-[var(--color-text-muted)] mt-1 text-sm">{t.dashboard.subtitle}</p>
             </div>
 
             <div className="flex items-center gap-3">
               <button
                 onClick={() => router.push('/projects')}
-                className="flex items-center gap-2 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/20 transition-all"
+                className="flex items-center gap-2 rounded-xl bg-[var(--color-surface-elevated)] border border-[var(--color-border)] px-4 py-2.5 text-sm font-semibold text-[var(--foreground)] hover:border-[var(--color-amber)]/40 transition-all"
               >
                 <Eye size={15} />
                 {t.dashboard.viewAll}
               </button>
               <button
                 onClick={() => router.push('/projects')}
-                className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-indigo-700 shadow-lg shadow-black/10 hover:shadow-xl transition-all"
+                className="flex items-center gap-2 rounded-xl bg-[var(--color-amber)] px-4 py-2.5 text-sm font-bold text-[var(--color-on-amber)] hover:opacity-90 transition-all shadow-lg shadow-[var(--color-amber)]/20"
               >
                 <Plus size={15} />
                 {t.dashboard.newProject}
@@ -432,7 +432,7 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
-            className="relative grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-6 border-t border-white/10"
+            className="relative grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-6 border-t border-[var(--color-border)]"
           >
             {[
               { label: t.dashboard.portfolioValue, value: fmtCompact(totalContractValue), icon: Building2 },
@@ -441,12 +441,12 @@ export default function DashboardPage() {
               { label: t.dashboard.projectedProfit, value: fmtCompact(projectedProfit), icon: TrendingUp },
             ].map((stat, i) => (
               <div key={i} className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-white/10">
-                  <stat.icon size={16} />
+                <div className="p-2 rounded-lg bg-[var(--color-amber)]/10 border border-[var(--color-amber)]/20">
+                  <stat.icon size={16} className="text-[var(--color-amber)]" />
                 </div>
                 <div>
-                  <div className="text-lg font-bold tabular-nums">{stat.value}</div>
-                  <div className="text-[10px] text-white/50 uppercase tracking-wider">{stat.label}</div>
+                  <div className="text-lg font-bold tabular-nums text-[var(--foreground)]">{stat.value}</div>
+                  <div className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wider">{stat.label}</div>
                 </div>
               </div>
             ))}
@@ -482,38 +482,38 @@ export default function DashboardPage() {
           {/* Left Column: Budget + Cash Flow */}
           <div className="lg:col-span-4 space-y-6">
             <motion.div variants={fadeUp}>
-              <SectionCard title={t.dashboard.budgetOverview} icon={PieChart} iconColor="text-rose-500">
+              <SectionCard title={t.dashboard.budgetOverview} icon={PieChart} iconColor="text-[var(--color-amber)]">
                 {budgetSegments.length > 0 ? (
                   <div className="flex flex-col items-center">
                     <DonutChart segments={budgetSegments} size={180} showLegend={false} />
                     <div className="mt-5 grid grid-cols-3 gap-3 w-full">
                       {budgetSegments.map((seg, i) => (
-                        <div key={i} className="text-center p-2 rounded-xl bg-slate-50 dark:bg-white/[0.03]">
+                        <div key={i} className="text-center p-2 rounded-xl bg-[var(--color-surface-elevated)] border border-[var(--color-border)]">
                           <div className="w-2 h-2 rounded-full mx-auto mb-1" style={{ backgroundColor: seg.color }} />
-                          <div className="text-[9px] font-medium text-slate-400 uppercase tracking-wider">{seg.label}</div>
-                          <div className="text-xs font-bold text-slate-700 dark:text-slate-200 tabular-nums mt-0.5">{fmtCompact(seg.value)}</div>
+                          <div className="text-[9px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider">{seg.label}</div>
+                          <div className="text-xs font-bold text-[var(--foreground)] tabular-nums mt-0.5">{fmtCompact(seg.value)}</div>
                         </div>
                       ))}
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500 text-center py-8">{t.dashboard.noBudgetData}</p>
+                  <p className="text-sm text-[var(--color-text-muted)] text-center py-8">{t.dashboard.noBudgetData}</p>
                 )}
               </SectionCard>
             </motion.div>
 
             <motion.div variants={fadeUp}>
-              <SectionCard title={t.dashboard.cashFlow} icon={LineChart} iconColor="text-emerald-500">
+              <SectionCard title={t.dashboard.cashFlow} icon={LineChart} iconColor="text-[var(--color-amber)]">
                 {cashFlowData.some(d => d.income > 0 || d.expense > 0) ? (
                   <>
                     <CashFlowChart data={cashFlowData} />
-                    <div className="flex items-center justify-center gap-5 mt-3 text-[10px] text-slate-500">
-                      <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" />{t.dashboard.income}</span>
-                      <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500" />{t.dashboard.expense}</span>
+                    <div className="flex items-center justify-center gap-5 mt-3 text-[10px] text-[var(--color-text-muted)]">
+                      <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[var(--color-amber)]" />{t.dashboard.income}</span>
+                      <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#60a5fa]" />{t.dashboard.expense}</span>
                     </div>
                   </>
                 ) : (
-                  <p className="text-sm text-slate-500 text-center py-8">{t.dashboard.noCashFlowData}</p>
+                  <p className="text-sm text-[var(--color-text-muted)] text-center py-8">{t.dashboard.noCashFlowData}</p>
                 )}
               </SectionCard>
             </motion.div>
@@ -525,12 +525,12 @@ export default function DashboardPage() {
               <SectionCard
                 title={t.dashboard.projects}
                 icon={FolderKanban}
-                iconColor="text-indigo-500"
+                iconColor="text-[var(--color-amber)]"
                 noPadding
                 actions={
                   <button
                     onClick={() => router.push('/projects')}
-                    className="text-[10px] font-semibold text-indigo-500 hover:text-indigo-600 flex items-center gap-1 transition-colors"
+                    className="text-[10px] font-semibold text-[var(--color-amber)] hover:opacity-80 flex items-center gap-1 transition-opacity"
                   >
                     {t.dashboard.viewAll} <ArrowRight size={10} />
                   </button>
@@ -551,32 +551,35 @@ export default function DashboardPage() {
             </motion.div>
 
             <motion.div variants={fadeUp}>
-              <SectionCard title={t.dashboard.recentActivity} icon={Clock} iconColor="text-blue-500" noPadding>
+              <SectionCard title={t.dashboard.recentActivity} icon={Clock} iconColor="text-[var(--color-amber)]" noPadding>
                 {recentActivity.length > 0 ? (
-                  <div className="divide-y divide-slate-100/80 dark:divide-slate-700/20">
+                  <div className="divide-y divide-[var(--color-border)]">
                     {recentActivity.map((item, i) => (
                       <motion.div
                         key={i}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: i * 0.05 }}
-                        className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors"
+                        className="flex items-center gap-3 px-5 py-3 hover:bg-[var(--color-surface-elevated)] transition-colors"
                       >
-                        <div className={cn('p-1.5 rounded-lg bg-gradient-to-br text-white shrink-0', item.color)}>
-                          <item.icon size={12} />
+                        <div
+                          className="p-1.5 rounded-lg shrink-0"
+                          style={{ background: `${item.color}18`, border: `1px solid ${item.color}30` }}
+                        >
+                          <item.icon size={12} style={{ color: item.color }} />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">{item.label}</div>
-                          <div className="text-[10px] text-slate-400 truncate">{item.detail}</div>
+                          <div className="text-[12px] font-semibold text-[var(--foreground)]">{item.label}</div>
+                          <div className="text-[10px] text-[var(--color-text-muted)] truncate">{item.detail}</div>
                         </div>
-                        <div className="text-[9px] text-slate-400 dark:text-slate-500 shrink-0 tabular-nums">
+                        <div className="text-[9px] text-[var(--color-text-muted)] shrink-0 tabular-nums">
                           {formatDate(item.time)}
                         </div>
                       </motion.div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500 text-center py-8 px-6">{t.dashboard.noRecentActivity}</p>
+                  <p className="text-sm text-[var(--color-text-muted)] text-center py-8 px-6">{t.dashboard.noRecentActivity}</p>
                 )}
               </SectionCard>
             </motion.div>
@@ -585,7 +588,7 @@ export default function DashboardPage() {
           {/* Right Column: Health + EVM + Insights */}
           <div className="lg:col-span-3 space-y-6">
             <motion.div variants={fadeUp}>
-              <SectionCard title={t.dashboard.projectHealth} icon={Activity} iconColor="text-cyan-500">
+              <SectionCard title={t.dashboard.projectHealth} icon={Activity} iconColor="text-[var(--color-amber)]">
                 <div className="space-y-4">
                   {summaries.slice(0, 4).map(s => {
                     const progress = s.project.progress ?? 0
@@ -595,11 +598,11 @@ export default function DashboardPage() {
                           value={progress}
                           size={48}
                           strokeWidth={5}
-                          color={progress >= 80 ? '#10b981' : progress >= 40 ? '#3b82f6' : '#f59e0b'}
+                          color={progress >= 80 ? '#22c55e' : progress >= 40 ? '#eab308' : '#f87171'}
                         />
                         <div className="min-w-0 flex-1">
-                          <div className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 truncate">{s.project.name}</div>
-                          <div className="text-[10px] text-slate-400">{progress.toFixed(0)}{t.dashboard.percentComplete}</div>
+                          <div className="text-[12px] font-semibold text-[var(--foreground)] truncate">{s.project.name}</div>
+                          <div className="text-[10px] text-[var(--color-text-muted)]">{progress.toFixed(0)}{t.dashboard.percentComplete}</div>
                         </div>
                       </div>
                     )
@@ -609,22 +612,22 @@ export default function DashboardPage() {
             </motion.div>
 
             <motion.div variants={fadeUp}>
-              <SectionCard title={t.dashboard.evmPerformance} icon={Gauge} iconColor="text-indigo-500">
+              <SectionCard title={t.dashboard.evmPerformance} icon={Gauge} iconColor="text-[var(--color-amber)]">
                 {earnedValueData.length > 0 ? (
                   <div className="space-y-3">
                     {earnedValueData.slice(0, 3).map((ev, i) => (
-                      <div key={i} className="p-3 rounded-xl bg-slate-50/80 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.04]">
-                        <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-200 truncate mb-2">{ev.name}</div>
+                      <div key={i} className="p-3 rounded-xl bg-[var(--color-surface-elevated)] border border-[var(--color-border)]">
+                        <div className="text-[11px] font-semibold text-[var(--foreground)] truncate mb-2">{ev.name}</div>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <div className="text-[9px] text-slate-400 uppercase">SPI</div>
-                            <div className={cn('text-sm font-bold tabular-nums', ev.SPI >= 1 ? 'text-emerald-600' : ev.SPI >= 0.9 ? 'text-amber-600' : 'text-red-500')}>
+                            <div className="text-[9px] text-[var(--color-text-muted)] uppercase tracking-wider">SPI</div>
+                            <div className={cn('text-sm font-bold tabular-nums', ev.SPI >= 1 ? 'text-[#22c55e]' : ev.SPI >= 0.9 ? 'text-[var(--color-amber)]' : 'text-[#f87171]')}>
                               {ev.SPI.toFixed(2)}
                             </div>
                           </div>
                           <div>
-                            <div className="text-[9px] text-slate-400 uppercase">CPI</div>
-                            <div className={cn('text-sm font-bold tabular-nums', ev.CPI >= 1 ? 'text-emerald-600' : ev.CPI >= 0.9 ? 'text-amber-600' : 'text-red-500')}>
+                            <div className="text-[9px] text-[var(--color-text-muted)] uppercase tracking-wider">CPI</div>
+                            <div className={cn('text-sm font-bold tabular-nums', ev.CPI >= 1 ? 'text-[#22c55e]' : ev.CPI >= 0.9 ? 'text-[var(--color-amber)]' : 'text-[#f87171]')}>
                               {ev.CPI.toFixed(2)}
                             </div>
                           </div>
@@ -633,14 +636,14 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500 text-center py-6">{t.dashboard.noEvmData}</p>
+                  <p className="text-sm text-[var(--color-text-muted)] text-center py-6">{t.dashboard.noEvmData}</p>
                 )}
               </SectionCard>
             </motion.div>
 
             {/* AI Insights */}
             <motion.div variants={fadeUp}>
-              <SectionCard title={t.dashboard.insights} icon={Sparkles} iconColor="text-amber-500">
+              <SectionCard title={t.dashboard.insights} icon={Sparkles} iconColor="text-[var(--color-amber)]">
                 <div className="space-y-3">
                   {profitMargin !== 0 && (
                     <InsightCard
@@ -648,7 +651,7 @@ export default function DashboardPage() {
                       title={t.dashboard.profitMargin}
                       value={`${profitMargin.toFixed(1)}%`}
                       subtitle={profitMargin > 10 ? t.dashboard.portfolioPerformingWell : profitMargin > 0 ? t.dashboard.marginsAreThin : t.dashboard.portfolioAtRisk}
-                      gradient={profitMargin > 10 ? 'from-emerald-500 to-teal-500' : profitMargin > 0 ? 'from-amber-500 to-orange-500' : 'from-red-500 to-rose-500'}
+                      color={profitMargin > 10 ? '#22c55e' : profitMargin > 0 ? '#eab308' : '#f87171'}
                     />
                   )}
                   {pendingPayments > 0 && (
@@ -657,7 +660,7 @@ export default function DashboardPage() {
                       title={t.dashboard.pendingPayments}
                       value={fmtCompact(pendingPayments)}
                       subtitle={t.dashboard.awaitingClientApproval}
-                      gradient="from-blue-500 to-indigo-500"
+                      color="#60a5fa"
                     />
                   )}
                   {pendingVariations > 0 && (
@@ -666,7 +669,7 @@ export default function DashboardPage() {
                       title={t.dashboard.pendingVariations}
                       value={fmtCompact(pendingVariations)}
                       subtitle={t.dashboard.requiresFollowUp}
-                      gradient="from-orange-500 to-red-500"
+                      color="#f87171"
                     />
                   )}
                   {totalMeasurements > 0 && (
@@ -675,7 +678,7 @@ export default function DashboardPage() {
                       title={t.dashboard.measurements}
                       value={`${totalMeasurements} ${t.dashboard.items}`}
                       subtitle={`${totalMeasurementLines} ${t.dashboard.calculationLines}`}
-                      gradient="from-violet-500 to-purple-500"
+                      color="#a855f7"
                     />
                   )}
                 </div>
@@ -686,12 +689,12 @@ export default function DashboardPage() {
 
         {/* ── Bottom: Financial Summary ── */}
         <motion.div variants={fadeUp}>
-          <SectionCard title={t.dashboard.financialSummary} icon={DollarSign} iconColor="text-emerald-500">
+          <SectionCard title={t.dashboard.financialSummary} icon={DollarSign} iconColor="text-[var(--color-amber)]">
             {summaries.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-start">
                   <thead>
-                    <tr className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-700/40">
+                    <tr className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest border-b border-[var(--color-border)]">
                       <th className="pb-3 pe-4">{t.dashboard.tableProject}</th>
                       <th className="pb-3 pe-4 text-end">{t.dashboard.tableContract}</th>
                       <th className="pb-3 pe-4 text-end">{t.dashboard.tableVariations}</th>
@@ -700,8 +703,8 @@ export default function DashboardPage() {
                       <th className="pb-3 text-end">{t.dashboard.tableMargin}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
-                    {summaries.map(s => {
+                  <tbody className="divide-y divide-[var(--color-border)]">
+                    {summaries.map((s, idx) => {
                       const contractVal = s.contract?.contract_value ?? 0
                       const varApproved = s.variations.filter(v => v.status === 'approved').reduce((a, b) => a + (b.approved_amount ?? b.amount), 0)
                       const actual = s.costEntries.filter(c => c.category === 'actual').reduce((a, b) => a + b.amount, 0)
@@ -713,20 +716,27 @@ export default function DashboardPage() {
                       const margin = revised > 0 ? (profit / revised) * 100 : 0
 
                       return (
-                        <tr key={s.project.id} className="group cursor-pointer hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors" onClick={() => router.push(`/projects/${s.project.id}`)}>
+                        <tr
+                          key={s.project.id}
+                          className={cn(
+                            'group cursor-pointer hover:bg-[var(--color-amber)]/5 transition-colors',
+                            idx % 2 === 0 ? 'bg-transparent' : 'bg-[var(--color-surface-elevated)]'
+                          )}
+                          onClick={() => router.push(`/projects/${s.project.id}`)}
+                        >
                           <td className="py-3 pe-4">
-                            <div className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{s.project.name}</div>
+                            <div className="text-[12px] font-semibold text-[var(--foreground)] group-hover:text-[var(--color-amber)] transition-colors">{s.project.name}</div>
                           </td>
-                          <td className="py-3 pe-4 text-end text-[12px] font-medium text-slate-600 dark:text-slate-300 tabular-nums">{fmtCompact(contractVal)}</td>
-                          <td className="py-3 pe-4 text-end text-[12px] font-medium text-blue-500 tabular-nums">{varApproved > 0 ? `+${fmtCompact(varApproved)}` : '-'}</td>
-                          <td className="py-3 pe-4 text-end text-[12px] font-medium text-rose-500 tabular-nums">{fmtCompact(actual)}</td>
-                          <td className={cn('py-3 pe-4 text-end text-[12px] font-bold tabular-nums', profit >= 0 ? 'text-emerald-600' : 'text-red-500')}>{fmtCompact(profit)}</td>
+                          <td className="py-3 pe-4 text-end text-[12px] font-medium text-[var(--color-text-secondary)] tabular-nums">{fmtCompact(contractVal)}</td>
+                          <td className="py-3 pe-4 text-end text-[12px] font-medium text-[#60a5fa] tabular-nums">{varApproved > 0 ? `+${fmtCompact(varApproved)}` : '-'}</td>
+                          <td className="py-3 pe-4 text-end text-[12px] font-medium text-[#f87171] tabular-nums">{fmtCompact(actual)}</td>
+                          <td className={cn('py-3 pe-4 text-end text-[12px] font-bold tabular-nums', profit >= 0 ? 'text-[#22c55e]' : 'text-[#f87171]')}>{fmtCompact(profit)}</td>
                           <td className="py-3 text-end">
                             <span className={cn(
                               'px-2 py-0.5 rounded-full text-[10px] font-bold',
-                              margin >= 10 ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' :
-                              margin >= 0 ? 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400' :
-                              'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
+                              margin >= 10 ? 'bg-[#22c55e]/10 text-[#22c55e]' :
+                              margin >= 0 ? 'bg-[var(--color-amber)]/10 text-[var(--color-amber)]' :
+                              'bg-[#f87171]/10 text-[#f87171]'
                             )}>
                               {margin.toFixed(1)}%
                             </span>
@@ -738,7 +748,7 @@ export default function DashboardPage() {
                 </table>
               </div>
             ) : (
-              <p className="text-sm text-slate-500 text-center py-8">{t.dashboard.noFinancialData}</p>
+              <p className="text-sm text-[var(--color-text-muted)] text-center py-8">{t.dashboard.noFinancialData}</p>
             )}
           </SectionCard>
         </motion.div>

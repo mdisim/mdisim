@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { getDrawing, getDrawingUrl } from '@/app/actions/drawings'
 import type { Drawing } from '@/lib/types'
 import { DRAWING_TYPES } from '@/lib/types'
-import { ArrowLeft, Maximize2, Minimize2 } from 'lucide-react'
+import { ArrowLeft, Maximize2, Minimize2, AlertTriangle } from 'lucide-react'
 import { TakeoffViewer } from '@/components/takeoff/takeoff-viewer'
 import { DwgViewer } from '@/components/takeoff/dwg-viewer'
 import { ImageViewer } from '@/components/takeoff/image-viewer'
@@ -57,29 +57,35 @@ export default function TakeoffPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-120px)]">
-        <div className="animate-spin h-8 w-8 border-4 border-blue-600 dark:border-blue-400 border-t-transparent rounded-full" />
+      <div className="flex items-center justify-center h-[calc(100vh-120px)] bg-[#0e0e10]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative w-10 h-10">
+            <div className="absolute inset-0 rounded-full border-2 border-[var(--color-amber)]/20" />
+            <div className="absolute inset-0 rounded-full border-2 border-t-[var(--color-amber)] border-transparent animate-spin" />
+          </div>
+          <p className="text-xs font-mono uppercase tracking-widest text-[var(--color-text-muted)]">Loading blueprint…</p>
+        </div>
       </div>
     )
   }
 
   if (error || !drawing || !drawingUrl) {
     return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-120px)] gap-4">
-        <div className="w-12 h-12 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
-          <ArrowLeft size={20} className="text-red-400 rotate-[135deg]" />
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-120px)] gap-4 bg-[#0e0e10]">
+        <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+          <AlertTriangle size={22} className="text-red-400" />
         </div>
-        <p className="text-sm text-red-500 dark:text-red-400">{error ?? 'Failed to load drawing'}</p>
-        <div className="flex gap-3">
+        <p className="text-sm text-red-400 max-w-xs text-center">{error ?? 'Failed to load drawing'}</p>
+        <div className="flex gap-2">
           <button
             onClick={() => setRetryCount(c => c + 1)}
-            className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 text-xs font-bold uppercase tracking-wider bg-[var(--color-amber)] text-[var(--color-on-amber)] rounded-lg hover:opacity-90 transition-opacity"
           >
             Retry
           </button>
           <button
             onClick={() => router.push(`/projects/${projectId}/drawings`)}
-            className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            className="px-4 py-2 text-xs font-semibold text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-hover)] transition-colors"
           >
             Back to drawings
           </button>
@@ -89,44 +95,54 @@ export default function TakeoffPage() {
   }
 
   return (
-    <div className={fullscreen ? 'fixed inset-0 z-50 flex flex-col bg-white dark:bg-slate-900' : 'flex flex-col h-[calc(100vh-120px)]'}>
-      {/* Compact professional header */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-900 shrink-0">
+    <div className={fullscreen ? 'fixed inset-0 z-50 flex flex-col bg-[#0e0e10]' : 'flex flex-col h-[calc(100vh-120px)]'}>
+      {/* Obsidian toolbar — dark chrome matching the Stitch precision workspace */}
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--color-border)] bg-[var(--color-surface)] shrink-0">
+        {/* Back */}
         <button
           onClick={() => router.push(`/projects/${projectId}/drawings`)}
-          className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500 transition-colors"
+          className="p-1.5 rounded-lg hover:bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-amber)] transition-colors"
           title="Back to drawings"
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={15} />
         </button>
-        <div className="h-4 w-px bg-slate-200 dark:bg-slate-700" />
-        <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
-          {drawing.name}
-        </h2>
-        {drawing.drawing_number && (
-          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
-            #{drawing.drawing_number}
+
+        <div className="w-px h-4 bg-[var(--color-border)]" />
+
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <h2 className="text-sm font-semibold text-[var(--color-text)] truncate">
+            {drawing.name}
+          </h2>
+          {drawing.drawing_number && (
+            <span className="text-[10px] font-mono text-[var(--color-text-muted)]">
+              #{drawing.drawing_number}
+            </span>
+          )}
+          {drawing.revision_number && (
+            <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-[var(--color-amber)]/10 text-[var(--color-amber)] rounded border border-[var(--color-amber)]/20">
+              Rev {drawing.revision_number}
+            </span>
+          )}
+          <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-mono uppercase text-[var(--color-text-muted)] bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded">
+            {typeLabel(drawing.drawing_type)}
           </span>
-        )}
-        {drawing.revision_number && (
-          <span className="shrink-0 px-1.5 py-0.5 text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded">
-            Rev {drawing.revision_number}
+          <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-mono uppercase text-[var(--color-text-muted)] bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded">
+            {drawing.file_type.toUpperCase()}
           </span>
-        )}
-        <span className="shrink-0 px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded">
-          {typeLabel(drawing.drawing_type)}
-        </span>
-        <div className="flex-1" />
+        </div>
+
+        {/* Fullscreen toggle */}
         <button
           onClick={() => setFullscreen(v => !v)}
-          className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500 transition-colors"
+          className="p-1.5 rounded-lg hover:bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-amber)] transition-colors"
           title={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
         >
           {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
         </button>
       </div>
 
-      {/* Takeoff workspace */}
+      {/* Takeoff workspace — canvas rendering code untouched */}
       <div className="flex-1 min-h-0">
         {drawing.file_type === 'pdf' ? (
           <TakeoffViewer

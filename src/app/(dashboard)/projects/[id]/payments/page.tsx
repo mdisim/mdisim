@@ -53,11 +53,19 @@ const STATUS_ICON: Record<PaymentCertStatus, React.ComponentType<{ size?: number
 }
 
 const STATUS_COLOR: Record<PaymentCertStatus, string> = {
-  draft: 'text-slate-500 bg-slate-100 dark:bg-slate-700',
-  submitted: 'text-blue-600 bg-blue-50 dark:bg-blue-900/30',
-  checked: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30',
-  approved: 'text-green-600 bg-green-50 dark:bg-green-900/30',
-  paid: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30',
+  draft:     'bg-[var(--color-surface-hover)] text-[var(--color-text-muted)]',
+  submitted: 'bg-[var(--color-info-bg)] text-[var(--color-info)]',
+  checked:   'bg-[var(--color-warning-bg)] text-[var(--color-warning)]',
+  approved:  'bg-[var(--color-amber)]/10 text-[var(--color-amber)]',
+  paid:      'bg-[var(--color-success-bg)] text-[var(--color-success)]',
+}
+
+const STATUS_DOT: Record<PaymentCertStatus, string> = {
+  draft:     'bg-[var(--color-text-muted)]',
+  submitted: 'bg-[var(--color-info)]',
+  checked:   'bg-[var(--color-warning)]',
+  approved:  'bg-[var(--color-amber)]',
+  paid:      'bg-[var(--color-success)]',
 }
 
 const STATUS_ORDER: PaymentCertStatus[] = ['draft', 'submitted', 'checked', 'approved', 'paid']
@@ -111,7 +119,6 @@ export default function PaymentsPage() {
     const totalPaid = certs.filter(c => c.status === 'paid').reduce((s, c) => s + c.net_payable, 0)
     const totalRetention = certs.reduce((s, c) => s + c.current_retention, 0)
 
-    // Payment progress bars: certified vs paid per cert
     const progressBars = certs.map(c => ({
       certNumber: c.cert_number,
       certified: c.gross_amount,
@@ -119,7 +126,6 @@ export default function PaymentsPage() {
       status: c.status,
     }))
 
-    // Status counts for timeline
     const statusCounts: Record<PaymentCertStatus, number> = {
       draft: 0, submitted: 0, checked: 0, approved: 0, paid: 0,
     }
@@ -205,114 +211,121 @@ export default function PaymentsPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
-      <PageHeader
-        icon={CreditCard}
-        title={t.payments.title}
-        subtitle={t.payments.subtitle}
-        gradient="from-emerald-500 to-emerald-600"
-        actions={
-          <Button onClick={() => setShowCreate(true)}>
-            <Plus size={16} /> {t.payments.newCertificate}
-          </Button>
-        }
-      />
+    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
+      {/* Page Header */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--color-text)] tracking-tight">{t.payments.title}</h1>
+          <p className="text-sm text-[var(--color-text-secondary)] mt-1">{t.payments.subtitle}</p>
+        </div>
+        <Button onClick={() => setShowCreate(true)}>
+          <Plus size={16} /> {t.payments.newCertificate}
+        </Button>
+      </div>
 
       {/* Statistics Dashboard */}
       {!loading && certs.length > 0 && (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-            <StatCard
-              icon={ArrowUpRight}
-              label={t.payments.totalCertified}
-              value={stats.totalCertified}
-              decimals={2}
-              gradient="from-indigo-500 to-indigo-600"
-            />
-            <StatCard
-              icon={CreditCard}
-              label={t.payments.totalPaid}
-              value={stats.totalPaid}
-              decimals={2}
-              gradient="from-emerald-500 to-emerald-600"
-            />
-            <StatCard
-              icon={Shield}
-              label={t.payments.retentionHeld}
-              value={stats.totalRetention}
-              decimals={2}
-              gradient="from-amber-500 to-amber-600"
-            />
-            <StatCard
-              icon={Receipt}
-              label={t.payments.certificates}
-              value={stats.count}
-              gradient="from-blue-500 to-blue-600"
-            />
+          {/* KPI Strip */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Total Certified */}
+            <div className="bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-2xl p-5 space-y-2 relative overflow-hidden">
+              <div className="absolute top-4 end-4 opacity-[0.06]">
+                <ArrowUpRight size={48} className="text-[var(--color-text)]" />
+              </div>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.payments.totalCertified}</p>
+              <p className="text-2xl font-bold text-[var(--color-text)] tabular-nums">{fmt(stats.totalCertified)}</p>
+              <div className="flex items-center gap-1.5 text-[var(--color-amber)] text-xs font-medium">
+                <ArrowUpRight size={12} />
+                <span>{certs.length} {t.payments.certificates}</span>
+              </div>
+            </div>
+
+            {/* Pending Approval */}
+            <div className="bg-[var(--color-surface-elevated)] border border-[var(--color-amber)]/20 rounded-2xl p-5 space-y-2 relative overflow-hidden">
+              <div className="absolute top-4 end-4 opacity-[0.06]">
+                <Clock size={48} className="text-[var(--color-amber)]" />
+              </div>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.payments.retentionHeld}</p>
+              <p className="text-2xl font-bold text-[var(--color-amber)] tabular-nums">{fmt(stats.totalRetention)}</p>
+              <p className="text-xs text-[var(--color-text-muted)]">{t.payments.certificates}: {stats.count}</p>
+            </div>
+
+            {/* Total Paid */}
+            <div className="bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-2xl p-5 space-y-2 relative overflow-hidden">
+              <div className="absolute top-4 end-4 opacity-[0.06]">
+                <CheckCircle2 size={48} className="text-[var(--color-success)]" />
+              </div>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.payments.totalPaid}</p>
+              <p className="text-2xl font-bold text-[var(--color-text)] tabular-nums">{fmt(stats.totalPaid)}</p>
+              <div className="w-full h-1 rounded-full bg-[var(--color-surface-hover)] overflow-hidden mt-2">
+                <div
+                  className="bg-[var(--color-success)] h-full rounded-full"
+                  style={{ width: stats.totalCertified > 0 ? `${Math.min((stats.totalPaid / stats.totalCertified) * 100, 100)}%` : '0%' }}
+                />
+              </div>
+            </div>
+
+            {/* Certificates count */}
+            <div className="bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-2xl p-5 space-y-2 relative overflow-hidden">
+              <div className="absolute top-4 end-4 opacity-[0.06]">
+                <Receipt size={48} className="text-[var(--color-text)]" />
+              </div>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">{t.payments.certificates}</p>
+              <p className="text-2xl font-bold text-[var(--color-text)] tabular-nums">{stats.count}</p>
+              <p className="text-xs text-[var(--color-text-muted)]">{t.payments.totalCertified}</p>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Payment Progress */}
-            {stats.progressBars.length > 0 && (
-              <SectionCard title={t.payments.paymentProgress} icon={Banknote} iconColor="text-emerald-500">
-                <SimpleBarChart
-                  bars={stats.progressBars.flatMap(p => [
-                    { label: `IPC #${p.certNumber} (${t.payments.totalCertified})`, value: p.certified, color: '#6366f1' },
-                    { label: `IPC #${p.certNumber} (${t.payments.totalPaid})`, value: p.paid, color: '#10b981' },
-                  ])}
-                  horizontal
-                />
-              </SectionCard>
-            )}
-
-            {/* Payment Timeline */}
-            <SectionCard title={t.payments.paymentTimeline} icon={Clock} iconColor="text-blue-500">
-              <div className="flex items-center justify-between gap-1">
-                {STATUS_ORDER.map((step, i) => {
-                  const count = stats.statusCounts[step]
-                  const StepIcon = STATUS_ICON[step]
-                  const isActive = count > 0
-                  return (
-                    <div key={step} className="flex items-center flex-1">
-                      <div className="flex flex-col items-center flex-1">
-                        <div className={cn(
-                          'w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-all',
-                          isActive
-                            ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/20'
-                            : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500'
-                        )}>
-                          <StepIcon size={18} />
-                        </div>
-                        <span className={cn(
-                          'text-xs font-medium',
-                          isActive ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'
-                        )}>
-                          {getStatusLabel(t, step)}
-                        </span>
-                        <span className={cn(
-                          'text-lg font-bold tabular-nums mt-0.5',
-                          isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-300 dark:text-slate-600'
-                        )}>
-                          {count}
-                        </span>
+          {/* Payment Timeline */}
+          <div className="bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-2xl p-5">
+            <h3 className="text-sm font-semibold text-[var(--color-text)] mb-4">{t.payments.paymentTimeline}</h3>
+            <div className="flex items-center justify-between gap-1">
+              {STATUS_ORDER.map((step, i) => {
+                const count = stats.statusCounts[step]
+                const StepIcon = STATUS_ICON[step]
+                const isActive = count > 0
+                return (
+                  <div key={step} className="flex items-center flex-1">
+                    <div className="flex flex-col items-center flex-1 gap-2">
+                      <div className={cn(
+                        'w-10 h-10 rounded-xl flex items-center justify-center transition-all',
+                        isActive
+                          ? 'bg-[var(--color-amber)]/10 text-[var(--color-amber)] border border-[var(--color-amber)]/30'
+                          : 'bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] border border-[var(--color-border)]'
+                      )}>
+                        <StepIcon size={16} />
                       </div>
-                      {i < STATUS_ORDER.length - 1 && (
-                        <ArrowRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0 mx-1 -mt-6" />
-                      )}
+                      <span className={cn(
+                        'text-[10px] font-medium text-center',
+                        isActive ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)]'
+                      )}>
+                        {getStatusLabel(t, step)}
+                      </span>
+                      <span className={cn(
+                        'text-lg font-bold tabular-nums',
+                        isActive ? 'text-[var(--color-amber)]' : 'text-[var(--color-text-muted)]'
+                      )}>
+                        {count}
+                      </span>
                     </div>
-                  )
-                })}
-              </div>
-            </SectionCard>
+                    {i < STATUS_ORDER.length - 1 && (
+                      <ArrowRight size={14} className="text-[var(--color-text-muted)] shrink-0 mx-1 -mt-8" />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </>
       )}
 
+      {/* IPC Table / Cards */}
       {loading ? (
         <TableSkeleton rows={6} columns={4} />
       ) : error && certs.length === 0 ? (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
-          <p className="text-red-600 dark:text-red-400 font-medium mb-4">{error}</p>
+        <div className="bg-[var(--color-danger-bg)] border border-[var(--color-danger)]/30 rounded-2xl p-6 text-center">
+          <p className="text-[var(--color-danger)] font-medium mb-4">{error}</p>
           <Button onClick={() => load()}>{t.payments.retry}</Button>
         </div>
       ) : certs.length === 0 ? (
@@ -324,29 +337,38 @@ export default function PaymentsPage() {
           onAction={() => setShowCreate(true)}
         />
       ) : (
-        <div className="space-y-4">
-          {certs.map((cert, idx) => (
-            <motion.div
-              key={cert.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.06, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-            >
-            <CertCard
-              cert={cert}
-              isExpanded={expandedId === cert.id}
-              onToggle={() => setExpandedId(expandedId === cert.id ? null : cert.id)}
-              onDelete={() => handleDelete(cert.id)}
-              onStatusChange={(s) => handleStatusChange(cert.id, s)}
-              onUpdateLine={handleUpdateLine}
-              fmt={fmt}
-              t={t}
-            />
-            </motion.div>
-          ))}
+        <div className="bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-2xl overflow-hidden">
+          {/* Table header */}
+          <div className="border-b border-[var(--color-border)] px-6 py-4">
+            <h3 className="text-sm font-semibold text-[var(--color-text)]">{t.payments.title}</h3>
+            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{t.payments.subtitle}</p>
+          </div>
+
+          <div className="divide-y divide-[var(--color-border)]">
+            {certs.map((cert, idx) => (
+              <motion.div
+                key={cert.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05, duration: 0.35 }}
+              >
+                <CertCard
+                  cert={cert}
+                  isExpanded={expandedId === cert.id}
+                  onToggle={() => setExpandedId(expandedId === cert.id ? null : cert.id)}
+                  onDelete={() => handleDelete(cert.id)}
+                  onStatusChange={(s) => handleStatusChange(cert.id, s)}
+                  onUpdateLine={handleUpdateLine}
+                  fmt={fmt}
+                  t={t}
+                />
+              </motion.div>
+            ))}
+          </div>
         </div>
       )}
 
+      {/* Create Modal */}
       <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title={t.payments.newIpcTitle.replace('{number}', String(certs.length + 1))} size="md">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -361,8 +383,8 @@ export default function PaymentsPage() {
             <Input label={t.payments.advanceRecovery} type="number" value={form.advance_recovery} onChange={e => setForm({ ...form, advance_recovery: e.target.value })} />
             <Input label={t.payments.previousAdvanceRecovery} type="number" value={form.previous_advance_recovery} onChange={e => setForm({ ...form, previous_advance_recovery: e.target.value })} />
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{t.payments.autoPopulateNote}</p>
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          <p className="text-xs text-[var(--color-text-muted)]">{t.payments.autoPopulateNote}</p>
+          {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowCreate(false)}>{t.payments.cancel}</Button>
             <Button onClick={handleCreate} disabled={!form.period_from || !form.period_to}>{t.payments.create}</Button>
@@ -371,7 +393,7 @@ export default function PaymentsPage() {
       </Modal>
 
       <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title={t.payments.confirmTitle} size="sm">
-        <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{confirmAction?.message}</p>
+        <p className="text-sm text-[var(--color-text-secondary)] mb-4">{confirmAction?.message}</p>
         <div className="flex justify-end gap-3">
           <Button variant="ghost" onClick={() => setConfirmAction(null)}>{t.payments.cancel}</Button>
           <Button variant="danger" onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>{t.payments.confirm}</Button>
@@ -405,25 +427,51 @@ function CertCard({
   const statusLabel = getStatusLabel(t, cert.status)
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-      <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-750" role="button" tabIndex={0} aria-expanded={isExpanded} onClick={onToggle} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle() } }}>
-        {isExpanded ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronRight size={16} className="text-slate-400" />}
+    <div>
+      {/* Row header */}
+      <div
+        className="flex items-center gap-3 px-6 py-4 cursor-pointer hover:bg-[var(--color-surface-hover)] transition-colors group"
+        role="button"
+        tabIndex={0}
+        aria-expanded={isExpanded}
+        onClick={onToggle}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle() } }}
+      >
+        {isExpanded
+          ? <ChevronDown size={16} className="text-[var(--color-text-muted)] shrink-0" />
+          : <ChevronRight size={16} className="text-[var(--color-text-muted)] shrink-0" />
+        }
+
+        {/* IPC number + period */}
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-slate-900 dark:text-white">IPC #{cert.cert_number}</div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">
-            {cert.period_from} to {cert.period_to} · {lines.length} items
+          <div className="font-semibold text-[var(--color-text)] text-sm">
+            IPC #{cert.cert_number}
+          </div>
+          <div className="text-xs text-[var(--color-text-muted)] mt-0.5">
+            {cert.period_from} — {cert.period_to} · {lines.length} {t.payments.colDescription ?? 'items'}
           </div>
         </div>
-        <div className="text-end me-2">
-          <div className="text-sm font-bold text-slate-900 dark:text-white tabular-nums">{fmt(cert.net_payable)}</div>
-          <div className="text-[10px] text-slate-400">{t.payments.netPayable}</div>
+
+        {/* Net payable */}
+        <div className="text-end me-3 shrink-0">
+          <div className="text-sm font-bold text-[var(--color-text)] tabular-nums font-mono">{fmt(cert.net_payable)}</div>
+          <div className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wider">{t.payments.netPayable}</div>
         </div>
-        <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium', STATUS_COLOR[cert.status])}>
-          <Icon size={12} /> {statusLabel}
+
+        {/* Status badge */}
+        <span className={cn(
+          'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0',
+          STATUS_COLOR[cert.status]
+        )}>
+          <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', STATUS_DOT[cert.status])} />
+          <Icon size={11} />
+          {statusLabel}
         </span>
+
+        {/* Delete — visible on hover */}
         <button
           onClick={e => { e.stopPropagation(); onDelete() }}
-          className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-300 hover:text-red-500"
+          className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-[var(--color-danger-bg)] text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-all"
           title={t.payments.deleteCertificate}
           aria-label={t.payments.deleteCertificate}
         >
@@ -431,16 +479,19 @@ function CertCard({
         </button>
       </div>
 
+      {/* Expanded body */}
       {isExpanded && (
-        <div className="border-t border-slate-200 dark:border-slate-700">
-          {/* Status bar */}
-          <div className="flex items-center gap-2 px-4 py-2 bg-slate-50/50 dark:bg-slate-900/30">
+        <div className="border-t border-[var(--color-border)] bg-[var(--color-surface)]">
+          {/* Status select */}
+          <div className="flex items-center gap-3 px-6 py-3 border-b border-[var(--color-border)] bg-[var(--color-surface-hover)]">
             <select
               value={cert.status}
               onChange={e => onStatusChange(e.target.value as PaymentCertStatus)}
-              className="text-xs px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 dark:text-white"
+              className="text-xs px-3 py-1.5 border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-elevated)] text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]/40"
             >
-              {STATUS_ORDER.map(k => <option key={k} value={k}>{getStatusLabel(t, k)}</option>)}
+              {(STATUS_ORDER as PaymentCertStatus[]).map(k => (
+                <option key={k} value={k}>{getStatusLabel(t, k)}</option>
+              ))}
             </select>
           </div>
 
@@ -448,36 +499,36 @@ function CertCard({
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-                  <th className="text-start px-3 py-2 font-semibold text-slate-600 dark:text-slate-300 min-w-[180px]">{t.payments.colDescription}</th>
-                  <th className="text-center px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[50px]">{t.payments.colUnit}</th>
-                  <th className="text-end px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[70px]">{t.payments.colContractQty}</th>
-                  <th className="text-end px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[70px]">{t.payments.colRate}</th>
-                  <th className="text-end px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[70px]">{t.payments.colPreviousQty}</th>
-                  <th className="text-end px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[80px]">{t.payments.colCurrentQty}</th>
-                  <th className="text-end px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[70px]">{t.payments.colCumQty}</th>
-                  <th className="text-end px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[90px]">{t.payments.colCumAmount}</th>
+                <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-hover)]">
+                  <th className="text-start px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)] min-w-[180px]">{t.payments.colDescription}</th>
+                  <th className="text-center px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)] w-[50px]">{t.payments.colUnit}</th>
+                  <th className="text-end px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)] w-[70px]">{t.payments.colContractQty}</th>
+                  <th className="text-end px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)] w-[70px]">{t.payments.colRate}</th>
+                  <th className="text-end px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)] w-[70px]">{t.payments.colPreviousQty}</th>
+                  <th className="text-end px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)] w-[80px]">{t.payments.colCurrentQty}</th>
+                  <th className="text-end px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)] w-[70px]">{t.payments.colCumQty}</th>
+                  <th className="text-end px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)] w-[90px]">{t.payments.colCumAmount}</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[var(--color-border)]">
                 {lines.sort((a, b) => a.sort_order - b.sort_order).map(line => (
-                  <tr key={line.id} className="border-b border-slate-100 dark:border-slate-700">
-                    <td className="px-3 py-1.5 text-slate-700 dark:text-slate-300 truncate max-w-[180px]">{line.description}</td>
-                    <td className="px-2 py-1.5 text-center text-slate-500">{line.unit}</td>
-                    <td className="px-2 py-1.5 text-end tabular-nums text-slate-500">{fmt(line.contract_qty)}</td>
-                    <td className="px-2 py-1.5 text-end tabular-nums text-slate-500">{fmt(line.contract_rate)}</td>
-                    <td className="px-2 py-1.5 text-end tabular-nums text-slate-500">{fmt(line.previous_qty)}</td>
-                    <td className="px-2 py-0.5">
+                  <tr key={line.id} className="hover:bg-[var(--color-surface-hover)] transition-colors">
+                    <td className="px-4 py-2 text-[var(--color-text-secondary)] truncate max-w-[180px]">{line.description}</td>
+                    <td className="px-3 py-2 text-center text-[var(--color-text-muted)]">{line.unit}</td>
+                    <td className="px-3 py-2 text-end tabular-nums font-mono text-[var(--color-text-muted)]">{fmt(line.contract_qty)}</td>
+                    <td className="px-3 py-2 text-end tabular-nums font-mono text-[var(--color-text-muted)]">{fmt(line.contract_rate)}</td>
+                    <td className="px-3 py-2 text-end tabular-nums font-mono text-[var(--color-text-muted)]">{fmt(line.previous_qty)}</td>
+                    <td className="px-3 py-1">
                       <input
                         type="number"
                         value={line.current_qty || ''}
                         onChange={e => onUpdateLine(line.id, parseFloat(e.target.value) || 0)}
-                        className="w-full px-1 py-0.5 text-xs text-end border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-800 dark:text-white focus:ring-1 focus:ring-blue-500 outline-none"
+                        className="w-full px-2 py-1 text-xs text-end border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-elevated)] text-[var(--color-text)] focus:ring-1 focus:ring-[var(--color-amber)]/40 outline-none"
                         step="any"
                       />
                     </td>
-                    <td className="px-2 py-1.5 text-end tabular-nums font-medium text-slate-700 dark:text-slate-200">{fmt(line.cumulative_qty)}</td>
-                    <td className="px-2 py-1.5 text-end tabular-nums font-medium text-slate-900 dark:text-white">{fmt(line.cumulative_amount)}</td>
+                    <td className="px-3 py-2 text-end tabular-nums font-mono font-medium text-[var(--color-text)]">{fmt(line.cumulative_qty)}</td>
+                    <td className="px-3 py-2 text-end tabular-nums font-mono font-semibold text-[var(--color-text)]">{fmt(line.cumulative_amount)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -485,8 +536,8 @@ function CertCard({
           </div>
 
           {/* Summary */}
-          <div className="border-t border-slate-200 dark:border-slate-700 px-4 py-3">
-            <table className="w-full text-xs">
+          <div className="border-t border-[var(--color-border)] px-6 py-4 bg-[var(--color-surface-hover)]">
+            <table className="w-full text-xs max-w-xs ms-auto">
               <tbody>
                 {[
                   { label: t.payments.summaryGrossAmount, value: cert.gross_amount },
@@ -497,12 +548,20 @@ function CertCard({
                   { label: t.payments.summaryAddVat.replace('{pct}', String(cert.vat_pct)), value: cert.vat_amount },
                   { label: t.payments.summaryNetPayable, value: cert.net_payable, bold: true, highlight: true },
                 ].map(row => (
-                  <tr key={row.label} className={row.bold ? 'border-t border-slate-200 dark:border-slate-600' : ''}>
-                    <td className={cn('py-1', row.bold ? 'font-semibold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300')}>{row.label}</td>
-                    <td className={cn('py-1 text-end tabular-nums', row.bold ? 'font-bold' : '',
-                      row.highlight ? 'text-lg text-blue-600 dark:text-blue-400' : row.bold ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-200',
-                      row.value < 0 && !row.highlight && 'text-red-600 dark:text-red-400'
-                    )}>{fmt(row.value)}</td>
+                  <tr key={row.label} className={row.bold ? 'border-t border-[var(--color-border-strong)]' : ''}>
+                    <td className={cn(
+                      'py-1.5',
+                      row.bold ? 'font-semibold text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]'
+                    )}>
+                      {row.label}
+                    </td>
+                    <td className={cn(
+                      'py-1.5 text-end tabular-nums font-mono',
+                      row.highlight ? 'text-base font-bold text-[var(--color-amber)]' : row.bold ? 'font-bold text-[var(--color-text)]' : 'text-[var(--color-text)]',
+                      !row.highlight && !row.bold && row.value < 0 && 'text-[var(--color-danger)]'
+                    )}>
+                      {fmt(row.value)}
+                    </td>
                   </tr>
                 ))}
               </tbody>

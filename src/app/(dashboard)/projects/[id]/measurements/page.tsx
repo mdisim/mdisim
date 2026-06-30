@@ -32,8 +32,6 @@ import { GenerateBOQDialog } from '@/components/measurements/generate-boq-dialog
 import { Ruler, Plus, Image, ArrowRight, BarChart3, GitBranch, FileText, Layers } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useI18n } from '@/lib/i18n'
-import { PageHeader } from '@/components/ui/page-header'
-import { StatCard } from '@/components/ui/stat-card'
 import { getProject } from '@/app/actions/projects'
 import { exportMeasurementsToExcel } from '@/lib/export/measurements-excel'
 import { exportMeasurementsToPDF } from '@/lib/export/measurements-pdf'
@@ -288,12 +286,17 @@ export default function MeasurementsPage() {
 
   if (loading) {
     return (
-      <div className="p-4 md:p-8">
-        <PageHeader icon={Ruler} title={t.measurements.title} subtitle={t.measurements.totalMeasured} gradient="from-blue-500 to-cyan-600" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          {[1, 2, 3, 4].map((i) => <CardSkeleton key={i} className="h-28" />)}
+      <div className="p-4 md:p-6 space-y-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-[color:var(--color-amber)]/10 flex items-center justify-center">
+            <Ruler size={16} className="text-[color:var(--color-amber)]" />
+          </div>
+          <h1 className="text-2xl font-bold text-[color:var(--color-text)]">{t.measurements.title}</h1>
         </div>
-        <div className="space-y-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          {[1, 2, 3, 4].map((i) => <CardSkeleton key={i} className="h-24" />)}
+        </div>
+        <div className="space-y-3">
           <CardSkeleton />
           <CardSkeleton />
           <CardSkeleton />
@@ -304,11 +307,16 @@ export default function MeasurementsPage() {
 
   if (error && !loading && items.length === 0) {
     return (
-      <div className="p-4 md:p-8">
-        <PageHeader icon={Ruler} title={t.measurements.title} subtitle={t.measurements.totalMeasured} gradient="from-blue-500 to-cyan-600" />
+      <div className="p-4 md:p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-[color:var(--color-amber)]/10 flex items-center justify-center">
+            <Ruler size={16} className="text-[color:var(--color-amber)]" />
+          </div>
+          <h1 className="text-2xl font-bold text-[color:var(--color-text)]">{t.measurements.title}</h1>
+        </div>
         <div className="flex flex-col items-center justify-center py-12 gap-3">
-          <p className="text-sm text-red-500">{error}</p>
-          <button onClick={load} className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700">Retry</button>
+          <p className="text-sm text-red-400">{error}</p>
+          <button onClick={load} className="px-4 py-2 text-sm font-medium bg-[color:var(--color-amber)] text-[color:var(--color-on-amber)] rounded-xl hover:opacity-90">Retry</button>
         </div>
       </div>
     )
@@ -316,8 +324,16 @@ export default function MeasurementsPage() {
 
   if (items.length === 0) {
     return (
-      <div className="p-4 md:p-8">
-        <PageHeader icon={Ruler} title={t.measurements.title} subtitle={t.measurements.noMeasurements} gradient="from-blue-500 to-cyan-600" />
+      <div className="p-4 md:p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-8 h-8 rounded-lg bg-[color:var(--color-amber)]/10 flex items-center justify-center">
+            <Ruler size={16} className="text-[color:var(--color-amber)]" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-[color:var(--color-text)]">{t.measurements.title}</h1>
+            <p className="text-sm text-[color:var(--color-text-secondary)]">{t.measurements.noMeasurements}</p>
+          </div>
+        </div>
         <EmptyState
           icon={Ruler}
           title="No measurement items yet"
@@ -341,9 +357,18 @@ export default function MeasurementsPage() {
   }
 
   return (
-    <motion.div className="p-4 md:p-8" variants={stagger} initial="hidden" animate="show">
-      <motion.div variants={fadeUp}>
-        <PageHeader icon={Ruler} title={t.measurements.title} subtitle={`${items.length} items · ${lineCount} lines`} gradient="from-blue-500 to-cyan-600" />
+    <motion.div className="p-4 md:p-6 space-y-5" variants={stagger} initial="hidden" animate="show">
+      {/* Page Header */}
+      <motion.div variants={fadeUp} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-8 h-8 rounded-lg bg-[color:var(--color-amber)]/10 flex items-center justify-center">
+              <Ruler size={16} className="text-[color:var(--color-amber)]" />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-[color:var(--color-text)]">{t.measurements.title}</h1>
+          </div>
+          <p className="text-sm text-[color:var(--color-text-secondary)] ms-10">{items.length} items · {lineCount} lines</p>
+        </div>
       </motion.div>
 
       <motion.div variants={fadeUp}>
@@ -380,34 +405,45 @@ export default function MeasurementsPage() {
         />
       </motion.div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <motion.div variants={fadeUp}>
-          <StatCard label="Items" value={items.length} icon={Layers} gradient="from-blue-500 to-blue-600" glass />
-        </motion.div>
-        <motion.div variants={fadeUp}>
-          <StatCard label="Lines" value={lineCount} icon={FileText} gradient="from-indigo-500 to-indigo-600" glass />
-        </motion.div>
-        <motion.div variants={fadeUp}>
-          <StatCard label="Additions" value={totalAdditions} decimals={2} icon={Plus} gradient="from-green-500 to-emerald-600" glass />
-        </motion.div>
-        <motion.div variants={fadeUp}>
-          <StatCard label="Net Quantity" value={netQuantity} decimals={2} icon={BarChart3} gradient="from-purple-500 to-purple-600" glass />
-        </motion.div>
+      {/* KPI Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: 'Items', value: items.length, icon: Layers },
+          { label: 'Lines', value: lineCount, icon: FileText },
+          { label: 'Additions', value: totalAdditions.toFixed(2), icon: Plus },
+          { label: 'Net Quantity', value: netQuantity.toFixed(2), icon: BarChart3 },
+        ].map((stat) => (
+          <motion.div key={stat.label} variants={fadeUp}>
+            <div className="bg-[color:var(--color-surface-elevated)] border border-[color:var(--color-border)] rounded-2xl p-4 flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono uppercase tracking-widest text-[color:var(--color-text-secondary)]">{stat.label}</span>
+                <div className="w-7 h-7 rounded-lg bg-[color:var(--color-amber)]/10 flex items-center justify-center">
+                  <stat.icon size={14} className="text-[color:var(--color-amber)]" />
+                </div>
+              </div>
+              <div className="text-xl font-bold font-mono text-[color:var(--color-text)] tabular-nums">{stat.value}</div>
+            </div>
+          </motion.div>
+        ))}
       </div>
 
       {/* Tab bar */}
-      <motion.div variants={fadeUp} className="flex gap-1 mb-4 border-b border-slate-200 dark:border-slate-700">
+      <motion.div variants={fadeUp} className="flex gap-1 border-b border-[color:var(--color-border)]">
         <button onClick={() => setActiveTab('measurements')} className={cn(
-          'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
-          activeTab === 'measurements' ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700'
+          'flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors',
+          activeTab === 'measurements'
+            ? 'border-[color:var(--color-amber)] text-[color:var(--color-amber)]'
+            : 'border-transparent text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-text)]'
         )}>
-          <Ruler size={14} className="inline mr-1.5" />Measurements
+          <Ruler size={14} />Measurements
         </button>
         <button onClick={() => setActiveTab('traceability')} className={cn(
-          'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
-          activeTab === 'traceability' ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700'
+          'flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors',
+          activeTab === 'traceability'
+            ? 'border-[color:var(--color-amber)] text-[color:var(--color-amber)]'
+            : 'border-transparent text-[color:var(--color-text-secondary)] hover:text-[color:var(--color-text)]'
         )}>
-          <GitBranch size={14} className="inline mr-1.5" />Traceability Chain
+          <GitBranch size={14} />Traceability Chain
         </button>
       </motion.div>
 
@@ -423,32 +459,31 @@ export default function MeasurementsPage() {
               <motion.div
                 key={item.id}
                 variants={fadeUp}
-                className="premium-card hover-lift p-4"
+                className="bg-[color:var(--color-surface-elevated)] border border-[color:var(--color-border)] rounded-2xl p-4 hover:border-[color:var(--color-amber)]/30 transition-colors"
               >
                 <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-                    <Ruler size={16} className="text-blue-600" />
+                  <div className="p-2 rounded-lg bg-[color:var(--color-amber)]/10">
+                    <Ruler size={16} className="text-[color:var(--color-amber)]" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      {item.item_code && <span className="font-mono text-xs text-slate-400">{item.item_code}</span>}
-                      <span className="font-medium text-slate-900 dark:text-white">{item.description}</span>
+                      {item.item_code && <span className="font-mono text-xs text-[color:var(--color-text-secondary)]">{item.item_code}</span>}
+                      <span className="font-medium text-[color:var(--color-text)]">{item.description}</span>
                       <Badge variant="default">{item.measurement_type}</Badge>
                     </div>
-                    <div className="text-xs text-slate-500 mt-0.5">
+                    <div className="text-xs text-[color:var(--color-text-secondary)] mt-0.5">
                       {item.unit} · Net: {item.net_qty.toFixed(2)} · {(item.lines ?? []).length} lines
                       {item.location && <span> · {item.location}</span>}
                     </div>
 
                     {/* Chain visualization */}
-                    <div className="mt-3 pl-4 border-l-2 border-slate-200 dark:border-slate-700 space-y-2">
-                      {/* Drawing links */}
+                    <div className="mt-3 ps-4 border-s-2 border-[color:var(--color-border)] space-y-2">
                       {(linkedLines.length > 0 || item.drawing_ref) && (
                         <div className="flex items-center gap-2 text-xs">
-                          <Image size={12} className="text-indigo-500" />
-                          <span className="text-indigo-600 dark:text-indigo-400 font-medium">Drawing</span>
-                          <ArrowRight size={10} className="text-slate-300" />
-                          <span className="text-slate-600 dark:text-slate-300">
+                          <Image size={12} className="text-[color:var(--color-amber)]" />
+                          <span className="text-[color:var(--color-amber)] font-medium">Drawing</span>
+                          <ArrowRight size={10} className="text-[color:var(--color-border)]" />
+                          <span className="text-[color:var(--color-text-secondary)]">
                             {drawingName || item.drawing_ref || `${linkedLines.length} linked measurements`}
                           </span>
                           {linkedLines.length > 0 && (
@@ -457,34 +492,31 @@ export default function MeasurementsPage() {
                         </div>
                       )}
 
-                      {/* BOQ links */}
                       {linkedBOQ.length > 0 && linkedBOQ.map(boq => (
                         <div key={boq.id} className="flex items-center gap-2 text-xs">
-                          <FileText size={12} className="text-emerald-500" />
-                          <span className="text-emerald-600 dark:text-emerald-400 font-medium">BOQ</span>
-                          <ArrowRight size={10} className="text-slate-300" />
-                          <span className="text-slate-600 dark:text-slate-300">{boq.code ?? '-'} {boq.description}</span>
-                          <span className="tabular-nums text-slate-500">{boq.quantity.toFixed(2)} {boq.unit}</span>
+                          <FileText size={12} className="text-[color:var(--color-amber)]" />
+                          <span className="text-[color:var(--color-amber)] font-medium">BOQ</span>
+                          <ArrowRight size={10} className="text-[color:var(--color-border)]" />
+                          <span className="text-[color:var(--color-text-secondary)]">{boq.code ?? '-'} {boq.description}</span>
+                          <span className="tabular-nums text-[color:var(--color-text-secondary)]">{boq.quantity.toFixed(2)} {boq.unit}</span>
                           {boq.total_amount != null && (
-                            <span className="tabular-nums font-medium text-slate-700 dark:text-slate-200">= {boq.total_amount.toFixed(2)}</span>
+                            <span className="tabular-nums font-medium text-[color:var(--color-text)]">= {boq.total_amount.toFixed(2)}</span>
                           )}
                         </div>
                       ))}
 
-                      {/* Rate links */}
                       {linkedRates.length > 0 && linkedRates.map(rate => (
                         <div key={rate.id} className="flex items-center gap-2 text-xs">
-                          <BarChart3 size={12} className="text-purple-500" />
-                          <span className="text-purple-600 dark:text-purple-400 font-medium">Rate</span>
-                          <ArrowRight size={10} className="text-slate-300" />
-                          <span className="text-slate-600 dark:text-slate-300">{rate.description}</span>
-                          <span className="tabular-nums text-slate-500">{rate.unit_rate.toFixed(2)}/{rate.unit}</span>
+                          <BarChart3 size={12} className="text-[color:var(--color-amber)]" />
+                          <span className="text-[color:var(--color-amber)] font-medium">Rate</span>
+                          <ArrowRight size={10} className="text-[color:var(--color-border)]" />
+                          <span className="text-[color:var(--color-text-secondary)]">{rate.description}</span>
+                          <span className="tabular-nums text-[color:var(--color-text-secondary)]">{rate.unit_rate.toFixed(2)}/{rate.unit}</span>
                         </div>
                       ))}
 
-                      {/* No links */}
                       {linkedLines.length === 0 && !item.drawing_ref && linkedBOQ.length === 0 && (
-                        <div className="text-xs text-slate-400 italic">No links established</div>
+                        <div className="text-xs text-[color:var(--color-text-secondary)] italic">No links established</div>
                       )}
                     </div>
                   </div>
@@ -497,7 +529,13 @@ export default function MeasurementsPage() {
 
       {activeTab === 'measurements' && (
         <motion.div variants={fadeUp}>
-          <SectionCard title="Measurement Items" icon={Ruler} iconColor="text-blue-500" noPadding>
+          <div className="bg-[color:var(--color-surface-elevated)] border border-[color:var(--color-border)] rounded-2xl overflow-hidden">
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-[color:var(--color-border)]">
+              <div className="w-7 h-7 rounded-lg bg-[color:var(--color-amber)]/10 flex items-center justify-center">
+                <Ruler size={14} className="text-[color:var(--color-amber)]" />
+              </div>
+              <h3 className="font-semibold text-[color:var(--color-text)]">Measurement Items</h3>
+            </div>
             <MeasurementGrid
               items={filteredItems}
               selectedItems={selectedItems}
@@ -511,25 +549,25 @@ export default function MeasurementsPage() {
               onDeleteLine={handleDeleteLine}
               onDuplicateLine={handleDuplicateLine}
             />
-          </SectionCard>
+          </div>
         </motion.div>
       )}
 
       {/* Footer */}
-      <motion.div variants={fadeUp} className="mt-6 flex items-center justify-between rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-5 py-3 text-sm text-slate-600 dark:text-slate-300">
+      <motion.div variants={fadeUp} className="flex items-center justify-between rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-elevated)] px-5 py-3 text-sm text-[color:var(--color-text-secondary)]">
         <div className="flex items-center gap-4">
           <span>
-            <strong className="text-slate-900 dark:text-white">{items.length}</strong> item
+            <strong className="text-[color:var(--color-text)]">{items.length}</strong> item
             {items.length !== 1 ? 's' : ''}
           </span>
-          <span className="text-slate-300 dark:text-slate-600">|</span>
+          <span className="text-[color:var(--color-border)]">|</span>
           <span>
-            <strong className="text-slate-900 dark:text-white">{lineCount}</strong> line
+            <strong className="text-[color:var(--color-text)]">{lineCount}</strong> line
             {lineCount !== 1 ? 's' : ''}
           </span>
         </div>
         {selectedItems.size > 0 && (
-          <span className="text-blue-600 dark:text-blue-400 font-medium">
+          <span className="text-[color:var(--color-amber)] font-medium">
             {selectedItems.size} selected for BOQ
           </span>
         )}
@@ -548,7 +586,7 @@ export default function MeasurementsPage() {
       />
 
       <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title="Confirm" size="sm">
-        <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{confirmAction?.message}</p>
+        <p className="text-sm text-[color:var(--color-text-secondary)] mb-4">{confirmAction?.message}</p>
         <div className="flex justify-end gap-3">
           <Button variant="ghost" onClick={() => setConfirmAction(null)}>Cancel</Button>
           <Button variant="danger" onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>Confirm</Button>
@@ -635,7 +673,7 @@ function CreateItemModal({
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+            <label className="text-sm font-medium text-[color:var(--color-text)]">
               Section / Category
             </label>
             <input
@@ -646,7 +684,7 @@ function CreateItemModal({
                 setForm((prev) => ({ ...prev, section: e.target.value }))
               }
               placeholder="e.g. Substructure"
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface-elevated)] text-[color:var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-amber)]/30"
             />
             <datalist id="sections-list">
               {sections.map((s) => (
@@ -672,7 +710,7 @@ function CreateItemModal({
           />
         </div>
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p className="text-sm text-red-400">{error}</p>}
 
         <div className="flex justify-end gap-3 pt-2">
           <Button variant="ghost" onClick={onClose}>

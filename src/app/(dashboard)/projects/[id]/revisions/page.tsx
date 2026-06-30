@@ -114,19 +114,18 @@ export default function RevisionsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-[#0a0b0f] dark:via-[#0f1117] dark:to-[#0a0b0f]">
+      <div className="min-h-screen bg-[var(--background)]">
         <div className="mx-auto max-w-7xl p-4 md:p-8 space-y-6">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl premium-skeleton" />
+            <div className="w-10 h-10 rounded-lg bg-[var(--color-surface-elevated)] border border-[var(--color-border)] animate-pulse" />
             <div className="space-y-2">
-              <div className="h-7 w-48 premium-skeleton" />
-              <div className="h-4 w-64 premium-skeleton" />
+              <div className="h-6 w-48 rounded-lg bg-[var(--color-surface-elevated)] animate-pulse" />
+              <div className="h-4 w-64 rounded-lg bg-[var(--color-surface-elevated)] animate-pulse" />
             </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[1, 2, 3, 4].map(i => <CardSkeleton key={i} />)}
           </div>
-          <CardSkeleton />
           <CardSkeleton />
         </div>
       </div>
@@ -135,14 +134,17 @@ export default function RevisionsPage() {
 
   if (error && drawings.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-[#0a0b0f] dark:via-[#0f1117] dark:to-[#0a0b0f] flex items-center justify-center p-8">
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-8">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-md">
-          <div className="w-16 h-16 rounded-2xl bg-red-100 dark:bg-red-500/10 flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle size={28} className="text-red-500" />
+          <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle size={28} className="text-red-400" />
           </div>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Unable to Load Revisions</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{error}</p>
-          <button onClick={load} className="px-5 py-2.5 bg-gradient-to-r from-amber-600 to-amber-500 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-amber-500/25 transition-all">
+          <h2 className="text-lg font-bold text-[var(--color-text)] mb-2">Unable to Load Revisions</h2>
+          <p className="text-sm text-[var(--color-text-muted)] mb-6">{error}</p>
+          <button
+            onClick={load}
+            className="px-5 py-2.5 bg-[var(--color-amber)] text-[var(--color-on-amber)] text-sm font-bold rounded-xl hover:opacity-90 transition-opacity"
+          >
             Retry
           </button>
         </motion.div>
@@ -151,7 +153,7 @@ export default function RevisionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-[#0a0b0f] dark:via-[#0f1117] dark:to-[#0a0b0f]">
+    <div className="min-h-screen bg-[var(--background)]">
       <motion.div
         className="mx-auto max-w-7xl space-y-6 p-4 md:p-8"
         variants={stagger}
@@ -190,11 +192,12 @@ export default function RevisionsPage() {
 
         {/* Compare Section */}
         <motion.div variants={fadeUp}>
-          <SectionCard title="Compare Revisions" icon={GitCompare} iconColor="text-purple-500" glass>
+          <SectionCard title="Compare Revisions" icon={GitCompare} iconColor="text-[var(--color-amber)]" glass>
             <div className="flex items-center gap-3 flex-wrap">
               <div className="flex-1 min-w-[200px]">
-                <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Drawing</label>
-                <select className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                <label className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-1.5 block">Drawing</label>
+                <select
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]/40"
                   value={selectedDrawingId}
                   onChange={e => { setSelectedDrawingId(e.target.value); setRevA(''); setRevB('') }}
                 >
@@ -205,18 +208,28 @@ export default function RevisionsPage() {
                 </select>
               </div>
               <div className="min-w-[160px]">
-                <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Revision A (From)</label>
-                <select className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500" value={revA} onChange={e => setRevA(e.target.value)} disabled={!selectedDrawingId}>
+                <label className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-1.5 block">Revision A (From)</label>
+                <select
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]/40"
+                  value={revA}
+                  onChange={e => setRevA(e.target.value)}
+                  disabled={!selectedDrawingId}
+                >
                   <option value="">Select...</option>
                   {selectedRevisions.map(r => (
                     <option key={r.id} value={r.id}>Rev {r.revision_number} — {r.revision_date}</option>
                   ))}
                 </select>
               </div>
-              <ArrowRight size={20} className="text-slate-400 mt-4" />
+              <ArrowRight size={18} className="text-[var(--color-amber)] mt-5 shrink-0" />
               <div className="min-w-[160px]">
-                <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Revision B (To)</label>
-                <select className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500" value={revB} onChange={e => setRevB(e.target.value)} disabled={!selectedDrawingId}>
+                <label className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-1.5 block">Revision B (To)</label>
+                <select
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]/40"
+                  value={revB}
+                  onChange={e => setRevB(e.target.value)}
+                  disabled={!selectedDrawingId}
+                >
                   <option value="">Select...</option>
                   {selectedRevisions.filter(r => r.id !== revA).map(r => (
                     <option key={r.id} value={r.id}>Rev {r.revision_number} — {r.revision_date}</option>
@@ -236,17 +249,17 @@ export default function RevisionsPage() {
                     compact
                   />
                 ) : (
-                  <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden overflow-x-auto hover-lift">
+                  <div className="border border-[var(--color-border)] rounded-xl overflow-hidden overflow-x-auto">
                     <table className="w-full text-sm min-w-[600px]">
                       <thead>
-                        <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-                          <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Description</th>
-                          <th className="text-center px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Unit</th>
-                          <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Old Qty</th>
-                          <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">New Qty</th>
-                          <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Difference</th>
-                          <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">% Change</th>
-                          <th className="text-center px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Type</th>
+                        <tr className="bg-[var(--color-surface)] border-b border-[var(--color-border)]">
+                          <th className="text-left px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Description</th>
+                          <th className="text-center px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Unit</th>
+                          <th className="text-right px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Old Qty</th>
+                          <th className="text-right px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">New Qty</th>
+                          <th className="text-right px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Difference</th>
+                          <th className="text-right px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">% Change</th>
+                          <th className="text-center px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Type</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -254,18 +267,18 @@ export default function RevisionsPage() {
                           const diff = c.new_qty - c.previous_qty
                           const pct = c.previous_qty !== 0 ? (diff / c.previous_qty) * 100 : 100
                           return (
-                            <tr key={c.id} className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
-                              <td className="px-3 py-2 text-slate-700 dark:text-slate-200">{c.description}</td>
-                              <td className="px-3 py-2 text-center text-slate-500">{c.unit}</td>
-                              <td className="px-3 py-2 text-right tabular-nums text-slate-500">{fmt(c.previous_qty)}</td>
-                              <td className="px-3 py-2 text-right tabular-nums font-medium text-slate-900 dark:text-white">{fmt(c.new_qty)}</td>
-                              <td className={cn('px-3 py-2 text-right tabular-nums font-medium', diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-slate-500')}>
+                            <tr key={c.id} className="border-b border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] transition-colors">
+                              <td className="px-3 py-2.5 text-[var(--color-text)]">{c.description}</td>
+                              <td className="px-3 py-2.5 text-center text-[var(--color-text-muted)]">{c.unit}</td>
+                              <td className="px-3 py-2.5 text-right tabular-nums text-[var(--color-text-muted)]">{fmt(c.previous_qty)}</td>
+                              <td className="px-3 py-2.5 text-right tabular-nums font-semibold text-[var(--color-text)]">{fmt(c.new_qty)}</td>
+                              <td className={cn('px-3 py-2.5 text-right tabular-nums font-semibold', diff > 0 ? 'text-green-500' : diff < 0 ? 'text-red-400' : 'text-[var(--color-text-muted)]')}>
                                 {diff > 0 ? '+' : ''}{fmt(diff)}
                               </td>
-                              <td className={cn('px-3 py-2 text-right tabular-nums', diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-slate-500')}>
+                              <td className={cn('px-3 py-2.5 text-right tabular-nums', diff > 0 ? 'text-green-500' : diff < 0 ? 'text-red-400' : 'text-[var(--color-text-muted)]')}>
                                 {diff > 0 ? '+' : ''}{pct.toFixed(1)}%
                               </td>
-                              <td className="px-3 py-2 text-center">
+                              <td className="px-3 py-2.5 text-center">
                                 <Badge variant={diff > 0 ? 'success' : diff < 0 ? 'danger' : 'warning'}>
                                   {c.change_type}
                                 </Badge>
@@ -284,7 +297,7 @@ export default function RevisionsPage() {
 
         {/* Revision Timeline */}
         <motion.div variants={fadeUp}>
-          <SectionCard title="Revision History Timeline" icon={Clock} iconColor="text-blue-500">
+          <SectionCard title="Revision History Timeline" icon={Clock} iconColor="text-[var(--color-amber)]">
             {allRevisions.length === 0 ? (
               <EmptyState
                 icon={Layers}
@@ -294,8 +307,9 @@ export default function RevisionsPage() {
               />
             ) : (
               <div className="relative">
-                <div className="absolute left-4 top-0 bottom-0 w-px bg-slate-200 dark:bg-slate-700" />
-                <div className="space-y-4">
+                {/* Timeline line */}
+                <div className="absolute left-4 top-0 bottom-0 w-px bg-[var(--color-border)]" />
+                <div className="space-y-3">
                   {allRevisions.map((rev, i) => {
                     const isExpanded = expandedTimeline.has(rev.id)
                     const relatedChanges = changes.filter(c => c.to_revision_id === rev.id || c.from_revision_id === rev.id)
@@ -307,44 +321,49 @@ export default function RevisionsPage() {
                         transition={{ delay: i * 0.04 }}
                         className="relative pl-10"
                       >
+                        {/* Timeline dot */}
                         <div className={cn(
-                          'absolute left-2.5 w-3 h-3 rounded-full border-2 border-white dark:border-slate-800',
-                          rev.status === 'current' ? 'bg-green-500' : rev.status === 'draft' ? 'bg-amber-500' : 'bg-slate-400',
-                        )} style={{ top: '6px' }} />
+                          'absolute left-[10px] w-3 h-3 rounded-full border-2 border-[var(--color-surface)]',
+                          rev.status === 'current' ? 'bg-green-500' : rev.status === 'draft' ? 'bg-[var(--color-amber)]' : 'bg-[var(--color-text-muted)]',
+                        )} style={{ top: '10px' }} />
+
                         <div
-                          className="premium-card hover-lift rounded-lg p-3 cursor-pointer"
+                          className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-3 cursor-pointer hover:border-[var(--color-amber)]/30 transition-colors"
                           onClick={() => setExpandedTimeline(prev => {
                             const next = new Set(prev)
                             next.has(rev.id) ? next.delete(rev.id) : next.add(rev.id)
                             return next
                           })}
                         >
-                          <div className="flex items-center gap-2">
-                            {isExpanded ? <ChevronDown size={14} className="text-slate-400" /> : <ChevronRight size={14} className="text-slate-400" />}
-                            <span className="font-medium text-slate-900 dark:text-white text-sm">{rev.drawingName}</span>
-                            <span className="text-xs font-mono text-slate-500">Rev {rev.revision_number}</span>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {isExpanded
+                              ? <ChevronDown size={13} className="text-[var(--color-text-muted)] shrink-0" />
+                              : <ChevronRight size={13} className="text-[var(--color-text-muted)] shrink-0" />
+                            }
+                            <span className="font-semibold text-[var(--color-text)] text-sm">{rev.drawingName}</span>
+                            <span className="text-xs font-mono text-[var(--color-text-muted)]">Rev {rev.revision_number}</span>
                             {statusBadge(rev.status)}
-                            <span className="ml-auto text-xs text-slate-400">{rev.revision_date}</span>
+                            <span className="ms-auto text-xs font-mono text-[var(--color-text-muted)]">{rev.revision_date}</span>
                             {relatedChanges.length > 0 && (
                               <Badge variant="info">{relatedChanges.length} changes</Badge>
                             )}
                           </div>
                           {isExpanded && (
-                            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+                            <div className="mt-3 pt-3 border-t border-[var(--color-border)]">
                               {rev.description && (
-                                <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">{rev.description}</p>
+                                <p className="text-sm text-[var(--color-text-secondary)] mb-2">{rev.description}</p>
                               )}
                               {relatedChanges.length > 0 && (
                                 <div className="space-y-1">
-                                  <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Quantity Changes</span>
+                                  <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Quantity Changes</span>
                                   {relatedChanges.map(c => {
                                     const diff = c.new_qty - c.previous_qty
                                     return (
                                       <div key={c.id} className="flex items-center gap-2 text-xs py-1">
-                                        {diff > 0 ? <Plus size={12} className="text-green-500" /> : diff < 0 ? <Minus size={12} className="text-red-500" /> : <RefreshCw size={12} className="text-amber-500" />}
-                                        <span className="text-slate-600 dark:text-slate-300 flex-1">{c.description}</span>
-                                        <span className="tabular-nums text-slate-500">{fmt(c.previous_qty)} → {fmt(c.new_qty)} {c.unit}</span>
-                                        <span className={cn('tabular-nums font-medium', diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-slate-500')}>
+                                        {diff > 0 ? <Plus size={11} className="text-green-500" /> : diff < 0 ? <Minus size={11} className="text-red-400" /> : <RefreshCw size={11} className="text-[var(--color-amber)]" />}
+                                        <span className="text-[var(--color-text-secondary)] flex-1">{c.description}</span>
+                                        <span className="tabular-nums text-[var(--color-text-muted)]">{fmt(c.previous_qty)} → {fmt(c.new_qty)} {c.unit}</span>
+                                        <span className={cn('tabular-nums font-semibold', diff > 0 ? 'text-green-500' : diff < 0 ? 'text-red-400' : 'text-[var(--color-text-muted)]')}>
                                           ({diff > 0 ? '+' : ''}{fmt(diff)})
                                         </span>
                                       </div>
@@ -367,36 +386,36 @@ export default function RevisionsPage() {
         {/* All Quantity Changes Table */}
         {changes.length > 0 && (
           <motion.div variants={fadeUp}>
-            <SectionCard title="Quantity Change Report" icon={FileText} iconColor="text-amber-500">
-              <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden overflow-x-auto">
+            <SectionCard title="Quantity Change Report" icon={FileText} iconColor="text-[var(--color-amber)]">
+              <div className="border border-[var(--color-border)] rounded-xl overflow-hidden overflow-x-auto">
                 <table className="w-full text-sm min-w-[600px]">
                   <thead>
-                    <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-                      <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Description</th>
-                      <th className="text-center px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Unit</th>
-                      <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Previous</th>
-                      <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">New</th>
-                      <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Diff</th>
-                      <th className="text-center px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Type</th>
-                      <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Date</th>
+                    <tr className="bg-[var(--color-surface)] border-b border-[var(--color-border)]">
+                      <th className="text-left px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Description</th>
+                      <th className="text-center px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Unit</th>
+                      <th className="text-right px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Previous</th>
+                      <th className="text-right px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">New</th>
+                      <th className="text-right px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Diff</th>
+                      <th className="text-center px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Type</th>
+                      <th className="text-left px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Date</th>
                     </tr>
                   </thead>
                   <tbody>
                     {changes.map(c => {
                       const diff = c.new_qty - c.previous_qty
                       return (
-                        <tr key={c.id} className="border-b border-slate-100 dark:border-slate-700">
-                          <td className="px-3 py-2 text-slate-700 dark:text-slate-200">{c.description}</td>
-                          <td className="px-3 py-2 text-center text-slate-500">{c.unit}</td>
-                          <td className="px-3 py-2 text-right tabular-nums text-slate-500">{fmt(c.previous_qty)}</td>
-                          <td className="px-3 py-2 text-right tabular-nums font-medium">{fmt(c.new_qty)}</td>
-                          <td className={cn('px-3 py-2 text-right tabular-nums font-medium', diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-slate-500')}>
+                        <tr key={c.id} className="border-b border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] transition-colors">
+                          <td className="px-3 py-2.5 text-[var(--color-text)]">{c.description}</td>
+                          <td className="px-3 py-2.5 text-center text-[var(--color-text-muted)]">{c.unit}</td>
+                          <td className="px-3 py-2.5 text-right tabular-nums text-[var(--color-text-muted)]">{fmt(c.previous_qty)}</td>
+                          <td className="px-3 py-2.5 text-right tabular-nums font-semibold text-[var(--color-text)]">{fmt(c.new_qty)}</td>
+                          <td className={cn('px-3 py-2.5 text-right tabular-nums font-semibold', diff > 0 ? 'text-green-500' : diff < 0 ? 'text-red-400' : 'text-[var(--color-text-muted)]')}>
                             {diff > 0 ? '+' : ''}{fmt(diff)}
                           </td>
-                          <td className="px-3 py-2 text-center">
+                          <td className="px-3 py-2.5 text-center">
                             <Badge variant={diff > 0 ? 'success' : diff < 0 ? 'danger' : 'warning'}>{c.change_type}</Badge>
                           </td>
-                          <td className="px-3 py-2 text-xs text-slate-400">{c.created_at?.slice(0, 10)}</td>
+                          <td className="px-3 py-2.5 text-xs font-mono text-[var(--color-text-muted)]">{c.created_at?.slice(0, 10)}</td>
                         </tr>
                       )
                     })}

@@ -16,6 +16,7 @@ import {
   FileText,
   Download,
   AlertCircle,
+  X,
 } from 'lucide-react'
 import { getBOQItems } from '@/app/actions/boq'
 import { getMeasurementItems } from '@/app/actions/measurements'
@@ -40,47 +41,42 @@ const reportCards = [
     title: 'BOQ Report',
     description: 'Bill of Quantities with sections, rates, and totals',
     icon: FileSpreadsheet,
-    gradient: 'from-blue-500 to-blue-600',
-    iconColor: 'text-blue-500',
+    amberAccent: false,
   },
   {
     key: 'measurements',
     title: 'Measurement Report',
     description: 'Measurement items with quantities and calculations',
     icon: Ruler,
-    gradient: 'from-emerald-500 to-emerald-600',
-    iconColor: 'text-emerald-500',
+    amberAccent: false,
   },
   {
     key: 'cost',
     title: 'Cost Report',
     description: 'Budget summary, cost breakdown, and variance analysis',
     icon: DollarSign,
-    gradient: 'from-amber-500 to-amber-600',
-    iconColor: 'text-amber-500',
+    amberAccent: true,
   },
   {
     key: 'payment',
     title: 'Payment Report',
     description: 'Payment certificates with amounts and status',
     icon: Receipt,
-    gradient: 'from-purple-500 to-purple-600',
-    iconColor: 'text-purple-500',
+    amberAccent: false,
   },
   {
     key: 'evm',
     title: 'EVM Report',
     description: 'Earned Value Management performance metrics',
     icon: TrendingUp,
-    gradient: 'from-rose-500 to-rose-600',
-    iconColor: 'text-rose-500',
+    amberAccent: true,
   },
 ] as const
 
 type ReportKey = (typeof reportCards)[number]['key']
 
-const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } }
-const fadeUp: Variants = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } } }
+const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.07 } } }
+const fadeUp: Variants = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] } } }
 
 export default function ReportsPage() {
   const { id: projectId } = useParams<{ id: string }>()
@@ -173,9 +169,9 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-[#0a0b0f] dark:via-[#0f1117] dark:to-[#0a0b0f]">
+    <div className="min-h-screen bg-[var(--background)]">
       <motion.div
-        className="mx-auto max-w-[1400px] space-y-6 p-6 md:p-8"
+        className="mx-auto max-w-[1400px] space-y-6 p-5 md:p-8"
         variants={stagger}
         initial="hidden"
         animate="show"
@@ -184,54 +180,75 @@ export default function ReportsPage() {
           icon={FileBarChart}
           title={t.reports.title}
           subtitle="Generate and export project reports"
-          gradient="from-blue-500 to-blue-600"
+          gradient="from-amber-500 to-amber-600"
           className="mb-0"
         />
 
+        {/* Error Banner */}
         {error && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center gap-2 text-sm text-red-700 dark:text-red-400"
+            className="flex items-center gap-3 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400"
           >
-            <AlertCircle size={16} />
+            <AlertCircle size={15} className="shrink-0" />
             <span className="flex-1">{error}</span>
-            <button onClick={() => setError(null)} className="text-red-500 hover:text-red-700">
-              x
+            <button onClick={() => setError(null)} className="hover:text-red-300 transition-colors">
+              <X size={14} />
             </button>
           </motion.div>
         )}
 
+        {/* Report Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {reportCards.map((card) => (
-            <motion.div key={card.key} variants={fadeUp}>
-              <SectionCard title={card.title} icon={card.icon} iconColor={card.iconColor} glass className="hover-lift hover-glow h-full">
-                <div className="flex flex-col h-full">
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 flex-1">
-                    {card.description}
-                  </p>
-                  <div className="flex gap-2">
+          {reportCards.map((card) => {
+            const Icon = card.icon
+            const isLoadingPDF = loading[card.key] === 'pdf'
+            const isLoadingExcel = loading[card.key] === 'excel'
+            return (
+              <motion.div key={card.key} variants={fadeUp}>
+                <div className="group flex flex-col gap-4 p-5 rounded-2xl bg-[var(--color-surface-elevated)] border border-[var(--color-border)] hover:border-[var(--color-amber)]/40 transition-all h-full">
+                  {/* Card header */}
+                  <div className="flex items-start gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${card.amberAccent ? 'bg-[var(--color-amber)] text-[var(--color-on-amber)]' : 'bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-muted)]'}`}>
+                      <Icon size={18} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-bold text-[var(--color-text)]">{card.title}</h3>
+                      <p className="text-xs text-[var(--color-text-muted)] mt-0.5 leading-relaxed">{card.description}</p>
+                    </div>
+                  </div>
+
+                  {/* Amber divider */}
+                  {card.amberAccent && (
+                    <div className="h-px bg-[var(--color-amber)]/20" />
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex gap-2 mt-auto">
                     <Button
                       variant="primary"
                       size="sm"
-                      loading={loading[card.key] === 'pdf'}
+                      loading={isLoadingPDF}
                       onClick={() => handleGenerate(card.key, 'pdf')}
+                      className="flex-1"
                     >
-                      <FileText size={14} className="mr-1.5" /> Generate PDF
+                      <FileText size={13} className="me-1.5" /> PDF
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      loading={loading[card.key] === 'excel'}
+                      loading={isLoadingExcel}
                       onClick={() => handleGenerate(card.key, 'excel')}
+                      className="flex-1"
                     >
-                      <Download size={14} className="mr-1.5" /> Export Excel
+                      <Download size={13} className="me-1.5" /> Excel
                     </Button>
                   </div>
                 </div>
-              </SectionCard>
-            </motion.div>
-          ))}
+              </motion.div>
+            )
+          })}
         </div>
       </motion.div>
     </div>
