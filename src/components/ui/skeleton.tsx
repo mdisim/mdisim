@@ -7,7 +7,7 @@ function Skeleton({ className, ...props }: SkeletonProps) {
   return (
     <div
       className={cn(
-        'bg-slate-200 dark:bg-slate-700 animate-pulse rounded',
+        'skeleton',
         className
       )}
       {...props}
@@ -39,7 +39,7 @@ function TableSkeleton({ rows = 5, columns = 4, className }: SkeletonProps & { r
 function CardSkeleton({ className }: SkeletonProps) {
   return (
     <div className={cn(
-      'bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-md p-6 space-y-4',
+      'bg-[var(--color-surface-elevated)] rounded-[var(--radius-lg)] border border-[var(--color-border)] shadow-[var(--shadow-md)] p-6 space-y-4',
       className
     )}>
       {/* Header */}

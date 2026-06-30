@@ -35,7 +35,7 @@ export function StatCard({ label, value, prefix = '', suffix = '', decimals = 0,
     return () => controls.stop()
   }, [value, prefix, suffix, decimals])
 
-  const trendColor = trend && trend > 0 ? 'text-emerald-600 dark:text-emerald-400' : trend && trend < 0 ? 'text-red-500 dark:text-red-400' : 'text-slate-400'
+  const trendColor = trend && trend > 0 ? 'text-[var(--color-success)]' : trend && trend < 0 ? 'text-[var(--color-danger)]' : 'text-[var(--color-text-muted)]'
   const TrendIcon = trend && trend > 0 ? TrendingUp : trend && trend < 0 ? TrendingDown : Minus
 
   return (
@@ -45,10 +45,10 @@ export function StatCard({ label, value, prefix = '', suffix = '', decimals = 0,
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       whileHover={{ y: -3, transition: { duration: 0.2 } }}
       className={cn(
-        'group relative rounded-2xl overflow-hidden transition-shadow duration-300',
+        'group relative rounded-[var(--radius-lg)] overflow-hidden transition-shadow duration-300 border',
         glass
-          ? 'glass-card hover:shadow-xl'
-          : 'bg-white dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 shadow-sm hover:shadow-xl',
+          ? 'glass-card hover:shadow-[var(--shadow-xl)]'
+          : 'bg-[var(--color-surface-elevated)] border-[var(--color-border)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-xl)]',
         compact ? 'p-4' : 'p-5',
         className
       )}
@@ -77,7 +77,7 @@ export function StatCard({ label, value, prefix = '', suffix = '', decimals = 0,
           {trend !== undefined && (
             <div className={cn(
               'flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full',
-              trend > 0 ? 'bg-emerald-50 dark:bg-emerald-500/10' : trend < 0 ? 'bg-red-50 dark:bg-red-500/10' : 'bg-slate-50 dark:bg-slate-700/50',
+              trend > 0 ? 'bg-[var(--color-success-bg)]' : trend < 0 ? 'bg-[var(--color-danger-bg)]' : 'bg-[var(--color-surface-hover)]',
               trendColor
             )}>
               <TrendIcon size={10} />
@@ -87,7 +87,7 @@ export function StatCard({ label, value, prefix = '', suffix = '', decimals = 0,
         </div>
 
         <div className={cn(
-          'font-bold text-slate-900 dark:text-white tabular-nums tracking-tight',
+          'font-bold text-[var(--color-text)] tabular-nums tracking-tight',
           compact ? 'text-xl' : 'text-[26px] leading-none'
         )}>
           <span ref={nodeRef}>{prefix}0{suffix}</span>
@@ -95,13 +95,13 @@ export function StatCard({ label, value, prefix = '', suffix = '', decimals = 0,
 
         <div className="flex items-center justify-between mt-1.5">
           <span className={cn(
-            'font-medium text-slate-500 dark:text-slate-400 tracking-wide',
+            'font-medium text-[var(--color-text-secondary)] tracking-wide',
             compact ? 'text-[10px]' : 'text-[11px]'
           )}>
             {label}
           </span>
           {trendLabel && (
-            <span className="text-[9px] text-slate-400 dark:text-slate-500">{trendLabel}</span>
+            <span className="text-[9px] text-[var(--color-text-muted)]">{trendLabel}</span>
           )}
         </div>
       </div>

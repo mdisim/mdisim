@@ -16,7 +16,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <div className="flex flex-col gap-1">
         {label && (
-          <label htmlFor={textareaId} className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label htmlFor={textareaId} className="text-sm font-medium text-[var(--color-text-secondary)]">
             {label}
           </label>
         )}
@@ -26,17 +26,16 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           aria-invalid={error ? true : undefined}
           aria-describedby={errorId}
           className={cn(
-            'w-full px-3 py-2 text-sm rounded-lg border bg-white text-slate-900 placeholder-slate-400 resize-none',
-            'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
-            'disabled:bg-slate-50 disabled:cursor-not-allowed',
-            'dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500',
-            'dark:focus:ring-blue-400',
-            error ? 'border-red-400 dark:border-red-500' : 'border-slate-300 dark:border-slate-600',
+            'w-full px-3 py-2 text-sm rounded-[var(--radius-md)] border bg-[var(--color-surface)] text-[var(--color-text)] placeholder-[var(--color-text-muted)] resize-none',
+            'focus:outline-none focus:border-[var(--color-amber)] focus:shadow-[0_0_0_2px_var(--color-ring)]',
+            'disabled:bg-[var(--color-surface-sunken)] disabled:cursor-not-allowed',
+            'transition-colors duration-150',
+            error ? 'border-[var(--color-danger)]' : 'border-[var(--color-border)]',
             className
           )}
           {...props}
         />
-        {error && <p id={errorId} className="text-xs text-red-500 dark:text-red-400">{error}</p>}
+        {error && <p id={errorId} className="text-xs text-[var(--color-danger)]">{error}</p>}
       </div>
     )
   }

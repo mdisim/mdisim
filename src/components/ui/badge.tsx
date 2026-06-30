@@ -7,11 +7,11 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 
 function Badge({ className, variant = 'default', children, ...props }: BadgeProps) {
   const variants = {
-    default: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300',
-    success: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
-    warning: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
-    danger: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
-    info: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
+    default: 'bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)]',
+    success: 'bg-[var(--color-success-bg)] text-[var(--color-success)]',
+    warning: 'bg-[var(--color-warning-bg)] text-[var(--color-warning)]',
+    danger: 'bg-[var(--color-danger-bg)] text-[var(--color-danger)]',
+    info: 'bg-[var(--color-info-bg)] text-[var(--color-info)]',
   }
 
   return (

@@ -108,8 +108,8 @@ function ToastCard({ toastItem, onDismiss }: { toastItem: ToastItem; onDismiss: 
       role="status"
       aria-live="polite"
       className={cn(
-        'pointer-events-auto relative flex w-full max-w-sm items-start gap-3 overflow-hidden rounded-2xl border p-4 pe-3',
-        'bg-white dark:bg-slate-800/95',
+        'glass-card pointer-events-auto relative flex w-full max-w-sm items-start gap-3 overflow-hidden rounded-2xl border p-4 pe-3',
+        'bg-[var(--color-surface-elevated)]',
         'border-[var(--color-border)]'
       )}
       style={{
@@ -129,9 +129,9 @@ function ToastCard({ toastItem, onDismiss }: { toastItem: ToastItem; onDismiss: 
         <Icon size={18} style={{ color: iconColor }} />
       </div>
       <div className="min-w-0 flex-1 pt-0.5">
-        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{toastItem.title}</p>
+        <p className="text-sm font-semibold text-[var(--color-text)]">{toastItem.title}</p>
         {toastItem.description && (
-          <p className="mt-0.5 text-[13px] leading-snug text-slate-500 dark:text-slate-400">
+          <p className="mt-0.5 text-[13px] leading-snug text-[var(--color-text-secondary)]">
             {toastItem.description}
           </p>
         )}
@@ -140,7 +140,7 @@ function ToastCard({ toastItem, onDismiss }: { toastItem: ToastItem; onDismiss: 
         onClick={() => onDismiss(toastItem.id)}
         aria-label="Close notification"
         title="Close"
-        className="ms-1 shrink-0 rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300"
+        className="ms-1 shrink-0 rounded-lg p-1 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]"
       >
         <X size={16} />
       </button>

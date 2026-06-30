@@ -28,11 +28,11 @@ export function PageHeader({ icon: Icon, title, subtitle, gradient, badge, actio
         </div>
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{title}</h1>
+            <h1 className="text-2xl font-bold text-[var(--color-text)] tracking-tight">{title}</h1>
             {badge}
           </div>
           {subtitle && (
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>
+            <p className="text-sm text-[var(--color-text-secondary)] mt-0.5">{subtitle}</p>
           )}
         </div>
       </div>

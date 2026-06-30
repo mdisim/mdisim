@@ -20,7 +20,7 @@ export function DonutChart({ segments, size = 160, strokeWidth = 24, className, 
   return (
     <div className={cn('flex items-center gap-6', className)}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0 -rotate-90">
-        <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="currentColor" strokeWidth={strokeWidth} className="text-slate-100 dark:text-slate-700/50" />
+        <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="currentColor" strokeWidth={strokeWidth} className="text-[var(--color-surface-hover)]" />
         {segments.map((seg, i) => {
           const pct = seg.value / total
           const dashArray = pct * circumference
@@ -44,7 +44,7 @@ export function DonutChart({ segments, size = 160, strokeWidth = 24, className, 
             />
           )
         })}
-        <text x={size/2} y={size/2} textAnchor="middle" dominantBaseline="central" className="fill-slate-900 dark:fill-white text-lg font-bold rotate-90" style={{ transformOrigin: 'center' }}>
+        <text x={size/2} y={size/2} textAnchor="middle" dominantBaseline="central" className="fill-[var(--color-text)] text-lg font-bold rotate-90" style={{ transformOrigin: 'center' }}>
           {total.toLocaleString()}
         </text>
       </svg>
@@ -53,9 +53,9 @@ export function DonutChart({ segments, size = 160, strokeWidth = 24, className, 
           {segments.map((seg, i) => (
             <div key={i} className="flex items-center gap-2 text-sm">
               <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: seg.color }} />
-              <span className="text-slate-600 dark:text-slate-300 whitespace-nowrap">{seg.label}</span>
-              <span className="ml-auto font-semibold tabular-nums text-slate-900 dark:text-white">{seg.value.toLocaleString()}</span>
-              <span className="text-xs text-slate-400">({(seg.value/total*100).toFixed(0)}%)</span>
+              <span className="text-[var(--color-text-secondary)] whitespace-nowrap">{seg.label}</span>
+              <span className="ms-auto font-semibold tabular-nums text-[var(--color-text)]">{seg.value.toLocaleString()}</span>
+              <span className="text-xs text-[var(--color-text-muted)]">({(seg.value/total*100).toFixed(0)}%)</span>
             </div>
           ))}
         </div>
@@ -80,10 +80,10 @@ export function SimpleBarChart({ bars, maxValue, className, horizontal = true }:
         {bars.map((bar, i) => (
           <div key={i}>
             <div className="flex justify-between items-center mb-1">
-              <span className="text-sm text-slate-600 dark:text-slate-300">{bar.label}</span>
-              <span className="text-sm font-semibold tabular-nums text-slate-900 dark:text-white">{bar.value.toLocaleString()}</span>
+              <span className="text-sm text-[var(--color-text-secondary)]">{bar.label}</span>
+              <span className="text-sm font-semibold tabular-nums text-[var(--color-text)]">{bar.value.toLocaleString()}</span>
             </div>
-            <div className="h-2 bg-slate-100 dark:bg-slate-700/50 rounded-full overflow-hidden">
+            <div className="h-2 bg-[var(--color-surface-hover)] rounded-full overflow-hidden">
               <motion.div
                 className="h-full rounded-full"
                 style={{ backgroundColor: bar.color }}
@@ -103,7 +103,7 @@ export function SimpleBarChart({ bars, maxValue, className, horizontal = true }:
     <div className={cn('flex items-end justify-around gap-2 h-40', className)}>
       {bars.map((bar, i) => (
         <div key={i} className="flex flex-col items-center gap-1 flex-1">
-          <span className="text-xs font-semibold tabular-nums text-slate-700 dark:text-slate-300">{bar.value.toLocaleString()}</span>
+          <span className="text-xs font-semibold tabular-nums text-[var(--color-text-secondary)]">{bar.value.toLocaleString()}</span>
           <motion.div
             className="w-full max-w-12 rounded-t-lg"
             style={{ backgroundColor: bar.color }}
@@ -111,7 +111,7 @@ export function SimpleBarChart({ bars, maxValue, className, horizontal = true }:
             animate={{ height: `${(bar.value / max) * 100}%` }}
             transition={{ duration: 0.8, delay: i * 0.1, ease: 'easeOut' }}
           />
-          <span className="text-[10px] text-slate-500 dark:text-slate-400 text-center truncate w-full">{bar.label}</span>
+          <span className="text-[10px] text-[var(--color-text-muted)] text-center truncate w-full">{bar.label}</span>
         </div>
       ))}
     </div>
@@ -127,7 +127,7 @@ interface ProgressRingProps {
   className?: string
 }
 
-export function ProgressRing({ value, size = 80, strokeWidth = 8, color = '#2563EB', label, className }: ProgressRingProps) {
+export function ProgressRing({ value, size = 80, strokeWidth = 8, color = '#eab308', label, className }: ProgressRingProps) {
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   const pct = Math.min(Math.max(value, 0), 100)
@@ -135,7 +135,7 @@ export function ProgressRing({ value, size = 80, strokeWidth = 8, color = '#2563
   return (
     <div className={cn('relative inline-flex items-center justify-center', className)}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-        <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="currentColor" strokeWidth={strokeWidth} className="text-slate-100 dark:text-slate-700/50" />
+        <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="currentColor" strokeWidth={strokeWidth} className="text-[var(--color-surface-hover)]" />
         <motion.circle
           cx={size/2} cy={size/2} r={radius}
           fill="none" stroke={color} strokeWidth={strokeWidth}
@@ -147,8 +147,8 @@ export function ProgressRing({ value, size = 80, strokeWidth = 8, color = '#2563
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-sm font-bold text-slate-900 dark:text-white">{pct.toFixed(0)}%</span>
-        {label && <span className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">{label}</span>}
+        <span className="text-sm font-bold text-[var(--color-text)]">{pct.toFixed(0)}%</span>
+        {label && <span className="text-[9px] text-[var(--color-text-secondary)] uppercase tracking-wider">{label}</span>}
       </div>
     </div>
   )

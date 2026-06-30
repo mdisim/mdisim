@@ -82,27 +82,27 @@ export function Modal({ isOpen, onClose, title, children, className, size = 'md'
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title ?? 'Dialog'}>
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm dark:bg-black/70"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
       <div
         ref={modalRef}
         className={cn(
-          'relative bg-white rounded-xl shadow-xl w-full max-h-[90vh] overflow-y-auto',
+          'glass-card relative rounded-[var(--radius-lg)] shadow-[var(--shadow-2xl)] w-full max-h-[90vh] overflow-y-auto',
           'animate-in fade-in zoom-in-95 duration-200',
-          'dark:bg-slate-800 dark:shadow-slate-900/50',
+          'bg-[var(--color-surface-elevated)]',
           sizes[size],
           className
         )}
       >
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)]">
+            <h2 className="text-lg font-semibold text-[var(--color-text)]">{title}</h2>
             <button
               onClick={onClose}
               aria-label="Close"
-              className="p-1 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors dark:hover:bg-slate-700 dark:text-slate-400"
+              className="p-1 rounded-[var(--radius-sm)] hover:bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] transition-colors"
             >
               <X size={18} />
             </button>

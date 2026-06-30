@@ -23,16 +23,16 @@ export function EmptyState({ icon: Icon, title, description, actionLabel, onActi
       className={cn('flex flex-col items-center justify-center text-center', compact ? 'py-10 px-4' : 'py-20 px-6', className)}
     >
       <div className="relative mb-6">
-        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center shadow-inner">
-          <Icon size={32} className="text-slate-400 dark:text-slate-500" strokeWidth={1.5} />
+        <div className="w-20 h-20 rounded-[var(--radius-2xl)] bg-[var(--color-surface-hover)] flex items-center justify-center shadow-[var(--shadow-inner)]">
+          <Icon size={32} className="text-[var(--color-text-muted)]" strokeWidth={1.5} />
         </div>
-        <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
-          <div className="w-2 h-2 rounded-full bg-blue-500" />
+        <div className="absolute -bottom-1 -end-1 w-6 h-6 rounded-full bg-[var(--color-amber)]/15 flex items-center justify-center">
+          <div className="w-2 h-2 rounded-full bg-[var(--color-amber)]" />
         </div>
       </div>
-      <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">{title}</h3>
+      <h3 className="text-lg font-semibold text-[var(--color-text)] mb-2">{title}</h3>
       {description && (
-        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md leading-relaxed mb-6">{description}</p>
+        <p className="text-sm text-[var(--color-text-secondary)] max-w-md leading-relaxed mb-6">{description}</p>
       )}
       {actionLabel && onAction && (
         <Button onClick={onAction} size="md">
