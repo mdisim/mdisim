@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Hanken_Grotesk } from 'next/font/google'
 import { ToastProvider } from '@/components/ui/toast'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const hankenGrotesk = Hanken_Grotesk({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'ANGEL D.C. — Construction Intelligence Platform',
@@ -17,11 +17,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
-      <body className={`${inter.className} h-full`}>
+      <body className={`${hankenGrotesk.className} h-full`}>
         <script dangerouslySetInnerHTML={{__html: `
   (function(){
     try {
-      var theme = localStorage.getItem('angel-dc-theme') || 'light';
+      var theme = localStorage.getItem('angel-dc-theme') || 'dark';
       if (theme === 'dark') {
         document.documentElement.classList.add('dark');
       } else {

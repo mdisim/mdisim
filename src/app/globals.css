@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600;700;800;900&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 /* ========================================================================
@@ -6,68 +6,75 @@
    Inspired by: Bluebeam, Procore, Autodesk
    ======================================================================== */
 
-/* ---------- Light Mode (default) ---------- */
+/* ---------- Light Mode ---------- */
+/* "Structural Intelligence Narrative" — Obsidian & Amber design language (Stitch source of truth) */
 :root {
   /* Brand */
-  --color-navy: #0B1426;
-  --color-navy-light: #162040;
-  --color-blue: #2563EB;
-  --color-blue-light: #3B82F6;
-  --color-blue-dark: #1D4ED8;
+  --color-navy: #131315;
+  --color-navy-light: #39393b;
+  --color-blue: #3b82f6;
+  --color-blue-light: #60a5fa;
+  --color-blue-dark: #2563eb;
   --color-blue-subtle: #DBEAFE;
   --color-blue-wash: #EFF6FF;
-  --color-indigo: #4F46E5;
+  --color-indigo: #a855f7;
+
+  /* Brand — Angel Amber */
+  --color-amber: #eab308;
+  --color-amber-light: #facc15;
+  --color-amber-dark: #ca8a04;
+  --color-on-amber: #131315;
 
   /* Semantic */
-  --color-success: #059669;
-  --color-success-light: #10B981;
+  --color-success: #16a34a;
+  --color-success-light: #22c55e;
   --color-success-bg: #ECFDF5;
-  --color-danger: #DC2626;
-  --color-danger-light: #EF4444;
+  --color-danger: #dc2626;
+  --color-danger-light: #ef4444;
   --color-danger-bg: #FEF2F2;
-  --color-warning: #D97706;
-  --color-warning-light: #F59E0B;
-  --color-warning-bg: #FFFBEB;
-  --color-info: #0284C7;
-  --color-info-light: #38BDF8;
+  --color-warning: #ea580c;
+  --color-warning-light: #f97316;
+  --color-warning-bg: #FFF7ED;
+  --color-info: #2563eb;
+  --color-info-light: #3b82f6;
   --color-info-bg: #F0F9FF;
 
   /* Surfaces */
   --background: #FFFFFF;
-  --foreground: #0B1426;
-  --color-surface: #F8FAFC;
+  --foreground: #131315;
+  --color-surface: #F7F7F8;
   --color-surface-elevated: #FFFFFF;
-  --color-surface-hover: #F1F5F9;
-  --color-surface-active: #E2E8F0;
-  --color-surface-sunken: #F1F5F9;
+  --color-surface-hover: #F1F1F3;
+  --color-surface-active: #E4E4E7;
+  --color-surface-sunken: #F1F1F3;
   --color-surface-overlay: rgba(255, 255, 255, 0.92);
 
   /* Borders */
-  --color-border: #E2E8F0;
-  --color-border-light: #F1F5F9;
-  --color-border-strong: #CBD5E1;
-  --color-border-focus: #2563EB;
-  --color-ring: rgba(37, 99, 235, 0.35);
+  --color-border: #E4E4E7;
+  --color-border-light: #F1F1F3;
+  --color-border-strong: #D4D4D8;
+  --color-border-focus: #eab308;
+  --color-ring: rgba(234, 179, 8, 0.35);
 
   /* Text */
-  --color-text: #0B1426;
-  --color-text-secondary: #475569;
-  --color-text-muted: #94A3B8;
+  --color-text: #131315;
+  --color-text-secondary: #52525b;
+  --color-text-muted: #a1a1aa;
   --color-text-inverse: #FFFFFF;
-  --color-text-link: #2563EB;
-  --color-text-link-hover: #1D4ED8;
+  --color-text-link: #2563eb;
+  --color-text-link-hover: #1d4ed8;
 
   /* Shadows — layered for premium depth */
-  --shadow-xs: 0 1px 2px rgba(11, 20, 38, 0.04);
-  --shadow-sm: 0 1px 3px rgba(11, 20, 38, 0.06), 0 1px 2px rgba(11, 20, 38, 0.04);
-  --shadow-md: 0 4px 6px -1px rgba(11, 20, 38, 0.08), 0 2px 4px -2px rgba(11, 20, 38, 0.04);
-  --shadow-lg: 0 10px 24px -4px rgba(11, 20, 38, 0.10), 0 4px 8px -4px rgba(11, 20, 38, 0.04);
-  --shadow-xl: 0 20px 40px -8px rgba(11, 20, 38, 0.14), 0 8px 16px -6px rgba(11, 20, 38, 0.04);
-  --shadow-2xl: 0 32px 64px -12px rgba(11, 20, 38, 0.18);
-  --shadow-inner: inset 0 2px 4px rgba(11, 20, 38, 0.04);
+  --shadow-xs: 0 1px 2px rgba(19, 19, 21, 0.04);
+  --shadow-sm: 0 1px 3px rgba(19, 19, 21, 0.06), 0 1px 2px rgba(19, 19, 21, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(19, 19, 21, 0.08), 0 2px 4px -2px rgba(19, 19, 21, 0.04);
+  --shadow-lg: 0 10px 24px -4px rgba(19, 19, 21, 0.10), 0 4px 8px -4px rgba(19, 19, 21, 0.04);
+  --shadow-xl: 0 20px 40px -8px rgba(19, 19, 21, 0.14), 0 8px 16px -6px rgba(19, 19, 21, 0.04);
+  --shadow-2xl: 0 32px 64px -12px rgba(19, 19, 21, 0.18);
+  --shadow-inner: inset 0 2px 4px rgba(19, 19, 21, 0.04);
   --shadow-ring: 0 0 0 3px var(--color-ring);
-  --shadow-card: 0 1px 3px rgba(11, 20, 38, 0.05), 0 0 0 1px rgba(11, 20, 38, 0.03);
-  --shadow-dropdown: 0 10px 30px -5px rgba(11, 20, 38, 0.12), 0 0 0 1px rgba(11, 20, 38, 0.05);
+  --shadow-card: 0 1px 3px rgba(19, 19, 21, 0.05), 0 0 0 1px rgba(19, 19, 21, 0.03);
+  --shadow-dropdown: 0 10px 30px -5px rgba(19, 19, 21, 0.12), 0 0 0 1px rgba(19, 19, 21, 0.05);
 
   /* Radius */
   --radius-xs: 0.25rem;
@@ -135,62 +142,66 @@
   --z-toast: 80;
 
   /* Legacy compat */
-  --color-primary: #2563EB;
-  --color-primary-light: #3B82F6;
-  --color-accent: #F97316;
-  --color-accent-light: #FB923C;
+  --color-primary: #eab308;
+  --color-primary-light: #facc15;
+  --color-accent: #eab308;
+  --color-accent-light: #facc15;
 }
 
-/* ---------- Dark Mode ---------- */
+/* ---------- Dark Mode (primary brand identity) ---------- */
 .dark {
-  --color-navy: #E2E8F0;
-  --color-navy-light: #CBD5E1;
+  --color-navy: #f5f5f5;
+  --color-navy-light: #d4d4d8;
 
-  /* Surfaces — deep navy/charcoal, never pure black */
-  --background: #0C1222;
-  --foreground: #E2E8F0;
-  --color-surface: #111827;
-  --color-surface-elevated: #162040;
-  --color-surface-hover: #1E293B;
-  --color-surface-active: #273552;
-  --color-surface-sunken: #0A0F1C;
-  --color-surface-overlay: rgba(12, 18, 34, 0.92);
+  /* Surfaces — Obsidian: deep charcoal, never pure pitch black */
+  --background: #0e0e10;
+  --foreground: #ffffff;
+  --color-surface: #131315;
+  --color-surface-elevated: #1c1c1e;
+  --color-surface-hover: #232325;
+  --color-surface-active: #2c2c2f;
+  --color-surface-sunken: #0a0a0b;
+  --color-surface-overlay: rgba(14, 14, 16, 0.92);
 
   /* Brand in dark */
-  --color-blue: #3B82F6;
-  --color-blue-light: #60A5FA;
-  --color-blue-dark: #2563EB;
+  --color-blue: #3b82f6;
+  --color-blue-light: #60a5fa;
+  --color-blue-dark: #2563eb;
   --color-blue-subtle: rgba(59, 130, 246, 0.15);
   --color-blue-wash: rgba(59, 130, 246, 0.08);
+  --color-amber: #eab308;
+  --color-amber-light: #facc15;
+  --color-amber-dark: #ca8a04;
+  --color-on-amber: #131315;
 
   /* Semantic dark */
-  --color-success: #34D399;
-  --color-success-light: #6EE7B7;
-  --color-success-bg: rgba(52, 211, 153, 0.1);
-  --color-danger: #F87171;
-  --color-danger-light: #FCA5A5;
-  --color-danger-bg: rgba(248, 113, 113, 0.1);
-  --color-warning: #FBBF24;
-  --color-warning-light: #FDE68A;
-  --color-warning-bg: rgba(251, 191, 36, 0.1);
-  --color-info: #38BDF8;
-  --color-info-light: #7DD3FC;
-  --color-info-bg: rgba(56, 189, 248, 0.1);
+  --color-success: #22c55e;
+  --color-success-light: #4ade80;
+  --color-success-bg: rgba(34, 197, 94, 0.1);
+  --color-danger: #ef4444;
+  --color-danger-light: #f87171;
+  --color-danger-bg: rgba(239, 68, 68, 0.1);
+  --color-warning: #f97316;
+  --color-warning-light: #fb923c;
+  --color-warning-bg: rgba(249, 115, 22, 0.1);
+  --color-info: #3b82f6;
+  --color-info-light: #60a5fa;
+  --color-info-bg: rgba(59, 130, 246, 0.1);
 
   /* Borders */
-  --color-border: #1E293B;
-  --color-border-light: #162040;
-  --color-border-strong: #334155;
-  --color-border-focus: #3B82F6;
-  --color-ring: rgba(59, 130, 246, 0.4);
+  --color-border: #ffffff15;
+  --color-border-light: #ffffff0d;
+  --color-border-strong: #ffffff26;
+  --color-border-focus: #eab308;
+  --color-ring: rgba(234, 179, 8, 0.4);
 
   /* Text */
-  --color-text: #E2E8F0;
-  --color-text-secondary: #94A3B8;
-  --color-text-muted: #64748B;
-  --color-text-inverse: #0B1426;
-  --color-text-link: #60A5FA;
-  --color-text-link-hover: #93BBFD;
+  --color-text: #ffffff;
+  --color-text-secondary: #ffffff99;
+  --color-text-muted: #ffffff60;
+  --color-text-inverse: #131315;
+  --color-text-link: #facc15;
+  --color-text-link-hover: #fde047;
 
   /* Shadows — subtle glow on dark bg */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
@@ -204,10 +215,10 @@
   --shadow-dropdown: 0 10px 30px -5px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
 
   /* Legacy compat */
-  --color-primary: #3B82F6;
-  --color-primary-light: #60A5FA;
-  --color-accent: #FB923C;
-  --color-accent-light: #FDBA74;
+  --color-primary: #eab308;
+  --color-primary-light: #facc15;
+  --color-accent: #eab308;
+  --color-accent-light: #facc15;
 }
 
 /* ========================================================================
@@ -227,7 +238,7 @@ html {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: var(--text-base);
   line-height: var(--leading-normal);
   background: var(--background);
