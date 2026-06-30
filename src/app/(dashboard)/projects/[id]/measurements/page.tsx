@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams } from 'next/navigation'
+import { motion, type Variants } from 'framer-motion'
 import {
   getMeasurementItems,
   createMeasurementItem,
@@ -19,15 +20,16 @@ import type { MeasurementItem, MeasurementType, BOQItem, Drawing, RateAnalysis }
 import { MEASUREMENT_UNITS, MEASUREMENT_TYPES } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { Select } from '@/components/ui/select'
-import { TableSkeleton } from '@/components/ui/skeleton'
+import { CardSkeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
+import { SectionCard } from '@/components/ui/section-card'
 import { MeasurementGrid } from '@/components/measurements/measurement-grid'
 import { MeasurementToolbar } from '@/components/measurements/measurement-toolbar'
 import { GenerateBOQDialog } from '@/components/measurements/generate-boq-dialog'
-import { Ruler, Plus, Link2, Image, ArrowRight, BarChart3, GitBranch, FileText, Layers } from 'lucide-react'
+import { Ruler, Plus, Image, ArrowRight, BarChart3, GitBranch, FileText, Layers } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useI18n } from '@/lib/i18n'
 import { PageHeader } from '@/components/ui/page-header'
@@ -35,6 +37,9 @@ import { StatCard } from '@/components/ui/stat-card'
 import { getProject } from '@/app/actions/projects'
 import { exportMeasurementsToExcel } from '@/lib/export/measurements-excel'
 import { exportMeasurementsToPDF } from '@/lib/export/measurements-pdf'
+
+const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } }
+const fadeUp: Variants = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } } }
 
 const MEASUREMENT_TYPE_DEFAULT_UNIT: Record<MeasurementType, string> = {
   volume: 'm³',
@@ -285,7 +290,14 @@ export default function MeasurementsPage() {
     return (
       <div className="p-4 md:p-8">
         <PageHeader icon={Ruler} title={t.measurements.title} subtitle={t.measurements.totalMeasured} gradient="from-blue-500 to-cyan-600" />
-        <TableSkeleton rows={6} columns={4} />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          {[1, 2, 3, 4].map((i) => <CardSkeleton key={i} className="h-28" />)}
+        </div>
+        <div className="space-y-4">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
       </div>
     )
   }
@@ -306,20 +318,13 @@ export default function MeasurementsPage() {
     return (
       <div className="p-4 md:p-8">
         <PageHeader icon={Ruler} title={t.measurements.title} subtitle={t.measurements.noMeasurements} gradient="from-blue-500 to-cyan-600" />
-        <div className="text-center py-20">
-          <Ruler size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
-          <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-1">
-            No measurement items yet
-          </h3>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
-            Add measurement items to start building your quantity calculation
-            book.
-          </p>
-          <Button onClick={() => setShowCreateItem(true)}>
-            <Plus size={16} />
-            Add First Item
-          </Button>
-        </div>
+        <EmptyState
+          icon={Ruler}
+          title="No measurement items yet"
+          description="Add measurement items to start building your quantity calculation book."
+          actionLabel="Add First Item"
+          onAction={() => setShowCreateItem(true)}
+        />
         <CreateItemModal
           isOpen={showCreateItem}
           onClose={() => setShowCreateItem(false)}
@@ -336,50 +341,62 @@ export default function MeasurementsPage() {
   }
 
   return (
-    <div className="p-4 md:p-8">
-      <PageHeader icon={Ruler} title={t.measurements.title} subtitle={`${items.length} items · ${lineCount} lines`} gradient="from-blue-500 to-cyan-600" />
+    <motion.div className="p-4 md:p-8" variants={stagger} initial="hidden" animate="show">
+      <motion.div variants={fadeUp}>
+        <PageHeader icon={Ruler} title={t.measurements.title} subtitle={`${items.length} items · ${lineCount} lines`} gradient="from-blue-500 to-cyan-600" />
+      </motion.div>
 
-      <MeasurementToolbar
-        itemCount={items.length}
-        lineCount={lineCount}
-        selectedCount={selectedItems.size}
-        sections={sections}
-        activeSection={sectionFilter}
-        onSectionFilter={setSectionFilter}
-        searchQuery={searchQuery}
-        onSearch={setSearchQuery}
-        onAddItem={() => setShowCreateItem(true)}
-        onGenerateBOQ={() => setShowGenerateBOQ(true)}
-        onExport={async () => {
-          try {
-            const project = await getProject(projectId)
-            if (project) await exportMeasurementsToExcel(items, project.name)
-          } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to export Excel')
-          }
-        }}
-        onExportPDF={async () => {
-          try {
-            const project = await getProject(projectId)
-            if (project) exportMeasurementsToPDF(items, project.name)
-          } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to export PDF')
-          }
-        }}
-        totalAdditions={totalAdditions}
-        totalDeductions={totalDeductions}
-        netQuantity={netQuantity}
-      />
+      <motion.div variants={fadeUp}>
+        <MeasurementToolbar
+          itemCount={items.length}
+          lineCount={lineCount}
+          selectedCount={selectedItems.size}
+          sections={sections}
+          activeSection={sectionFilter}
+          onSectionFilter={setSectionFilter}
+          searchQuery={searchQuery}
+          onSearch={setSearchQuery}
+          onAddItem={() => setShowCreateItem(true)}
+          onGenerateBOQ={() => setShowGenerateBOQ(true)}
+          onExport={async () => {
+            try {
+              const project = await getProject(projectId)
+              if (project) await exportMeasurementsToExcel(items, project.name)
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'Failed to export Excel')
+            }
+          }}
+          onExportPDF={async () => {
+            try {
+              const project = await getProject(projectId)
+              if (project) exportMeasurementsToPDF(items, project.name)
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'Failed to export PDF')
+            }
+          }}
+          totalAdditions={totalAdditions}
+          totalDeductions={totalDeductions}
+          netQuantity={netQuantity}
+        />
+      </motion.div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <StatCard label="Items" value={items.length} icon={Layers} gradient="from-blue-500 to-blue-600" />
-        <StatCard label="Lines" value={lineCount} icon={FileText} gradient="from-indigo-500 to-indigo-600" />
-        <StatCard label="Additions" value={totalAdditions} decimals={2} icon={Plus} gradient="from-green-500 to-emerald-600" />
-        <StatCard label="Net Quantity" value={netQuantity} decimals={2} icon={BarChart3} gradient="from-purple-500 to-purple-600" />
+        <motion.div variants={fadeUp}>
+          <StatCard label="Items" value={items.length} icon={Layers} gradient="from-blue-500 to-blue-600" glass />
+        </motion.div>
+        <motion.div variants={fadeUp}>
+          <StatCard label="Lines" value={lineCount} icon={FileText} gradient="from-indigo-500 to-indigo-600" glass />
+        </motion.div>
+        <motion.div variants={fadeUp}>
+          <StatCard label="Additions" value={totalAdditions} decimals={2} icon={Plus} gradient="from-green-500 to-emerald-600" glass />
+        </motion.div>
+        <motion.div variants={fadeUp}>
+          <StatCard label="Net Quantity" value={netQuantity} decimals={2} icon={BarChart3} gradient="from-purple-500 to-purple-600" glass />
+        </motion.div>
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 mb-4 border-b border-slate-200 dark:border-slate-700">
+      <motion.div variants={fadeUp} className="flex gap-1 mb-4 border-b border-slate-200 dark:border-slate-700">
         <button onClick={() => setActiveTab('measurements')} className={cn(
           'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
           activeTab === 'measurements' ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700'
@@ -392,106 +409,114 @@ export default function MeasurementsPage() {
         )}>
           <GitBranch size={14} className="inline mr-1.5" />Traceability Chain
         </button>
-      </div>
+      </motion.div>
 
       {/* Traceability Chain View */}
       {activeTab === 'traceability' && (
-        <div className="space-y-3">
+        <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-3">
           {filteredItems.map(item => {
             const linkedLines = (item.lines ?? []).filter(l => l.drawing_measurement_id || l.drawing_id)
             const linkedBOQ = boqItems.filter(b => b.mi_id === item.id)
             const linkedRates = rateAnalyses.filter(r => linkedBOQ.some(b => b.id === r.boq_item_id))
             const drawingName = item.drawing_ref ? drawings.find(d => d.drawing_number === item.drawing_ref)?.name : null
             return (
-              <Card key={item.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-                      <Ruler size={16} className="text-blue-600" />
+              <motion.div
+                key={item.id}
+                variants={fadeUp}
+                className="premium-card hover-lift p-4"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                    <Ruler size={16} className="text-blue-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      {item.item_code && <span className="font-mono text-xs text-slate-400">{item.item_code}</span>}
+                      <span className="font-medium text-slate-900 dark:text-white">{item.description}</span>
+                      <Badge variant="default">{item.measurement_type}</Badge>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        {item.item_code && <span className="font-mono text-xs text-slate-400">{item.item_code}</span>}
-                        <span className="font-medium text-slate-900 dark:text-white">{item.description}</span>
-                        <Badge variant="default">{item.measurement_type}</Badge>
-                      </div>
-                      <div className="text-xs text-slate-500 mt-0.5">
-                        {item.unit} · Net: {item.net_qty.toFixed(2)} · {(item.lines ?? []).length} lines
-                        {item.location && <span> · {item.location}</span>}
-                      </div>
+                    <div className="text-xs text-slate-500 mt-0.5">
+                      {item.unit} · Net: {item.net_qty.toFixed(2)} · {(item.lines ?? []).length} lines
+                      {item.location && <span> · {item.location}</span>}
+                    </div>
 
-                      {/* Chain visualization */}
-                      <div className="mt-3 pl-4 border-l-2 border-slate-200 dark:border-slate-700 space-y-2">
-                        {/* Drawing links */}
-                        {(linkedLines.length > 0 || item.drawing_ref) && (
-                          <div className="flex items-center gap-2 text-xs">
-                            <Image size={12} className="text-indigo-500" />
-                            <span className="text-indigo-600 dark:text-indigo-400 font-medium">Drawing</span>
-                            <ArrowRight size={10} className="text-slate-300" />
-                            <span className="text-slate-600 dark:text-slate-300">
-                              {drawingName || item.drawing_ref || `${linkedLines.length} linked measurements`}
-                            </span>
-                            {linkedLines.length > 0 && (
-                              <Badge variant="info">{linkedLines.length} lines linked</Badge>
-                            )}
-                          </div>
-                        )}
+                    {/* Chain visualization */}
+                    <div className="mt-3 pl-4 border-l-2 border-slate-200 dark:border-slate-700 space-y-2">
+                      {/* Drawing links */}
+                      {(linkedLines.length > 0 || item.drawing_ref) && (
+                        <div className="flex items-center gap-2 text-xs">
+                          <Image size={12} className="text-indigo-500" />
+                          <span className="text-indigo-600 dark:text-indigo-400 font-medium">Drawing</span>
+                          <ArrowRight size={10} className="text-slate-300" />
+                          <span className="text-slate-600 dark:text-slate-300">
+                            {drawingName || item.drawing_ref || `${linkedLines.length} linked measurements`}
+                          </span>
+                          {linkedLines.length > 0 && (
+                            <Badge variant="info">{linkedLines.length} lines linked</Badge>
+                          )}
+                        </div>
+                      )}
 
-                        {/* BOQ links */}
-                        {linkedBOQ.length > 0 && linkedBOQ.map(boq => (
-                          <div key={boq.id} className="flex items-center gap-2 text-xs">
-                            <FileText size={12} className="text-emerald-500" />
-                            <span className="text-emerald-600 dark:text-emerald-400 font-medium">BOQ</span>
-                            <ArrowRight size={10} className="text-slate-300" />
-                            <span className="text-slate-600 dark:text-slate-300">{boq.code ?? '-'} {boq.description}</span>
-                            <span className="tabular-nums text-slate-500">{boq.quantity.toFixed(2)} {boq.unit}</span>
-                            {boq.total_amount != null && (
-                              <span className="tabular-nums font-medium text-slate-700 dark:text-slate-200">= {boq.total_amount.toFixed(2)}</span>
-                            )}
-                          </div>
-                        ))}
+                      {/* BOQ links */}
+                      {linkedBOQ.length > 0 && linkedBOQ.map(boq => (
+                        <div key={boq.id} className="flex items-center gap-2 text-xs">
+                          <FileText size={12} className="text-emerald-500" />
+                          <span className="text-emerald-600 dark:text-emerald-400 font-medium">BOQ</span>
+                          <ArrowRight size={10} className="text-slate-300" />
+                          <span className="text-slate-600 dark:text-slate-300">{boq.code ?? '-'} {boq.description}</span>
+                          <span className="tabular-nums text-slate-500">{boq.quantity.toFixed(2)} {boq.unit}</span>
+                          {boq.total_amount != null && (
+                            <span className="tabular-nums font-medium text-slate-700 dark:text-slate-200">= {boq.total_amount.toFixed(2)}</span>
+                          )}
+                        </div>
+                      ))}
 
-                        {/* Rate links */}
-                        {linkedRates.length > 0 && linkedRates.map(rate => (
-                          <div key={rate.id} className="flex items-center gap-2 text-xs">
-                            <BarChart3 size={12} className="text-purple-500" />
-                            <span className="text-purple-600 dark:text-purple-400 font-medium">Rate</span>
-                            <ArrowRight size={10} className="text-slate-300" />
-                            <span className="text-slate-600 dark:text-slate-300">{rate.description}</span>
-                            <span className="tabular-nums text-slate-500">{rate.unit_rate.toFixed(2)}/{rate.unit}</span>
-                          </div>
-                        ))}
+                      {/* Rate links */}
+                      {linkedRates.length > 0 && linkedRates.map(rate => (
+                        <div key={rate.id} className="flex items-center gap-2 text-xs">
+                          <BarChart3 size={12} className="text-purple-500" />
+                          <span className="text-purple-600 dark:text-purple-400 font-medium">Rate</span>
+                          <ArrowRight size={10} className="text-slate-300" />
+                          <span className="text-slate-600 dark:text-slate-300">{rate.description}</span>
+                          <span className="tabular-nums text-slate-500">{rate.unit_rate.toFixed(2)}/{rate.unit}</span>
+                        </div>
+                      ))}
 
-                        {/* No links */}
-                        {linkedLines.length === 0 && !item.drawing_ref && linkedBOQ.length === 0 && (
-                          <div className="text-xs text-slate-400 italic">No links established</div>
-                        )}
-                      </div>
+                      {/* No links */}
+                      {linkedLines.length === 0 && !item.drawing_ref && linkedBOQ.length === 0 && (
+                        <div className="text-xs text-slate-400 italic">No links established</div>
+                      )}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </motion.div>
             )
           })}
-        </div>
+        </motion.div>
       )}
 
-      {activeTab === 'measurements' && <MeasurementGrid
-        items={filteredItems}
-        selectedItems={selectedItems}
-        onToggleSelect={handleToggleSelect}
-        onSelectAll={handleSelectAll}
-        onAddItem={() => setShowCreateItem(true)}
-        onUpdateItem={handleUpdateItem}
-        onDeleteItem={handleDeleteItem}
-        onAddLine={handleAddLine}
-        onUpdateLine={handleUpdateLine}
-        onDeleteLine={handleDeleteLine}
-        onDuplicateLine={handleDuplicateLine}
-      />}
+      {activeTab === 'measurements' && (
+        <motion.div variants={fadeUp}>
+          <SectionCard title="Measurement Items" icon={Ruler} iconColor="text-blue-500" noPadding>
+            <MeasurementGrid
+              items={filteredItems}
+              selectedItems={selectedItems}
+              onToggleSelect={handleToggleSelect}
+              onSelectAll={handleSelectAll}
+              onAddItem={() => setShowCreateItem(true)}
+              onUpdateItem={handleUpdateItem}
+              onDeleteItem={handleDeleteItem}
+              onAddLine={handleAddLine}
+              onUpdateLine={handleUpdateLine}
+              onDeleteLine={handleDeleteLine}
+              onDuplicateLine={handleDuplicateLine}
+            />
+          </SectionCard>
+        </motion.div>
+      )}
 
       {/* Footer */}
-      <div className="mt-6 flex items-center justify-between rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-5 py-3 text-sm text-slate-600 dark:text-slate-300">
+      <motion.div variants={fadeUp} className="mt-6 flex items-center justify-between rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-5 py-3 text-sm text-slate-600 dark:text-slate-300">
         <div className="flex items-center gap-4">
           <span>
             <strong className="text-slate-900 dark:text-white">{items.length}</strong> item
@@ -508,7 +533,7 @@ export default function MeasurementsPage() {
             {selectedItems.size} selected for BOQ
           </span>
         )}
-      </div>
+      </motion.div>
 
       <CreateItemModal
         isOpen={showCreateItem}
@@ -536,7 +561,7 @@ export default function MeasurementsPage() {
         selectedItems={items.filter((item) => selectedItems.has(item.id))}
         onGenerate={handleGenerateBOQ}
       />
-    </div>
+    </motion.div>
   )
 }
 

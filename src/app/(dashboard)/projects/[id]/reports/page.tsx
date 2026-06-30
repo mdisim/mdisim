@@ -2,7 +2,10 @@
 
 import { useState } from 'react'
 import { useParams } from 'next/navigation'
+import { motion, type Variants } from 'framer-motion'
 import { Button } from '@/components/ui/button'
+import { SectionCard } from '@/components/ui/section-card'
+import { PageHeader } from '@/components/ui/page-header'
 import {
   FileBarChart,
   FileSpreadsheet,
@@ -38,6 +41,7 @@ const reportCards = [
     description: 'Bill of Quantities with sections, rates, and totals',
     icon: FileSpreadsheet,
     gradient: 'from-blue-500 to-blue-600',
+    iconColor: 'text-blue-500',
   },
   {
     key: 'measurements',
@@ -45,6 +49,7 @@ const reportCards = [
     description: 'Measurement items with quantities and calculations',
     icon: Ruler,
     gradient: 'from-emerald-500 to-emerald-600',
+    iconColor: 'text-emerald-500',
   },
   {
     key: 'cost',
@@ -52,6 +57,7 @@ const reportCards = [
     description: 'Budget summary, cost breakdown, and variance analysis',
     icon: DollarSign,
     gradient: 'from-amber-500 to-amber-600',
+    iconColor: 'text-amber-500',
   },
   {
     key: 'payment',
@@ -59,6 +65,7 @@ const reportCards = [
     description: 'Payment certificates with amounts and status',
     icon: Receipt,
     gradient: 'from-purple-500 to-purple-600',
+    iconColor: 'text-purple-500',
   },
   {
     key: 'evm',
@@ -66,10 +73,14 @@ const reportCards = [
     description: 'Earned Value Management performance metrics',
     icon: TrendingUp,
     gradient: 'from-rose-500 to-rose-600',
+    iconColor: 'text-rose-500',
   },
 ] as const
 
 type ReportKey = (typeof reportCards)[number]['key']
+
+const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } }
+const fadeUp: Variants = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } } }
 
 export default function ReportsPage() {
   const { id: projectId } = useParams<{ id: string }>()
@@ -162,71 +173,67 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="p-4 md:p-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20">
-            <FileBarChart size={22} />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t.reports.title}</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Generate and export project reports
-            </p>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-[#0a0b0f] dark:via-[#0f1117] dark:to-[#0a0b0f]">
+      <motion.div
+        className="mx-auto max-w-[1400px] space-y-6 p-6 md:p-8"
+        variants={stagger}
+        initial="hidden"
+        animate="show"
+      >
+        <PageHeader
+          icon={FileBarChart}
+          title={t.reports.title}
+          subtitle="Generate and export project reports"
+          gradient="from-blue-500 to-blue-600"
+          className="mb-0"
+        />
 
-      {error && (
-        <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center gap-2 text-sm text-red-700 dark:text-red-400">
-          <AlertCircle size={16} />
-          <span className="flex-1">{error}</span>
-          <button onClick={() => setError(null)} className="text-red-500 hover:text-red-700">
-            x
-          </button>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {reportCards.map((card) => (
-          <div
-            key={card.key}
-            className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700/60 p-6 hover:shadow-lg transition-all duration-200"
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center gap-2 text-sm text-red-700 dark:text-red-400"
           >
-            <div className="flex items-start gap-4 mb-4">
-              <div
-                className={`p-2.5 rounded-xl bg-gradient-to-br ${card.gradient} text-white shadow-lg`}
-              >
-                <card.icon size={22} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-slate-900 dark:text-white">{card.title}</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                  {card.description}
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="primary"
-                size="sm"
-                loading={loading[card.key] === 'pdf'}
-                onClick={() => handleGenerate(card.key, 'pdf')}
-              >
-                <FileText size={14} className="mr-1.5" /> Generate PDF
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                loading={loading[card.key] === 'excel'}
-                onClick={() => handleGenerate(card.key, 'excel')}
-              >
-                <Download size={14} className="mr-1.5" /> Export Excel
-              </Button>
-            </div>
-          </div>
-        ))}
-      </div>
+            <AlertCircle size={16} />
+            <span className="flex-1">{error}</span>
+            <button onClick={() => setError(null)} className="text-red-500 hover:text-red-700">
+              x
+            </button>
+          </motion.div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {reportCards.map((card) => (
+            <motion.div key={card.key} variants={fadeUp}>
+              <SectionCard title={card.title} icon={card.icon} iconColor={card.iconColor} glass className="hover-lift hover-glow h-full">
+                <div className="flex flex-col h-full">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 flex-1">
+                    {card.description}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      loading={loading[card.key] === 'pdf'}
+                      onClick={() => handleGenerate(card.key, 'pdf')}
+                    >
+                      <FileText size={14} className="mr-1.5" /> Generate PDF
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      loading={loading[card.key] === 'excel'}
+                      onClick={() => handleGenerate(card.key, 'excel')}
+                    >
+                      <Download size={14} className="mr-1.5" /> Export Excel
+                    </Button>
+                  </div>
+                </div>
+              </SectionCard>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
     </div>
   )
 }

@@ -13,7 +13,6 @@ import {
   Shield,
   Target,
   TrendingUp,
-  Loader2,
   RefreshCw,
   Zap,
   FileSpreadsheet,
@@ -26,11 +25,16 @@ import {
   Copy,
   Layers,
 } from 'lucide-react'
+import { motion, type Variants } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { getProjectHealth } from '@/app/actions/ai-intelligence'
 import type { HealthScore, HealthDimension, Alert, Recommendation, AlertSeverity } from '@/app/actions/ai-intelligence'
 import { getProject } from '@/app/actions/projects'
 import type { Project } from '@/lib/types'
+import { SectionCard } from '@/components/ui/section-card'
+import { PageHeader } from '@/components/ui/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
+import { CardSkeleton } from '@/components/ui/skeleton'
 
 const SEVERITY_STYLES: Record<AlertSeverity, { bg: string; border: string; icon: typeof AlertTriangle; iconColor: string; label: string }> = {
   critical: { bg: 'bg-red-50 dark:bg-red-900/10', border: 'border-red-200 dark:border-red-800', icon: XCircle, iconColor: 'text-red-500', label: 'Critical' },
@@ -100,7 +104,12 @@ function DimensionBar({ dim }: { dim: HealthDimension }) {
         <span className="text-xs font-mono text-slate-500">{dim.score}/{dim.maxScore}</span>
       </div>
       <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-        <div className={cn('h-full rounded-full transition-all duration-1000', color)} style={{ width: `${pct}%` }} />
+        <motion.div
+          className={cn('h-full rounded-full', color)}
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+        />
       </div>
       {dim.items.length > 0 && (
         <div className="mt-1 space-y-0.5 max-h-0 group-hover:max-h-40 overflow-hidden transition-all duration-200">
@@ -174,6 +183,9 @@ function RecommendationCard({ rec }: { rec: Recommendation }) {
   )
 }
 
+const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } }
+const fadeUp: Variants = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } } }
+
 export default function ProjectIntelligencePage() {
   const params = useParams()
   const projectId = params.id as string
@@ -203,26 +215,24 @@ export default function ProjectIntelligencePage() {
 
   if (loading) {
     return (
-      <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center gap-2 mb-1">
-          <Activity size={20} className="text-violet-600" />
-          <div className="h-6 w-48 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 flex flex-col items-center gap-4">
-            <div className="w-[120px] h-[120px] rounded-full border-4 border-slate-200 dark:border-slate-700 animate-pulse" />
-            <div className="h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-[#0a0b0f] dark:via-[#0f1117] dark:to-[#0a0b0f]">
+        <div className="mx-auto max-w-7xl p-4 md:p-6 space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl premium-skeleton" />
+            <div className="space-y-2">
+              <div className="h-6 w-48 premium-skeleton" />
+              <div className="h-4 w-64 premium-skeleton" />
+            </div>
           </div>
-          <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 space-y-3">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <CardSkeleton />
+            <CardSkeleton className="lg:col-span-2" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-12 bg-slate-100 dark:bg-slate-700/50 rounded-lg animate-pulse" />
+              <div key={i} className="h-10 premium-skeleton" />
             ))}
           </div>
-        </div>
-        <div className="space-y-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-8 bg-slate-100 dark:bg-slate-700/50 rounded animate-pulse" />
-          ))}
         </div>
       </div>
     )
@@ -230,18 +240,35 @@ export default function ProjectIntelligencePage() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] gap-3">
-        <AlertTriangle size={28} className="text-amber-500" />
-        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Failed to load project health</p>
-        <p className="text-xs text-slate-500 max-w-sm text-center">{error}</p>
-        <button onClick={load} className="mt-2 px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-          Retry
-        </button>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-[#0a0b0f] dark:via-[#0f1117] dark:to-[#0a0b0f] flex items-center justify-center p-8">
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-md">
+          <div className="w-16 h-16 rounded-2xl bg-red-100 dark:bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle size={28} className="text-red-500" />
+          </div>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Failed to load project health</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{error}</p>
+          <button onClick={load} className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all">
+            Retry
+          </button>
+        </motion.div>
       </div>
     )
   }
 
-  if (!health || !project) return null
+  if (!health || !project) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-[#0a0b0f] dark:via-[#0f1117] dark:to-[#0a0b0f] p-4 md:p-6">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <PageHeader icon={Activity} title="Project Intelligence" gradient="from-violet-600 to-indigo-600" />
+          <EmptyState
+            icon={Activity}
+            title="No health data available"
+            description="We couldn't find health analysis for this project yet."
+          />
+        </div>
+      </div>
+    )
+  }
 
   const criticals = health.alerts.filter(a => a.severity === 'critical')
   const warnings = health.alerts.filter(a => a.severity === 'warning')
@@ -249,118 +276,133 @@ export default function ProjectIntelligencePage() {
   const highRecs = health.recommendations.filter(r => r.priority === 'high')
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Activity size={20} className="text-violet-600" />
-            <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Project Intelligence</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-[#0a0b0f] dark:via-[#0f1117] dark:to-[#0a0b0f]">
+      <motion.div
+        className="mx-auto max-w-7xl p-4 md:p-6 space-y-6"
+        variants={stagger}
+        initial="hidden"
+        animate="show"
+      >
+        {/* Header */}
+        <motion.div variants={fadeUp} className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800 p-6 md:p-8 text-white">
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/[0.04] rounded-full blur-3xl animate-float-slow" />
+            <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-3xl" />
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{project.name} — Real-time health analysis</p>
-        </div>
-        <button
-          onClick={load}
-          disabled={loading}
-          className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors"
-        >
-          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-          Refresh
-        </button>
-      </div>
-
-      {/* Top row: Score + Urgent */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Health Score */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 flex flex-col items-center">
-          <div className="flex items-center gap-2 mb-4 self-start">
-            <Shield size={16} className="text-violet-500" />
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Health Score</span>
-          </div>
-          <ScoreRing score={health.overall} />
-          <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-3 max-w-[240px]">{health.summary}</p>
-          <div className="flex items-center gap-4 mt-4 text-[10px]">
-            <span className="flex items-center gap-1 text-red-500"><XCircle size={12} /> {criticals.length} critical</span>
-            <span className="flex items-center gap-1 text-amber-500"><AlertTriangle size={12} /> {warnings.length} warning</span>
-            <span className="flex items-center gap-1 text-blue-500"><Info size={12} /> {infos.length} info</span>
-          </div>
-        </div>
-
-        {/* Today's Priorities */}
-        <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <Target size={16} className="text-red-500" />
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Requires Attention Today</span>
-          </div>
-          {criticals.length === 0 && highRecs.length === 0 ? (
-            <div className="flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-lg">
-              <CheckCircle2 size={24} className="text-emerald-500" />
-              <div>
-                <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">All clear</p>
-                <p className="text-xs text-emerald-600 dark:text-emerald-400">No critical issues require immediate attention.</p>
+          <div className="relative flex items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Activity size={20} className="text-white/90" />
+                <h1 className="text-xl md:text-2xl font-black tracking-tight">Project Intelligence</h1>
               </div>
+              <p className="text-sm text-white/60">{project.name} — Real-time health analysis</p>
             </div>
-          ) : (
-            <div className="space-y-2 max-h-[220px] overflow-y-auto">
-              {criticals.map(alert => <AlertCard key={alert.id} alert={alert} />)}
-              {highRecs.map(rec => <RecommendationCard key={rec.id} rec={rec} />)}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Dimension Scores */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Sparkles size={16} className="text-violet-500" />
-          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Health Dimensions</span>
-          <span className="text-[10px] text-slate-400 ml-auto">Hover for details</span>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
-          {health.dimensions.map(dim => (
-            <DimensionBar key={dim.id} dim={dim} />
-          ))}
-        </div>
-      </div>
-
-      {/* Alerts + Recommendations side by side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* All Alerts */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <AlertTriangle size={16} className="text-amber-500" />
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">All Alerts</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500">{health.alerts.length}</span>
-            </div>
+            <button
+              onClick={load}
+              disabled={loading}
+              className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-white bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 transition-all shrink-0"
+            >
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+              Refresh
+            </button>
           </div>
-          {health.alerts.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center py-8">No alerts — everything looks good.</p>
-          ) : (
-            <div className="space-y-2 max-h-[400px] overflow-y-auto">
-              {health.alerts.map(alert => <AlertCard key={alert.id} alert={alert} />)}
-            </div>
-          )}
+        </motion.div>
+
+        {/* Top row: Score + Urgent */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Health Score */}
+          <motion.div variants={fadeUp}>
+            <SectionCard title="Health Score" icon={Shield} iconColor="text-violet-500" glass className="h-full">
+              <div className="flex flex-col items-center">
+                <ScoreRing score={health.overall} />
+                <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-3 max-w-[240px]">{health.summary}</p>
+                <div className="flex items-center gap-4 mt-4 text-[10px]">
+                  <span className="flex items-center gap-1 text-red-500"><XCircle size={12} /> {criticals.length} critical</span>
+                  <span className="flex items-center gap-1 text-amber-500"><AlertTriangle size={12} /> {warnings.length} warning</span>
+                  <span className="flex items-center gap-1 text-blue-500"><Info size={12} /> {infos.length} info</span>
+                </div>
+              </div>
+            </SectionCard>
+          </motion.div>
+
+          {/* Today's Priorities */}
+          <motion.div variants={fadeUp} className="lg:col-span-2">
+            <SectionCard title="Requires Attention Today" icon={Target} iconColor="text-red-500" className="h-full">
+              {criticals.length === 0 && highRecs.length === 0 ? (
+                <div className="flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-lg">
+                  <CheckCircle2 size={24} className="text-emerald-500" />
+                  <div>
+                    <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">All clear</p>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400">No critical issues require immediate attention.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-[220px] overflow-y-auto">
+                  {criticals.map(alert => <AlertCard key={alert.id} alert={alert} />)}
+                  {highRecs.map(rec => <RecommendationCard key={rec.id} rec={rec} />)}
+                </div>
+              )}
+            </SectionCard>
+          </motion.div>
         </div>
 
-        {/* Recommendations */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Sparkles size={16} className="text-violet-500" />
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Recommendations</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500">{health.recommendations.length}</span>
+        {/* Dimension Scores */}
+        <motion.div variants={fadeUp}>
+          <SectionCard
+            title="Health Dimensions"
+            icon={Sparkles}
+            iconColor="text-violet-500"
+            actions={<span className="text-[10px] text-slate-400">Hover for details</span>}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+              {health.dimensions.map(dim => (
+                <DimensionBar key={dim.id} dim={dim} />
+              ))}
             </div>
-          </div>
-          {health.recommendations.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center py-8">No recommendations — project is well-managed.</p>
-          ) : (
-            <div className="space-y-2 max-h-[400px] overflow-y-auto">
-              {health.recommendations.map(rec => <RecommendationCard key={rec.id} rec={rec} />)}
-            </div>
-          )}
+          </SectionCard>
+        </motion.div>
+
+        {/* Alerts + Recommendations side by side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* All Alerts */}
+          <motion.div variants={fadeUp}>
+            <SectionCard
+              title="All Alerts"
+              icon={AlertTriangle}
+              iconColor="text-amber-500"
+              className="h-full"
+              actions={<span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500">{health.alerts.length}</span>}
+            >
+              {health.alerts.length === 0 ? (
+                <EmptyState icon={CheckCircle2} title="No alerts" description="Everything looks good." compact />
+              ) : (
+                <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                  {health.alerts.map(alert => <AlertCard key={alert.id} alert={alert} />)}
+                </div>
+              )}
+            </SectionCard>
+          </motion.div>
+
+          {/* Recommendations */}
+          <motion.div variants={fadeUp}>
+            <SectionCard
+              title="Recommendations"
+              icon={Sparkles}
+              iconColor="text-violet-500"
+              className="h-full"
+              actions={<span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500">{health.recommendations.length}</span>}
+            >
+              {health.recommendations.length === 0 ? (
+                <EmptyState icon={Sparkles} title="No recommendations" description="Project is well-managed." compact />
+              ) : (
+                <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                  {health.recommendations.map(rec => <RecommendationCard key={rec.id} rec={rec} />)}
+                </div>
+              )}
+            </SectionCard>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }
