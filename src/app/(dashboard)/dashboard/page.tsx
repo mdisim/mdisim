@@ -13,6 +13,7 @@ import {
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
 import { useI18n } from '@/lib/i18n'
+import type { TranslationKeys } from '@/lib/i18n/translations'
 import { getDashboardSummaries } from '@/app/actions/dashboard'
 import type { ProjectSummary } from '@/app/actions/dashboard'
 import type { Project } from '@/lib/types'
@@ -22,6 +23,7 @@ import { PageHeader } from '@/components/ui/page-header'
 import { DonutChart, SimpleBarChart, ProgressRing } from '@/components/ui/mini-chart'
 import { EmptyState } from '@/components/ui/empty-state'
 import { CardSkeleton } from '@/components/ui/skeleton'
+import { useToast } from '@/components/ui/toast'
 
 function CashFlowChart({ data }: { data: { month: string; income: number; expense: number }[] }) {
   const max = Math.max(...data.flatMap(d => [d.income, d.expense]), 1)
@@ -55,7 +57,7 @@ function CashFlowChart({ data }: { data: { month: string; income: number; expens
   )
 }
 
-function ProjectCard({ project, summary, onClick }: { project: Project; summary: ProjectSummary; onClick: () => void }) {
+function ProjectCard({ project, summary, onClick, t }: { project: Project; summary: ProjectSummary; onClick: () => void; t: TranslationKeys }) {
   const contractVal = summary.contract?.contract_value ?? 0
   const actual = summary.costEntries.filter(c => c.category === 'actual').reduce((a, b) => a + b.amount, 0)
   const progress = project.progress ?? 0
@@ -76,7 +78,7 @@ function ProjectCard({ project, summary, onClick }: { project: Project; summary:
       <div className="flex items-start justify-between mb-3">
         <div className="min-w-0 flex-1">
           <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate">{project.name}</h4>
-          <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{project.location ?? 'No location'}</p>
+          <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{project.location ?? t.dashboard.noLocation}</p>
         </div>
         <div className={cn(
           'px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider',
@@ -92,11 +94,11 @@ function ProjectCard({ project, summary, onClick }: { project: Project; summary:
         <ProgressRing value={progress} size={44} strokeWidth={5} color={progress >= 80 ? '#10b981' : progress >= 40 ? '#3b82f6' : '#f59e0b'} />
         <div className="flex-1 space-y-1.5">
           <div className="flex justify-between text-[10px]">
-            <span className="text-slate-400">Contract</span>
+            <span className="text-slate-400">{t.dashboard.contract}</span>
             <span className="font-semibold text-slate-700 dark:text-slate-300 tabular-nums">${fmtCompact(contractVal)}</span>
           </div>
           <div className="flex justify-between text-[10px]">
-            <span className="text-slate-400">Spent</span>
+            <span className="text-slate-400">{t.dashboard.spent}</span>
             <span className="font-semibold text-rose-500 tabular-nums">${fmtCompact(actual)}</span>
           </div>
         </div>
@@ -138,6 +140,7 @@ import type { LucideIcon } from 'lucide-react'
 export default function DashboardPage() {
   const router = useRouter()
   const { t } = useI18n()
+  const { toast } = useToast()
   const [projects, setProjects] = useState<Project[]>([])
   const [summaries, setSummaries] = useState<ProjectSummary[]>([])
   const [loading, setLoading] = useState(true)
@@ -150,7 +153,8 @@ export default function DashboardPage() {
         setProjects(allProjects)
         setSummaries(results)
       } catch {
-        setError('Failed to load dashboard data. Please refresh the page.')
+        setError(t.dashboard.failedToLoadDashboard)
+        toast({ title: t.dashboard.failedToLoadDashboard, variant: 'danger' })
       } finally {
         setLoading(false)
       }
@@ -345,10 +349,10 @@ export default function DashboardPage() {
           <div className="w-16 h-16 rounded-2xl bg-red-100 dark:bg-red-500/10 flex items-center justify-center mx-auto mb-4">
             <AlertTriangle size={28} className="text-red-500" />
           </div>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Dashboard Unavailable</h2>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{t.dashboard.dashboardUnavailable}</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{error}</p>
           <button onClick={() => window.location.reload()} className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all">
-            Retry
+            {t.dashboard.retry}
           </button>
         </motion.div>
       </div>
@@ -362,9 +366,9 @@ export default function DashboardPage() {
           <PageHeader icon={Activity} title={t.dashboard.title} subtitle={t.dashboard.subtitle} gradient="from-indigo-500 to-indigo-600" />
           <EmptyState
             icon={FolderOpen}
-            title="No projects yet"
-            description="Create your first project to start tracking budgets, measurements, and payments."
-            actionLabel="Go to Projects"
+            title={t.dashboard.noProjectsYet}
+            description={t.dashboard.noProjectsYetDesc}
+            actionLabel={t.dashboard.goToProjects}
             onAction={() => router.push('/projects')}
           />
         </div>
@@ -398,7 +402,7 @@ export default function DashboardPage() {
               >
                 <div className="px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/10 text-[10px] font-semibold tracking-wider uppercase flex items-center gap-1.5">
                   <Sparkles size={10} className="text-amber-300" />
-                  Angel D.C.
+                  {t.dashboard.brandTag}
                 </div>
               </motion.div>
               <h1 className="text-3xl md:text-4xl font-black tracking-tight">{t.dashboard.title}</h1>
@@ -411,14 +415,14 @@ export default function DashboardPage() {
                 className="flex items-center gap-2 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/20 transition-all"
               >
                 <Eye size={15} />
-                View All
+                {t.dashboard.viewAll}
               </button>
               <button
                 onClick={() => router.push('/projects')}
                 className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-indigo-700 shadow-lg shadow-black/10 hover:shadow-xl transition-all"
               >
                 <Plus size={15} />
-                New Project
+                {t.dashboard.newProject}
               </button>
             </div>
           </div>
@@ -431,10 +435,10 @@ export default function DashboardPage() {
             className="relative grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-6 border-t border-white/10"
           >
             {[
-              { label: 'Portfolio Value', value: fmtCompact(totalContractValue), icon: Building2 },
-              { label: 'Total Spent', value: fmtCompact(totalActualCost), icon: Wallet },
-              { label: 'Payments Collected', value: fmtCompact(totalPaid), icon: CircleDollarSign },
-              { label: 'Projected Profit', value: fmtCompact(projectedProfit), icon: TrendingUp },
+              { label: t.dashboard.portfolioValue, value: fmtCompact(totalContractValue), icon: Building2 },
+              { label: t.dashboard.totalSpent, value: fmtCompact(totalActualCost), icon: Wallet },
+              { label: t.dashboard.paymentsCollected, value: fmtCompact(totalPaid), icon: CircleDollarSign },
+              { label: t.dashboard.projectedProfit, value: fmtCompact(projectedProfit), icon: TrendingUp },
             ].map((stat, i) => (
               <div key={i} className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-white/10">
@@ -456,7 +460,7 @@ export default function DashboardPage() {
             { label: t.dashboard.totalBudget, value: totalContractValue, icon: Briefcase, gradient: 'from-blue-600 to-cyan-600', prefix: '$', decimals: 2, glass: true },
             { label: t.dashboard.activeTenders, value: activeTenders, icon: Receipt, gradient: 'from-purple-600 to-fuchsia-600', glass: true },
             { label: t.dashboard.totalPayments, value: totalPaid, icon: DollarSign, gradient: 'from-emerald-600 to-teal-600', prefix: '$', decimals: 2, glass: true },
-            { label: 'Completion', value: completionRate, icon: Target, gradient: 'from-amber-600 to-orange-600', suffix: '%', decimals: 1, glass: true },
+            { label: t.dashboard.completion, value: completionRate, icon: Target, gradient: 'from-amber-600 to-orange-600', suffix: '%', decimals: 1, glass: true },
           ] as const).map((kpi, index) => (
             <motion.div key={kpi.label} variants={fadeUp}>
               <StatCard
@@ -493,23 +497,23 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500 text-center py-8">No budget data</p>
+                  <p className="text-sm text-slate-500 text-center py-8">{t.dashboard.noBudgetData}</p>
                 )}
               </SectionCard>
             </motion.div>
 
             <motion.div variants={fadeUp}>
-              <SectionCard title="Cash Flow" icon={LineChart} iconColor="text-emerald-500">
+              <SectionCard title={t.dashboard.cashFlow} icon={LineChart} iconColor="text-emerald-500">
                 {cashFlowData.some(d => d.income > 0 || d.expense > 0) ? (
                   <>
                     <CashFlowChart data={cashFlowData} />
                     <div className="flex items-center justify-center gap-5 mt-3 text-[10px] text-slate-500">
-                      <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" />Income</span>
-                      <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500" />Expense</span>
+                      <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" />{t.dashboard.income}</span>
+                      <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500" />{t.dashboard.expense}</span>
                     </div>
                   </>
                 ) : (
-                  <p className="text-sm text-slate-500 text-center py-8">No cash flow data</p>
+                  <p className="text-sm text-slate-500 text-center py-8">{t.dashboard.noCashFlowData}</p>
                 )}
               </SectionCard>
             </motion.div>
@@ -519,7 +523,7 @@ export default function DashboardPage() {
           <div className="lg:col-span-5 space-y-6">
             <motion.div variants={fadeUp}>
               <SectionCard
-                title="Projects"
+                title={t.dashboard.projects}
                 icon={FolderKanban}
                 iconColor="text-indigo-500"
                 noPadding
@@ -528,7 +532,7 @@ export default function DashboardPage() {
                     onClick={() => router.push('/projects')}
                     className="text-[10px] font-semibold text-indigo-500 hover:text-indigo-600 flex items-center gap-1 transition-colors"
                   >
-                    View All <ArrowRight size={10} />
+                    {t.dashboard.viewAll} <ArrowRight size={10} />
                   </button>
                 }
               >
@@ -539,6 +543,7 @@ export default function DashboardPage() {
                       project={s.project}
                       summary={s}
                       onClick={() => router.push(`/projects/${s.project.id}`)}
+                      t={t}
                     />
                   ))}
                 </div>
@@ -571,7 +576,7 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500 text-center py-8 px-6">No recent activity</p>
+                  <p className="text-sm text-slate-500 text-center py-8 px-6">{t.dashboard.noRecentActivity}</p>
                 )}
               </SectionCard>
             </motion.div>
@@ -594,7 +599,7 @@ export default function DashboardPage() {
                         />
                         <div className="min-w-0 flex-1">
                           <div className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 truncate">{s.project.name}</div>
-                          <div className="text-[10px] text-slate-400">{progress.toFixed(0)}% complete</div>
+                          <div className="text-[10px] text-slate-400">{progress.toFixed(0)}{t.dashboard.percentComplete}</div>
                         </div>
                       </div>
                     )
@@ -604,7 +609,7 @@ export default function DashboardPage() {
             </motion.div>
 
             <motion.div variants={fadeUp}>
-              <SectionCard title="EVM Performance" icon={Gauge} iconColor="text-indigo-500">
+              <SectionCard title={t.dashboard.evmPerformance} icon={Gauge} iconColor="text-indigo-500">
                 {earnedValueData.length > 0 ? (
                   <div className="space-y-3">
                     {earnedValueData.slice(0, 3).map((ev, i) => (
@@ -628,48 +633,48 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500 text-center py-6">No EVM data</p>
+                  <p className="text-sm text-slate-500 text-center py-6">{t.dashboard.noEvmData}</p>
                 )}
               </SectionCard>
             </motion.div>
 
             {/* AI Insights */}
             <motion.div variants={fadeUp}>
-              <SectionCard title="Insights" icon={Sparkles} iconColor="text-amber-500">
+              <SectionCard title={t.dashboard.insights} icon={Sparkles} iconColor="text-amber-500">
                 <div className="space-y-3">
                   {profitMargin !== 0 && (
                     <InsightCard
                       icon={profitMargin > 0 ? TrendingUp : TrendingDown}
-                      title="Profit Margin"
+                      title={t.dashboard.profitMargin}
                       value={`${profitMargin.toFixed(1)}%`}
-                      subtitle={profitMargin > 10 ? 'Portfolio performing well' : profitMargin > 0 ? 'Margins are thin — review costs' : 'Portfolio at risk'}
+                      subtitle={profitMargin > 10 ? t.dashboard.portfolioPerformingWell : profitMargin > 0 ? t.dashboard.marginsAreThin : t.dashboard.portfolioAtRisk}
                       gradient={profitMargin > 10 ? 'from-emerald-500 to-teal-500' : profitMargin > 0 ? 'from-amber-500 to-orange-500' : 'from-red-500 to-rose-500'}
                     />
                   )}
                   {pendingPayments > 0 && (
                     <InsightCard
                       icon={Clock}
-                      title="Pending Payments"
+                      title={t.dashboard.pendingPayments}
                       value={fmtCompact(pendingPayments)}
-                      subtitle="Awaiting client approval"
+                      subtitle={t.dashboard.awaitingClientApproval}
                       gradient="from-blue-500 to-indigo-500"
                     />
                   )}
                   {pendingVariations > 0 && (
                     <InsightCard
                       icon={AlertTriangle}
-                      title="Pending Variations"
+                      title={t.dashboard.pendingVariations}
                       value={fmtCompact(pendingVariations)}
-                      subtitle="Requires follow-up"
+                      subtitle={t.dashboard.requiresFollowUp}
                       gradient="from-orange-500 to-red-500"
                     />
                   )}
                   {totalMeasurements > 0 && (
                     <InsightCard
                       icon={Ruler}
-                      title="Measurements"
-                      value={`${totalMeasurements} items`}
-                      subtitle={`${totalMeasurementLines} calculation lines`}
+                      title={t.dashboard.measurements}
+                      value={`${totalMeasurements} ${t.dashboard.items}`}
+                      subtitle={`${totalMeasurementLines} ${t.dashboard.calculationLines}`}
                       gradient="from-violet-500 to-purple-500"
                     />
                   )}
@@ -684,15 +689,15 @@ export default function DashboardPage() {
           <SectionCard title={t.dashboard.financialSummary} icon={DollarSign} iconColor="text-emerald-500">
             {summaries.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="w-full text-left">
+                <table className="w-full text-start">
                   <thead>
                     <tr className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-700/40">
-                      <th className="pb-3 pr-4">Project</th>
-                      <th className="pb-3 pr-4 text-right">Contract</th>
-                      <th className="pb-3 pr-4 text-right">Variations</th>
-                      <th className="pb-3 pr-4 text-right">Actual Cost</th>
-                      <th className="pb-3 pr-4 text-right">Profit</th>
-                      <th className="pb-3 text-right">Margin</th>
+                      <th className="pb-3 pe-4">{t.dashboard.tableProject}</th>
+                      <th className="pb-3 pe-4 text-end">{t.dashboard.tableContract}</th>
+                      <th className="pb-3 pe-4 text-end">{t.dashboard.tableVariations}</th>
+                      <th className="pb-3 pe-4 text-end">{t.dashboard.tableActualCost}</th>
+                      <th className="pb-3 pe-4 text-end">{t.dashboard.tableProfit}</th>
+                      <th className="pb-3 text-end">{t.dashboard.tableMargin}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
@@ -709,14 +714,14 @@ export default function DashboardPage() {
 
                       return (
                         <tr key={s.project.id} className="group cursor-pointer hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors" onClick={() => router.push(`/projects/${s.project.id}`)}>
-                          <td className="py-3 pr-4">
+                          <td className="py-3 pe-4">
                             <div className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{s.project.name}</div>
                           </td>
-                          <td className="py-3 pr-4 text-right text-[12px] font-medium text-slate-600 dark:text-slate-300 tabular-nums">{fmtCompact(contractVal)}</td>
-                          <td className="py-3 pr-4 text-right text-[12px] font-medium text-blue-500 tabular-nums">{varApproved > 0 ? `+${fmtCompact(varApproved)}` : '-'}</td>
-                          <td className="py-3 pr-4 text-right text-[12px] font-medium text-rose-500 tabular-nums">{fmtCompact(actual)}</td>
-                          <td className={cn('py-3 pr-4 text-right text-[12px] font-bold tabular-nums', profit >= 0 ? 'text-emerald-600' : 'text-red-500')}>{fmtCompact(profit)}</td>
-                          <td className="py-3 text-right">
+                          <td className="py-3 pe-4 text-end text-[12px] font-medium text-slate-600 dark:text-slate-300 tabular-nums">{fmtCompact(contractVal)}</td>
+                          <td className="py-3 pe-4 text-end text-[12px] font-medium text-blue-500 tabular-nums">{varApproved > 0 ? `+${fmtCompact(varApproved)}` : '-'}</td>
+                          <td className="py-3 pe-4 text-end text-[12px] font-medium text-rose-500 tabular-nums">{fmtCompact(actual)}</td>
+                          <td className={cn('py-3 pe-4 text-end text-[12px] font-bold tabular-nums', profit >= 0 ? 'text-emerald-600' : 'text-red-500')}>{fmtCompact(profit)}</td>
+                          <td className="py-3 text-end">
                             <span className={cn(
                               'px-2 py-0.5 rounded-full text-[10px] font-bold',
                               margin >= 10 ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' :
@@ -733,7 +738,7 @@ export default function DashboardPage() {
                 </table>
               </div>
             ) : (
-              <p className="text-sm text-slate-500 text-center py-8">No financial data</p>
+              <p className="text-sm text-slate-500 text-center py-8">{t.dashboard.noFinancialData}</p>
             )}
           </SectionCard>
         </motion.div>

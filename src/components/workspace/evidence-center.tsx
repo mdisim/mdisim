@@ -8,6 +8,8 @@ import { generateEvidenceReport } from '@/lib/export/evidence-report'
 import { getProfile } from '@/app/actions/profile'
 import { getProject } from '@/app/actions/projects'
 import { useParams } from 'next/navigation'
+import { useI18n } from '@/lib/i18n'
+import { useToast } from '@/components/ui/toast'
 import {
   FileSpreadsheet, Ruler, ImageIcon, DollarSign,
   GitCompare, ArrowRight, Hash, Calculator, Package,
@@ -25,7 +27,7 @@ function SectionTitle({ icon: Icon, title, count, color }: {
       <Icon size={12} className={color} />
       <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">{title}</span>
       {count != null && count > 0 && (
-        <span className="ml-auto text-[9px] tabular-nums bg-slate-100 dark:bg-white/[0.06] text-slate-400 px-1.5 py-0.5 rounded-full">{count}</span>
+        <span className="ms-auto text-[9px] tabular-nums bg-slate-100 dark:bg-white/[0.06] text-slate-400 px-1.5 py-0.5 rounded-full">{count}</span>
       )}
     </div>
   )
@@ -38,7 +40,7 @@ function PropRow({ label, value, mono, accent }: {
     <div className="flex items-start justify-between gap-3 px-4 py-1.5">
       <span className="text-[11px] text-slate-400 dark:text-slate-500 shrink-0">{label}</span>
       <span className={cn(
-        'text-[11px] text-right break-words',
+        'text-[11px] text-end break-words',
         mono && 'font-mono tabular-nums',
         accent ?? 'text-slate-700 dark:text-slate-200',
       )}>
@@ -83,6 +85,8 @@ const RESOURCE_ICONS = {
 
 export function EvidenceCenter() {
   const { id: projectId } = useParams<{ id: string }>()
+  const { t } = useI18n()
+  const { toast } = useToast()
   const {
     data, selection, linkedMeasurements, linkedRateAnalysis,
     linkedSourceDrawings, linkedQuantityChanges, linkedVariations,
@@ -119,8 +123,9 @@ export function EvidenceCenter() {
         engineerName,
         currency,
       })
+      toast({ title: t.workspace.reportGenerated, variant: 'success' })
     } catch {
-      // Pop-up blocked or other error — silent
+      toast({ title: t.workspace.reportFailed, variant: 'danger' })
     } finally {
       setGenerating(false)
     }

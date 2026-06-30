@@ -11,10 +11,12 @@ import { FolderKanban, Plus, Trash2, MapPin, User, Calendar, Search, LayoutGrid,
 import { formatDate } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n } from '@/lib/i18n'
+import { useToast } from '@/components/ui/toast'
 
 export default function ProjectsPage() {
   const router = useRouter()
   const { t } = useI18n()
+  const { toast } = useToast()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
@@ -39,7 +41,9 @@ export default function ProjectsPage() {
       const data = await getProjects()
       setProjects(data)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load projects')
+      const message = e instanceof Error ? e.message : t.projects.failedToLoadProjects
+      setError(message)
+      toast({ title: t.projects.failedToLoadProjects, description: message, variant: 'danger' })
     } finally {
       setLoading(false)
     }
@@ -54,25 +58,29 @@ export default function ProjectsPage() {
     const result = await createProject(form)
     if (result.error) {
       setError(result.error)
+      toast({ title: t.projects.failedToLoadProjects, description: result.error, variant: 'danger' })
       setCreating(false)
       return
     }
     setShowCreate(false)
     setForm({ name: '', client_name: '', location: '', currency: 'USD', description: '' })
     setCreating(false)
+    toast({ title: t.projects.projectCreated, variant: 'success' })
     loadProjects()
   }
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
     setConfirmAction({
-      message: 'Delete this project and all its data?',
+      message: t.projects.deleteProjectConfirm,
       onConfirm: async () => {
         try {
           await deleteProject(id)
+          toast({ title: t.projects.projectDeleted, variant: 'success' })
           loadProjects()
         } catch {
-          setError('Failed to delete project. Please try again.')
+          setError(t.projects.failedToDeleteProject)
+          toast({ title: t.projects.failedToDeleteProject, variant: 'danger' })
         }
       },
     })
@@ -109,14 +117,20 @@ export default function ProjectsPage() {
             <button
               onClick={() => setView('grid')}
               className={`p-1.5 rounded-md transition-colors ${view === 'grid' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}
-              title="Grid view"
+              title={t.dashboard.gridView}
+              aria-label={t.dashboard.gridView}
+              aria-selected={view === 'grid'}
+              role="tab"
             >
               <LayoutGrid size={16} />
             </button>
             <button
               onClick={() => setView('list')}
               className={`p-1.5 rounded-md transition-colors ${view === 'list' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}
-              title="List view"
+              title={t.dashboard.listView}
+              aria-label={t.dashboard.listView}
+              aria-selected={view === 'list'}
+              role="tab"
             >
               <List size={16} />
             </button>
@@ -131,13 +145,13 @@ export default function ProjectsPage() {
       {/* Search */}
       {projects.length > 0 && (
         <div className="relative mb-6 max-w-md">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+          <Search size={16} className="absolute start-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search projects..."
-            className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 dark:focus:border-blue-400 transition-all"
+            placeholder={t.projects.searchPlaceholder}
+            className="w-full ps-10 pe-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 dark:focus:border-blue-400 transition-all"
           />
         </div>
       )}
@@ -163,17 +177,17 @@ export default function ProjectsPage() {
             <FolderKanban size={36} className="text-slate-300 dark:text-slate-600" />
           </div>
           <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">
-            {search ? 'No matching projects' : 'No projects yet'}
+            {search ? t.projects.noMatchingProjects : t.projects.noProjects}
           </h3>
           <p className="text-slate-500 dark:text-slate-400 text-sm mb-8 max-w-sm mx-auto">
             {search
-              ? 'Try adjusting your search terms or clear the filter to see all projects.'
-              : 'Get started by creating your first project. Organize measurements, drawings, and bills of quantities all in one place.'}
+              ? t.projects.tryAdjustingSearch
+              : t.projects.noProjectsDescLong}
           </p>
           {!search && (
             <Button onClick={() => setShowCreate(true)}>
               <Plus size={16} />
-              Create Project
+              {t.projects.createProject}
             </Button>
           )}
         </div>
@@ -200,7 +214,8 @@ export default function ProjectsPage() {
                   <button
                     onClick={(e) => handleDelete(project.id, e)}
                     className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-slate-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 transition-all"
-                    title="Delete project"
+                    title={t.projects.deleteProjectTitle}
+                    aria-label={t.projects.deleteProjectTitle}
                   >
                     <Trash2 size={14} />
                   </button>
@@ -256,7 +271,7 @@ export default function ProjectsPage() {
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-sm text-slate-900 dark:text-white truncate">{project.name}</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                  {[project.client_name, project.location].filter(Boolean).join(' · ') || 'No details'}
+                  {[project.client_name, project.location].filter(Boolean).join(' · ') || t.projects.noDetails}
                 </p>
               </div>
               <div className="hidden sm:flex items-center gap-4 shrink-0 text-xs text-slate-400 dark:text-slate-500">
@@ -266,7 +281,8 @@ export default function ProjectsPage() {
               <button
                 onClick={(e) => handleDelete(project.id, e)}
                 className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-slate-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 transition-all shrink-0"
-                title="Delete project"
+                title={t.projects.deleteProjectTitle}
+                aria-label={t.projects.deleteProjectTitle}
               >
                 <Trash2 size={14} />
               </button>
@@ -276,29 +292,29 @@ export default function ProjectsPage() {
       )}
 
       {/* Create modal */}
-      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="New Project" size="md">
+      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title={t.projects.newProjectTitle} size="md">
         <div className="space-y-4">
           <Input
-            label="Project Name"
+            label={t.projects.projectName}
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            placeholder="e.g. Villa Al-Noor"
+            placeholder={t.projects.projectNamePlaceholder}
             required
           />
           <Input
-            label="Client Name"
+            label={t.projects.clientName}
             value={form.client_name}
             onChange={(e) => setForm({ ...form, client_name: e.target.value })}
-            placeholder="e.g. Ahmad Construction Ltd"
+            placeholder={t.projects.clientNamePlaceholder}
           />
           <Input
-            label="Location"
+            label={t.projects.location}
             value={form.location}
             onChange={(e) => setForm({ ...form, location: e.target.value })}
-            placeholder="e.g. Riyadh, KSA"
+            placeholder={t.projects.locationPlaceholder}
           />
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Currency</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t.projects.currency}</label>
             <select
               value={form.currency}
               onChange={(e) => setForm({ ...form, currency: e.target.value })}
@@ -315,11 +331,11 @@ export default function ProjectsPage() {
             </select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Description</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t.projects.description}</label>
             <textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Optional project description..."
+              placeholder={t.projects.descriptionPlaceholder}
               rows={3}
               className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 resize-none"
             />
@@ -328,19 +344,19 @@ export default function ProjectsPage() {
           {error && <p className="text-sm text-red-500 dark:text-red-400">{error}</p>}
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setShowCreate(false)}>{t.projects.cancel}</Button>
             <Button onClick={handleCreate} loading={creating} disabled={!form.name.trim()}>
-              Create Project
+              {t.projects.createProject}
             </Button>
           </div>
         </div>
       </Modal>
 
-      <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title="Confirm" size="sm">
+      <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title={t.projects.confirmTitle} size="sm">
         <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{confirmAction?.message}</p>
         <div className="flex justify-end gap-3">
-          <Button variant="ghost" onClick={() => setConfirmAction(null)}>Cancel</Button>
-          <Button variant="danger" onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>Confirm</Button>
+          <Button variant="ghost" onClick={() => setConfirmAction(null)}>{t.projects.cancel}</Button>
+          <Button variant="danger" onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>{t.projects.confirm}</Button>
         </div>
       </Modal>
     </div>

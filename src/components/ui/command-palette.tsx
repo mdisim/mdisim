@@ -151,7 +151,7 @@ export function CommandPalette() {
       >
         <Search size={15} />
         <span className="hidden sm:inline">Search...</span>
-        <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-slate-400 dark:text-slate-500 ml-4">
+        <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-slate-400 dark:text-slate-500 ms-4">
           <Command size={10} />K
         </kbd>
       </button>
@@ -186,6 +186,11 @@ export function CommandPalette() {
                     onChange={e => setQuery(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Type a command or search..."
+                    role="combobox"
+                    aria-expanded="true"
+                    aria-controls="command-palette-list"
+                    aria-activedescendant={filtered[selectedIndex] ? `command-item-${filtered[selectedIndex].id}` : undefined}
+                    aria-autocomplete="list"
                     className="flex-1 text-base bg-transparent outline-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                   <kbd className="px-2 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-slate-700 rounded text-slate-400 dark:text-slate-500">
@@ -194,7 +199,7 @@ export function CommandPalette() {
                 </div>
 
                 {/* Results */}
-                <div ref={listRef} className="max-h-[50vh] overflow-y-auto py-2">
+                <div ref={listRef} id="command-palette-list" role="listbox" className="max-h-[50vh] overflow-y-auto py-2">
                   {filtered.length === 0 ? (
                     <div className="px-5 py-8 text-center text-sm text-slate-400 dark:text-slate-500">
                       No results found for &ldquo;{query}&rdquo;
@@ -215,6 +220,9 @@ export function CommandPalette() {
                             return (
                               <button
                                 key={cmd.id}
+                                id={`command-item-${cmd.id}`}
+                                role="option"
+                                aria-selected={isSelected}
                                 data-index={globalIdx}
                                 onClick={() => handleSelect(cmd)}
                                 onMouseEnter={() => setSelectedIndex(globalIdx)}

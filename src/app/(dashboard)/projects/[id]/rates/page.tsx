@@ -46,6 +46,7 @@ import { PageHeader } from '@/components/ui/page-header'
 import { DonutChart, SimpleBarChart } from '@/components/ui/mini-chart'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useI18n } from '@/lib/i18n'
+import { useToast } from '@/components/ui/toast'
 
 const RESOURCE_ICONS: Record<ResourceType, React.ComponentType<{ size?: number; className?: string }>> = {
   material: Package,
@@ -71,6 +72,7 @@ const RESOURCE_BG_COLORS: Record<ResourceType, string> = {
 export default function RateAnalysisPage() {
   const { id: projectId } = useParams<{ id: string }>()
   const { t } = useI18n()
+  const { toast } = useToast()
   const [analyses, setAnalyses] = useState<RateAnalysis[]>([])
   const [boqItems, setBOQItems] = useState<BOQItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -101,13 +103,13 @@ export default function RateAnalysisPage() {
       setBOQItems(boq)
       setError(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load rate analyses')
+      setError(err instanceof Error ? err.message : t.rates.loadError)
       setAnalyses([])
       setBOQItems([])
     } finally {
       setLoading(false)
     }
-  }, [projectId])
+  }, [projectId, t])
 
   useEffect(() => { load() }, [load])
 
@@ -123,7 +125,12 @@ export default function RateAnalysisPage() {
       profit_pct: parseFloat(form.profit_pct) || 0,
       boq_item_id: form.boq_item_id || undefined,
     })
-    if (result.error) { setError(result.error); return }
+    if (result.error) {
+      setError(result.error)
+      toast({ title: t.rates.createError, description: result.error, variant: 'danger' })
+      return
+    }
+    toast({ title: t.rates.createSuccess, variant: 'success' })
     setShowCreate(false)
     setForm({ description: '', unit: 'm', output_qty: '1', overhead_pct: '10', profit_pct: '10', boq_item_id: '' })
     load()
@@ -131,11 +138,15 @@ export default function RateAnalysisPage() {
 
   const handleDelete = async (id: string) => {
     setConfirmAction({
-      message: 'Delete this rate analysis?',
+      message: t.rates.deleteAnalysisConfirm,
       onConfirm: async () => {
         try {
           await deleteRateAnalysis(id)
-        } catch { setError('Failed to delete rate analysis.') }
+          toast({ title: t.rates.deleteSuccess, variant: 'success' })
+        } catch {
+          setError(t.rates.deleteError)
+          toast({ title: t.rates.deleteError, variant: 'danger' })
+        }
         load()
       },
     })
@@ -144,27 +155,49 @@ export default function RateAnalysisPage() {
   const handleUpdateAnalysis = async (id: string, fields: Partial<RateAnalysis>) => {
     try {
       const result = await updateRateAnalysis(id, fields)
-      if (result.error) setError(result.error)
-    } catch { setError('Failed to update rate analysis.') }
+      if (result.error) {
+        setError(result.error)
+        toast({ title: t.rates.updateError, description: result.error, variant: 'danger' })
+      } else {
+        toast({ title: t.rates.updateSuccess, variant: 'success' })
+      }
+    } catch {
+      setError(t.rates.updateError)
+      toast({ title: t.rates.updateError, variant: 'danger' })
+    }
     load()
   }
 
   const handleAddResource = async (raId: string, type: ResourceType) => {
-    await createRateResource({
-      rate_analysis_id: raId,
-      resource_type: type,
-      description: `New ${type}`,
-    })
+    try {
+      await createRateResource({
+        rate_analysis_id: raId,
+        resource_type: type,
+        description: `New ${type}`,
+      })
+      toast({ title: t.rates.addResourceSuccess, variant: 'success' })
+    } catch {
+      toast({ title: t.rates.addResourceError, variant: 'danger' })
+    }
     load()
   }
 
   const handleUpdateResource = async (id: string, fields: Partial<RateResource>) => {
-    await updateRateResource(id, fields)
+    try {
+      await updateRateResource(id, fields)
+    } catch {
+      toast({ title: t.rates.updateResourceError, variant: 'danger' })
+    }
     load()
   }
 
   const handleDeleteResource = async (id: string) => {
-    await deleteRateResource(id)
+    try {
+      await deleteRateResource(id)
+      toast({ title: t.rates.deleteResourceSuccess, variant: 'success' })
+    } catch {
+      toast({ title: t.rates.deleteResourceError, variant: 'danger' })
+    }
     load()
   }
 
@@ -211,12 +244,12 @@ export default function RateAnalysisPage() {
       <PageHeader
         icon={Calculator}
         title={t.rates.title}
-        subtitle="Build up unit rates from materials, labor, equipment & subcontractors"
+        subtitle={t.rates.subtitle}
         gradient="from-amber-500 to-amber-600"
         actions={activeTab === 'analyses' ? (
           <Button onClick={() => setShowCreate(true)}>
             <Plus size={16} />
-            New Analysis
+            {t.rates.newAnalysis}
           </Button>
         ) : undefined}
       />
@@ -233,7 +266,7 @@ export default function RateAnalysisPage() {
           )}
         >
           <Calculator size={16} />
-          Rate Analyses
+          {t.rates.rateAnalysesTab}
         </button>
         <button
           onClick={() => setActiveTab('breakdown')}
@@ -245,7 +278,7 @@ export default function RateAnalysisPage() {
           )}
         >
           <PieChart size={16} />
-          Resource Breakdown
+          {t.rates.resourceBreakdownTab}
         </button>
       </div>
 
@@ -299,17 +332,18 @@ export default function RateAnalysisPage() {
       {/* Search Bar */}
       {!loading && analyses.length > 0 && (
         <div className="relative mb-4">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={16} className="absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search rate analyses..."
+            placeholder={t.rates.searchPlaceholder}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+            className="w-full ps-10 pe-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
           />
           {searchQuery && (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
-              {filteredAnalyses.length} of {analyses.length}
+            <span className="absolute end-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+              {filteredAnalyses.length} {t.rates.noMatch ? '' : ''}{filteredAnalyses.length === analyses.length ? '' : ''}
+              {filteredAnalyses.length} / {analyses.length}
             </span>
           )}
         </div>
@@ -320,20 +354,20 @@ export default function RateAnalysisPage() {
       ) : error && analyses.length === 0 ? (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
           <p className="text-red-600 dark:text-red-400 font-medium mb-4">{error}</p>
-          <Button onClick={() => load()}>Retry</Button>
+          <Button onClick={() => load()}>{t.rates.retry}</Button>
         </div>
       ) : analyses.length === 0 ? (
         <EmptyState
           icon={Calculator}
-          title="No rate analyses yet"
-          description="Create rate analyses to build up unit rates for your BOQ items. Each analysis breaks down costs into materials, labor, equipment, and subcontractor components."
-          actionLabel="Create First Analysis"
+          title={t.rates.noAnalysesTitle}
+          description={t.rates.noAnalysesDesc}
+          actionLabel={t.rates.createFirstAnalysis}
           onAction={() => setShowCreate(true)}
         />
       ) : filteredAnalyses.length === 0 ? (
         <EmptyState
           icon={Search}
-          title={`No analyses match "${searchQuery}"`}
+          title={`${t.rates.noMatch} "${searchQuery}"`}
           compact
         />
       ) : (

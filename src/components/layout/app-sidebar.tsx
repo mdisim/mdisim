@@ -54,12 +54,13 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
         key={item.href}
         href={item.href}
         onClick={() => setMobileOpen(false)}
+        aria-current={isActive ? 'page' : undefined}
         className={cn(
           'group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
           collapsed && 'justify-center px-2',
           isActive
-            ? 'bg-blue-500/10 text-blue-400 border-l-[3px] border-blue-500 ml-0 pl-[9px]'
-            : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-200 border-l-[3px] border-transparent ml-0 pl-[9px]'
+            ? 'bg-blue-500/10 text-blue-400 border-s-[3px] border-blue-500 ms-0 ps-[9px]'
+            : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-200 border-s-[3px] border-transparent ms-0 ps-[9px]'
         )}
       >
         <Icon size={18} className={cn(isActive ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300')} />
@@ -83,12 +84,14 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
         {!collapsed && (
           <div className="flex-1 min-w-0">
             <h1 className="text-white font-bold text-sm tracking-widest">ANGEL D.C.</h1>
-            <p className="text-blue-400/70 text-[10px] font-medium mt-0.5 tracking-wide">Construction Intelligence</p>
+            <p className="text-blue-400/70 text-[10px] font-medium mt-0.5 tracking-wide">{t.sidebar.tagline}</p>
           </div>
         )}
         <button
           onClick={() => setMobileOpen(false)}
           className="lg:hidden p-3 min-h-11 min-w-11 rounded text-white/40 hover:text-white transition-colors"
+          aria-label={t.sidebar.closeMenu}
+          title={t.sidebar.closeMenu}
         >
           <X size={18} />
         </button>
@@ -98,7 +101,7 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
       <nav className="flex-1 px-2 py-4 overflow-y-auto">
         {!collapsed && (
           <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">
-            Navigation
+            {t.sidebar.navigation}
           </p>
         )}
         <div className="space-y-0.5">
@@ -146,7 +149,8 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
             <button
               onClick={handleLogout}
               className="p-1.5 rounded-md text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
-              title="Log out"
+              title={t.sidebar.logOut}
+              aria-label={t.sidebar.logOut}
             >
               <LogOut size={14} />
             </button>
@@ -157,7 +161,8 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
             className={cn(
               'flex items-center justify-center w-full p-1.5 rounded-md text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all',
             )}
-            title="Log out"
+            title={t.sidebar.logOut}
+            aria-label={t.sidebar.logOut}
           >
             <LogOut size={16} />
           </button>
@@ -173,7 +178,7 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
             collapsed && 'justify-center'
           )}
         >
-          {collapsed ? <ChevronRight size={16} /> : <><ChevronLeft size={16} /><span>Collapse</span></>}
+          {collapsed ? <ChevronRight size={16} /> : <><ChevronLeft size={16} /><span>{t.sidebar.collapse}</span></>}
         </button>
       </div>
     </aside>
@@ -184,7 +189,9 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
       {/* Mobile toggle */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed top-4 left-4 z-40 lg:hidden p-3 min-h-11 min-w-11 bg-[var(--color-navy)] dark:bg-[var(--color-surface-sunken)] rounded-lg text-white shadow-lg shadow-black/20 border border-white/[0.06]"
+        className="fixed top-4 start-4 z-40 lg:hidden p-3 min-h-11 min-w-11 bg-[var(--color-navy)] dark:bg-[var(--color-surface-sunken)] rounded-lg text-white shadow-lg shadow-black/20 border border-white/[0.06]"
+        aria-label={t.sidebar.navigation}
+        title={t.sidebar.navigation}
       >
         <Menu size={20} />
       </button>
@@ -199,7 +206,7 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
             className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="absolute left-0 top-0 h-full shadow-2xl shadow-black/50 animate-in slide-in-from-left duration-300">
+          <div className="absolute start-0 top-0 h-full shadow-2xl shadow-black/50 animate-in slide-in-from-left duration-300 rtl:slide-in-from-right">
             {sidebar}
           </div>
         </div>

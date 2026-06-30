@@ -9,6 +9,8 @@ import {
   XCircle,
   Info,
   ChevronRight,
+  Wrench,
+  Building2,
   Sparkles,
   Shield,
   Target,
@@ -31,10 +33,13 @@ import { getProjectHealth } from '@/app/actions/ai-intelligence'
 import type { HealthScore, HealthDimension, Alert, Recommendation, AlertSeverity } from '@/app/actions/ai-intelligence'
 import { getProject } from '@/app/actions/projects'
 import type { Project } from '@/lib/types'
+import type { TranslationKeys } from '@/lib/i18n/translations'
 import { SectionCard } from '@/components/ui/section-card'
 import { PageHeader } from '@/components/ui/page-header'
 import { EmptyState } from '@/components/ui/empty-state'
 import { CardSkeleton } from '@/components/ui/skeleton'
+import { useI18n } from '@/lib/i18n'
+import { useToast } from '@/components/ui/toast'
 
 const SEVERITY_STYLES: Record<AlertSeverity, { bg: string; border: string; icon: typeof AlertTriangle; iconColor: string; label: string }> = {
   critical: { bg: 'bg-red-50 dark:bg-red-900/10', border: 'border-red-200 dark:border-red-800', icon: XCircle, iconColor: 'text-red-500', label: 'Critical' },
@@ -114,7 +119,7 @@ function DimensionBar({ dim }: { dim: HealthDimension }) {
       {dim.items.length > 0 && (
         <div className="mt-1 space-y-0.5 max-h-0 group-hover:max-h-40 overflow-hidden transition-all duration-200">
           {dim.items.map((item, i) => (
-            <p key={i} className="text-[10px] text-slate-500 dark:text-slate-400 pl-6">• {item}</p>
+            <p key={i} className="text-[10px] text-slate-500 dark:text-slate-400 ps-6">• {item}</p>
           ))}
         </div>
       )}
@@ -152,12 +157,13 @@ function AlertCard({ alert }: { alert: Alert }) {
   )
 }
 
-function RecommendationCard({ rec }: { rec: Recommendation }) {
-  const priorityColor = rec.priority === 'high' ? 'border-l-red-500' : rec.priority === 'medium' ? 'border-l-amber-500' : 'border-l-blue-400'
-  const effortLabel = rec.effort === 'quick' ? '⚡ Quick fix' : rec.effort === 'moderate' ? '🔧 Moderate' : '🏗️ Significant'
+function RecommendationCard({ rec, t }: { rec: Recommendation; t: TranslationKeys }) {
+  const priorityColor = rec.priority === 'high' ? 'border-s-red-500' : rec.priority === 'medium' ? 'border-s-amber-500' : 'border-s-blue-400'
+  const EffortIcon = rec.effort === 'quick' ? Zap : rec.effort === 'moderate' ? Wrench : Building2
+  const effortLabel = rec.effort === 'quick' ? t.intelligence.effortQuick : rec.effort === 'moderate' ? t.intelligence.effortModerate : t.intelligence.effortSignificant
 
   return (
-    <div className={cn('border border-slate-200 dark:border-slate-700 border-l-4 rounded-lg p-3', priorityColor)}>
+    <div className={cn('border border-slate-200 dark:border-slate-700 border-s-4 rounded-lg p-3', priorityColor)}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-0.5">
@@ -173,8 +179,8 @@ function RecommendationCard({ rec }: { rec: Recommendation }) {
           </div>
           <p className="text-[11px] text-slate-600 dark:text-slate-300">{rec.description}</p>
           <div className="flex items-center gap-3 mt-1.5 text-[10px] text-slate-500">
-            <span>Impact: {rec.impact}</span>
-            <span>{effortLabel}</span>
+            <span>{t.intelligence.impact}: {rec.impact}</span>
+            <span className="flex items-center gap-1"><EffortIcon size={10} /> {effortLabel}</span>
           </div>
         </div>
         <ChevronRight size={16} className="text-slate-300 shrink-0 mt-1" />
@@ -189,6 +195,8 @@ const fadeUp: Variants = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y:
 export default function ProjectIntelligencePage() {
   const params = useParams()
   const projectId = params.id as string
+  const { t } = useI18n()
+  const { toast } = useToast()
   const [health, setHealth] = useState<HealthScore | null>(null)
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
@@ -205,11 +213,13 @@ export default function ProjectIntelligencePage() {
       setHealth(h)
       setProject(p)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load project health')
+      const message = e instanceof Error ? e.message : t.intelligence.failedToLoadHealth
+      setError(message)
+      toast({ title: t.intelligence.failedToLoad, description: message, variant: 'danger' })
     } finally {
       setLoading(false)
     }
-  }, [projectId])
+  }, [projectId, t, toast])
 
   useEffect(() => { load() }, [load])
 
@@ -245,10 +255,10 @@ export default function ProjectIntelligencePage() {
           <div className="w-16 h-16 rounded-2xl bg-red-100 dark:bg-red-500/10 flex items-center justify-center mx-auto mb-4">
             <AlertTriangle size={28} className="text-red-500" />
           </div>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Failed to load project health</h2>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{t.intelligence.failedToLoad}</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{error}</p>
           <button onClick={load} className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all">
-            Retry
+            {t.dashboard.retry}
           </button>
         </motion.div>
       </div>
@@ -259,11 +269,11 @@ export default function ProjectIntelligencePage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-[#0a0b0f] dark:via-[#0f1117] dark:to-[#0a0b0f] p-4 md:p-6">
         <div className="mx-auto max-w-7xl space-y-6">
-          <PageHeader icon={Activity} title="Project Intelligence" gradient="from-violet-600 to-indigo-600" />
+          <PageHeader icon={Activity} title={t.intelligence.title} gradient="from-violet-600 to-indigo-600" />
           <EmptyState
             icon={Activity}
-            title="No health data available"
-            description="We couldn't find health analysis for this project yet."
+            title={t.intelligence.noHealthData}
+            description={t.intelligence.noHealthDataDesc}
           />
         </div>
       </div>
@@ -293,17 +303,19 @@ export default function ProjectIntelligencePage() {
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <Activity size={20} className="text-white/90" />
-                <h1 className="text-xl md:text-2xl font-black tracking-tight">Project Intelligence</h1>
+                <h1 className="text-xl md:text-2xl font-black tracking-tight">{t.intelligence.title}</h1>
               </div>
-              <p className="text-sm text-white/60">{project.name} — Real-time health analysis</p>
+              <p className="text-sm text-white/60">{project.name} — {t.intelligence.subtitle}</p>
             </div>
             <button
               onClick={load}
               disabled={loading}
+              title={t.intelligence.refresh}
+              aria-label={t.intelligence.refresh}
               className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-white bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 transition-all shrink-0"
             >
               <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-              Refresh
+              {t.intelligence.refresh}
             </button>
           </div>
         </motion.div>
@@ -312,14 +324,14 @@ export default function ProjectIntelligencePage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Health Score */}
           <motion.div variants={fadeUp}>
-            <SectionCard title="Health Score" icon={Shield} iconColor="text-violet-500" glass className="h-full">
+            <SectionCard title={t.intelligence.healthScore} icon={Shield} iconColor="text-violet-500" glass className="h-full">
               <div className="flex flex-col items-center">
                 <ScoreRing score={health.overall} />
                 <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-3 max-w-[240px]">{health.summary}</p>
                 <div className="flex items-center gap-4 mt-4 text-[10px]">
-                  <span className="flex items-center gap-1 text-red-500"><XCircle size={12} /> {criticals.length} critical</span>
-                  <span className="flex items-center gap-1 text-amber-500"><AlertTriangle size={12} /> {warnings.length} warning</span>
-                  <span className="flex items-center gap-1 text-blue-500"><Info size={12} /> {infos.length} info</span>
+                  <span className="flex items-center gap-1 text-red-500"><XCircle size={12} /> {criticals.length} {t.intelligence.critical}</span>
+                  <span className="flex items-center gap-1 text-amber-500"><AlertTriangle size={12} /> {warnings.length} {t.intelligence.warning}</span>
+                  <span className="flex items-center gap-1 text-blue-500"><Info size={12} /> {infos.length} {t.intelligence.info}</span>
                 </div>
               </div>
             </SectionCard>
@@ -327,19 +339,19 @@ export default function ProjectIntelligencePage() {
 
           {/* Today's Priorities */}
           <motion.div variants={fadeUp} className="lg:col-span-2">
-            <SectionCard title="Requires Attention Today" icon={Target} iconColor="text-red-500" className="h-full">
+            <SectionCard title={t.intelligence.requiresAttentionToday} icon={Target} iconColor="text-red-500" className="h-full">
               {criticals.length === 0 && highRecs.length === 0 ? (
                 <div className="flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-lg">
                   <CheckCircle2 size={24} className="text-emerald-500" />
                   <div>
-                    <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">All clear</p>
-                    <p className="text-xs text-emerald-600 dark:text-emerald-400">No critical issues require immediate attention.</p>
+                    <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">{t.intelligence.allClear}</p>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400">{t.intelligence.noCriticalIssues}</p>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-2 max-h-[220px] overflow-y-auto">
                   {criticals.map(alert => <AlertCard key={alert.id} alert={alert} />)}
-                  {highRecs.map(rec => <RecommendationCard key={rec.id} rec={rec} />)}
+                  {highRecs.map(rec => <RecommendationCard key={rec.id} rec={rec} t={t} />)}
                 </div>
               )}
             </SectionCard>
@@ -349,10 +361,10 @@ export default function ProjectIntelligencePage() {
         {/* Dimension Scores */}
         <motion.div variants={fadeUp}>
           <SectionCard
-            title="Health Dimensions"
+            title={t.intelligence.healthDimensions}
             icon={Sparkles}
             iconColor="text-violet-500"
-            actions={<span className="text-[10px] text-slate-400">Hover for details</span>}
+            actions={<span className="text-[10px] text-slate-400">{t.intelligence.hoverForDetails}</span>}
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
               {health.dimensions.map(dim => (
@@ -367,14 +379,14 @@ export default function ProjectIntelligencePage() {
           {/* All Alerts */}
           <motion.div variants={fadeUp}>
             <SectionCard
-              title="All Alerts"
+              title={t.intelligence.allAlerts}
               icon={AlertTriangle}
               iconColor="text-amber-500"
               className="h-full"
               actions={<span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500">{health.alerts.length}</span>}
             >
               {health.alerts.length === 0 ? (
-                <EmptyState icon={CheckCircle2} title="No alerts" description="Everything looks good." compact />
+                <EmptyState icon={CheckCircle2} title={t.intelligence.noAlerts} description={t.intelligence.everythingLooksGood} compact />
               ) : (
                 <div className="space-y-2 max-h-[400px] overflow-y-auto">
                   {health.alerts.map(alert => <AlertCard key={alert.id} alert={alert} />)}
@@ -386,17 +398,17 @@ export default function ProjectIntelligencePage() {
           {/* Recommendations */}
           <motion.div variants={fadeUp}>
             <SectionCard
-              title="Recommendations"
+              title={t.intelligence.recommendations}
               icon={Sparkles}
               iconColor="text-violet-500"
               className="h-full"
               actions={<span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500">{health.recommendations.length}</span>}
             >
               {health.recommendations.length === 0 ? (
-                <EmptyState icon={Sparkles} title="No recommendations" description="Project is well-managed." compact />
+                <EmptyState icon={Sparkles} title={t.intelligence.noRecommendations} description={t.intelligence.projectWellManaged} compact />
               ) : (
                 <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                  {health.recommendations.map(rec => <RecommendationCard key={rec.id} rec={rec} />)}
+                  {health.recommendations.map(rec => <RecommendationCard key={rec.id} rec={rec} t={t} />)}
                 </div>
               )}
             </SectionCard>

@@ -16,6 +16,7 @@ import { SectionCard } from '@/components/ui/section-card'
 import { PageHeader } from '@/components/ui/page-header'
 import { SimpleBarChart } from '@/components/ui/mini-chart'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useToast } from '@/components/ui/toast'
 import {
   getTenders,
   createTender,
@@ -57,29 +58,31 @@ import {
 import { cn } from '@/lib/utils'
 import { useI18n } from '@/lib/i18n'
 
-const STATUS_CONFIG: Record<TenderStatus, {
-  label: string
-  badgeVariant: 'default' | 'success' | 'warning' | 'danger' | 'info'
-  icon: React.ComponentType<{ size?: number; className?: string }>
-}> = {
-  draft: { label: 'Draft', badgeVariant: 'default', icon: Clock },
-  issued: { label: 'Issued', badgeVariant: 'info', icon: AlertCircle },
-  closed: { label: 'Closed', badgeVariant: 'warning', icon: XCircle },
-  awarded: { label: 'Awarded', badgeVariant: 'success', icon: Trophy },
-  cancelled: { label: 'Cancelled', badgeVariant: 'danger', icon: XCircle },
-}
-
-const STATUS_OPTIONS: { value: string; label: string }[] = [
-  { value: 'draft', label: 'Draft' },
-  { value: 'issued', label: 'Issued' },
-  { value: 'closed', label: 'Closed' },
-  { value: 'awarded', label: 'Awarded' },
-  { value: 'cancelled', label: 'Cancelled' },
-]
-
 export default function TendersPage() {
   const { id: projectId } = useParams<{ id: string }>()
   const { t } = useI18n()
+  const { toast } = useToast()
+
+  const STATUS_CONFIG: Record<TenderStatus, {
+    label: string
+    badgeVariant: 'default' | 'success' | 'warning' | 'danger' | 'info'
+    icon: React.ComponentType<{ size?: number; className?: string }>
+  }> = {
+    draft: { label: t.tenders.statusDraft, badgeVariant: 'default', icon: Clock },
+    issued: { label: t.tenders.statusIssued, badgeVariant: 'info', icon: AlertCircle },
+    closed: { label: t.tenders.statusClosed, badgeVariant: 'warning', icon: XCircle },
+    awarded: { label: t.tenders.statusAwarded, badgeVariant: 'success', icon: Trophy },
+    cancelled: { label: t.tenders.statusCancelled, badgeVariant: 'danger', icon: XCircle },
+  }
+
+  const STATUS_OPTIONS: { value: string; label: string }[] = [
+    { value: 'draft', label: t.tenders.statusDraft },
+    { value: 'issued', label: t.tenders.statusIssued },
+    { value: 'closed', label: t.tenders.statusClosed },
+    { value: 'awarded', label: t.tenders.statusAwarded },
+    { value: 'cancelled', label: t.tenders.statusCancelled },
+  ]
+
   const [tenders, setTenders] = useState<Tender[]>([])
   const [boqItems, setBOQItems] = useState<BOQItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -100,7 +103,8 @@ export default function TendersPage() {
       setBOQItems(b)
       setError(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load tenders')
+      const msg = err instanceof Error ? err.message : null
+      setError(msg)
       setTenders([])
       setBOQItems([])
     } finally {
@@ -168,58 +172,83 @@ export default function TendersPage() {
   const handleCreateTender = async () => {
     if (!tenderForm.title.trim()) return
     setError(null)
-    const r = await createTender({ project_id: projectId, ...tenderForm })
-    if (r.error) { setError(r.error); return }
-    setShowCreate(false)
-    setTenderForm({ title: '', description: '', tender_number: '', issue_date: '', closing_date: '' })
-    load()
+    try {
+      const r = await createTender({ project_id: projectId, ...tenderForm })
+      if (r.error) {
+        setError(r.error)
+        toast({ title: t.tenders.createTenderError, description: r.error, variant: 'danger' })
+        return
+      }
+      setShowCreate(false)
+      setTenderForm({ title: '', description: '', tender_number: '', issue_date: '', closing_date: '' })
+      toast({ title: t.tenders.createTenderSuccess, variant: 'success' })
+      load()
+    } catch {
+      toast({ title: t.tenders.createTenderError, variant: 'danger' })
+    }
   }
 
   const handleAddBidder = async (tenderId: string) => {
     if (!bidderForm.name.trim()) return
     setError(null)
-    const r = await createBidder({ tender_id: tenderId, ...bidderForm })
-    if (r.error) { setError(r.error); return }
-
-    if (boqItems.length > 0 && r.data) {
-      try {
-        await bulkCreateBids(
-          tenderId,
-          r.data.id,
-          boqItems.map(b => ({
-            boq_item_id: b.id,
-            description: b.description,
-            unit: b.unit,
-            quantity: b.quantity,
-            unit_rate: 0,
-          }))
-        )
-      } catch {
-        setError('Bidder created but failed to populate bid lines.')
+    try {
+      const r = await createBidder({ tender_id: tenderId, ...bidderForm })
+      if (r.error) {
+        setError(r.error)
+        toast({ title: t.tenders.addBidderError, description: r.error, variant: 'danger' })
+        return
       }
-    }
 
-    setShowAddBidder(null)
-    setBidderForm({ name: '', company: '', email: '', phone: '' })
-    load()
+      if (boqItems.length > 0 && r.data) {
+        try {
+          await bulkCreateBids(
+            tenderId,
+            r.data.id,
+            boqItems.map(b => ({
+              boq_item_id: b.id,
+              description: b.description,
+              unit: b.unit,
+              quantity: b.quantity,
+              unit_rate: 0,
+            }))
+          )
+        } catch {
+          setError(t.tenders.bidderPopulateError)
+          toast({ title: t.tenders.bidderPopulateError, variant: 'danger' })
+        }
+      }
+
+      setShowAddBidder(null)
+      setBidderForm({ name: '', company: '', email: '', phone: '' })
+      toast({ title: t.tenders.addBidderSuccess, variant: 'success' })
+      load()
+    } catch {
+      toast({ title: t.tenders.addBidderError, variant: 'danger' })
+    }
   }
 
   const handleUpdateBid = async (bidId: string, unitRate: number) => {
     try {
       await updateBid(bidId, { unit_rate: unitRate })
     } catch {
-      setError('Failed to update bid.')
+      setError(t.tenders.updateBidError)
+      toast({ title: t.tenders.updateBidError, variant: 'danger' })
     }
     load()
   }
 
   const handleAward = async (tenderId: string, bidderId: string) => {
     setConfirmAction({
-      message: 'Award this tender to the selected bidder?',
+      message: t.tenders.awardTenderConfirm,
       isDestructive: false,
       onConfirm: async () => {
-        await awardTender(tenderId, bidderId)
-        load()
+        try {
+          await awardTender(tenderId, bidderId)
+          toast({ title: t.tenders.awardSuccess, variant: 'warning' })
+          load()
+        } catch {
+          toast({ title: t.tenders.awardError, variant: 'danger' })
+        }
       },
     })
   }
@@ -229,11 +258,11 @@ export default function TendersPage() {
       <PageHeader
         icon={Users}
         title={t.tenders.title}
-        subtitle="Compare bids, analyze variances, and award tenders"
+        subtitle={t.tenders.subtitle}
         gradient="from-violet-500 to-violet-600"
         actions={
           <Button onClick={() => setShowCreate(true)}>
-            <Plus size={16} /> New Tender
+            <Plus size={16} /> {t.tenders.newTender}
           </Button>
         }
       />
@@ -308,11 +337,11 @@ export default function TendersPage() {
                             {c.company ? `${c.company} · ` : ''}{c.tenderTitle}
                           </div>
                         </div>
-                        <div className="text-right shrink-0">
+                        <div className="text-end shrink-0">
                           <div className="text-sm font-bold tabular-nums text-slate-900 dark:text-white">{fmt(c.total)}</div>
                           {i === 0 && (
                             <Badge variant="success" className="text-[10px] mt-0.5">
-                              <Trophy size={10} className="mr-0.5" /> Winner
+                              <Trophy size={10} className="me-0.5" /> {t.tenders.winner}
                             </Badge>
                           )}
                         </div>
@@ -331,14 +360,14 @@ export default function TendersPage() {
       ) : error && tenders.length === 0 ? (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
           <p className="text-red-600 dark:text-red-400 font-medium mb-4">{error}</p>
-          <Button onClick={() => load()}>Retry</Button>
+          <Button onClick={() => load()}>{t.tenders.retry}</Button>
         </div>
       ) : tenders.length === 0 ? (
         <EmptyState
           icon={FileSpreadsheet}
-          title="No tenders yet"
-          description="Create your first tender to start collecting and comparing bids from contractors."
-          actionLabel="Create First Tender"
+          title={t.tenders.noTenders}
+          description={t.tenders.noTendersDesc}
+          actionLabel={t.tenders.createFirstTender}
           onAction={() => setShowCreate(true)}
         />
       ) : (
@@ -355,13 +384,44 @@ export default function TendersPage() {
               boqItems={boqItems}
               isExpanded={expandedId === tender.id}
               onToggle={() => setExpandedId(expandedId === tender.id ? null : tender.id)}
-              onDelete={() => setConfirmAction({ message: 'Delete this tender and all associated bids?', onConfirm: async () => { await deleteTender(tender.id); load() } })}
-              onStatusChange={async (s) => { await updateTender(tender.id, { status: s }); load() }}
+              onDelete={() => setConfirmAction({
+                message: t.tenders.deleteTenderConfirm,
+                onConfirm: async () => {
+                  try {
+                    await deleteTender(tender.id)
+                    toast({ title: t.tenders.deleteTenderSuccess, variant: 'success' })
+                    load()
+                  } catch {
+                    toast({ title: t.tenders.deleteTenderError, variant: 'danger' })
+                  }
+                },
+              })}
+              onStatusChange={async (s) => {
+                try {
+                  await updateTender(tender.id, { status: s })
+                  toast({ title: t.tenders.statusUpdateSuccess, variant: 'success' })
+                  load()
+                } catch {
+                  toast({ title: t.tenders.statusUpdateError, variant: 'danger' })
+                }
+              }}
               onAddBidder={() => setShowAddBidder(tender.id)}
-              onDeleteBidder={(id) => setConfirmAction({ message: 'Remove this bidder?', onConfirm: async () => { await deleteBidder(id); load() } })}
+              onDeleteBidder={(id) => setConfirmAction({
+                message: t.tenders.removeBidderConfirm,
+                onConfirm: async () => {
+                  try {
+                    await deleteBidder(id)
+                    toast({ title: t.tenders.deleteBidderSuccess, variant: 'success' })
+                    load()
+                  } catch {
+                    toast({ title: t.tenders.deleteBidderError, variant: 'danger' })
+                  }
+                },
+              })}
               onUpdateBid={handleUpdateBid}
               onAward={(bidderId) => handleAward(tender.id, bidderId)}
               fmt={fmt}
+              t={t}
             />
             </motion.div>
           ))}
@@ -369,29 +429,29 @@ export default function TendersPage() {
       )}
 
       {/* Create Tender Modal */}
-      <Modal isOpen={showCreate} onClose={() => { setShowCreate(false); setError(null) }} title="Create New Tender" size="md">
+      <Modal isOpen={showCreate} onClose={() => { setShowCreate(false); setError(null) }} title={t.tenders.createTenderTitle} size="md">
         <div className="space-y-5">
           <Input
-            label="Tender Title"
+            label={t.tenders.tenderTitleLabel}
             value={tenderForm.title}
             onChange={e => setTenderForm({ ...tenderForm, title: e.target.value })}
-            placeholder="e.g. Main Building Works"
+            placeholder={t.tenders.tenderTitlePlaceholder}
           />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input
-              label="Tender Number"
+              label={t.tenders.tenderNumber}
               value={tenderForm.tender_number}
               onChange={e => setTenderForm({ ...tenderForm, tender_number: e.target.value })}
               placeholder="T-001"
             />
             <Input
-              label="Issue Date"
+              label={t.tenders.issueDate}
               type="date"
               value={tenderForm.issue_date}
               onChange={e => setTenderForm({ ...tenderForm, issue_date: e.target.value })}
             />
             <Input
-              label="Closing Date"
+              label={t.tenders.closingDate}
               type="date"
               value={tenderForm.closing_date}
               onChange={e => setTenderForm({ ...tenderForm, closing_date: e.target.value })}
@@ -399,13 +459,13 @@ export default function TendersPage() {
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Description
+              {t.tenders.descriptionLabel}
             </label>
             <textarea
               value={tenderForm.description}
               onChange={e => setTenderForm({ ...tenderForm, description: e.target.value })}
               rows={3}
-              placeholder="Brief description of the tender scope..."
+              placeholder={t.tenders.descriptionPlaceholder}
               className="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none placeholder:text-slate-400"
             />
           </div>
@@ -417,40 +477,40 @@ export default function TendersPage() {
           )}
           <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-700">
             <Button variant="ghost" onClick={() => { setShowCreate(false); setError(null) }}>
-              Cancel
+              {t.tenders.cancel}
             </Button>
             <Button onClick={handleCreateTender} disabled={!tenderForm.title.trim()}>
-              Create Tender
+              {t.tenders.createTender}
             </Button>
           </div>
         </div>
       </Modal>
 
       {/* Add Bidder Modal */}
-      <Modal isOpen={!!showAddBidder} onClose={() => { setShowAddBidder(null); setError(null) }} title="Add Bidder" size="md">
+      <Modal isOpen={!!showAddBidder} onClose={() => { setShowAddBidder(null); setError(null) }} title={t.tenders.addBidderTitle} size="md">
         <div className="space-y-5">
           <Input
-            label="Bidder / Company Name"
+            label={t.tenders.bidderCompanyName}
             value={bidderForm.name}
             onChange={e => setBidderForm({ ...bidderForm, name: e.target.value })}
-            placeholder="Company or individual name"
+            placeholder={t.tenders.bidderNamePlaceholder}
           />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input
-              label="Company"
+              label={t.tenders.company}
               value={bidderForm.company}
               onChange={e => setBidderForm({ ...bidderForm, company: e.target.value })}
-              placeholder="Company Ltd."
+              placeholder={t.tenders.companyPlaceholder}
             />
             <Input
-              label="Email"
+              label={t.tenders.email}
               type="email"
               value={bidderForm.email}
               onChange={e => setBidderForm({ ...bidderForm, email: e.target.value })}
               placeholder="email@company.com"
             />
             <Input
-              label="Phone"
+              label={t.tenders.phone}
               value={bidderForm.phone}
               onChange={e => setBidderForm({ ...bidderForm, phone: e.target.value })}
               placeholder="+1 234 567 890"
@@ -459,8 +519,8 @@ export default function TendersPage() {
           <div className="flex items-start gap-2 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/40 rounded-lg px-3 py-2.5">
             <BarChart3 size={14} className="mt-0.5 shrink-0" />
             {boqItems.length > 0
-              ? `${boqItems.length} BOQ item${boqItems.length !== 1 ? 's' : ''} will be auto-populated as bid lines for this bidder.`
-              : 'No BOQ items found. You can add bid lines manually after creating the bidder.'}
+              ? `${boqItems.length} ${t.tenders.boqAutoPopulateInfo}`
+              : t.tenders.noBoqItemsInfo}
           </div>
           {error && (
             <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2.5">
@@ -470,20 +530,20 @@ export default function TendersPage() {
           )}
           <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-700">
             <Button variant="ghost" onClick={() => { setShowAddBidder(null); setError(null) }}>
-              Cancel
+              {t.tenders.cancel}
             </Button>
             <Button onClick={() => showAddBidder && handleAddBidder(showAddBidder)} disabled={!bidderForm.name.trim()}>
-              <Users size={14} /> Add Bidder
+              <Users size={14} /> {t.tenders.addBidder}
             </Button>
           </div>
         </div>
       </Modal>
 
-      <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title="Confirm" size="sm">
+      <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title={t.tenders.confirmTitle} size="sm">
         <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{confirmAction?.message}</p>
         <div className="flex justify-end gap-3">
-          <Button variant="ghost" onClick={() => setConfirmAction(null)}>Cancel</Button>
-          <Button variant={confirmAction?.isDestructive === false ? 'primary' : 'danger'} onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>Confirm</Button>
+          <Button variant="ghost" onClick={() => setConfirmAction(null)}>{t.tenders.cancel}</Button>
+          <Button variant={confirmAction?.isDestructive === false ? 'primary' : 'danger'} onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>{t.tenders.confirm}</Button>
         </div>
       </Modal>
     </div>
@@ -504,6 +564,7 @@ function TenderCard({
   onUpdateBid,
   onAward,
   fmt,
+  t,
 }: {
   tender: Tender
   boqItems: BOQItem[]
@@ -516,7 +577,28 @@ function TenderCard({
   onUpdateBid: (bidId: string, rate: number) => void
   onAward: (bidderId: string) => void
   fmt: (n: number) => string
+  t: ReturnType<typeof useI18n>['t']
 }) {
+  const STATUS_CONFIG: Record<TenderStatus, {
+    label: string
+    badgeVariant: 'default' | 'success' | 'warning' | 'danger' | 'info'
+    icon: React.ComponentType<{ size?: number; className?: string }>
+  }> = {
+    draft: { label: t.tenders.statusDraft, badgeVariant: 'default', icon: Clock },
+    issued: { label: t.tenders.statusIssued, badgeVariant: 'info', icon: AlertCircle },
+    closed: { label: t.tenders.statusClosed, badgeVariant: 'warning', icon: XCircle },
+    awarded: { label: t.tenders.statusAwarded, badgeVariant: 'success', icon: Trophy },
+    cancelled: { label: t.tenders.statusCancelled, badgeVariant: 'danger', icon: XCircle },
+  }
+
+  const STATUS_OPTIONS: { value: string; label: string }[] = [
+    { value: 'draft', label: t.tenders.statusDraft },
+    { value: 'issued', label: t.tenders.statusIssued },
+    { value: 'closed', label: t.tenders.statusClosed },
+    { value: 'awarded', label: t.tenders.statusAwarded },
+    { value: 'cancelled', label: t.tenders.statusCancelled },
+  ]
+
   const bidders = tender.bidders ?? []
   const cfg = STATUS_CONFIG[tender.status]
   const Icon = cfg.icon
@@ -538,7 +620,11 @@ function TenderCard({
       {/* Card Header */}
       <div
         className="flex items-center gap-4 px-6 py-4 cursor-pointer select-none group"
+        role="button"
+        tabIndex={0}
         onClick={onToggle}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle() } }}
+        aria-expanded={isExpanded}
       >
         <div className={cn(
           'w-8 h-8 rounded-lg flex items-center justify-center transition-colors',
@@ -564,32 +650,33 @@ function TenderCard({
           <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 dark:text-slate-400">
             <span className="inline-flex items-center gap-1">
               <Users size={12} />
-              {bidders.length} bidder{bidders.length !== 1 ? 's' : ''}
+              {bidders.length} {bidders.length !== 1 ? t.tenders.biddersLabel : t.tenders.bidderLabel}
             </span>
             {tender.closing_date && (
               <span className="inline-flex items-center gap-1">
                 <CalendarDays size={12} />
-                Closes {tender.closing_date}
+                {t.tenders.closesLabel} {tender.closing_date}
               </span>
             )}
             {lowestBidder && (
               <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400">
                 <TrendingDown size={12} />
-                Lowest: {fmt(lowestBidder.total)}
+                {t.tenders.lowest}: {fmt(lowestBidder.total)}
               </span>
             )}
           </div>
         </div>
 
         <Badge variant={cfg.badgeVariant} className="shrink-0">
-          <Icon size={12} className="mr-1" />
+          <Icon size={12} className="me-1" />
           {cfg.label}
         </Badge>
 
         <button
           onClick={e => { e.stopPropagation(); onDelete() }}
           className="p-2 rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors opacity-0 group-hover:opacity-100"
-          title="Delete tender"
+          title={t.tenders.deleteTender}
+          aria-label={t.tenders.deleteTender}
         >
           <Trash2 size={14} />
         </button>
@@ -607,10 +694,10 @@ function TenderCard({
               className="!w-auto !py-1.5 text-xs"
             />
             <Button size="sm" variant="outline" onClick={onAddBidder}>
-              <Users size={14} /> Add Bidder
+              <Users size={14} /> {t.tenders.addBidder}
             </Button>
             {tender.description && (
-              <p className="ml-auto text-xs text-slate-400 dark:text-slate-500 italic truncate max-w-xs">
+              <p className="ms-auto text-xs text-slate-400 dark:text-slate-500 italic truncate max-w-xs">
                 {tender.description}
               </p>
             )}
@@ -622,13 +709,13 @@ function TenderCard({
               <table className="w-full text-xs">
                 <thead>
                   <tr className="bg-slate-50 dark:bg-slate-900/60 border-y border-slate-100 dark:border-slate-700">
-                    <th className="text-left px-4 py-2.5 font-semibold text-slate-600 dark:text-slate-300 sticky left-0 bg-slate-50 dark:bg-slate-900/60 min-w-[220px]">
-                      Description
+                    <th className="text-start px-4 py-2.5 font-semibold text-slate-600 dark:text-slate-300 sticky start-0 bg-slate-50 dark:bg-slate-900/60 min-w-[220px]">
+                      {t.tenders.colDescription}
                     </th>
-                    <th className="text-center px-3 py-2.5 font-semibold text-slate-600 dark:text-slate-300 w-[70px]">Unit</th>
-                    <th className="text-right px-3 py-2.5 font-semibold text-slate-600 dark:text-slate-300 w-[80px]">Qty</th>
+                    <th className="text-center px-3 py-2.5 font-semibold text-slate-600 dark:text-slate-300 w-[70px]">{t.tenders.colUnit}</th>
+                    <th className="text-end px-3 py-2.5 font-semibold text-slate-600 dark:text-slate-300 w-[80px]">{t.tenders.colQty}</th>
                     {bidderTotals.map(b => (
-                      <th key={b.id} className="text-right px-3 py-2.5 font-semibold text-slate-600 dark:text-slate-300 min-w-[140px]">
+                      <th key={b.id} className="text-end px-3 py-2.5 font-semibold text-slate-600 dark:text-slate-300 min-w-[140px]">
                         <div className="flex items-center justify-end gap-1.5">
                           {b.id === lowestBidder?.id && (
                             <Trophy size={11} className="text-amber-500 shrink-0" />
@@ -637,13 +724,14 @@ function TenderCard({
                           <button
                             onClick={() => onDeleteBidder(b.id)}
                             className="p-0.5 rounded text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                            title="Remove bidder"
+                            title={t.tenders.removeBidder}
+                            aria-label={t.tenders.removeBidder}
                           >
                             <Trash2 size={10} />
                           </button>
                         </div>
                         {b.company && (
-                          <div className="text-[10px] font-normal text-slate-400 dark:text-slate-500 mt-0.5 text-right">
+                          <div className="text-[10px] font-normal text-slate-400 dark:text-slate-500 mt-0.5 text-end">
                             {b.company}
                           </div>
                         )}
@@ -657,16 +745,16 @@ function TenderCard({
                       'hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors',
                       idx % 2 === 0 ? 'bg-white dark:bg-slate-800/50' : 'bg-slate-50/30 dark:bg-slate-800/30'
                     )}>
-                      <td className="px-4 py-2 text-slate-700 dark:text-slate-300 sticky left-0 bg-inherit">
+                      <td className="px-4 py-2 text-slate-700 dark:text-slate-300 sticky start-0 bg-inherit">
                         <div className="truncate max-w-[220px]" title={item.description}>
                           {item.code && (
-                            <span className="text-slate-400 dark:text-slate-500 font-mono mr-1.5">{item.code}</span>
+                            <span className="text-slate-400 dark:text-slate-500 font-mono me-1.5">{item.code}</span>
                           )}
                           {item.description}
                         </div>
                       </td>
                       <td className="px-3 py-2 text-center text-slate-500 dark:text-slate-400">{item.unit}</td>
-                      <td className="px-3 py-2 text-right tabular-nums text-slate-600 dark:text-slate-300 font-mono">
+                      <td className="px-3 py-2 text-end tabular-nums text-slate-600 dark:text-slate-300 font-mono">
                         {fmt(item.quantity)}
                       </td>
                       {bidderTotals.map(bidder => {
@@ -693,7 +781,7 @@ function TenderCard({
                                 value={bid.unit_rate || ''}
                                 onChange={e => onUpdateBid(bid.id, parseFloat(e.target.value) || 0)}
                                 className={cn(
-                                  'w-[80px] px-2 py-1 text-xs text-right border rounded-md bg-transparent dark:text-white tabular-nums font-mono',
+                                  'w-[80px] px-2 py-1 text-xs text-end border rounded-md bg-transparent dark:text-white tabular-nums font-mono',
                                   'focus:outline-none focus:ring-1 focus:ring-blue-400 transition-colors',
                                   isLowest
                                     ? 'border-green-300 dark:border-green-700 bg-green-50/60 dark:bg-green-900/20'
@@ -703,7 +791,7 @@ function TenderCard({
                                 )}
                                 step="any"
                               />
-                              <span className="text-[10px] tabular-nums text-slate-400 dark:text-slate-500 w-[65px] text-right font-mono">
+                              <span className="text-[10px] tabular-nums text-slate-400 dark:text-slate-500 w-[65px] text-end font-mono">
                                 {fmt(bid.amount)}
                               </span>
                             </div>
@@ -716,11 +804,11 @@ function TenderCard({
                 <tfoot>
                   {/* Total row */}
                   <tr className="border-t-2 border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/60">
-                    <td colSpan={3} className="px-4 py-3 font-bold text-sm text-slate-700 dark:text-slate-200 sticky left-0 bg-slate-50 dark:bg-slate-900/60">
-                      Total Bid Amount
+                    <td colSpan={3} className="px-4 py-3 font-bold text-sm text-slate-700 dark:text-slate-200 sticky start-0 bg-slate-50 dark:bg-slate-900/60">
+                      {t.tenders.totalBidAmount}
                     </td>
                     {bidderTotals.map(b => (
-                      <td key={b.id} className="px-3 py-3 text-right">
+                      <td key={b.id} className="px-3 py-3 text-end">
                         <div className={cn(
                           'text-sm font-bold tabular-nums font-mono',
                           b.id === lowestBidder?.id
@@ -733,7 +821,7 @@ function TenderCard({
                           <div className="flex items-center justify-end gap-0.5 mt-0.5">
                             <CheckCircle2 size={10} className="text-green-500" />
                             <span className="text-[10px] text-green-600 dark:text-green-400 font-semibold">
-                              LOWEST BID
+                              {t.tenders.lowestBid}
                             </span>
                           </div>
                         )}
@@ -744,19 +832,19 @@ function TenderCard({
                   {/* Variance row */}
                   {lowestBidder && bidderTotals.length > 1 && (
                     <tr className="bg-slate-50/80 dark:bg-slate-900/40">
-                      <td colSpan={3} className="px-4 py-2 text-xs text-slate-500 dark:text-slate-400 sticky left-0 bg-slate-50/80 dark:bg-slate-900/40">
+                      <td colSpan={3} className="px-4 py-2 text-xs text-slate-500 dark:text-slate-400 sticky start-0 bg-slate-50/80 dark:bg-slate-900/40">
                         <span className="inline-flex items-center gap-1">
                           <TrendingDown size={12} />
-                          Variance from lowest
+                          {t.tenders.varianceFromLowest}
                         </span>
                       </td>
                       {bidderTotals.map(b => {
                         const diff = b.total - (lowestBidder?.total ?? 0)
                         const pct = lowestBidder && lowestBidder.total > 0 ? (diff / lowestBidder.total * 100) : 0
                         return (
-                          <td key={b.id} className="px-3 py-2 text-right text-xs tabular-nums font-mono">
+                          <td key={b.id} className="px-3 py-2 text-end text-xs tabular-nums font-mono">
                             {diff === 0 ? (
-                              <span className="text-green-600 dark:text-green-400 font-medium">Baseline</span>
+                              <span className="text-green-600 dark:text-green-400 font-medium">{t.tenders.baseline}</span>
                             ) : (
                               <span className="text-red-600 dark:text-red-400">
                                 +{fmt(diff)} <span className="text-[10px]">({pct.toFixed(1)}%)</span>
@@ -771,10 +859,10 @@ function TenderCard({
                   {/* Award row */}
                   {tender.status !== 'awarded' && bidderTotals.length > 0 && (
                     <tr className="bg-slate-50/50 dark:bg-slate-900/30 border-t border-slate-100 dark:border-slate-700">
-                      <td colSpan={3} className="px-4 py-3 text-xs font-medium text-slate-600 dark:text-slate-300 sticky left-0 bg-slate-50/50 dark:bg-slate-900/30">
+                      <td colSpan={3} className="px-4 py-3 text-xs font-medium text-slate-600 dark:text-slate-300 sticky start-0 bg-slate-50/50 dark:bg-slate-900/30">
                         <span className="inline-flex items-center gap-1">
                           <Award size={12} />
-                          Award Tender
+                          {t.tenders.awardTenderLabel}
                         </span>
                       </td>
                       {bidderTotals.map(b => (
@@ -788,7 +876,7 @@ function TenderCard({
                                 : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                             )}
                           >
-                            <Award size={12} /> Award
+                            <Award size={12} /> {t.tenders.award}
                           </button>
                         </td>
                       ))}
@@ -798,17 +886,17 @@ function TenderCard({
                   {/* Awarded indicator */}
                   {tender.status === 'awarded' && tender.awarded_bidder_id && (
                     <tr className="bg-green-50/80 dark:bg-green-900/20 border-t border-green-200 dark:border-green-800">
-                      <td colSpan={3} className="px-4 py-3 sticky left-0 bg-green-50/80 dark:bg-green-900/20">
+                      <td colSpan={3} className="px-4 py-3 sticky start-0 bg-green-50/80 dark:bg-green-900/20">
                         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 dark:text-green-300">
                           <Trophy size={14} />
-                          Awarded To
+                          {t.tenders.awardedTo}
                         </span>
                       </td>
                       {bidderTotals.map(b => (
                         <td key={b.id} className="px-3 py-3 text-center">
                           {b.id === tender.awarded_bidder_id ? (
                             <span className="inline-flex items-center gap-1 text-xs font-bold text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/40 px-3 py-1.5 rounded-lg">
-                              <Trophy size={12} /> Winner
+                              <Trophy size={12} /> {t.tenders.winner}
                             </span>
                           ) : (
                             <span className="text-xs text-slate-400">--</span>
@@ -826,13 +914,13 @@ function TenderCard({
                 <Users size={20} className="text-slate-400 dark:text-slate-500" />
               </div>
               <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
-                No bidders added yet
+                {t.tenders.noBiddersYet}
               </p>
               <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">
-                Add bidders to start entering and comparing bids.
+                {t.tenders.addBiddersToStart}
               </p>
               <Button size="sm" variant="outline" onClick={onAddBidder}>
-                <Users size={14} /> Add First Bidder
+                <Users size={14} /> {t.tenders.addFirstBidder}
               </Button>
             </div>
           )}

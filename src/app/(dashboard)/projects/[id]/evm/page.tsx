@@ -319,7 +319,7 @@ export default function EVMPage() {
           </div>
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">{error}</h3>
           <Button onClick={load} className="mt-4">
-            <RefreshCw size={16} className="mr-2" /> {t.evm.retry}
+            <RefreshCw size={16} className="me-2" /> {t.evm.retry}
           </Button>
         </div>
       </div>
@@ -497,11 +497,11 @@ export default function EVMPage() {
               ))}
               <div className="pt-2 border-t border-slate-200 dark:border-slate-700 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300">ETC (Estimate to Complete)</span>
+                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{t.evm.etcLabel}</span>
                   <span className="text-sm font-bold tabular-nums text-slate-900 dark:text-white">{fmt(evm.etc, evm.currency)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300">VAC (Variance at Completion)</span>
+                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{t.evm.vacLabel}</span>
                   <span className={cn('text-sm font-bold tabular-nums', evm.vac >= 0 ? 'text-green-600' : 'text-red-600')}>
                     {fmt(evm.vac, evm.currency)}
                   </span>

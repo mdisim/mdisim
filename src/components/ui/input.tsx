@@ -12,6 +12,8 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, label, error, helperText, id, ...props }, ref) => {
     const inputId = id || label?.toLowerCase().replace(/\s+/g, '-')
+    const errorId = error && inputId ? `${inputId}-error` : undefined
+    const helperId = helperText && !error && inputId ? `${inputId}-helper` : undefined
 
     return (
       <div className="flex flex-col gap-1">
@@ -23,6 +25,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           id={inputId}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={errorId || helperId}
           className={cn(
             'w-full px-3 py-2 text-sm rounded-lg border bg-white text-slate-900 placeholder-slate-400',
             'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
@@ -37,8 +41,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
           {...props}
         />
-        {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
-        {helperText && !error && <p className="text-xs text-slate-500 dark:text-slate-400">{helperText}</p>}
+        {error && <p id={errorId} className="text-xs text-red-500 dark:text-red-400">{error}</p>}
+        {helperText && !error && <p id={helperId} className="text-xs text-slate-500 dark:text-slate-400">{helperText}</p>}
       </div>
     )
   }

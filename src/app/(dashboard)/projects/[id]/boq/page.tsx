@@ -35,6 +35,7 @@ import { DonutChart, SimpleBarChart, ProgressRing } from '@/components/ui/mini-c
 import { EmptyState } from '@/components/ui/empty-state'
 import { cn } from '@/lib/utils'
 import { useI18n } from '@/lib/i18n'
+import { useToast } from '@/components/ui/toast'
 import { VirtualTable } from '@/components/ui/virtual-table'
 import type { VirtualTableColumn } from '@/components/ui/virtual-table'
 import {
@@ -62,6 +63,7 @@ const EDITABLE_FIELDS: (keyof BOQItem)[] = ['code', 'description', 'unit', 'quan
 export default function BOQPage() {
   const { id: projectId } = useParams<{ id: string }>()
   const { t } = useI18n()
+  const { toast } = useToast()
   const [items, setItems] = useState<BOQItem[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
@@ -104,7 +106,7 @@ export default function BOQPage() {
       const data = await getBOQItems(projectId)
       setItems(data)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load BOQ items')
+      setError(e instanceof Error ? e.message : t.boq.createError)
     } finally {
       setLoading(false)
     }
@@ -132,27 +134,34 @@ export default function BOQPage() {
       })
       if (result.error) {
         setError(result.error)
+        toast({ title: t.boq.createError, description: result.error, variant: 'danger' })
         setCreating(false)
         return
       }
     } catch {
-      setError('Failed to create item')
+      setError(t.boq.createError)
+      toast({ title: t.boq.createError, variant: 'danger' })
       setCreating(false)
       return
     }
     setShowCreate(false)
     setForm({ code: '', description: '', unit: 'm', quantity: '', unit_rate: '', material_rate: '', labor_rate: '', equipment_rate: '', section: '', notes: '' })
     setCreating(false)
+    toast({ title: t.boq.createSuccess, variant: 'success' })
     load()
   }
 
   const handleDelete = async (id: string) => {
     setConfirmAction({
-      message: 'Delete this BOQ item?',
+      message: t.boq.confirmDeleteItem,
       onConfirm: async () => {
         try {
           await deleteBOQItem(id)
-        } catch { setError('Failed to delete BOQ item.') }
+          toast({ title: t.boq.deleteSuccess, variant: 'success' })
+        } catch {
+          setError(t.boq.deleteError)
+          toast({ title: t.boq.deleteError, variant: 'danger' })
+        }
         load()
       },
     })
@@ -174,12 +183,14 @@ export default function BOQPage() {
     const result = await bulkCreateBOQItems(projectId, importRows)
     if (result.error) {
       setImportError(result.error)
+      toast({ title: t.boq.importErrorToast, description: result.error, variant: 'danger' })
       setImporting(false)
       return
     }
     setShowImport(false)
     setImportRows([])
     setImporting(false)
+    toast({ title: t.boq.importSuccess, variant: 'success' })
     load()
   }
 
@@ -214,7 +225,10 @@ export default function BOQPage() {
 
     try {
       await updateBOQItem(itemId, { [field]: val })
-    } catch { setError('Failed to save changes.') }
+    } catch {
+      setError(t.boq.updateError)
+      toast({ title: t.boq.updateError, variant: 'danger' })
+    }
 
     setEditingCell(null)
   }
@@ -283,8 +297,17 @@ export default function BOQPage() {
         section: item.section ?? undefined,
         notes: item.notes ?? undefined,
       })
-      if (result.error) { setError(result.error) } else { load() }
-    } catch { setError('Failed to duplicate item.') }
+      if (result.error) {
+        setError(result.error)
+        toast({ title: t.boq.duplicateError, description: result.error, variant: 'danger' })
+      } else {
+        toast({ title: t.boq.duplicateSuccess, variant: 'success' })
+        load()
+      }
+    } catch {
+      setError(t.boq.duplicateError)
+      toast({ title: t.boq.duplicateError, variant: 'danger' })
+    }
   }
 
   const handleOpenLibraryLink = async (boqItemId: string) => {
@@ -307,6 +330,7 @@ export default function BOQPage() {
       equipment_rate: libraryItem.equipment_rate ?? undefined,
     })
     setShowLibraryLink(null)
+    toast({ title: t.boq.linkSuccess, variant: 'success' })
     load()
   }
 
@@ -356,8 +380,8 @@ export default function BOQPage() {
     { key: 'code', header: <span className="px-2 py-1.5 font-medium text-slate-500 text-xs">Code</span>, width: '80px', render: (row) => <span className="px-2 py-1 text-xs text-slate-600 dark:text-slate-300">{row.code ?? '-'}</span> },
     { key: 'description', header: <span className="px-2 py-1.5 font-medium text-slate-500 text-xs">Description</span>, render: (row) => <span className="px-2 py-1 text-xs text-slate-700 dark:text-slate-200 truncate block max-w-[200px]">{row.description}</span> },
     { key: 'unit', header: <span className="px-2 py-1.5 font-medium text-slate-500 text-xs">Unit</span>, width: '60px', render: (row) => <span className="px-2 py-1 text-xs text-slate-500">{row.unit}</span> },
-    { key: 'quantity', header: <span className="px-2 py-1.5 font-medium text-slate-500 text-xs text-right block">Qty</span>, width: '80px', render: (row) => <span className="px-2 py-1 text-xs text-right tabular-nums text-slate-600 dark:text-slate-300 block">{row.quantity}</span> },
-    { key: 'unit_rate', header: <span className="px-2 py-1.5 font-medium text-slate-500 text-xs text-right block">Rate</span>, width: '80px', render: (row) => <span className="px-2 py-1 text-xs text-right tabular-nums text-slate-600 dark:text-slate-300 block">{row.unit_rate}</span> },
+    { key: 'quantity', header: <span className="px-2 py-1.5 font-medium text-slate-500 text-xs text-end block">Qty</span>, width: '80px', render: (row) => <span className="px-2 py-1 text-xs text-end tabular-nums text-slate-600 dark:text-slate-300 block">{row.quantity}</span> },
+    { key: 'unit_rate', header: <span className="px-2 py-1.5 font-medium text-slate-500 text-xs text-end block">Rate</span>, width: '80px', render: (row) => <span className="px-2 py-1 text-xs text-end tabular-nums text-slate-600 dark:text-slate-300 block">{row.unit_rate}</span> },
     { key: 'section', header: <span className="px-2 py-1.5 font-medium text-slate-500 text-xs">Section</span>, width: '100px', render: (row) => <span className="px-2 py-1 text-xs text-slate-500">{row.section ?? '-'}</span> },
   ]
 
@@ -410,7 +434,7 @@ export default function BOQPage() {
       <PageHeader
         icon={FileSpreadsheet}
         title={t.boq.title}
-        subtitle={items.length > 0 ? `${items.length} items · ${allSections.length} sections` : 'Manage your project quantities and costs'}
+        subtitle={items.length > 0 ? `${items.length} ${t.boq.items} · ${allSections.length} ${t.boq.sections}` : t.boq.defaultSubtitle}
         gradient="from-blue-500 to-blue-600"
         badge={items.length > 0 ? (
           <span className="px-3 py-1 text-sm font-bold tabular-nums text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 rounded-full">
@@ -437,12 +461,32 @@ export default function BOQPage() {
             <Upload size={15} /> {t.boq.importExcel}
           </Button>
           <Button variant="outline" size="sm" onClick={async () => {
-            try { const project = await getProject(projectId); if (project) await exportBOQToExcel(items, project.name, project.currency, vatPct) } catch (e) { setError(e instanceof Error ? e.message : 'Failed to export Excel') }
+            try {
+              const project = await getProject(projectId)
+              if (project) {
+                await exportBOQToExcel(items, project.name, project.currency, vatPct)
+                toast({ title: t.boq.exportSuccess, variant: 'success' })
+              }
+            } catch (e) {
+              const msg = e instanceof Error ? e.message : t.boq.exportError
+              setError(msg)
+              toast({ title: t.boq.exportError, description: msg, variant: 'danger' })
+            }
           }} disabled={items.length === 0}>
             <Download size={15} /> {t.boq.exportExcel}
           </Button>
           <Button variant="outline" size="sm" onClick={async () => {
-            try { const project = await getProject(projectId); if (project) exportBOQToPDF(items, project.name, project.currency, vatPct) } catch (e) { setError(e instanceof Error ? e.message : 'Failed to export PDF') }
+            try {
+              const project = await getProject(projectId)
+              if (project) {
+                exportBOQToPDF(items, project.name, project.currency, vatPct)
+                toast({ title: t.boq.exportSuccess, variant: 'success' })
+              }
+            } catch (e) {
+              const msg = e instanceof Error ? e.message : t.boq.exportError
+              setError(msg)
+              toast({ title: t.boq.exportError, description: msg, variant: 'danger' })
+            }
           }} disabled={items.length === 0}>
             <FileText size={15} /> {t.boq.exportPdf}
           </Button>
@@ -471,27 +515,27 @@ export default function BOQPage() {
       ) : items.length === 0 ? (
         <EmptyState
           icon={FileSpreadsheet}
-          title="No BOQ items yet"
-          description="Start building your Bill of Quantities by adding items manually or importing from Excel."
-          actionLabel="Add First Item"
+          title={t.boq.noItems}
+          description={t.boq.noItemsDesc}
+          actionLabel={t.boq.addFirstItem}
           onAction={() => setShowCreate(true)}
         />
       ) : (<>
         {/* KPI Statistics */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <StatCard label="Total Items" value={items.length} icon={Hash} gradient="from-blue-500 to-blue-600" compact />
-          <StatCard label="Sections" value={allSections.length} icon={Layers} gradient="from-violet-500 to-violet-600" compact />
-          <StatCard label="Subtotal" value={subtotal} prefix="" decimals={2} icon={DollarSign} gradient="from-emerald-500 to-emerald-600" compact />
-          <StatCard label="Avg Rate" value={avgRate} decimals={2} icon={PieChart} gradient="from-amber-500 to-amber-600" compact />
+          <StatCard label={t.boq.items} value={items.length} icon={Hash} gradient="from-blue-500 to-blue-600" compact />
+          <StatCard label={t.boq.sections} value={allSections.length} icon={Layers} gradient="from-violet-500 to-violet-600" compact />
+          <StatCard label={t.boq.subtotal} value={subtotal} prefix="" decimals={2} icon={DollarSign} gradient="from-emerald-500 to-emerald-600" compact />
+          <StatCard label={t.boq.rateLabel} value={avgRate} decimals={2} icon={PieChart} gradient="from-amber-500 to-amber-600" compact />
         </div>
 
         {/* Charts Row */}
         {sectionBreakdown.length > 1 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <SectionCard title="Cost Breakdown by Section" icon={PieChart} iconColor="text-blue-500">
+            <SectionCard title={t.boq.costBreakdown} icon={PieChart} iconColor="text-blue-500">
               <DonutChart segments={sectionBreakdown} size={140} strokeWidth={20} />
             </SectionCard>
-            <SectionCard title="Section Comparison" icon={Layers} iconColor="text-violet-500">
+            <SectionCard title={t.boq.sectionComparison} icon={Layers} iconColor="text-violet-500">
               <SimpleBarChart bars={sectionBreakdown.slice(0, 6).map(s => ({ label: s.label, value: s.value, color: s.color }))} />
             </SectionCard>
           </div>
@@ -501,7 +545,7 @@ export default function BOQPage() {
         <div className="mb-6">
           <div className="bg-white dark:bg-slate-800/80 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm p-5">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Budget Composition</span>
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t.boq.budgetComposition}</span>
               <span className="text-xs text-slate-400 tabular-nums">VAT {vatPct}%: {formatCurrency(vatAmount)}</span>
             </div>
             <div className="flex items-center gap-4">
@@ -515,9 +559,9 @@ export default function BOQPage() {
                   />
                 </div>
               </div>
-              <div className="text-right">
+              <div className="text-end">
                 <div className="text-lg font-bold tabular-nums text-slate-900 dark:text-white">{formatCurrency(grandTotal)}</div>
-                <div className="text-[10px] text-slate-400 uppercase tracking-wider">Grand Total</div>
+                <div className="text-[10px] text-slate-400 uppercase tracking-wider">{t.boq.grandTotal}</div>
               </div>
             </div>
           </div>
@@ -530,15 +574,15 @@ export default function BOQPage() {
               <thead className="sticky top-0 z-10">
                 <tr className="bg-slate-50 dark:bg-slate-900 border-b-2 border-slate-200 dark:border-slate-700">
                   <th className="w-[28px]" />
-                  <th className="text-left px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[80px]">Code</th>
-                  <th className="text-left px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 min-w-[200px]">Description</th>
-                  <th className="text-left px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[60px]">Unit</th>
-                  <th className="text-right px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[90px]">Qty</th>
-                  <th className="text-right px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[90px]">Orig Qty</th>
-                  <th className="text-right px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[90px]">Rev Qty</th>
-                  <th className="text-right px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[80px]">Diff</th>
-                  <th className="text-right px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[100px]">Unit Rate</th>
-                  <th className="text-right px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[120px]">Amount</th>
+                  <th className="text-start px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[80px]">{t.boq.colCode}</th>
+                  <th className="text-start px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 min-w-[200px]">{t.boq.colDescription}</th>
+                  <th className="text-start px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[60px]">{t.boq.colUnit}</th>
+                  <th className="text-end px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[90px]">{t.boq.colQty}</th>
+                  <th className="text-end px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[90px]">{t.boq.colOrigQty}</th>
+                  <th className="text-end px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[90px]">{t.boq.colRevQty}</th>
+                  <th className="text-end px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[80px]">{t.boq.colDiff}</th>
+                  <th className="text-end px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[100px]">{t.boq.colUnitRate}</th>
+                  <th className="text-end px-3 py-3 font-semibold text-slate-600 dark:text-slate-300 w-[120px]">{t.boq.colAmount}</th>
                   <th className="w-[56px]" />
                 </tr>
               </thead>
@@ -548,20 +592,27 @@ export default function BOQPage() {
                   return (
                     <Fragment key={section}>
                       {section && (
-                        <tr className="bg-slate-100/80 dark:bg-slate-800/80 cursor-pointer" tabIndex={0} onClick={() => toggleSection(section)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSection(section) } }}>
+                        <tr
+                          className="bg-slate-100/80 dark:bg-slate-800/80 cursor-pointer"
+                          tabIndex={0}
+                          role="button"
+                          aria-expanded={!collapsedSections.has(section)}
+                          onClick={() => toggleSection(section)}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSection(section) } }}
+                        >
                           <td colSpan={11} className="px-0 py-2.5">
-                            <div className="flex items-center gap-2 border-l-[3px] border-blue-500 pl-3 ml-1">
+                            <div className="flex items-center gap-2 border-s-[3px] border-blue-500 ps-3 ms-1">
                               {collapsedSections.has(section)
-                                ? <ChevronRight size={14} className="text-slate-400" />
-                                : <ChevronDown size={14} className="text-slate-400" />
+                                ? <ChevronRight size={14} className="text-slate-400 rtl:rotate-180" aria-hidden="true" />
+                                : <ChevronDown size={14} className="text-slate-400" aria-hidden="true" />
                               }
                               <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                                 {section}
                               </span>
                               <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 bg-slate-200/60 dark:bg-slate-700/60 px-1.5 py-0.5 rounded">
-                                {sectionItems.length} items
+                                {sectionItems.length} {t.boq.items}
                               </span>
-                              <span className="ml-auto text-xs tabular-nums font-medium text-slate-500 dark:text-slate-400 pr-3">
+                              <span className="ms-auto text-xs tabular-nums font-medium text-slate-500 dark:text-slate-400 pe-3">
                                 {formatCurrency(sectionTotal)}
                               </span>
                             </div>
@@ -591,8 +642,8 @@ export default function BOQPage() {
                             <div className="flex items-center gap-1">
                               {renderCell(item, 'code', item.code)}
                               {item.mi_id && (
-                                <span title="Linked measurement item">
-                                  <Link2 size={12} className="text-blue-400 dark:text-blue-500 shrink-0" />
+                                <span title={t.boq.linkedMeasurement}>
+                                  <Link2 size={12} className="text-blue-400 dark:text-blue-500 shrink-0" aria-label={t.boq.linkedMeasurement} />
                                 </span>
                               )}
                             </div>
@@ -614,7 +665,7 @@ export default function BOQPage() {
                           </td>
                           <td className="px-1 py-0.5">
                             <div className={cn(
-                              'px-2 py-1.5 text-right tabular-nums',
+                              'px-2 py-1.5 text-end tabular-nums',
                               item.quantity_difference != null && item.quantity_difference > 0 && 'text-green-600 dark:text-green-400',
                               item.quantity_difference != null && item.quantity_difference < 0 && 'text-red-600 dark:text-red-400'
                             )}>
@@ -642,21 +693,24 @@ export default function BOQPage() {
                                     ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
                                     : 'text-slate-300 dark:text-slate-500 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20'
                                 )}
-                                title={item.library_item_id ? 'Linked to library' : 'Link to library item'}
+                                title={item.library_item_id ? t.boq.linkedToLibrary : t.boq.linkToLibraryItem}
+                                aria-label={item.library_item_id ? t.boq.linkedToLibrary : t.boq.linkToLibraryItem}
                               >
                                 <BookOpen size={13} />
                               </button>
                               <button
                                 onClick={() => handleDuplicate(item)}
                                 className="p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 text-slate-300 dark:text-slate-500 hover:text-blue-500 transition-colors"
-                                title="Duplicate row"
+                                title={t.boq.duplicateRow}
+                                aria-label={t.boq.duplicateRow}
                               >
                                 <Copy size={13} />
                               </button>
                               <button
                                 onClick={() => handleDelete(item.id)}
                                 className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-300 dark:text-slate-500 hover:text-red-500 transition-colors"
-                                title="Delete"
+                                title={t.boq.deleteRow}
+                                aria-label={t.boq.deleteRow}
                               >
                                 <Trash2 size={13} />
                               </button>
@@ -666,10 +720,10 @@ export default function BOQPage() {
                       ))}
                       {section && (
                         <tr className="bg-slate-100/60 dark:bg-slate-800/60 border-b-2 border-slate-200 dark:border-slate-700">
-                          <td colSpan={8} className="px-3 py-2.5 text-right text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                            {section} Subtotal
+                          <td colSpan={8} className="px-3 py-2.5 text-end text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            {t.boq.sectionSubtotal.replace('{section}', section)}
                           </td>
-                          <td className="px-3 py-2.5 text-right font-bold text-sm tabular-nums text-slate-800 dark:text-slate-100">
+                          <td className="px-3 py-2.5 text-end font-bold text-sm tabular-nums text-slate-800 dark:text-slate-100">
                             {formatCurrency(sectionTotal)}
                           </td>
                           <td />
@@ -684,7 +738,7 @@ export default function BOQPage() {
                   <td />
                   <td className="px-1 py-1">
                     <input
-                      placeholder="Code"
+                      placeholder={t.boq.codeLabel}
                       className="w-full px-2 py-1.5 text-sm rounded border border-transparent hover:border-slate-300 dark:hover:border-slate-600 bg-transparent focus:border-blue-400 focus:bg-white dark:focus:bg-slate-800 outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                       value={form.code}
                       onChange={e => setForm(f => ({ ...f, code: e.target.value }))}
@@ -692,7 +746,7 @@ export default function BOQPage() {
                   </td>
                   <td className="px-1 py-1">
                     <input
-                      placeholder="+ Add item description..."
+                      placeholder={t.boq.addItemPlaceholder}
                       className="w-full px-2 py-1.5 text-sm rounded border border-transparent hover:border-slate-300 dark:hover:border-slate-600 bg-transparent focus:border-blue-400 focus:bg-white dark:focus:bg-slate-800 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                       value={form.description}
                       onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
@@ -717,7 +771,7 @@ export default function BOQPage() {
                     <input
                       placeholder="0"
                       type="number"
-                      className="w-full px-2 py-1.5 text-sm text-right rounded border border-transparent hover:border-slate-300 dark:hover:border-slate-600 bg-transparent focus:border-blue-400 focus:bg-white dark:focus:bg-slate-800 outline-none tabular-nums placeholder:text-slate-300"
+                      className="w-full px-2 py-1.5 text-sm text-end rounded border border-transparent hover:border-slate-300 dark:hover:border-slate-600 bg-transparent focus:border-blue-400 focus:bg-white dark:focus:bg-slate-800 outline-none tabular-nums placeholder:text-slate-300"
                       value={form.quantity}
                       onChange={e => setForm(f => ({ ...f, quantity: e.target.value }))}
                     />
@@ -727,7 +781,7 @@ export default function BOQPage() {
                     <input
                       placeholder="0"
                       type="number"
-                      className="w-full px-2 py-1.5 text-sm text-right rounded border border-transparent hover:border-slate-300 dark:hover:border-slate-600 bg-transparent focus:border-blue-400 focus:bg-white dark:focus:bg-slate-800 outline-none tabular-nums placeholder:text-slate-300"
+                      className="w-full px-2 py-1.5 text-sm text-end rounded border border-transparent hover:border-slate-300 dark:hover:border-slate-600 bg-transparent focus:border-blue-400 focus:bg-white dark:focus:bg-slate-800 outline-none tabular-nums placeholder:text-slate-300"
                       value={form.unit_rate}
                       onChange={e => setForm(f => ({ ...f, unit_rate: e.target.value }))}
                     />
@@ -738,7 +792,8 @@ export default function BOQPage() {
                       <button
                         onClick={handleCreate}
                         className="p-1.5 rounded bg-blue-500 hover:bg-blue-600 text-white transition-colors"
-                        title="Add item (or press Enter)"
+                        title={t.boq.addItemButton}
+                        aria-label={t.boq.addItemButton}
                       >
                         <Plus size={14} />
                       </button>
@@ -746,16 +801,16 @@ export default function BOQPage() {
                   </td>
                 </tr>
                 <tr className="border-t-2 border-slate-300 dark:border-slate-600 bg-slate-50/80 dark:bg-slate-900/80">
-                  <td colSpan={8} className="px-4 py-3 text-right font-semibold text-slate-500 dark:text-slate-400 text-sm uppercase tracking-wide">
+                  <td colSpan={8} className="px-4 py-3 text-end font-semibold text-slate-500 dark:text-slate-400 text-sm uppercase tracking-wide">
                     {t.boq.subtotal}
                   </td>
-                  <td className="px-4 py-3 text-right font-bold text-slate-900 dark:text-white tabular-nums">
+                  <td className="px-4 py-3 text-end font-bold text-slate-900 dark:text-white tabular-nums">
                     {formatCurrency(subtotal)}
                   </td>
                   <td />
                 </tr>
                 <tr className="bg-slate-50/80 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-800">
-                  <td colSpan={7} className="px-4 py-3 text-right font-semibold text-slate-500 dark:text-slate-400 text-sm uppercase tracking-wide">
+                  <td colSpan={7} className="px-4 py-3 text-end font-semibold text-slate-500 dark:text-slate-400 text-sm uppercase tracking-wide">
                     {t.boq.vat}
                   </td>
                   <td className="px-1 py-2">
@@ -764,21 +819,21 @@ export default function BOQPage() {
                         type="number"
                         value={vatPct}
                         onChange={(e) => setVatPct(parseFloat(e.target.value) || 0)}
-                        className="w-16 px-2 py-1 text-sm text-right border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500 tabular-nums"
+                        className="w-16 px-2 py-1 text-sm text-end border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500 tabular-nums"
                       />
                       <span className="text-xs text-slate-500 dark:text-slate-400">%</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-right font-semibold text-slate-700 dark:text-slate-200 tabular-nums">
+                  <td className="px-4 py-3 text-end font-semibold text-slate-700 dark:text-slate-200 tabular-nums">
                     {formatCurrency(vatAmount)}
                   </td>
                   <td />
                 </tr>
                 <tr className="bg-gradient-to-r from-blue-50 to-blue-100/80 dark:from-blue-900/30 dark:to-blue-800/20 border-t-2 border-blue-300 dark:border-blue-700">
-                  <td colSpan={8} className="px-4 py-4 text-right font-bold text-blue-900 dark:text-blue-100 text-base uppercase tracking-wide">
+                  <td colSpan={8} className="px-4 py-4 text-end font-bold text-blue-900 dark:text-blue-100 text-base uppercase tracking-wide">
                     {t.boq.grandTotal}
                   </td>
-                  <td className="px-4 py-4 text-right font-black text-lg text-blue-900 dark:text-blue-100 tabular-nums">
+                  <td className="px-4 py-4 text-end font-black text-lg text-blue-900 dark:text-blue-100 tabular-nums">
                     {formatCurrency(grandTotal)}
                   </td>
                   <td />
@@ -791,10 +846,10 @@ export default function BOQPage() {
 
       {/* Import Modal */}
 
-      <Modal isOpen={showImport} onClose={() => setShowImport(false)} title="Import BOQ from Excel" size="lg">
+      <Modal isOpen={showImport} onClose={() => setShowImport(false)} title={t.boq.importTitle} size="lg">
         <div className="space-y-4">
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Upload an Excel file (.xlsx, .xls) with BOQ data. The importer will auto-detect columns for Code, Description, Unit, Quantity, Rate, and Section.
+            {t.boq.importDesc}
           </p>
           <input
             type="file"
@@ -803,13 +858,13 @@ export default function BOQPage() {
               const f = e.target.files?.[0]
               if (f) handleImportFile(f)
             }}
-            className="text-sm text-slate-600 dark:text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-400 hover:file:bg-blue-100"
+            className="text-sm text-slate-600 dark:text-slate-300 file:me-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-400 hover:file:bg-blue-100"
           />
           {importError && <p className="text-sm text-red-500">{importError}</p>}
           {importRows.length > 0 && (
             <>
               <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                Preview: {importRows.length} items found
+                {t.boq.importPreview.replace('{count}', String(importRows.length))}
               </div>
               <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
                 <VirtualTable<ImportedBOQRow>
@@ -823,31 +878,31 @@ export default function BOQPage() {
             </>
           )}
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowImport(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setShowImport(false)}>{t.common.cancel}</Button>
             <Button
               onClick={handleImportConfirm}
               loading={importing}
               disabled={importRows.length === 0}
             >
-              Import {importRows.length} Items
+              {t.boq.importItems.replace('{count}', String(importRows.length))}
             </Button>
           </div>
         </div>
       </Modal>
 
       {/* Create Modal */}
-      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="New BOQ Item" size="md">
+      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title={t.boq.newItemTitle} size="md">
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input
-              label="Code"
+              label={t.boq.codeLabel}
               value={form.code}
               onChange={(e) => setForm({ ...form, code: e.target.value })}
               placeholder="e.g. 01.01"
             />
             <div className="col-span-2">
               <Input
-                label="Description"
+                label={t.boq.descriptionLabel}
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 placeholder="e.g. Excavation for foundations"
@@ -856,7 +911,7 @@ export default function BOQPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Unit</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t.boq.unitLabel}</label>
               <select
                 value={form.unit}
                 onChange={(e) => setForm({ ...form, unit: e.target.value })}
@@ -868,14 +923,14 @@ export default function BOQPage() {
               </select>
             </div>
             <Input
-              label="Quantity"
+              label={t.boq.quantityLabel}
               type="number"
               value={form.quantity}
               onChange={(e) => setForm({ ...form, quantity: e.target.value })}
               placeholder="0.00"
             />
             <Input
-              label="Unit Rate"
+              label={t.boq.unitRateLabel}
               type="number"
               value={form.unit_rate}
               onChange={(e) => setForm({ ...form, unit_rate: e.target.value })}
@@ -884,21 +939,21 @@ export default function BOQPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input
-              label="Material Rate"
+              label={t.boq.materialRateLabel}
               type="number"
               value={form.material_rate}
               onChange={(e) => setForm({ ...form, material_rate: e.target.value })}
               placeholder="0.00"
             />
             <Input
-              label="Labor Rate"
+              label={t.boq.laborRateLabel}
               type="number"
               value={form.labor_rate}
               onChange={(e) => setForm({ ...form, labor_rate: e.target.value })}
               placeholder="0.00"
             />
             <Input
-              label="Equipment Rate"
+              label={t.boq.equipmentRateLabel}
               type="number"
               value={form.equipment_rate}
               onChange={(e) => setForm({ ...form, equipment_rate: e.target.value })}
@@ -906,13 +961,13 @@ export default function BOQPage() {
             />
           </div>
           <Input
-            label="Section"
+            label={t.boq.sectionLabel}
             value={form.section}
             onChange={(e) => setForm({ ...form, section: e.target.value })}
             placeholder="e.g. Substructure"
           />
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Notes</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t.boq.notesLabel}</label>
             <textarea
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
@@ -922,7 +977,7 @@ export default function BOQPage() {
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setShowCreate(false)}>{t.common.cancel}</Button>
             <Button onClick={handleCreate} loading={creating} disabled={!form.description.trim()}>
               {t.boq.addItem}
             </Button>
@@ -930,23 +985,23 @@ export default function BOQPage() {
         </div>
       </Modal>
 
-      <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title="Confirm" size="sm">
+      <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title={t.boq.confirmTitle} size="sm">
         <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{confirmAction?.message}</p>
         <div className="flex justify-end gap-3">
-          <Button variant="ghost" onClick={() => setConfirmAction(null)}>Cancel</Button>
-          <Button variant="danger" onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>Confirm</Button>
+          <Button variant="ghost" onClick={() => setConfirmAction(null)}>{t.common.cancel}</Button>
+          <Button variant="danger" onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>{t.common.confirm}</Button>
         </div>
       </Modal>
 
       {/* Library Link Modal */}
-      <Modal isOpen={!!showLibraryLink} onClose={() => setShowLibraryLink(null)} title="Link Library Item" size="md">
+      <Modal isOpen={!!showLibraryLink} onClose={() => setShowLibraryLink(null)} title={t.boq.linkLibraryItemTitle} size="md">
         <div className="space-y-3">
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Select a library item to apply its rates to this BOQ item.
+            {t.boq.linkLibraryItemDesc}
           </p>
           <input
             type="text"
-            placeholder="Search library items..."
+            placeholder={t.boq.searchLibraryItems}
             value={librarySearch}
             onChange={e => setLibrarySearch(e.target.value)}
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -954,7 +1009,7 @@ export default function BOQPage() {
           />
           <div className="max-h-[300px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700/50 border border-slate-200 dark:border-slate-700 rounded-lg">
             {libraryItems.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-8">No library items found. Add items in the Library page first.</p>
+              <p className="text-xs text-slate-400 text-center py-8">{t.boq.noLibraryItemsFound}</p>
             ) : (
               libraryItems
                 .filter(li => {
@@ -966,7 +1021,7 @@ export default function BOQPage() {
                   <button
                     key={li.id}
                     onClick={() => handleLinkLibraryItem(li)}
-                    className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors"
+                    className="w-full flex items-center justify-between px-3 py-2.5 text-start hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -975,18 +1030,18 @@ export default function BOQPage() {
                       </div>
                       <div className="flex items-center gap-3 text-[10px] text-slate-400 mt-0.5">
                         <span>{li.unit}</span>
-                        {li.default_rate != null && <span>Rate: {li.default_rate}</span>}
-                        {li.material_rate != null && <span>Mat: {li.material_rate}</span>}
-                        {li.labor_rate != null && <span>Lab: {li.labor_rate}</span>}
+                        {li.default_rate != null && <span>{t.boq.rateLabel}: {li.default_rate}</span>}
+                        {li.material_rate != null && <span>{t.boq.materialLabel}: {li.material_rate}</span>}
+                        {li.labor_rate != null && <span>{t.boq.laborLabel}: {li.labor_rate}</span>}
                       </div>
                     </div>
-                    <BookOpen size={14} className="text-emerald-500 shrink-0 ml-2" />
+                    <BookOpen size={14} className="text-emerald-500 shrink-0 ms-2" />
                   </button>
                 ))
             )}
           </div>
           <div className="flex justify-end">
-            <Button variant="ghost" onClick={() => setShowLibraryLink(null)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setShowLibraryLink(null)}>{t.common.cancel}</Button>
           </div>
         </div>
       </Modal>

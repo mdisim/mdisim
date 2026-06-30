@@ -30,11 +30,12 @@ function TableRow({ className, ...props }: HTMLAttributes<HTMLTableRowElement>) 
   )
 }
 
-function TableHead({ className, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
+function TableHead({ className, scope = 'col', ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
+      scope={scope}
       className={cn(
-        'px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider',
+        'px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase tracking-wider',
         'dark:text-slate-400',
         className
       )}

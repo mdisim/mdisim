@@ -41,26 +41,41 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useI18n } from '@/lib/i18n'
+import { useToast } from '@/components/ui/toast'
+import type { TranslationKeys } from '@/lib/i18n/translations'
 
-const CERT_STATUS: Record<PaymentCertStatus, { label: string; color: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = {
-  draft: { label: 'Draft', color: 'text-slate-500 bg-slate-100 dark:bg-slate-700', icon: Clock },
-  submitted: { label: 'Submitted', color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/30', icon: Send },
-  checked: { label: 'Checked', color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30', icon: FileCheck },
-  approved: { label: 'Approved', color: 'text-green-600 bg-green-50 dark:bg-green-900/30', icon: CheckCircle2 },
-  paid: { label: 'Paid', color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30', icon: CreditCard },
+const STATUS_ICON: Record<PaymentCertStatus, React.ComponentType<{ size?: number; className?: string }>> = {
+  draft: Clock,
+  submitted: Send,
+  checked: FileCheck,
+  approved: CheckCircle2,
+  paid: CreditCard,
 }
 
-const STATUS_FLOW: { key: PaymentCertStatus; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
-  { key: 'draft', label: 'Draft', icon: Clock },
-  { key: 'submitted', label: 'Submitted', icon: Send },
-  { key: 'checked', label: 'Checked', icon: FileCheck },
-  { key: 'approved', label: 'Approved', icon: CheckCircle2 },
-  { key: 'paid', label: 'Paid', icon: CreditCard },
-]
+const STATUS_COLOR: Record<PaymentCertStatus, string> = {
+  draft: 'text-slate-500 bg-slate-100 dark:bg-slate-700',
+  submitted: 'text-blue-600 bg-blue-50 dark:bg-blue-900/30',
+  checked: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30',
+  approved: 'text-green-600 bg-green-50 dark:bg-green-900/30',
+  paid: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30',
+}
+
+const STATUS_ORDER: PaymentCertStatus[] = ['draft', 'submitted', 'checked', 'approved', 'paid']
+
+function getStatusLabel(t: TranslationKeys, status: PaymentCertStatus): string {
+  switch (status) {
+    case 'draft': return t.payments.statusDraft
+    case 'submitted': return t.payments.statusSubmitted
+    case 'checked': return t.payments.statusChecked
+    case 'approved': return t.payments.statusApproved
+    case 'paid': return t.payments.statusPaid
+  }
+}
 
 export default function PaymentsPage() {
   const { id: projectId } = useParams<{ id: string }>()
   const { t } = useI18n()
+  const { toast } = useToast()
   const [certs, setCerts] = useState<PaymentCert[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -80,12 +95,12 @@ export default function PaymentsPage() {
       setCerts(data)
       setError(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load payment certificates')
+      setError(err instanceof Error ? err.message : t.payments.loadError)
       setCerts([])
     } finally {
       setLoading(false)
     }
-  }, [projectId])
+  }, [projectId, t])
 
   useEffect(() => { load() }, [load])
 
@@ -129,16 +144,22 @@ export default function PaymentsPage() {
       advance_recovery: parseFloat(form.advance_recovery) || 0,
       previous_advance_recovery: parseFloat(form.previous_advance_recovery) || 0,
     })
-    if (r.error) { setError(r.error); return }
+    if (r.error) {
+      setError(r.error)
+      toast({ title: t.payments.createError, description: r.error, variant: 'danger' })
+      return
+    }
 
     if (r.data) {
       try {
         await populateCertFromBOQ(r.data.id, projectId, previousCert?.id)
       } catch {
-        setError('Certificate created but failed to populate lines from BOQ.')
+        setError(t.payments.createPopulateError)
+        toast({ title: t.payments.createPopulateError, variant: 'warning' })
       }
     }
 
+    toast({ title: t.payments.createSuccess, variant: 'success' })
     setShowCreate(false)
     setForm({ period_from: '', period_to: '', retention_pct: '10', vat_pct: '17', advance_recovery: '0', previous_advance_recovery: '0' })
     load()
@@ -147,8 +168,38 @@ export default function PaymentsPage() {
   const handleUpdateLine = async (lineId: string, currentQty: number) => {
     try {
       await updatePaymentLine(lineId, { current_qty: currentQty })
+      toast({ title: t.payments.updateLineSuccess, variant: 'success' })
     } catch {
-      setError('Failed to update line item.')
+      setError(t.payments.updateLineError)
+      toast({ title: t.payments.updateLineError, variant: 'danger' })
+    }
+    load()
+  }
+
+  const handleDelete = (certId: string) => {
+    setConfirmAction({
+      message: t.payments.confirmDeleteCert,
+      onConfirm: async () => {
+        try {
+          await deletePaymentCert(certId)
+          toast({ title: t.payments.deleteSuccess, variant: 'success' })
+        } catch {
+          toast({ title: t.payments.deleteError, variant: 'danger' })
+        }
+        load()
+      },
+    })
+  }
+
+  const handleStatusChange = async (certId: string, status: PaymentCertStatus) => {
+    try {
+      await updatePaymentCert(certId, { status })
+      toast({
+        title: t.payments.statusChangeSuccess.replace('{status}', getStatusLabel(t, status)),
+        variant: status === 'submitted' || status === 'checked' ? 'warning' : 'success',
+      })
+    } catch {
+      toast({ title: t.payments.statusChangeError, variant: 'danger' })
     }
     load()
   }
@@ -158,11 +209,11 @@ export default function PaymentsPage() {
       <PageHeader
         icon={CreditCard}
         title={t.payments.title}
-        subtitle="Interim Payment Certificates (IPC) & contractor payments"
+        subtitle={t.payments.subtitle}
         gradient="from-emerald-500 to-emerald-600"
         actions={
           <Button onClick={() => setShowCreate(true)}>
-            <Plus size={16} /> New Certificate
+            <Plus size={16} /> {t.payments.newCertificate}
           </Button>
         }
       />
@@ -206,8 +257,8 @@ export default function PaymentsPage() {
               <SectionCard title={t.payments.paymentProgress} icon={Banknote} iconColor="text-emerald-500">
                 <SimpleBarChart
                   bars={stats.progressBars.flatMap(p => [
-                    { label: `IPC #${p.certNumber} (Certified)`, value: p.certified, color: '#6366f1' },
-                    { label: `IPC #${p.certNumber} (Paid)`, value: p.paid, color: '#10b981' },
+                    { label: `IPC #${p.certNumber} (${t.payments.totalCertified})`, value: p.certified, color: '#6366f1' },
+                    { label: `IPC #${p.certNumber} (${t.payments.totalPaid})`, value: p.paid, color: '#10b981' },
                   ])}
                   horizontal
                 />
@@ -215,14 +266,14 @@ export default function PaymentsPage() {
             )}
 
             {/* Payment Timeline */}
-            <SectionCard title="Payment Timeline" icon={Clock} iconColor="text-blue-500">
+            <SectionCard title={t.payments.paymentTimeline} icon={Clock} iconColor="text-blue-500">
               <div className="flex items-center justify-between gap-1">
-                {STATUS_FLOW.map((step, i) => {
-                  const count = stats.statusCounts[step.key]
-                  const StepIcon = step.icon
+                {STATUS_ORDER.map((step, i) => {
+                  const count = stats.statusCounts[step]
+                  const StepIcon = STATUS_ICON[step]
                   const isActive = count > 0
                   return (
-                    <div key={step.key} className="flex items-center flex-1">
+                    <div key={step} className="flex items-center flex-1">
                       <div className="flex flex-col items-center flex-1">
                         <div className={cn(
                           'w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-all',
@@ -236,7 +287,7 @@ export default function PaymentsPage() {
                           'text-xs font-medium',
                           isActive ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'
                         )}>
-                          {step.label}
+                          {getStatusLabel(t, step)}
                         </span>
                         <span className={cn(
                           'text-lg font-bold tabular-nums mt-0.5',
@@ -245,7 +296,7 @@ export default function PaymentsPage() {
                           {count}
                         </span>
                       </div>
-                      {i < STATUS_FLOW.length - 1 && (
+                      {i < STATUS_ORDER.length - 1 && (
                         <ArrowRight size={14} className="text-slate-300 dark:text-slate-600 shrink-0 mx-1 -mt-6" />
                       )}
                     </div>
@@ -262,14 +313,14 @@ export default function PaymentsPage() {
       ) : error && certs.length === 0 ? (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
           <p className="text-red-600 dark:text-red-400 font-medium mb-4">{error}</p>
-          <Button onClick={() => load()}>Retry</Button>
+          <Button onClick={() => load()}>{t.payments.retry}</Button>
         </div>
       ) : certs.length === 0 ? (
         <EmptyState
           icon={Receipt}
-          title="No payment certificates yet"
-          description="Create a certificate to start the payment workflow."
-          actionLabel="Create IPC #1"
+          title={t.payments.noPayments}
+          description={t.payments.noPaymentsDesc}
+          actionLabel={t.payments.createFirstCert}
           onAction={() => setShowCreate(true)}
         />
       ) : (
@@ -285,44 +336,45 @@ export default function PaymentsPage() {
               cert={cert}
               isExpanded={expandedId === cert.id}
               onToggle={() => setExpandedId(expandedId === cert.id ? null : cert.id)}
-              onDelete={() => setConfirmAction({ message: 'Delete this certificate?', onConfirm: async () => { await deletePaymentCert(cert.id); load() } })}
-              onStatusChange={async (s) => { await updatePaymentCert(cert.id, { status: s }); load() }}
+              onDelete={() => handleDelete(cert.id)}
+              onStatusChange={(s) => handleStatusChange(cert.id, s)}
               onUpdateLine={handleUpdateLine}
               fmt={fmt}
+              t={t}
             />
             </motion.div>
           ))}
         </div>
       )}
 
-      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title={`New IPC #${certs.length + 1}`} size="md">
+      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title={t.payments.newIpcTitle.replace('{number}', String(certs.length + 1))} size="md">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Period From" type="date" value={form.period_from} onChange={e => setForm({ ...form, period_from: e.target.value })} />
-            <Input label="Period To" type="date" value={form.period_to} onChange={e => setForm({ ...form, period_to: e.target.value })} />
+            <Input label={t.payments.periodFrom} type="date" value={form.period_from} onChange={e => setForm({ ...form, period_from: e.target.value })} />
+            <Input label={t.payments.periodTo} type="date" value={form.period_to} onChange={e => setForm({ ...form, period_to: e.target.value })} />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Retention %" type="number" value={form.retention_pct} onChange={e => setForm({ ...form, retention_pct: e.target.value })} />
-            <Input label="VAT %" type="number" value={form.vat_pct} onChange={e => setForm({ ...form, vat_pct: e.target.value })} />
+            <Input label={t.payments.retentionPct} type="number" value={form.retention_pct} onChange={e => setForm({ ...form, retention_pct: e.target.value })} />
+            <Input label={t.payments.vatPct} type="number" value={form.vat_pct} onChange={e => setForm({ ...form, vat_pct: e.target.value })} />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Advance Recovery" type="number" value={form.advance_recovery} onChange={e => setForm({ ...form, advance_recovery: e.target.value })} />
-            <Input label="Previous Advance Recovery" type="number" value={form.previous_advance_recovery} onChange={e => setForm({ ...form, previous_advance_recovery: e.target.value })} />
+            <Input label={t.payments.advanceRecovery} type="number" value={form.advance_recovery} onChange={e => setForm({ ...form, advance_recovery: e.target.value })} />
+            <Input label={t.payments.previousAdvanceRecovery} type="number" value={form.previous_advance_recovery} onChange={e => setForm({ ...form, previous_advance_recovery: e.target.value })} />
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">BOQ items will be auto-populated. Previous quantities carried forward from prior certificate.</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t.payments.autoPopulateNote}</p>
           {error && <p className="text-sm text-red-500">{error}</p>}
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={!form.period_from || !form.period_to}>Create</Button>
+            <Button variant="ghost" onClick={() => setShowCreate(false)}>{t.payments.cancel}</Button>
+            <Button onClick={handleCreate} disabled={!form.period_from || !form.period_to}>{t.payments.create}</Button>
           </div>
         </div>
       </Modal>
 
-      <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title="Confirm" size="sm">
+      <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title={t.payments.confirmTitle} size="sm">
         <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{confirmAction?.message}</p>
         <div className="flex justify-end gap-3">
-          <Button variant="ghost" onClick={() => setConfirmAction(null)}>Cancel</Button>
-          <Button variant="danger" onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>Confirm</Button>
+          <Button variant="ghost" onClick={() => setConfirmAction(null)}>{t.payments.cancel}</Button>
+          <Button variant="danger" onClick={() => { confirmAction?.onConfirm(); setConfirmAction(null) }}>{t.payments.confirm}</Button>
         </div>
       </Modal>
     </div>
@@ -337,6 +389,7 @@ function CertCard({
   onStatusChange,
   onUpdateLine,
   fmt,
+  t,
 }: {
   cert: PaymentCert
   isExpanded: boolean
@@ -345,14 +398,15 @@ function CertCard({
   onStatusChange: (s: PaymentCertStatus) => void
   onUpdateLine: (lineId: string, currentQty: number) => void
   fmt: (n: number) => string
+  t: TranslationKeys
 }) {
   const lines = cert.lines ?? []
-  const sm = CERT_STATUS[cert.status]
-  const Icon = sm.icon
+  const Icon = STATUS_ICON[cert.status]
+  const statusLabel = getStatusLabel(t, cert.status)
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-      <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-750" role="button" tabIndex={0} onClick={onToggle} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle() } }}>
+      <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-750" role="button" tabIndex={0} aria-expanded={isExpanded} onClick={onToggle} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle() } }}>
         {isExpanded ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronRight size={16} className="text-slate-400" />}
         <div className="flex-1 min-w-0">
           <div className="font-medium text-slate-900 dark:text-white">IPC #{cert.cert_number}</div>
@@ -360,14 +414,19 @@ function CertCard({
             {cert.period_from} to {cert.period_to} · {lines.length} items
           </div>
         </div>
-        <div className="text-right mr-2">
+        <div className="text-end me-2">
           <div className="text-sm font-bold text-slate-900 dark:text-white tabular-nums">{fmt(cert.net_payable)}</div>
-          <div className="text-[10px] text-slate-400">net payable</div>
+          <div className="text-[10px] text-slate-400">{t.payments.netPayable}</div>
         </div>
-        <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium', sm.color)}>
-          <Icon size={12} /> {sm.label}
+        <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium', STATUS_COLOR[cert.status])}>
+          <Icon size={12} /> {statusLabel}
         </span>
-        <button onClick={e => { e.stopPropagation(); onDelete() }} className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-300 hover:text-red-500">
+        <button
+          onClick={e => { e.stopPropagation(); onDelete() }}
+          className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-300 hover:text-red-500"
+          title={t.payments.deleteCertificate}
+          aria-label={t.payments.deleteCertificate}
+        >
           <Trash2 size={14} />
         </button>
       </div>
@@ -381,7 +440,7 @@ function CertCard({
               onChange={e => onStatusChange(e.target.value as PaymentCertStatus)}
               className="text-xs px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 dark:text-white"
             >
-              {Object.entries(CERT_STATUS).map(([k, m]) => <option key={k} value={k}>{m.label}</option>)}
+              {STATUS_ORDER.map(k => <option key={k} value={k}>{getStatusLabel(t, k)}</option>)}
             </select>
           </div>
 
@@ -390,14 +449,14 @@ function CertCard({
             <table className="w-full text-xs">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-                  <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300 min-w-[180px]">Description</th>
-                  <th className="text-center px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[50px]">Unit</th>
-                  <th className="text-right px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[70px]">Contract Qty</th>
-                  <th className="text-right px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[70px]">Rate</th>
-                  <th className="text-right px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[70px]">Previous Qty</th>
-                  <th className="text-right px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[80px]">Current Qty</th>
-                  <th className="text-right px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[70px]">Cum. Qty</th>
-                  <th className="text-right px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[90px]">Cum. Amount</th>
+                  <th className="text-start px-3 py-2 font-semibold text-slate-600 dark:text-slate-300 min-w-[180px]">{t.payments.colDescription}</th>
+                  <th className="text-center px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[50px]">{t.payments.colUnit}</th>
+                  <th className="text-end px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[70px]">{t.payments.colContractQty}</th>
+                  <th className="text-end px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[70px]">{t.payments.colRate}</th>
+                  <th className="text-end px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[70px]">{t.payments.colPreviousQty}</th>
+                  <th className="text-end px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[80px]">{t.payments.colCurrentQty}</th>
+                  <th className="text-end px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[70px]">{t.payments.colCumQty}</th>
+                  <th className="text-end px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 w-[90px]">{t.payments.colCumAmount}</th>
                 </tr>
               </thead>
               <tbody>
@@ -405,20 +464,20 @@ function CertCard({
                   <tr key={line.id} className="border-b border-slate-100 dark:border-slate-700">
                     <td className="px-3 py-1.5 text-slate-700 dark:text-slate-300 truncate max-w-[180px]">{line.description}</td>
                     <td className="px-2 py-1.5 text-center text-slate-500">{line.unit}</td>
-                    <td className="px-2 py-1.5 text-right tabular-nums text-slate-500">{fmt(line.contract_qty)}</td>
-                    <td className="px-2 py-1.5 text-right tabular-nums text-slate-500">{fmt(line.contract_rate)}</td>
-                    <td className="px-2 py-1.5 text-right tabular-nums text-slate-500">{fmt(line.previous_qty)}</td>
+                    <td className="px-2 py-1.5 text-end tabular-nums text-slate-500">{fmt(line.contract_qty)}</td>
+                    <td className="px-2 py-1.5 text-end tabular-nums text-slate-500">{fmt(line.contract_rate)}</td>
+                    <td className="px-2 py-1.5 text-end tabular-nums text-slate-500">{fmt(line.previous_qty)}</td>
                     <td className="px-2 py-0.5">
                       <input
                         type="number"
                         value={line.current_qty || ''}
                         onChange={e => onUpdateLine(line.id, parseFloat(e.target.value) || 0)}
-                        className="w-full px-1 py-0.5 text-xs text-right border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-800 dark:text-white focus:ring-1 focus:ring-blue-500 outline-none"
+                        className="w-full px-1 py-0.5 text-xs text-end border border-slate-200 dark:border-slate-600 rounded bg-white dark:bg-slate-800 dark:text-white focus:ring-1 focus:ring-blue-500 outline-none"
                         step="any"
                       />
                     </td>
-                    <td className="px-2 py-1.5 text-right tabular-nums font-medium text-slate-700 dark:text-slate-200">{fmt(line.cumulative_qty)}</td>
-                    <td className="px-2 py-1.5 text-right tabular-nums font-medium text-slate-900 dark:text-white">{fmt(line.cumulative_amount)}</td>
+                    <td className="px-2 py-1.5 text-end tabular-nums font-medium text-slate-700 dark:text-slate-200">{fmt(line.cumulative_qty)}</td>
+                    <td className="px-2 py-1.5 text-end tabular-nums font-medium text-slate-900 dark:text-white">{fmt(line.cumulative_amount)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -430,17 +489,17 @@ function CertCard({
             <table className="w-full text-xs">
               <tbody>
                 {[
-                  { label: 'Gross Amount (Cumulative)', value: cert.gross_amount },
-                  { label: 'Less: Previous Gross', value: -cert.previous_gross },
-                  { label: 'Current Gross', value: cert.current_gross, bold: true },
-                  { label: `Less: Retention (${cert.retention_pct}%)`, value: -cert.current_retention },
-                  { label: 'Less: Advance Recovery', value: -cert.current_advance_recovery },
-                  { label: `Add: VAT (${cert.vat_pct}%)`, value: cert.vat_amount },
-                  { label: 'Net Payable', value: cert.net_payable, bold: true, highlight: true },
+                  { label: t.payments.summaryGrossAmount, value: cert.gross_amount },
+                  { label: t.payments.summaryLessPreviousGross, value: -cert.previous_gross },
+                  { label: t.payments.summaryCurrentGross, value: cert.current_gross, bold: true },
+                  { label: t.payments.summaryLessRetention.replace('{pct}', String(cert.retention_pct)), value: -cert.current_retention },
+                  { label: t.payments.summaryLessAdvanceRecovery, value: -cert.current_advance_recovery },
+                  { label: t.payments.summaryAddVat.replace('{pct}', String(cert.vat_pct)), value: cert.vat_amount },
+                  { label: t.payments.summaryNetPayable, value: cert.net_payable, bold: true, highlight: true },
                 ].map(row => (
                   <tr key={row.label} className={row.bold ? 'border-t border-slate-200 dark:border-slate-600' : ''}>
                     <td className={cn('py-1', row.bold ? 'font-semibold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300')}>{row.label}</td>
-                    <td className={cn('py-1 text-right tabular-nums', row.bold ? 'font-bold' : '',
+                    <td className={cn('py-1 text-end tabular-nums', row.bold ? 'font-bold' : '',
                       row.highlight ? 'text-lg text-blue-600 dark:text-blue-400' : row.bold ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-200',
                       row.value < 0 && !row.highlight && 'text-red-600 dark:text-red-400'
                     )}>{fmt(row.value)}</td>
