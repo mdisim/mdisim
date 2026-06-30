@@ -71,7 +71,7 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
   const sidebar = (
     <aside
       className={cn(
-        'flex flex-col h-full bg-[#0B1120] dark:bg-[#060A14] transition-all duration-300 ease-in-out border-r border-white/[0.06]',
+        'flex flex-col h-full bg-[var(--color-navy)] dark:bg-[var(--color-surface-sunken)] transition-all duration-300 ease-in-out border-r border-white/[0.06]',
         collapsed ? 'w-[68px]' : 'w-64'
       )}
     >
@@ -184,7 +184,7 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
       {/* Mobile toggle */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed top-4 left-4 z-40 lg:hidden p-3 min-h-11 min-w-11 bg-[#0B1120] rounded-lg text-white shadow-lg shadow-black/20 border border-white/[0.06]"
+        className="fixed top-4 left-4 z-40 lg:hidden p-3 min-h-11 min-w-11 bg-[var(--color-navy)] dark:bg-[var(--color-surface-sunken)] rounded-lg text-white shadow-lg shadow-black/20 border border-white/[0.06]"
       >
         <Menu size={20} />
       </button>

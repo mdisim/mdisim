@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
+import { useI18n } from '@/lib/i18n'
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -57,12 +58,16 @@ function monthsBetween(start: string, end: string): string[] {
   return months
 }
 
-function getHealthStatus(spi: number, cpi: number): { label: string; color: string; icon: typeof CheckCircle2 } {
-  if (spi >= 1 && cpi >= 1) return { label: 'On Track', color: 'text-green-600 bg-green-50 dark:bg-green-900/30', icon: CheckCircle2 }
-  if (spi < 0.9 && cpi < 0.9) return { label: 'Critical', color: 'text-red-600 bg-red-50 dark:bg-red-900/30', icon: XCircle }
-  if (cpi < 1) return { label: 'Over Budget', color: 'text-red-600 bg-red-50 dark:bg-red-900/30', icon: AlertTriangle }
-  if (spi < 1) return { label: 'Behind Schedule', color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30', icon: Clock }
-  return { label: 'At Risk', color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30', icon: AlertTriangle }
+function getHealthStatus(
+  spi: number,
+  cpi: number,
+  labels: { onTrack: string; critical: string; overBudget: string; behindSchedule: string; atRisk: string },
+): { label: string; color: string; icon: typeof CheckCircle2 } {
+  if (spi >= 1 && cpi >= 1) return { label: labels.onTrack, color: 'text-green-600 bg-green-50 dark:bg-green-900/30', icon: CheckCircle2 }
+  if (spi < 0.9 && cpi < 0.9) return { label: labels.critical, color: 'text-red-600 bg-red-50 dark:bg-red-900/30', icon: XCircle }
+  if (cpi < 1) return { label: labels.overBudget, color: 'text-red-600 bg-red-50 dark:bg-red-900/30', icon: AlertTriangle }
+  if (spi < 1) return { label: labels.behindSchedule, color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30', icon: Clock }
+  return { label: labels.atRisk, color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30', icon: AlertTriangle }
 }
 
 // ── EVM Computation ──────────────────────────────────────────────────────
@@ -154,7 +159,7 @@ function computeEVM(
 
 // ── SVG S-Curve Chart ────────────────────────────────────────────────────
 
-function SCurveChart({ evm }: { evm: EVMData }) {
+function SCurveChart({ evm, legend }: { evm: EVMData; legend: { pv: string; ev: string; ac: string } }) {
   const W = 700, H = 320, PAD = { top: 20, right: 30, bottom: 50, left: 70 }
   const cw = W - PAD.left - PAD.right
   const ch = H - PAD.top - PAD.bottom
@@ -202,9 +207,9 @@ function SCurveChart({ evm }: { evm: EVMData }) {
       </svg>
       {/* Legend */}
       <div className="flex items-center justify-center gap-6 mt-2 text-xs font-medium">
-        <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-blue-500 inline-block rounded" /> PV (Planned)</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-green-500 inline-block rounded" /> EV (Earned)</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-red-500 inline-block rounded" /> AC (Actual)</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-blue-500 inline-block rounded" /> {legend.pv}</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-green-500 inline-block rounded" /> {legend.ev}</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-red-500 inline-block rounded" /> {legend.ac}</span>
       </div>
     </div>
   )
@@ -253,6 +258,7 @@ function IndicesChart({ spi, cpi }: { spi: number; cpi: number }) {
 // ── Main Page ────────────────────────────────────────────────────────────
 
 export default function EVMPage() {
+  const { t } = useI18n()
   const { id: projectId } = useParams<{ id: string }>()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -277,11 +283,11 @@ export default function EVMPage() {
         setEvm(computeEVM(contract, costEntries, paymentCerts, project?.currency ?? 'USD'))
       }
     } catch {
-      setError('Failed to load EVM data')
+      setError(t.evm.loadFailed)
     } finally {
       setLoading(false)
     }
-  }, [projectId])
+  }, [projectId, t.evm.loadFailed])
 
   useEffect(() => { load() }, [load])
 
@@ -294,8 +300,8 @@ export default function EVMPage() {
             <TrendingUp size={20} className="text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Earned Value Management</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Loading analysis...</p>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t.evm.title}</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t.evm.loadingAnalysis}</p>
           </div>
         </div>
         <TableSkeleton rows={6} columns={4} />
@@ -313,7 +319,7 @@ export default function EVMPage() {
           </div>
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">{error}</h3>
           <Button onClick={load} className="mt-4">
-            <RefreshCw size={16} className="mr-2" /> Retry
+            <RefreshCw size={16} className="mr-2" /> {t.evm.retry}
           </Button>
         </div>
       </div>
@@ -329,17 +335,17 @@ export default function EVMPage() {
             <TrendingUp size={20} className="text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Earned Value Management</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Project performance analysis</p>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t.evm.title}</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t.evm.subtitle}</p>
           </div>
         </div>
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
             <DollarSign size={28} className="text-slate-400" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No Contract Found</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">{t.evm.noContractTitle}</h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm">
-            Set up a contract in Cost Control to enable EVM tracking.
+            {t.evm.noContractDesc}
           </p>
         </div>
       </div>
@@ -347,26 +353,32 @@ export default function EVMPage() {
   }
 
   // ── Computed values ──
-  const health = getHealthStatus(evm.spi, evm.cpi)
+  const health = getHealthStatus(evm.spi, evm.cpi, {
+    onTrack: t.evm.statusOnTrack,
+    critical: t.evm.statusCritical,
+    overBudget: t.evm.statusOverBudget,
+    behindSchedule: t.evm.statusBehindSchedule,
+    atRisk: t.evm.statusAtRisk,
+  })
   const HealthIcon = health.icon
 
   const kpis: { label: string; value: string; icon: typeof DollarSign; good?: boolean | null }[] = [
-    { label: 'BAC', value: fmt(evm.bac, evm.currency), icon: Target, good: null },
-    { label: 'EV', value: fmt(evm.ev, evm.currency), icon: TrendingUp, good: null },
-    { label: 'PV', value: fmt(evm.pv, evm.currency), icon: Activity, good: null },
-    { label: 'AC', value: fmt(evm.ac, evm.currency), icon: DollarSign, good: null },
-    { label: 'SPI', value: fmtIdx(evm.spi), icon: Clock, good: evm.spi >= 1 },
-    { label: 'CPI', value: fmtIdx(evm.cpi), icon: Calculator, good: evm.cpi >= 1 },
-    { label: 'EAC', value: fmt(evm.eac_cpi, evm.currency), icon: BarChart3, good: evm.eac_cpi <= evm.bac },
-    { label: 'ETC', value: fmt(evm.etc, evm.currency), icon: TrendingDown, good: null },
-    { label: 'VAC', value: fmt(evm.vac, evm.currency), icon: AlertTriangle, good: evm.vac >= 0 },
+    { label: t.evm.kpiBac, value: fmt(evm.bac, evm.currency), icon: Target, good: null },
+    { label: t.evm.kpiEv, value: fmt(evm.ev, evm.currency), icon: TrendingUp, good: null },
+    { label: t.evm.kpiPv, value: fmt(evm.pv, evm.currency), icon: Activity, good: null },
+    { label: t.evm.kpiAc, value: fmt(evm.ac, evm.currency), icon: DollarSign, good: null },
+    { label: t.evm.kpiSpi, value: fmtIdx(evm.spi), icon: Clock, good: evm.spi >= 1 },
+    { label: t.evm.kpiCpi, value: fmtIdx(evm.cpi), icon: Calculator, good: evm.cpi >= 1 },
+    { label: t.evm.kpiEac, value: fmt(evm.eac_cpi, evm.currency), icon: BarChart3, good: evm.eac_cpi <= evm.bac },
+    { label: t.evm.kpiEtc, value: fmt(evm.etc, evm.currency), icon: TrendingDown, good: null },
+    { label: t.evm.kpiVac, value: fmt(evm.vac, evm.currency), icon: AlertTriangle, good: evm.vac >= 0 },
   ]
 
   const variances = [
-    { label: 'Schedule Variance (SV = EV - PV)', value: evm.sv, good: evm.sv >= 0 },
-    { label: 'Cost Variance (CV = EV - AC)', value: evm.cv, good: evm.cv >= 0 },
-    { label: 'Variance at Completion (VAC = BAC - EAC)', value: evm.vac, good: evm.vac >= 0 },
-    { label: 'TCPI (BAC - EV) / (BAC - AC)', value: evm.tcpi, isTcpi: true },
+    { label: t.evm.varianceSV, value: evm.sv, good: evm.sv >= 0 },
+    { label: t.evm.varianceCV, value: evm.cv, good: evm.cv >= 0 },
+    { label: t.evm.varianceVAC, value: evm.vac, good: evm.vac >= 0 },
+    { label: t.evm.varianceTCPI, value: evm.tcpi, isTcpi: true },
   ]
 
   return (
@@ -378,8 +390,8 @@ export default function EVMPage() {
             <TrendingUp size={20} className="text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Earned Value Management</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Project performance analysis</p>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t.evm.title}</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t.evm.subtitle}</p>
           </div>
         </div>
         <div className={cn('flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold', health.color)}>
@@ -416,25 +428,25 @@ export default function EVMPage() {
         {/* S-Curve */}
         <Card className="lg:col-span-2">
           <CardContent className="p-5">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">S-Curve Analysis</h3>
-            <SCurveChart evm={evm} />
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">{t.evm.sCurveAnalysis}</h3>
+            <SCurveChart evm={evm} legend={{ pv: t.evm.legendPv, ev: t.evm.legendEv, ac: t.evm.legendAc }} />
           </CardContent>
         </Card>
 
         {/* Performance Indices */}
         <Card>
           <CardContent className="p-5">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Performance Indices</h3>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">{t.evm.performanceIndices}</h3>
             <div className="flex justify-center">
               <IndicesChart spi={evm.spi} cpi={evm.cpi} />
             </div>
             <div className="mt-4 space-y-2 text-xs">
               <div className="flex justify-between">
-                <span className="text-slate-500 dark:text-slate-400">Schedule Performance (SPI)</span>
+                <span className="text-slate-500 dark:text-slate-400">{t.evm.schedulePerformance}</span>
                 <span className={cn('font-semibold', evm.spi >= 1 ? 'text-green-600' : 'text-red-600')}>{fmtIdx(evm.spi)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 dark:text-slate-400">Cost Performance (CPI)</span>
+                <span className="text-slate-500 dark:text-slate-400">{t.evm.costPerformance}</span>
                 <span className={cn('font-semibold', evm.cpi >= 1 ? 'text-green-600' : 'text-red-600')}>{fmtIdx(evm.cpi)}</span>
               </div>
             </div>
@@ -447,7 +459,7 @@ export default function EVMPage() {
         {/* Variance Analysis */}
         <Card>
           <CardContent className="p-5">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Variance Analysis</h3>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">{t.evm.varianceAnalysis}</h3>
             <div className="space-y-3">
               {variances.map((v) => (
                 <div key={v.label} className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
@@ -468,12 +480,12 @@ export default function EVMPage() {
         {/* Forecasts */}
         <Card>
           <CardContent className="p-5">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Forecast Analysis</h3>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">{t.evm.forecastAnalysis}</h3>
             <div className="space-y-3">
               {[
-                { label: 'EAC (BAC / CPI)', value: fmt(evm.eac_cpi, evm.currency), desc: 'Current performance continues' },
-                { label: 'EAC (AC + BAC - EV)', value: fmt(evm.eac_linear, evm.currency), desc: 'Original estimate for remaining' },
-                { label: 'EAC (AC + (BAC-EV)/CPI)', value: fmt(evm.eac_combined, evm.currency), desc: 'CPI-adjusted remaining work' },
+                { label: t.evm.eacCpiLabel, value: fmt(evm.eac_cpi, evm.currency), desc: t.evm.eacCpiDesc },
+                { label: t.evm.eacLinearLabel, value: fmt(evm.eac_linear, evm.currency), desc: t.evm.eacLinearDesc },
+                { label: t.evm.eacCombinedLabel, value: fmt(evm.eac_combined, evm.currency), desc: t.evm.eacCombinedDesc },
               ].map((f) => (
                 <div key={f.label} className="py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
                   <div className="flex items-center justify-between">

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import { ToastProvider } from '@/components/ui/toast'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -36,7 +37,7 @@ export default function RootLayout({
     } catch(e) { console.error('Failed to initialize language/direction settings:', e) }
   })()
 `}} />
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   )

@@ -9,6 +9,7 @@ import { getBOQItems } from '@/app/actions/boq'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { TableSkeleton } from '@/components/ui/skeleton'
+import { useI18n } from '@/lib/i18n'
 import {
   BarChart3,
   Ruler,
@@ -31,6 +32,7 @@ type BOQAggregation = {
 }
 
 export default function QuantitiesPage() {
+  const { t } = useI18n()
   const { id: projectId } = useParams<{ id: string }>()
   const [drawingsData, setDrawingsData] = useState<DrawingWithMeasurements[]>([])
   const [boqItems, setBOQItems] = useState<BOQItem[]>([])
@@ -56,7 +58,7 @@ export default function QuantitiesPage() {
             const measurements = await getDrawingMeasurements(d.id)
             return { ...d, measurements }
           } catch (err) {
-            setError(`Failed to load measurements for drawing "${d.name}"`)
+            setError(`${t.quantities.loadFailed}: "${d.name}"`)
             return { ...d, measurements: [] as import('@/lib/types').DrawingMeasurement[] }
           }
         })
@@ -64,7 +66,7 @@ export default function QuantitiesPage() {
       setDrawingsData(withMeasurements.filter(d => d.measurements.length > 0))
       setBOQItems(boq)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load quantities')
+      setError(err instanceof Error ? err.message : t.quantities.loadFailed)
     } finally {
       setLoading(false)
     }
@@ -112,7 +114,7 @@ export default function QuantitiesPage() {
       <div className="p-4 md:p-8 max-w-7xl mx-auto">
         <div className="flex flex-col items-center justify-center py-12 gap-3">
           <p className="text-sm text-red-500">{error}</p>
-          <button onClick={load} className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700">Retry</button>
+          <button onClick={load} className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t.quantities.retry}</button>
         </div>
       </div>
     )
@@ -126,19 +128,19 @@ export default function QuantitiesPage() {
           <BarChart3 size={22} />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Quantity Management</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Aggregate and compare quantities across drawings</p>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t.quantities.title}</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t.quantities.subtitle}</p>
         </div>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
         {([
-          { label: 'Drawings', value: String(drawingsData.length), icon: FileText, gradient: 'from-blue-500 to-blue-600' },
-          { label: 'Measurements', value: String(allMeasurements.length), icon: Layers, gradient: 'from-indigo-500 to-indigo-600' },
-          { label: 'Linear Total', value: fmt(totalLinear), icon: Ruler, gradient: 'from-green-500 to-emerald-600' },
-          { label: 'Area Total', value: fmt(totalArea), icon: Square, gradient: 'from-amber-500 to-amber-600' },
-          { label: 'Count Total', value: String(totalCounts), icon: Hash, gradient: 'from-purple-500 to-purple-600' },
+          { label: t.quantities.kpiDrawings, value: String(drawingsData.length), icon: FileText, gradient: 'from-blue-500 to-blue-600' },
+          { label: t.quantities.kpiMeasurements, value: String(allMeasurements.length), icon: Layers, gradient: 'from-indigo-500 to-indigo-600' },
+          { label: t.quantities.kpiLinearTotal, value: fmt(totalLinear), icon: Ruler, gradient: 'from-green-500 to-emerald-600' },
+          { label: t.quantities.kpiAreaTotal, value: fmt(totalArea), icon: Square, gradient: 'from-amber-500 to-amber-600' },
+          { label: t.quantities.kpiCountTotal, value: String(totalCounts), icon: Hash, gradient: 'from-purple-500 to-purple-600' },
         ] as const).map((kpi, idx) => (
           <motion.div
             key={kpi.label}
@@ -164,11 +166,16 @@ export default function QuantitiesPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 mb-4 border-b border-slate-200 dark:border-slate-700">
-        {(['dashboard', 'by-drawing', 'by-boq', 'compare'] as const).map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} className={cn(
-            'px-4 py-2 text-sm font-medium border-b-2 transition-colors capitalize',
-            activeTab === tab ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700'
-          )}>{tab.replace('-', ' ')}</button>
+        {([
+          { key: 'dashboard', label: t.quantities.tabDashboard },
+          { key: 'by-drawing', label: t.quantities.tabByDrawing },
+          { key: 'by-boq', label: t.quantities.tabByBoq },
+          { key: 'compare', label: t.quantities.tabCompare },
+        ] as const).map(tab => (
+          <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={cn(
+            'px-4 py-2 text-sm font-medium border-b-2 transition-colors',
+            activeTab === tab.key ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700'
+          )}>{tab.label}</button>
         ))}
       </div>
 
@@ -176,18 +183,18 @@ export default function QuantitiesPage() {
       {activeTab === 'dashboard' && (
         <Card>
           <CardContent className="p-4">
-            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">Drawing Quantity Summary</h3>
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">{t.quantities.drawingSummary}</h3>
             <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-                    <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Drawing</th>
-                    <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Number</th>
-                    <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Type</th>
-                    <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Measurements</th>
-                    <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Linear</th>
-                    <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Area</th>
-                    <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Counts</th>
+                    <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.quantities.colDrawing}</th>
+                    <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.quantities.colNumber}</th>
+                    <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.quantities.colType}</th>
+                    <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.quantities.colMeasurements}</th>
+                    <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.quantities.colLinear}</th>
+                    <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.quantities.colArea}</th>
+                    <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">{t.quantities.colCounts}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -210,7 +217,7 @@ export default function QuantitiesPage() {
                 </tbody>
                 <tfoot>
                   <tr className="bg-slate-50 dark:bg-slate-900 border-t-2 border-slate-300 dark:border-slate-600">
-                    <td colSpan={3} className="px-3 py-2 font-bold text-slate-700 dark:text-slate-200">Project Total</td>
+                    <td colSpan={3} className="px-3 py-2 font-bold text-slate-700 dark:text-slate-200">{t.quantities.projectTotal}</td>
                     <td className="px-3 py-2 text-right tabular-nums font-bold">{allMeasurements.length}</td>
                     <td className="px-3 py-2 text-right tabular-nums font-bold">{fmt(totalLinear)}</td>
                     <td className="px-3 py-2 text-right tabular-nums font-bold">{fmt(totalArea)}</td>
@@ -230,7 +237,7 @@ export default function QuantitiesPage() {
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search drawings..."
+              placeholder={t.quantities.searchDrawings}
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -255,24 +262,24 @@ export default function QuantitiesPage() {
                     <FileText size={16} className="text-blue-500" />
                     <span className="font-medium text-slate-900 dark:text-white text-sm flex-1">{d.name}</span>
                     {d.drawing_number && <span className="text-xs font-mono text-slate-400">{d.drawing_number}</span>}
-                    <Badge variant="info">{d.measurements.length} measurements</Badge>
+                    <Badge variant="info">{d.measurements.length} {t.quantities.measurementsCount}</Badge>
                   </div>
                   {isExpanded && (
                     <div className="border-t border-slate-200 dark:border-slate-700 overflow-x-auto">
                       <table className="w-full text-xs">
                         <thead>
                           <tr className="bg-slate-50 dark:bg-slate-900">
-                            <th className="text-left px-3 py-1.5 font-semibold text-slate-600 dark:text-slate-300">Label</th>
-                            <th className="text-center px-3 py-1.5 font-semibold text-slate-600 dark:text-slate-300">Tool</th>
-                            <th className="text-right px-3 py-1.5 font-semibold text-slate-600 dark:text-slate-300">Quantity</th>
-                            <th className="text-center px-3 py-1.5 font-semibold text-slate-600 dark:text-slate-300">Unit</th>
-                            <th className="text-center px-3 py-1.5 font-semibold text-slate-600 dark:text-slate-300">Page</th>
+                            <th className="text-left px-3 py-1.5 font-semibold text-slate-600 dark:text-slate-300">{t.quantities.colLabel}</th>
+                            <th className="text-center px-3 py-1.5 font-semibold text-slate-600 dark:text-slate-300">{t.quantities.colTool}</th>
+                            <th className="text-right px-3 py-1.5 font-semibold text-slate-600 dark:text-slate-300">{t.quantities.colQuantity}</th>
+                            <th className="text-center px-3 py-1.5 font-semibold text-slate-600 dark:text-slate-300">{t.quantities.colUnit}</th>
+                            <th className="text-center px-3 py-1.5 font-semibold text-slate-600 dark:text-slate-300">{t.quantities.colPage}</th>
                           </tr>
                         </thead>
                         <tbody>
                           {d.measurements.map((m, i) => (
                             <tr key={m.id} className="border-b border-slate-100 dark:border-slate-700">
-                              <td className="px-3 py-1.5 text-slate-700 dark:text-slate-200">{m.label || `Measurement ${i + 1}`}</td>
+                              <td className="px-3 py-1.5 text-slate-700 dark:text-slate-200">{m.label || `${t.quantities.measurementFallback} ${i + 1}`}</td>
                               <td className="px-3 py-1.5 text-center"><Badge variant="default">{m.tool_type}</Badge></td>
                               <td className="px-3 py-1.5 text-right tabular-nums font-medium">{fmt(m.quantity)}</td>
                               <td className="px-3 py-1.5 text-center text-slate-500">{m.unit ?? 'px'}</td>
@@ -295,7 +302,7 @@ export default function QuantitiesPage() {
       {activeTab === 'by-boq' && (
         <div className="space-y-2">
           {boqAggregations.length === 0 ? (
-            <div className="text-center py-12 text-sm text-slate-400">No BOQ items linked to drawing measurements.</div>
+            <div className="text-center py-12 text-sm text-slate-400">{t.quantities.noBoqLinked}</div>
           ) : (
             boqAggregations.map(agg => {
               const isExpanded = expandedBOQ.has(agg.boqItem.id)
@@ -310,7 +317,7 @@ export default function QuantitiesPage() {
                     <span className="font-medium text-slate-900 dark:text-white text-sm flex-1">{agg.boqItem.description}</span>
                     <span className="text-xs text-slate-500">{agg.boqItem.unit}</span>
                     <span className="text-sm font-bold tabular-nums text-blue-600 dark:text-blue-400">{fmt(agg.grandTotal)}</span>
-                    <Badge variant="info">{agg.byDrawing.length} drawings</Badge>
+                    <Badge variant="info">{agg.byDrawing.length} {t.quantities.drawingsCount}</Badge>
                   </div>
                   {isExpanded && (
                     <div className="border-t border-slate-200 dark:border-slate-700 px-4 py-2 space-y-1">
@@ -318,18 +325,18 @@ export default function QuantitiesPage() {
                         <div key={bd.drawing.id} className="flex items-center gap-2 text-xs py-1">
                           <FileText size={12} className="text-slate-400" />
                           <span className="text-slate-600 dark:text-slate-300 flex-1">{bd.drawing.name}</span>
-                          <span className="tabular-nums text-slate-500">{bd.measurements.length} measurements</span>
+                          <span className="tabular-nums text-slate-500">{bd.measurements.length} {t.quantities.measurementsCount}</span>
                           <span className="tabular-nums font-medium text-slate-900 dark:text-white">{fmt(bd.total)} {agg.boqItem.unit}</span>
                         </div>
                       ))}
                       <div className="flex items-center gap-2 text-xs py-1 pt-2 border-t border-slate-100 dark:border-slate-700">
-                        <span className="flex-1 font-semibold text-slate-700 dark:text-slate-200">Total from drawings</span>
+                        <span className="flex-1 font-semibold text-slate-700 dark:text-slate-200">{t.quantities.totalFromDrawings}</span>
                         <span className="tabular-nums font-bold text-blue-600 dark:text-blue-400">{fmt(agg.grandTotal)} {agg.boqItem.unit}</span>
                       </div>
                       {agg.boqItem.quantity !== agg.grandTotal && (
                         <div className="flex items-center gap-2 text-xs py-1 text-amber-600 dark:text-amber-400">
                           <ArrowUpDown size={12} />
-                          BOQ Quantity: {fmt(agg.boqItem.quantity)} (difference: {fmt((agg.grandTotal - agg.boqItem.quantity) || 0)})
+                          {t.quantities.boqQuantity}: {fmt(agg.boqItem.quantity)} ({t.quantities.difference}: {fmt((agg.grandTotal - agg.boqItem.quantity) || 0)})
                         </div>
                       )}
                     </div>
@@ -366,25 +373,30 @@ export default function QuantitiesPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-                      <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300 sticky left-0 bg-slate-50 dark:bg-slate-900">Metric</th>
+                      <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300 sticky left-0 bg-slate-50 dark:bg-slate-900">{t.quantities.colMetric}</th>
                       {compareDrawings.map(d => (
                         <th key={d.id} className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300 min-w-[120px]">{d.name}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {['Total Measurements', 'Linear', 'Area', 'Count'].map(metric => (
-                      <tr key={metric} className="border-b border-slate-100 dark:border-slate-700">
-                        <td className="px-3 py-2 font-medium text-slate-700 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-800">{metric}</td>
+                    {([
+                      { key: 'Total Measurements', label: t.quantities.metricTotalMeasurements },
+                      { key: 'Linear', label: t.quantities.metricLinear },
+                      { key: 'Area', label: t.quantities.metricArea },
+                      { key: 'Count', label: t.quantities.metricCount },
+                    ] as const).map(metric => (
+                      <tr key={metric.key} className="border-b border-slate-100 dark:border-slate-700">
+                        <td className="px-3 py-2 font-medium text-slate-700 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-800">{metric.label}</td>
                         {compareDrawings.map(d => {
                           let val: number
-                          if (metric === 'Total Measurements') val = d.measurements.length
-                          else if (metric === 'Linear') val = d.measurements.filter(m => m.tool_type === 'line' || m.tool_type === 'polyline').reduce((s, m) => s + m.quantity, 0)
-                          else if (metric === 'Area') val = d.measurements.filter(m => m.tool_type === 'area' || m.tool_type === 'rectangle' || m.tool_type === 'circle').reduce((s, m) => s + m.quantity, 0)
+                          if (metric.key === 'Total Measurements') val = d.measurements.length
+                          else if (metric.key === 'Linear') val = d.measurements.filter(m => m.tool_type === 'line' || m.tool_type === 'polyline').reduce((s, m) => s + m.quantity, 0)
+                          else if (metric.key === 'Area') val = d.measurements.filter(m => m.tool_type === 'area' || m.tool_type === 'rectangle' || m.tool_type === 'circle').reduce((s, m) => s + m.quantity, 0)
                           else val = d.measurements.filter(m => m.tool_type === 'count').reduce((s, m) => s + m.quantity, 0)
                           return (
                             <td key={d.id} className="px-3 py-2 text-right tabular-nums font-medium text-slate-900 dark:text-white">
-                              {metric === 'Total Measurements' || metric === 'Count' ? val : fmt(val)}
+                              {metric.key === 'Total Measurements' || metric.key === 'Count' ? val : fmt(val)}
                             </td>
                           )
                         })}
@@ -395,7 +407,7 @@ export default function QuantitiesPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="text-center py-12 text-sm text-slate-400">Select at least 2 drawings to compare.</div>
+            <div className="text-center py-12 text-sm text-slate-400">{t.quantities.selectAtLeastTwo}</div>
           )}
         </div>
       )}
