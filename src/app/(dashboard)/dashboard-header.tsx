@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { Sun, Moon, ChevronDown, Globe, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CommandPalette } from '@/components/ui/command-palette'
@@ -17,6 +18,34 @@ export function DashboardHeader() {
   const [dark, setDark] = useState(false)
   const [langOpen, setLangOpen] = useState(false)
   const { t, locale, setLocale } = useI18n()
+  const pathname = usePathname()
+
+  const getPageLabel = () => {
+    if (pathname === '/dashboard') return t.nav.dashboard
+    if (pathname === '/projects' || pathname.startsWith('/projects/')) {
+      const segments = pathname.split('/').filter(Boolean)
+      if (segments.length === 1) return t.nav.projects
+      if (segments.length >= 3) {
+        const section = segments[2]
+        const labels: Record<string, string> = {
+          boq: t.nav.boq,
+          workspace: t.nav.workspace,
+          drawings: t.nav.drawings,
+          measurements: t.nav.measurements,
+          rates: t.nav.rates,
+          tenders: t.nav.tenders,
+          'cost-control': t.nav.costControl,
+          evm: t.nav.evm,
+          payments: t.nav.payments,
+          library: t.nav.library,
+          reports: t.nav.reports,
+        }
+        return labels[section] ?? t.nav.projects
+      }
+      return t.nav.projects
+    }
+    return t.nav.dashboard
+  }
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark')
@@ -42,7 +71,7 @@ export function DashboardHeader() {
       <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
         <span className="hidden lg:inline text-[var(--color-text-muted)] opacity-60 font-mono text-xs uppercase tracking-widest">ANGEL D.C.</span>
         <span className="hidden lg:inline opacity-30">/</span>
-        <span className="font-medium text-[var(--color-text)]">{t.nav.dashboard}</span>
+        <span className="font-medium text-[var(--color-text)]">{getPageLabel()}</span>
       </div>
 
       {/* Right side controls */}

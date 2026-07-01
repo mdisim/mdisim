@@ -10,6 +10,7 @@ export const translations = {
     nav: {
       dashboard: 'Dashboard', projects: 'Projects', settings: 'Settings',
       intelligence: 'Intelligence', measurements: 'Measurements', drawings: 'Drawings',
+      workspace: 'Workspace',
       boq: 'Bill of Quantities', rates: 'Rate Analysis', quantities: 'Quantities',
       revisions: 'Revisions', tenders: 'Tenders', costControl: 'Cost Control',
       evm: 'EVM', payments: 'Payments', library: 'Library', reports: 'Reports',
@@ -693,6 +694,7 @@ export const translations = {
     nav: {
       dashboard: 'لوحة التحكم', projects: 'المشاريع', settings: 'الإعدادات',
       intelligence: 'الذكاء', measurements: 'القياسات', drawings: 'الرسومات',
+      workspace: 'مساحة العمل',
       boq: 'جدول الكميات', rates: 'تحليل الأسعار', quantities: 'الكميات',
       revisions: 'المراجعات', tenders: 'المناقصات', costControl: 'مراقبة التكاليف',
       evm: 'إدارة القيمة المكتسبة', payments: 'المدفوعات', library: 'المكتبة', reports: 'التقارير',
@@ -1376,6 +1378,7 @@ export const translations = {
     nav: {
       dashboard: 'לוח בקרה', projects: 'פרויקטים', settings: 'הגדרות',
       intelligence: 'בינה', measurements: 'מדידות', drawings: 'שרטוטים',
+      workspace: 'סביבת עבודה',
       boq: 'כתב כמויות', rates: 'ניתוח מחירים', quantities: 'כמויות',
       revisions: 'מהדורות', tenders: 'מכרזים', costControl: 'בקרת עלויות',
       evm: 'ניהול ערך מרוויח', payments: 'תשלומים', library: 'ספריה', reports: 'דוחות',

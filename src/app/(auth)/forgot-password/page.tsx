@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { Mail, ArrowLeft, CheckCircle2, Loader2, Send, ShieldCheck } from 'lucide-react'
+import { LayoutGrid, ArrowLeft, CheckCircle2, Loader2, Send, ShieldCheck } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export default function ForgotPasswordPage() {
@@ -38,11 +38,11 @@ export default function ForgotPasswordPage() {
 
       <header className="w-full flex items-center px-6 py-4 z-10 relative">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#ffd165]/10 rounded-lg flex items-center justify-center border border-[#ffd165]/20">
-            <span className="text-[#ffd165] font-bold text-lg leading-none">A</span>
+          <div className="w-10 h-10 bg-[#eab308] rounded-lg flex items-center justify-center border border-[#ffd165]/40 shadow-[0_2px_8px_rgba(234,179,8,0.3)]">
+            <span className="text-[#604700] font-bold text-lg leading-none">A</span>
           </div>
           <div className="flex flex-col -space-y-0.5">
-            <span className="text-[#e5e1e4] font-semibold text-[22px] tracking-tight leading-none">Angel D.C.</span>
+            <span className="text-[#e5e1e4] font-bold text-[28px] tracking-tight leading-none">Angel D.C.</span>
             <span className="text-[#ffd165] text-[10px] tracking-[0.2em] uppercase opacity-80 font-mono">Construction Intelligence</span>
           </div>
         </div>
@@ -58,10 +58,10 @@ export default function ForgotPasswordPage() {
           {sent ? (
             <>
               <div className="text-center mb-8">
-                <h1 className="text-[36px] leading-[44px] font-semibold tracking-[-0.02em] text-[#e5e1e4]">Key Dispatched</h1>
+                <h1 className="text-[42px] leading-[52px] font-bold tracking-[-0.02em] text-[#e5e1e4]">Key Dispatched</h1>
                 <p className="text-[#d3c5ac] text-sm mt-2 opacity-80">Check your secure channel.</p>
               </div>
-              <div className="glass-card p-8 rounded-2xl relative overflow-hidden text-center">
+              <div className="p-8 rounded-2xl bg-[#1c1b1d]/90 border border-[#4f4633]/40 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6)] relative overflow-hidden text-center">
                 <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#ffd165]/30 to-transparent" />
                 <div className="w-14 h-14 bg-[#ffd165]/10 border border-[#ffd165]/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <CheckCircle2 size={28} className="text-[#ffd165]" />
@@ -83,11 +83,11 @@ export default function ForgotPasswordPage() {
           ) : (
             <>
               <div className="text-center mb-8">
-                <h1 className="text-[36px] leading-[44px] font-semibold tracking-[-0.02em] text-[#e5e1e4]">Key Recovery</h1>
+                <h1 className="text-[42px] leading-[52px] font-bold tracking-[-0.02em] text-[#e5e1e4]">Key Recovery</h1>
                 <p className="text-[#d3c5ac] text-sm mt-2 opacity-80">Enter your identity to receive a reset key.</p>
               </div>
 
-              <div className="glass-card p-8 rounded-2xl relative overflow-hidden">
+              <div className="p-8 rounded-2xl bg-[#1c1b1d]/90 border border-[#4f4633]/40 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6)] relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#ffd165]/30 to-transparent" />
 
                 {error && (
@@ -102,7 +102,7 @@ export default function ForgotPasswordPage() {
                       Corporate Identity
                     </label>
                     <div className="relative group">
-                      <Mail size={18} className="absolute start-4 top-1/2 -translate-y-1/2 text-[#9b8f79] group-focus-within:text-[#ffd165] transition-colors" />
+                      <LayoutGrid size={18} className="absolute start-4 top-1/2 -translate-y-1/2 text-[#9b8f79] group-focus-within:text-[#ffd165] transition-colors" />
                       <input
                         id="fp-email"
                         type="email"
@@ -111,7 +111,7 @@ export default function ForgotPasswordPage() {
                         required
                         placeholder="Work email address"
                         autoComplete="email"
-                        className="w-full bg-[#0e0e10]/40 border border-[#4f4633]/20 rounded-xl py-4 ps-12 pe-4 text-sm text-[#e5e1e4] placeholder:text-[#9b8f79]/50 focus:outline-none focus:ring-1 focus:ring-[#ffd165]/50 focus:border-[#ffd165]/50 transition-all"
+                        className="w-full bg-[#0e0e10]/40 border border-[#4f4633]/50 rounded-xl py-4 ps-12 pe-4 text-sm text-[#e5e1e4] placeholder:text-[#9b8f79]/50 focus:outline-none focus:ring-1 focus:ring-[#ffd165]/50 focus:border-[#ffd165]/50 transition-all"
                       />
                     </div>
                   </div>
@@ -146,7 +146,7 @@ export default function ForgotPasswordPage() {
       <footer className="w-full p-6 z-10 relative">
         <p className="text-[11px] text-[#d3c5ac]/30 flex items-center justify-center gap-3 tracking-widest text-center font-mono">
           <ShieldCheck size={16} />
-          <span>ANGEL D.C. CONSTRUCTION INTELLIGENCE · ENTERPRISE PLATFORM · SECURE NODE v1.2</span>
+          <span>ENCRYPTED ARCHITECTURAL PORTFOLIO MANAGEMENT · 2024</span>
         </p>
       </footer>
     </div>
