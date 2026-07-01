@@ -138,8 +138,8 @@ export default function RevisionsPage() {
     return (
       <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-8">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-md">
-          <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle size={28} className="text-red-400" />
+          <div className="w-16 h-16 rounded-2xl bg-[var(--color-danger-bg)] border border-[var(--color-danger)]/20 flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle size={28} className="text-[var(--color-danger)]" />
           </div>
           <h2 className="text-lg font-bold text-[var(--color-text)] mb-2">{t.revisions.unableToLoad}</h2>
           <p className="text-sm text-[var(--color-text-muted)] mb-6">{error}</p>
@@ -173,7 +173,7 @@ export default function RevisionsPage() {
         {/* KPI Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {([
-            { label: 'Total Changes', value: totalModifications, icon: RefreshCw, gradient: 'from-blue-500 to-blue-600' },
+            { label: 'Total Changes', value: totalModifications, icon: RefreshCw, gradient: 'from-amber-500 to-amber-600' },
             { label: 'Additions', value: totalAdditions, icon: Plus, gradient: 'from-green-500 to-emerald-600', decimals: 2 },
             { label: 'Removals', value: totalRemovals, icon: Minus, gradient: 'from-red-500 to-red-600', decimals: 2 },
             { label: 'Net Change', value: netChange, icon: netChange >= 0 ? TrendingUp : TrendingDown, gradient: netChange >= 0 ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-rose-600', decimals: 2 },
@@ -274,10 +274,10 @@ export default function RevisionsPage() {
                               <td className="px-3 py-2.5 text-center text-[var(--color-text-muted)]">{c.unit}</td>
                               <td className="px-3 py-2.5 text-end tabular-nums text-[var(--color-text-muted)]">{fmt(c.previous_qty)}</td>
                               <td className="px-3 py-2.5 text-end tabular-nums font-semibold text-[var(--color-text)]">{fmt(c.new_qty)}</td>
-                              <td className={cn('px-3 py-2.5 text-end tabular-nums font-semibold', diff > 0 ? 'text-green-500' : diff < 0 ? 'text-red-400' : 'text-[var(--color-text-muted)]')}>
+                              <td className={cn('px-3 py-2.5 text-end tabular-nums font-semibold', diff > 0 ? 'text-green-500' : diff < 0 ? 'text-[var(--color-danger)]' : 'text-[var(--color-text-muted)]')}>
                                 {diff > 0 ? '+' : ''}{fmt(diff)}
                               </td>
-                              <td className={cn('px-3 py-2.5 text-end tabular-nums', diff > 0 ? 'text-green-500' : diff < 0 ? 'text-red-400' : 'text-[var(--color-text-muted)]')}>
+                              <td className={cn('px-3 py-2.5 text-end tabular-nums', diff > 0 ? 'text-green-500' : diff < 0 ? 'text-[var(--color-danger)]' : 'text-[var(--color-text-muted)]')}>
                                 {diff > 0 ? '+' : ''}{pct.toFixed(1)}%
                               </td>
                               <td className="px-3 py-2.5 text-center">
@@ -362,10 +362,10 @@ export default function RevisionsPage() {
                                     const diff = c.new_qty - c.previous_qty
                                     return (
                                       <div key={c.id} className="flex items-center gap-2 text-xs py-1">
-                                        {diff > 0 ? <Plus size={11} className="text-green-500" /> : diff < 0 ? <Minus size={11} className="text-red-400" /> : <RefreshCw size={11} className="text-[var(--color-amber)]" />}
+                                        {diff > 0 ? <Plus size={11} className="text-green-500" /> : diff < 0 ? <Minus size={11} className="text-[var(--color-danger)]" /> : <RefreshCw size={11} className="text-[var(--color-amber)]" />}
                                         <span className="text-[var(--color-text-secondary)] flex-1">{c.description}</span>
                                         <span className="tabular-nums text-[var(--color-text-muted)]">{fmt(c.previous_qty)} → {fmt(c.new_qty)} {c.unit}</span>
-                                        <span className={cn('tabular-nums font-semibold', diff > 0 ? 'text-green-500' : diff < 0 ? 'text-red-400' : 'text-[var(--color-text-muted)]')}>
+                                        <span className={cn('tabular-nums font-semibold', diff > 0 ? 'text-green-500' : diff < 0 ? 'text-[var(--color-danger)]' : 'text-[var(--color-text-muted)]')}>
                                           ({diff > 0 ? '+' : ''}{fmt(diff)})
                                         </span>
                                       </div>
@@ -411,7 +411,7 @@ export default function RevisionsPage() {
                           <td className="px-3 py-2.5 text-center text-[var(--color-text-muted)]">{c.unit}</td>
                           <td className="px-3 py-2.5 text-end tabular-nums text-[var(--color-text-muted)]">{fmt(c.previous_qty)}</td>
                           <td className="px-3 py-2.5 text-end tabular-nums font-semibold text-[var(--color-text)]">{fmt(c.new_qty)}</td>
-                          <td className={cn('px-3 py-2.5 text-end tabular-nums font-semibold', diff > 0 ? 'text-green-500' : diff < 0 ? 'text-red-400' : 'text-[var(--color-text-muted)]')}>
+                          <td className={cn('px-3 py-2.5 text-end tabular-nums font-semibold', diff > 0 ? 'text-green-500' : diff < 0 ? 'text-[var(--color-danger)]' : 'text-[var(--color-text-muted)]')}>
                             {diff > 0 ? '+' : ''}{fmt(diff)}
                           </td>
                           <td className="px-3 py-2.5 text-center">

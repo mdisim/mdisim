@@ -299,10 +299,10 @@ export default function WorkspacePage() {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-140px)] bg-[#0a0b0f]">
         <div className="flex flex-col items-center gap-4 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-            <AlertTriangle size={24} className="text-red-400" />
+          <div className="w-14 h-14 rounded-2xl bg-[var(--color-danger-bg)] border border-[var(--color-danger)]/20 flex items-center justify-center">
+            <AlertTriangle size={24} className="text-[var(--color-danger)]" />
           </div>
-          <p className="text-sm text-red-400 max-w-xs">{error ?? 'Unknown error'}</p>
+          <p className="text-sm text-[var(--color-danger)] max-w-xs">{error ?? 'Unknown error'}</p>
           <button
             onClick={load}
             className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold uppercase tracking-wider bg-[var(--color-amber)] text-[var(--color-on-amber)] rounded-lg hover:opacity-90 transition-opacity"

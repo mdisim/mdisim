@@ -370,7 +370,7 @@ export default function LibraryPage() {
                             e.stopPropagation()
                             handleDeleteCategory(cat.id)
                           }}
-                          className="p-1 rounded hover:bg-red-500/10 text-[color:var(--color-text-secondary)] hover:text-red-400 transition-colors"
+                          className="p-1 rounded hover:bg-[var(--color-danger-bg)] text-[color:var(--color-text-secondary)] hover:text-[var(--color-danger)] transition-colors"
                           title="Delete"
                         >
                           <Trash2 size={12} />
@@ -423,7 +423,7 @@ export default function LibraryPage() {
               </div>
             ) : error && items.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 gap-3">
-                <p className="text-sm text-red-400">{error}</p>
+                <p className="text-sm text-[var(--color-danger)]">{error}</p>
                 <button onClick={() => selectedCategory && loadItems(selectedCategory)} className="px-4 py-2 text-sm font-medium bg-[color:var(--color-amber)] text-[color:var(--color-on-amber)] rounded-xl hover:opacity-90">Retry</button>
               </div>
             ) : items.length === 0 ? (
@@ -497,7 +497,7 @@ export default function LibraryPage() {
                           <td className="px-1 py-0.5">
                             <button
                               onClick={() => handleDeleteItem(item.id)}
-                              className="p-1.5 rounded hover:bg-red-500/10 text-[color:var(--color-border)] hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                              className="p-1.5 rounded hover:bg-[var(--color-danger-bg)] text-[color:var(--color-border)] hover:text-[var(--color-danger)] transition-colors opacity-0 group-hover:opacity-100"
                               title="Delete"
                             >
                               <Trash2 size={14} />
@@ -529,7 +529,7 @@ export default function LibraryPage() {
             onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
             placeholder="Optional description"
           />
-          {error && <p className="text-sm text-red-400">{error}</p>}
+          {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowCreateCategory(false)}>Cancel</Button>
             <Button onClick={handleCreateCategory} loading={creating} disabled={!categoryForm.name.trim()}>
@@ -554,7 +554,7 @@ export default function LibraryPage() {
             onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
             placeholder="Optional description"
           />
-          {error && <p className="text-sm text-red-400">{error}</p>}
+          {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => { setEditingCategory(null); setCategoryForm({ name: '', description: '' }) }}>Cancel</Button>
             <Button onClick={handleEditCategory} loading={creating} disabled={!categoryForm.name.trim()}>
@@ -636,7 +636,7 @@ export default function LibraryPage() {
               className="w-full px-3 py-2 text-sm rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface-elevated)] text-[color:var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-amber)]/30 resize-none"
             />
           </div>
-          {error && <p className="text-sm text-red-400">{error}</p>}
+          {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowCreateItem(false)}>Cancel</Button>
             <Button onClick={handleCreateItem} loading={creating} disabled={!itemForm.description.trim()}>

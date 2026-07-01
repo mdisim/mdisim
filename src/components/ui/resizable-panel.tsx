@@ -89,7 +89,7 @@ export function ResizablePanel({
         onMouseDown={handleMouseDown}
         className={cn(
           'group relative flex h-full w-1 flex-shrink-0 cursor-col-resize items-center justify-center',
-          'bg-slate-200 dark:bg-slate-700',
+          'bg-[var(--color-border)]',
           'hover:bg-[var(--color-amber)]',
           'transition-colors duration-150',
           isDragging && 'bg-[var(--color-amber)]'
@@ -101,7 +101,7 @@ export function ResizablePanel({
               key={i}
               className={cn(
                 'h-1 w-1 rounded-full',
-                'bg-slate-400 dark:bg-slate-500',
+                'bg-[var(--color-text-muted)]',
                 'group-hover:bg-white',
                 isDragging && 'bg-white'
               )}

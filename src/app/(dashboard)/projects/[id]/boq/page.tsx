@@ -495,9 +495,9 @@ export default function BOQPage() {
 
       {/* Error banner */}
       {error && (
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-sm text-red-400">
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 px-4 py-3 bg-[var(--color-danger-bg)] border border-[var(--color-danger)]/30 rounded-xl text-sm text-[var(--color-danger)]">
           <span className="flex-1">{error}</span>
-          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300">&times;</button>
+          <button onClick={() => setError(null)} className="text-[var(--color-danger)] hover:text-[var(--color-danger-light)]">&times;</button>
         </motion.div>
       )}
 
@@ -662,7 +662,7 @@ export default function BOQPage() {
                             <div className={cn(
                               'px-2 py-1.5 text-end tabular-nums font-mono text-xs',
                               item.quantity_difference != null && item.quantity_difference > 0 && 'text-green-400',
-                              item.quantity_difference != null && item.quantity_difference < 0 && 'text-red-400'
+                              item.quantity_difference != null && item.quantity_difference < 0 && 'text-[var(--color-danger)]'
                             )}>
                               {item.quantity_difference != null ? (
                                 <>
@@ -703,7 +703,7 @@ export default function BOQPage() {
                               </button>
                               <button
                                 onClick={() => handleDelete(item.id)}
-                                className="p-1 rounded hover:bg-red-500/10 text-[color:var(--color-border)] hover:text-red-400 transition-colors"
+                                className="p-1 rounded hover:bg-[var(--color-danger-bg)] text-[color:var(--color-border)] hover:text-[var(--color-danger)] transition-colors"
                                 title={t.boq.deleteRow}
                                 aria-label={t.boq.deleteRow}
                               >
@@ -854,7 +854,7 @@ export default function BOQPage() {
             }}
             className="text-sm text-[color:var(--color-text-secondary)] file:me-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[color:var(--color-amber)]/10 file:text-[color:var(--color-amber)] hover:file:bg-[color:var(--color-amber)]/20"
           />
-          {importError && <p className="text-sm text-red-400">{importError}</p>}
+          {importError && <p className="text-sm text-[var(--color-danger)]">{importError}</p>}
           {importRows.length > 0 && (
             <>
               <div className="text-sm font-medium text-[color:var(--color-text)]">
@@ -969,7 +969,7 @@ export default function BOQPage() {
               className="w-full px-3 py-2 text-sm rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface-elevated)] text-[color:var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-amber)]/30 resize-none"
             />
           </div>
-          {error && <p className="text-sm text-red-400">{error}</p>}
+          {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="ghost" onClick={() => setShowCreate(false)}>{t.common.cancel}</Button>
             <Button onClick={handleCreate} loading={creating} disabled={!form.description.trim()}>

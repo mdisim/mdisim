@@ -189,7 +189,7 @@ export default function ReportsPage() {
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400"
+            className="flex items-center gap-3 p-3 rounded-xl bg-[var(--color-danger-bg)] border border-[var(--color-danger)]/20 text-sm text-[var(--color-danger)]"
           >
             <AlertCircle size={15} className="shrink-0" />
             <span className="flex-1">{error}</span>

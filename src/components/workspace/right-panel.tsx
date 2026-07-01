@@ -14,9 +14,9 @@ import {
 
 function SectionTitle({ icon: Icon, title, color }: { icon: typeof Info; title: string; color: string }) {
   return (
-    <div className="flex items-center gap-2 px-4 py-2 bg-slate-50/80 dark:bg-white/[0.02] border-b border-slate-100 dark:border-white/[0.04]">
+    <div className="flex items-center gap-2 px-4 py-2 bg-[var(--color-surface-elevated)] border-b border-[var(--color-border)]">
       <Icon size={12} className={color} />
-      <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">{title}</span>
+      <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{title}</span>
     </div>
   )
 }
@@ -24,8 +24,8 @@ function SectionTitle({ icon: Icon, title, color }: { icon: typeof Info; title: 
 function PropRow({ label, value, mono }: { label: string; value: string | number | null | undefined; mono?: boolean }) {
   return (
     <div className="flex items-start justify-between gap-3 px-4 py-1.5">
-      <span className="text-[11px] text-slate-400 dark:text-slate-500 shrink-0">{label}</span>
-      <span className={cn('text-[11px] text-right text-slate-700 dark:text-slate-200 break-words', mono && 'font-mono tabular-nums')}>
+      <span className="text-[11px] text-[var(--color-text-muted)] shrink-0">{label}</span>
+      <span className={cn('text-[11px] text-end text-[var(--color-text-secondary)] break-words', mono && 'font-mono tabular-nums')}>
         {value ?? '—'}
       </span>
     </div>
@@ -46,11 +46,11 @@ function LinkedItem({ icon: Icon, label, sublabel, onClick }: {
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-2.5 px-4 py-2 text-left hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors group"
+      className="w-full flex items-center gap-2.5 px-4 py-2 text-start hover:bg-[var(--color-surface-elevated)] transition-colors group"
     >
-      <Icon size={12} className="text-slate-400 group-hover:text-blue-500 transition-colors shrink-0" />
+      <Icon size={12} className="text-[var(--color-text-muted)] group-hover:text-[var(--color-amber)] transition-colors shrink-0" />
       <div className="flex-1 min-w-0">
-        <div className="text-[11px] text-slate-700 dark:text-slate-200 truncate">{label}</div>
+        <div className="text-[11px] text-[var(--color-text-secondary)] truncate">{label}</div>
         {sublabel && <div className="text-[10px] text-slate-400 truncate">{sublabel}</div>}
       </div>
       <ArrowRight size={10} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />

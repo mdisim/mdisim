@@ -69,14 +69,14 @@ export function MeasurementToolbar({
       {/* Page Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-[var(--color-info)] to-[var(--color-info-light)] text-white shadow-lg shadow-blue-500/20">
             <BookOpen size={22} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-2xl font-bold text-[var(--color-text)] dark:text-white tracking-tight">
               Measurement Book
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] mt-0.5">
               {itemCount} item{itemCount !== 1 ? 's' : ''} &middot; {lineCount} measurement line{lineCount !== 1 ? 's' : ''}
             </p>
           </div>
@@ -119,15 +119,15 @@ export function MeasurementToolbar({
       {/* Compact Filter Bar */}
       <div className="mt-3 flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-1.5">
-          <Filter size={13} className="text-slate-400 dark:text-slate-500" />
+          <Filter size={13} className="text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]" />
           <select
             value={activeSection ?? ''}
             onChange={(e) => onSectionFilter(e.target.value || null)}
             className={cn(
-              'text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-200',
+              'text-xs px-2.5 py-1.5 rounded-lg border border-[var(--color-border)] dark:border-[var(--color-border)] bg-white dark:bg-[var(--color-surface-elevated)]/80 text-[var(--color-text-secondary)] dark:text-slate-200',
               'focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400',
               'transition-colors',
-              activeSection && 'border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300',
+              activeSection && 'border-blue-400 dark:border-blue-500 bg-[var(--color-info-bg)] dark:bg-[var(--color-info-bg)]/30 text-[var(--color-info)] dark:text-[var(--color-info)]',
             )}
           >
             <option value="">All Sections{sectionCount > 0 ? ` (${sectionCount})` : ''}</option>
@@ -140,14 +140,14 @@ export function MeasurementToolbar({
         </div>
 
         <div className="relative flex-1 max-w-xs">
-          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] pointer-events-none" />
           <input
             type="text"
             placeholder="Search by description, code, location..."
             value={searchQuery}
             onChange={(e) => onSearch(e.target.value)}
             className={cn(
-              'w-full text-xs pl-7 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-200',
+              'w-full text-xs pl-7 pr-3 py-1.5 rounded-lg border border-[var(--color-border)] dark:border-[var(--color-border)] bg-white dark:bg-[var(--color-surface-elevated)]/80 text-[var(--color-text-secondary)] dark:text-slate-200',
               'focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400',
               'placeholder-slate-400 dark:placeholder-slate-500 transition-colors',
             )}
@@ -156,11 +156,11 @@ export function MeasurementToolbar({
       </div>
 
       {/* Summary Stats Bar */}
-      <div className="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-px rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-200 dark:bg-slate-700">
+      <div className="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-px rounded-xl overflow-hidden border border-[var(--color-border)] dark:border-[var(--color-border)] bg-slate-200 dark:bg-[var(--color-surface-elevated)]">
         <StatCell label="Total Items" value={itemCount} />
         <StatCell label="Additions Qty" value={totalAdditions} className="text-emerald-600 dark:text-emerald-400" prefix="+" />
         <StatCell label="Deductions Qty" value={totalDeductions} className="text-red-500 dark:text-red-400" prefix="-" />
-        <StatCell label="Net Quantity" value={netQuantity} className="text-blue-600 dark:text-blue-400 font-semibold" />
+        <StatCell label="Net Quantity" value={netQuantity} className="text-[var(--color-info)] font-semibold" />
         <StatCell label="Sections" value={sectionCount} />
       </div>
     </div>
@@ -183,11 +183,11 @@ function StatCell({
     : value.toLocaleString()
 
   return (
-    <div className="bg-white dark:bg-slate-800 px-4 py-2.5 text-center">
-      <div className={cn('text-sm font-semibold tabular-nums', className ?? 'text-slate-900 dark:text-white')}>
+    <div className="bg-white dark:bg-[var(--color-surface-elevated)] px-4 py-2.5 text-center">
+      <div className={cn('text-sm font-semibold tabular-nums', className ?? 'text-[var(--color-text)] dark:text-white')}>
         {prefix}{formatted}
       </div>
-      <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mt-0.5">
+      <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] mt-0.5">
         {label}
       </div>
     </div>

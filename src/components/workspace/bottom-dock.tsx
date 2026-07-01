@@ -32,11 +32,11 @@ export function BottomDock({ projectId, projectName }: { projectId: string; proj
 
   return (
     <div
-      className="border-t border-slate-200/60 dark:border-white/[0.04] bg-white dark:bg-[#0f1117] flex flex-col"
+      className="border-t border-[var(--color-border)] bg-[var(--color-surface)] flex flex-col"
       style={{ height: expanded ? dockHeight : 36 }}
     >
       {/* Tab bar */}
-      <div className="flex items-center h-9 px-2 border-b border-slate-100 dark:border-white/[0.03] shrink-0">
+      <div className="flex items-center h-9 px-2 border-b border-[var(--color-border)] shrink-0">
         <div className="flex items-center gap-0.5 flex-1">
           {DOCK_TABS.map(tab => (
             <button
@@ -45,8 +45,8 @@ export function BottomDock({ projectId, projectName }: { projectId: string; proj
               className={cn(
                 'flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-md transition-all',
                 activeTab === tab.key && expanded
-                  ? 'bg-slate-100 dark:bg-white/[0.04] text-slate-900 dark:text-white'
-                  : 'text-[var(--color-text-muted)] hover:text-slate-700 dark:hover:text-[var(--color-text-secondary)] hover:bg-slate-50 dark:hover:bg-white/[0.02]'
+                  ? 'bg-[var(--color-surface-elevated)] text-[var(--color-text)]'
+                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-elevated)]'
               )}
             >
               <tab.icon size={12} className={activeTab === tab.key && expanded ? tab.color : ''} />
@@ -56,7 +56,7 @@ export function BottomDock({ projectId, projectName }: { projectId: string; proj
         </div>
         <button
           onClick={() => setExpanded(!expanded)}
-          className="p-1 rounded text-[var(--color-text-muted)] hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors"
+          className="p-1 rounded text-[var(--color-text-muted)] hover:bg-[var(--color-surface-elevated)] transition-colors"
         >
           {expanded ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
         </button>
@@ -119,11 +119,11 @@ function AIEngineerTab({ projectId, projectName }: { projectId: string; projectN
         <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
           {messages.length === 0 && (
             <div className="flex items-center gap-3 py-4 px-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-white shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white shrink-0">
                 <Sparkles size={14} />
               </div>
               <div>
-                <p className="text-[11px] font-medium text-slate-700 dark:text-slate-200">AI Engineering Assistant</p>
+                <p className="text-[11px] font-medium text-[var(--color-text-secondary)]">AI Engineering Assistant</p>
                 <p className="text-[10px] text-[var(--color-text-muted)]">Ask about costs, quantities, rates, comparisons, or get recommendations.</p>
               </div>
             </div>
@@ -132,7 +132,7 @@ function AIEngineerTab({ projectId, projectName }: { projectId: string; projectN
             <div key={msg.id} className={cn('flex gap-2', msg.role === 'user' ? 'flex-row-reverse' : '')}>
               <div className={cn(
                 'w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px]',
-                msg.role === 'user' ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-violet-100 dark:bg-violet-900/30'
+                msg.role === 'user' ? 'bg-[var(--color-blue)]/10' : 'bg-violet-500/10'
               )}>
                 {msg.role === 'user' ? <User size={11} className="text-[var(--color-blue)]" /> : <Bot size={11} className="text-[var(--color-indigo)]" />}
               </div>
@@ -140,7 +140,7 @@ function AIEngineerTab({ projectId, projectName }: { projectId: string; projectN
                 'max-w-[80%] rounded-xl px-3 py-1.5 text-[11px] leading-relaxed',
                 msg.role === 'user'
                   ? 'bg-[var(--color-blue)] text-white rounded-tr-sm'
-                  : 'bg-slate-100 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 rounded-tl-sm'
+                  : 'bg-[var(--color-surface-elevated)] text-[var(--color-text-secondary)] rounded-tl-sm'
               )}>
                 {msg.content}
               </div>
@@ -153,7 +153,7 @@ function AIEngineerTab({ projectId, projectName }: { projectId: string; projectN
             </div>
           )}
           {error && (
-            <div className="text-[10px] text-red-500 flex items-center gap-1">
+            <div className="text-[10px] text-[var(--color-danger)] flex items-center gap-1">
               <AlertTriangle size={10} />{error}
             </div>
           )}
@@ -167,7 +167,7 @@ function AIEngineerTab({ projectId, projectName }: { projectId: string; projectN
               <Sparkles size={8} />Context: {contextLabel}
             </div>
           )}
-          <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-white/[0.03] rounded-lg border border-slate-200/60 dark:border-white/[0.06] focus-within:border-violet-400 dark:focus-within:border-violet-600 transition-colors">
+          <div className="flex items-center gap-1.5 bg-[var(--color-surface-elevated)] rounded-lg border border-[var(--color-border)] focus-within:border-violet-400 dark:focus-within:border-violet-600 transition-colors">
             <input
               ref={inputRef}
               type="text"
@@ -175,12 +175,12 @@ function AIEngineerTab({ projectId, projectName }: { projectId: string; projectN
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') sendMessage(input) }}
               placeholder="Ask the AI Engineer..."
-              className="flex-1 px-3 py-2 text-[11px] bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder:text-[var(--color-text-muted)]"
+              className="flex-1 px-3 py-2 text-[11px] bg-transparent outline-none text-[var(--color-text)] placeholder:text-[var(--color-text-muted)]"
             />
             <button
               onClick={() => sendMessage(input)}
               disabled={!input.trim() || loading}
-              className="p-1.5 mr-1 text-white bg-violet-600 hover:bg-violet-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 rounded-md transition-colors"
+              className="p-1.5 mr-1 text-white bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-md transition-colors"
             >
               <Send size={11} />
             </button>
@@ -210,7 +210,7 @@ function TimelineTab() {
   return (
     <div className="h-full overflow-y-auto px-4 py-2">
       <div className="relative pl-6">
-        <div className="absolute left-2 top-0 bottom-0 w-px bg-slate-200 dark:bg-white/[0.06]" />
+        <div className="absolute start-2 top-0 bottom-0 w-px bg-[var(--color-border)]" />
         {events.map((ev, i) => (
           <div key={i} className="relative pb-3">
             <div className={cn(
@@ -219,7 +219,7 @@ function TimelineTab() {
             )} style={{ top: 2 }} />
             <div className="flex items-center gap-2 text-[11px]">
               <span className="text-[var(--color-text-muted)] text-[10px] font-mono w-20 shrink-0">{ev.date}</span>
-              <span className="text-slate-700 dark:text-slate-200 flex-1 truncate">{ev.label}</span>
+              <span className="text-[var(--color-text-secondary)] flex-1 truncate">{ev.label}</span>
               {ev.value && <span className="tabular-nums text-[var(--color-text-muted)] shrink-0">{ev.value}</span>}
             </div>
           </div>
@@ -243,7 +243,7 @@ function ActivityTab() {
           <div key={b.id} className="flex items-center gap-2 text-[11px] py-1">
             <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-blue)]" />
             <span className="font-mono text-[9px] text-[var(--color-text-muted)] w-8">{b.code ?? '—'}</span>
-            <span className="flex-1 truncate text-slate-600 dark:text-[var(--color-text-secondary)]">{b.description}</span>
+            <span className="flex-1 truncate text-[var(--color-text-secondary)]">{b.description}</span>
             <span className="tabular-nums text-[var(--color-text-muted)] shrink-0">{fmt(b.quantity)} {b.unit}</span>
           </div>
         ))}
@@ -254,7 +254,7 @@ function ActivityTab() {
           <div key={m.id} className="flex items-center gap-2 text-[11px] py-1">
             <div className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
             <span className="font-mono text-[9px] text-[var(--color-text-muted)] w-8">{m.item_code ?? '—'}</span>
-            <span className="flex-1 truncate text-slate-600 dark:text-[var(--color-text-secondary)]">{m.description}</span>
+            <span className="flex-1 truncate text-[var(--color-text-secondary)]">{m.description}</span>
             <span className="tabular-nums text-[var(--color-text-muted)] shrink-0">{fmt(m.net_qty)} {m.unit}</span>
           </div>
         ))}
@@ -276,17 +276,17 @@ function CostTab() {
     <div className="h-full overflow-y-auto px-4 py-3">
       <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { label: 'Contract Value', value: fmt(contractValue), color: 'from-blue-500 to-blue-600' },
+          { label: 'Contract Value', value: fmt(contractValue), color: 'from-[var(--color-info)] to-[var(--color-info-light)]' },
           { label: 'BOQ Total', value: fmt(totalBoq), color: 'from-indigo-500 to-indigo-600' },
           { label: 'Spent to Date', value: fmt(totalSpent), color: 'from-amber-500 to-amber-600' },
           { label: 'Variations', value: fmt(totalVariations), color: 'from-purple-500 to-purple-600' },
           { label: 'Total Paid', value: fmt(totalPaid), color: 'from-green-500 to-green-600' },
-          { label: 'Remaining', value: fmt(remaining), color: remaining >= 0 ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-red-600' },
+          { label: 'Remaining', value: fmt(remaining), color: remaining >= 0 ? 'from-emerald-500 to-emerald-600' : 'from-[var(--color-danger)] to-[var(--color-danger-light)]' },
         ].map(card => (
-          <div key={card.label} className="bg-slate-50 dark:bg-white/[0.02] rounded-lg p-2.5 border border-slate-100 dark:border-white/[0.04]">
+          <div key={card.label} className="bg-[var(--color-surface-elevated)] rounded-lg p-2.5 border border-[var(--color-border)]">
             <div className={cn('w-1.5 h-1.5 rounded-full bg-gradient-to-r mb-1.5', card.color)} />
             <div className="text-[9px] text-[var(--color-text-muted)] uppercase tracking-wider">{card.label}</div>
-            <div className="text-[13px] font-bold tabular-nums text-slate-900 dark:text-white mt-0.5">{card.value}</div>
+            <div className="text-[13px] font-bold tabular-nums text-[var(--color-text)] mt-0.5">{card.value}</div>
           </div>
         ))}
       </div>
@@ -297,13 +297,13 @@ function CostTab() {
             <span>Budget Utilization</span>
             <span className="tabular-nums">{((totalSpent / contractValue) * 100).toFixed(1)}%</span>
           </div>
-          <div className="h-2 bg-slate-100 dark:bg-white/[0.04] rounded-full overflow-hidden">
+          <div className="h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
             <div
               className={cn(
                 'h-full rounded-full transition-all bg-gradient-to-r',
-                totalSpent / contractValue > 0.9 ? 'from-red-500 to-red-600' :
+                totalSpent / contractValue > 0.9 ? 'from-[var(--color-danger)] to-[var(--color-danger-light)]' :
                 totalSpent / contractValue > 0.7 ? 'from-amber-500 to-amber-600' :
-                'from-blue-500 to-blue-600'
+                'from-[var(--color-info)] to-[var(--color-info-light)]'
               )}
               style={{ width: `${Math.min(100, (totalSpent / contractValue) * 100)}%` }}
             />
@@ -337,9 +337,9 @@ function TasksTab() {
     <div className="h-full overflow-y-auto px-4 py-2">
       <div className="flex items-center gap-4 mb-3">
         <div className="text-[11px] text-[var(--color-text-muted)]">
-          <span className="font-semibold text-slate-700 dark:text-slate-200">{tasks.filter(t => t.status === 'done').length}</span> / {tasks.length} completed
+          <span className="font-semibold text-[var(--color-text-secondary)]">{tasks.filter(t => t.status === 'done').length}</span> / {tasks.length} completed
         </div>
-        <div className="flex-1 h-1.5 bg-slate-100 dark:bg-white/[0.04] rounded-full overflow-hidden">
+        <div className="flex-1 h-1.5 bg-[var(--color-border)] rounded-full overflow-hidden">
           <div className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full" style={{ width: `${(tasks.filter(t => t.status === 'done').length / tasks.length) * 100}%` }} />
         </div>
       </div>
@@ -348,18 +348,18 @@ function TasksTab() {
           <div className={cn(
             'w-4 h-4 rounded flex items-center justify-center',
             task.status === 'done' ? 'bg-green-100 dark:bg-green-500/10' :
-            task.status === 'active' ? 'bg-blue-100 dark:bg-[var(--color-blue)]/10' :
-            'bg-slate-100 dark:bg-white/[0.04]'
+            task.status === 'active' ? 'bg-[var(--color-blue)]/10' :
+            'bg-[var(--color-surface-elevated)]'
           )}>
             {task.status === 'done' ? <CheckCircle size={10} className="text-green-500" /> :
              task.status === 'active' ? <Activity size={10} className="text-[var(--color-blue)]" /> :
-             <div className="w-2 h-2 rounded-sm border border-slate-300 dark:border-slate-600" />}
+             <div className="w-2 h-2 rounded-sm border border-[var(--color-border)]" />}
           </div>
           <span className={cn(
             'flex-1',
-            task.status === 'done' ? 'text-[var(--color-text-muted)] line-through' : 'text-slate-700 dark:text-slate-200'
+            task.status === 'done' ? 'text-[var(--color-text-muted)] line-through' : 'text-[var(--color-text-secondary)]'
           )}>{task.label}</span>
-          <span className="text-[9px] text-[var(--color-text-muted)] bg-slate-50 dark:bg-white/[0.02] px-1.5 py-0.5 rounded">{task.category}</span>
+          <span className="text-[9px] text-[var(--color-text-muted)] bg-[var(--color-surface-elevated)] px-1.5 py-0.5 rounded">{task.category}</span>
         </div>
       ))}
     </div>
@@ -381,10 +381,10 @@ function EvidenceTab() {
   return (
     <div className="h-full overflow-y-auto px-4 py-2">
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <div className="bg-blue-50/80 dark:bg-[var(--color-blue)]/5 rounded-lg p-2.5 border border-blue-100 dark:border-blue-500/10">
+        <div className="bg-[var(--color-blue)]/5 rounded-lg p-2.5 border border-[var(--color-blue)]/10">
           <div className="text-[8px] text-[var(--color-blue)] uppercase tracking-wider font-bold">Quantity</div>
-          <div className="text-[14px] font-bold tabular-nums text-blue-700 dark:text-blue-300">{fmt(item.quantity)}</div>
-          <div className="text-[9px] text-blue-400">{item.unit}</div>
+          <div className="text-[14px] font-bold tabular-nums text-[var(--color-blue)]">{fmt(item.quantity)}</div>
+          <div className="text-[9px] text-[var(--color-blue)]">{item.unit}</div>
         </div>
         <div className="bg-cyan-50/80 dark:bg-cyan-500/5 rounded-lg p-2.5 border border-cyan-100 dark:border-cyan-500/10">
           <div className="text-[8px] text-cyan-500 uppercase tracking-wider font-bold">Measurements</div>
@@ -431,20 +431,20 @@ function QuantityHistoryTab() {
   return (
     <div className="h-full overflow-y-auto px-4 py-2">
       <div className="relative pl-6">
-        <div className="absolute left-2 top-0 bottom-0 w-px bg-slate-200 dark:bg-white/[0.06]" />
+        <div className="absolute start-2 top-0 bottom-0 w-px bg-[var(--color-border)]" />
         {changes.map((qc, i) => {
           const boqItem = data.boqItems.find(b => b.id === qc.boq_item_id)
           return (
             <div key={qc.id} className="relative pb-3">
               <div className={cn(
                 'absolute left-[-17px] w-2.5 h-2.5 rounded-full border-2 border-white dark:border-[#0f1117]',
-                qc.difference > 0 ? 'bg-green-500' : qc.difference < 0 ? 'bg-red-500' : 'bg-slate-400'
+                qc.difference > 0 ? 'bg-green-500' : qc.difference < 0 ? 'bg-[var(--color-danger)]' : 'bg-[var(--color-border)]'
               )} style={{ top: 2 }} />
               <div className="flex items-center gap-2 text-[11px]">
                 <span className="text-[var(--color-text-muted)] text-[10px] font-mono w-20 shrink-0">{qc.created_at.slice(0, 10)}</span>
                 <span className="font-mono text-[9px] text-[var(--color-text-muted)] w-12 shrink-0">{boqItem?.code ?? '—'}</span>
-                <span className="text-slate-700 dark:text-slate-200 flex-1 truncate">{qc.description}</span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/[0.04] text-[var(--color-text-muted)] capitalize">{qc.change_type}</span>
+                <span className="text-[var(--color-text-secondary)] flex-1 truncate">{qc.description}</span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)] capitalize">{qc.change_type}</span>
                 <span className="tabular-nums text-[var(--color-text-muted)] shrink-0">{fmt(qc.previous_qty)} → {fmt(qc.new_qty)}</span>
                 <span className={cn(
                   'tabular-nums font-medium shrink-0',
@@ -476,11 +476,11 @@ function ReportsTab({ projectId }: { projectId: string }) {
           <a
             key={r.href}
             href={`/projects/${projectId}/reports`}
-            className="flex items-center gap-2.5 p-3 rounded-lg border border-slate-100 dark:border-white/[0.04] hover:border-blue-300 dark:hover:border-blue-500/30 hover:bg-blue-50/50 dark:hover:bg-[var(--color-blue)]/5 transition-all group"
+            className="flex items-center gap-2.5 p-3 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-amber)]/40 hover:bg-[var(--color-amber)]/5 transition-all group"
           >
             <r.icon size={16} className="text-[var(--color-text-muted)] group-hover:text-[var(--color-blue)] transition-colors shrink-0" />
             <div>
-              <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200">{r.label}</div>
+              <div className="text-[11px] font-medium text-[var(--color-text-secondary)]">{r.label}</div>
               <div className="text-[9px] text-[var(--color-text-muted)]">{r.desc}</div>
             </div>
           </a>

@@ -142,8 +142,8 @@ export default function DrawingsPage() {
         </div>
       ) : error && !loading ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center mb-4">
-            <AlertTriangle size={24} className="text-red-400" />
+          <div className="w-14 h-14 rounded-2xl bg-[var(--color-danger-bg)] flex items-center justify-center mb-4">
+            <AlertTriangle size={24} className="text-[var(--color-danger)]" />
           </div>
           <p className="text-sm text-[var(--color-text-secondary)] mb-4">{error}</p>
           <button
@@ -218,7 +218,7 @@ export default function DrawingsPage() {
                   </button>
                   <button
                     onClick={() => handleDelete(d.id)}
-                    className="p-2 rounded-lg hover:bg-red-500/10 text-[var(--color-text-muted)] hover:text-red-400 transition-colors"
+                    className="p-2 rounded-lg hover:bg-[var(--color-danger-bg)] text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-colors"
                     title="Delete"
                   >
                     <Trash2 size={15} />
@@ -307,9 +307,9 @@ export default function DrawingsPage() {
             />
           </div>
           {error && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-              <AlertTriangle size={14} className="text-red-400 shrink-0" />
-              <p className="text-xs text-red-400">{error}</p>
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-[var(--color-danger-bg)] border border-[var(--color-danger)]/20">
+              <AlertTriangle size={14} className="text-[var(--color-danger)] shrink-0" />
+              <p className="text-xs text-[var(--color-danger)]">{error}</p>
             </div>
           )}
           <div className="flex justify-end gap-2 pt-2">

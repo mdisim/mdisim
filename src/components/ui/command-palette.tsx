@@ -227,7 +227,7 @@ export function CommandPalette() {
                                 onClick={() => handleSelect(cmd)}
                                 onMouseEnter={() => setSelectedIndex(globalIdx)}
                                 className={cn(
-                                  'w-full flex items-center gap-3 px-5 py-2.5 text-left transition-colors',
+                                  'w-full flex items-center gap-3 px-5 py-2.5 text-start transition-colors',
                                   isSelected
                                     ? 'bg-[var(--color-amber)]/10 text-[var(--color-amber)]'
                                     : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]'

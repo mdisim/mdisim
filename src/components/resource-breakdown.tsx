@@ -31,9 +31,9 @@ const CATEGORY_CONFIG: Record<CategoryKey, CategoryConfig> = {
   material: {
     label: 'Materials',
     icon: Package,
-    barColor: 'bg-blue-500',
-    textColor: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+    barColor: 'bg-[var(--color-info)]',
+    textColor: 'text-[var(--color-info)]',
+    bgColor: 'bg-[var(--color-info-bg)]',
   },
   labor: {
     label: 'Labor',
@@ -59,9 +59,9 @@ const CATEGORY_CONFIG: Record<CategoryKey, CategoryConfig> = {
   overhead: {
     label: 'Overhead',
     icon: Percent,
-    barColor: 'bg-slate-500',
-    textColor: 'text-slate-600 dark:text-slate-400',
-    bgColor: 'bg-slate-100 dark:bg-slate-700/40',
+    barColor: 'bg-[var(--color-surface-elevated)]0',
+    textColor: 'text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]',
+    bgColor: 'bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated)]/40',
   },
   profit: {
     label: 'Profit',
@@ -172,7 +172,7 @@ export default function ResourceBreakdown({ rateAnalyses }: ResourceBreakdownPro
     return (
       <Card className="!shadow-sm">
         <CardContent>
-          <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">
+          <p className="text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] text-center py-8">
             No rate analyses available. Create rate analyses to see the resource breakdown.
           </p>
         </CardContent>
@@ -187,14 +187,14 @@ export default function ResourceBreakdown({ rateAnalyses }: ResourceBreakdownPro
         <CardContent className="!py-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <p className="text-xs font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] uppercase tracking-wider">
                 Project Total
               </p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
+              <p className="text-2xl font-bold text-[var(--color-text)] dark:text-white tabular-nums">
                 {fmt(grandTotal)}
               </p>
             </div>
-            <div className="text-right text-xs text-slate-500 dark:text-slate-400">
+            <div className="text-end text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">
               <p>{rateAnalyses.length} rate {rateAnalyses.length === 1 ? 'analysis' : 'analyses'}</p>
               <p>
                 {rateAnalyses.reduce((s, ra) => s + (ra.resources?.length ?? 0), 0)} resources
@@ -203,7 +203,7 @@ export default function ResourceBreakdown({ rateAnalyses }: ResourceBreakdownPro
           </div>
 
           {/* Stacked proportion bar */}
-          <div className="flex h-4 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-700">
+          <div className="flex h-4 rounded-full overflow-hidden bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated)]">
             {categories.map(cat => {
               if (cat.pct < 0.3) return null
               return (
@@ -222,10 +222,10 @@ export default function ResourceBreakdown({ rateAnalyses }: ResourceBreakdownPro
             {categories.map(cat => {
               if (cat.total === 0) return null
               return (
-                <div key={cat.key} className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
+                <div key={cat.key} className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">
                   <div className={cn('w-2.5 h-2.5 rounded-sm', cat.config.barColor)} />
                   <span className="font-medium">{cat.config.label}</span>
-                  <span className="text-slate-400 tabular-nums">{cat.pct.toFixed(1)}%</span>
+                  <span className="text-[var(--color-text-muted)] tabular-nums">{cat.pct.toFixed(1)}%</span>
                 </div>
               )
             })}
@@ -247,12 +247,12 @@ export default function ResourceBreakdown({ rateAnalyses }: ResourceBreakdownPro
               <div
                 className={cn(
                   'flex items-center gap-3 px-5 py-3.5 transition-colors',
-                  hasResources && 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-750'
+                  hasResources && 'cursor-pointer hover:bg-[var(--color-surface-elevated)] dark:hover:bg-[var(--color-surface-elevated)]'
                 )}
                 onClick={() => hasResources && toggle(cat.key)}
               >
                 {hasResources && (
-                  <div className="text-slate-400">
+                  <div className="text-[var(--color-text-muted)]">
                     {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                   </div>
                 )}
@@ -260,11 +260,11 @@ export default function ResourceBreakdown({ rateAnalyses }: ResourceBreakdownPro
                   <Icon size={16} className={cat.config.textColor} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                  <span className="text-sm font-semibold text-[var(--color-text)] dark:text-white">
                     {cat.config.label}
                   </span>
                   {hasResources && (
-                    <span className="ml-2 text-xs text-slate-400 dark:text-slate-500">
+                    <span className="ml-2 text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">
                       {cat.resources.length} item{cat.resources.length !== 1 ? 's' : ''}
                     </span>
                   )}
@@ -272,7 +272,7 @@ export default function ResourceBreakdown({ rateAnalyses }: ResourceBreakdownPro
 
                 {/* Proportion bar */}
                 <div className="hidden sm:block w-32 mr-4">
-                  <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                  <div className="h-2 rounded-full bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated)] overflow-hidden">
                     <div
                       className={cn(cat.config.barColor, 'h-full rounded-full transition-all duration-500')}
                       style={{ width: `${cat.pct}%` }}
@@ -280,11 +280,11 @@ export default function ResourceBreakdown({ rateAnalyses }: ResourceBreakdownPro
                   </div>
                 </div>
 
-                <div className="text-right shrink-0">
-                  <div className="text-sm font-bold text-slate-900 dark:text-white tabular-nums">
+                <div className="text-end shrink-0">
+                  <div className="text-sm font-bold text-[var(--color-text)] dark:text-white tabular-nums">
                     {fmt(cat.total)}
                   </div>
-                  <div className="text-[10px] text-slate-400 tabular-nums">
+                  <div className="text-[10px] text-[var(--color-text-muted)] tabular-nums">
                     {cat.pct.toFixed(1)}%
                   </div>
                 </div>
@@ -292,42 +292,42 @@ export default function ResourceBreakdown({ rateAnalyses }: ResourceBreakdownPro
 
               {/* Expanded resource list */}
               {isExpanded && hasResources && (
-                <div className="border-t border-slate-100 dark:border-slate-700">
+                <div className="border-t border-[var(--color-border)] dark:border-[var(--color-border)]">
                   {/* Column headers */}
-                  <div className="flex items-center gap-2 px-5 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 bg-slate-50/60 dark:bg-slate-900/30">
+                  <div className="flex items-center gap-2 px-5 py-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] bg-[var(--color-surface-elevated)]/60 dark:bg-[var(--color-surface)]/30">
                     <div className="flex-1 min-w-0">Description</div>
                     <div className="w-24 hidden md:block truncate">Source</div>
                     <div className="w-12 text-center">Unit</div>
-                    <div className="w-16 text-right">Qty</div>
-                    <div className="w-20 text-right">Unit Cost</div>
-                    <div className="w-14 text-right">Waste%</div>
-                    <div className="w-24 text-right">Amount</div>
+                    <div className="w-16 text-end">Qty</div>
+                    <div className="w-20 text-end">Unit Cost</div>
+                    <div className="w-14 text-end">Waste%</div>
+                    <div className="w-24 text-end">Amount</div>
                   </div>
 
                   {cat.resources.map((res, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center gap-2 px-5 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors border-t border-slate-50 dark:border-slate-800"
+                      className="flex items-center gap-2 px-5 py-2 text-xs text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-elevated)]/80 dark:hover:bg-[var(--color-surface-elevated)]/50 transition-colors border-t border-slate-50 dark:border-[var(--color-border)]"
                     >
                       <div className="flex-1 min-w-0 truncate">{res.description}</div>
-                      <div className="w-24 hidden md:block truncate text-slate-400 dark:text-slate-500" title={res.analysisDescription}>
+                      <div className="w-24 hidden md:block truncate text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]" title={res.analysisDescription}>
                         {res.analysisDescription}
                       </div>
-                      <div className="w-12 text-center text-slate-500">{res.unit}</div>
-                      <div className="w-16 text-right tabular-nums">{fmt(res.quantity)}</div>
-                      <div className="w-20 text-right tabular-nums">{fmt(res.unitCost)}</div>
-                      <div className="w-14 text-right tabular-nums text-slate-500">
+                      <div className="w-12 text-center text-[var(--color-text-muted)]">{res.unit}</div>
+                      <div className="w-16 text-end tabular-nums">{fmt(res.quantity)}</div>
+                      <div className="w-20 text-end tabular-nums">{fmt(res.unitCost)}</div>
+                      <div className="w-14 text-end tabular-nums text-[var(--color-text-muted)]">
                         {res.wastePct > 0 ? `${res.wastePct}%` : '-'}
                       </div>
-                      <div className="w-24 text-right tabular-nums font-semibold">{fmt(res.amount)}</div>
+                      <div className="w-24 text-end tabular-nums font-semibold">{fmt(res.amount)}</div>
                     </div>
                   ))}
 
                   {/* Category subtotal */}
-                  <div className="flex items-center gap-2 px-5 py-2.5 bg-slate-50/80 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center gap-2 px-5 py-2.5 bg-[var(--color-surface-elevated)]/80 dark:bg-[var(--color-surface)]/40 border-t border-[var(--color-border)] dark:border-[var(--color-border)]">
                     <div className="flex-1" />
-                    <div className="text-xs font-semibold text-slate-600 dark:text-slate-300 mr-2">Subtotal</div>
-                    <div className="w-24 text-right text-xs font-bold text-slate-900 dark:text-white tabular-nums">
+                    <div className="text-xs font-semibold text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] mr-2">Subtotal</div>
+                    <div className="w-24 text-end text-xs font-bold text-[var(--color-text)] dark:text-white tabular-nums">
                       {fmt(cat.total)}
                     </div>
                   </div>
@@ -339,13 +339,13 @@ export default function ResourceBreakdown({ rateAnalyses }: ResourceBreakdownPro
       </div>
 
       {/* Grand Total */}
-      <Card className="!shadow-sm border-2 border-slate-300 dark:border-slate-600">
+      <Card className="!shadow-sm border-2 border-[var(--color-border)] dark:border-[var(--color-border)]">
         <CardContent className="!py-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
+            <span className="text-sm font-bold text-[var(--color-text)] dark:text-slate-100 uppercase tracking-wider">
               Grand Total
             </span>
-            <span className="text-xl font-bold text-blue-600 dark:text-blue-400 tabular-nums">
+            <span className="text-xl font-bold text-[var(--color-info)] tabular-nums">
               {fmt(grandTotal)}
             </span>
           </div>

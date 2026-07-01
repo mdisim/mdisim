@@ -109,7 +109,7 @@ export function DrawingIntelligence({ projectId, drawings }: DrawingIntelligence
   }
 
   if (loading) {
-    return <div className="space-y-3">{[1, 2].map(i => <div key={i} className="h-16 bg-white dark:bg-slate-800 rounded-xl animate-pulse" />)}</div>
+    return <div className="space-y-3">{[1, 2].map(i => <div key={i} className="h-16 bg-white dark:bg-[var(--color-surface-elevated)] rounded-xl animate-pulse" />)}</div>
   }
 
   return (
@@ -117,7 +117,7 @@ export function DrawingIntelligence({ projectId, drawings }: DrawingIntelligence
       {/* Intelligence KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {([
-          { label: 'Drawings Analyzed', value: String(drawingsWithRevisions.length), icon: FileText, gradient: 'from-blue-500 to-blue-600' },
+          { label: 'Drawings Analyzed', value: String(drawingsWithRevisions.length), icon: FileText, gradient: 'from-[var(--color-info)] to-[var(--color-info-light)]' },
           { label: 'Changes Detected', value: String(totalChanges), icon: RefreshCw, gradient: 'from-amber-500 to-amber-600' },
           { label: 'Additions', value: String(additions.length), icon: TrendingUp, gradient: 'from-green-500 to-emerald-600' },
           { label: 'Removals', value: String(removals.length), icon: TrendingDown, gradient: 'from-red-500 to-red-600' },
@@ -129,9 +129,9 @@ export function DrawingIntelligence({ projectId, drawings }: DrawingIntelligence
                 <div className={cn('p-1 rounded-md bg-gradient-to-br text-white', kpi.gradient)}>
                   <kpi.icon size={12} />
                 </div>
-                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{kpi.label}</span>
+                <span className="text-[10px] font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] uppercase tracking-wider">{kpi.label}</span>
               </div>
-              <div className="text-lg font-bold tabular-nums text-slate-900 dark:text-white">{kpi.value}</div>
+              <div className="text-lg font-bold tabular-nums text-[var(--color-text)] dark:text-white">{kpi.value}</div>
             </CardContent>
           </Card>
         ))}
@@ -141,20 +141,20 @@ export function DrawingIntelligence({ projectId, drawings }: DrawingIntelligence
       {changes.length > 0 && (
         <Card>
           <CardContent className="p-4">
-            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] dark:text-slate-200 mb-3 flex items-center gap-2">
               <AlertTriangle size={16} className="text-amber-500" />
               Revision Impact Analysis
             </h3>
-            <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+            <div className="border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-lg overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-                    <th className="text-left px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Item</th>
-                    <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Old Qty</th>
-                    <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">New Qty</th>
-                    <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Change</th>
-                    <th className="text-right px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Cost Impact</th>
-                    <th className="text-center px-3 py-2 font-semibold text-slate-600 dark:text-slate-300">Type</th>
+                  <tr className="bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface)] border-b border-[var(--color-border)] dark:border-[var(--color-border)]">
+                    <th className="text-left px-3 py-2 font-semibold text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">Item</th>
+                    <th className="text-end px-3 py-2 font-semibold text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">Old Qty</th>
+                    <th className="text-end px-3 py-2 font-semibold text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">New Qty</th>
+                    <th className="text-end px-3 py-2 font-semibold text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">Change</th>
+                    <th className="text-end px-3 py-2 font-semibold text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">Cost Impact</th>
+                    <th className="text-center px-3 py-2 font-semibold text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">Type</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -163,14 +163,14 @@ export function DrawingIntelligence({ projectId, drawings }: DrawingIntelligence
                     const boq = boqItems.find(b => b.id === c.boq_item_id)
                     const impact = boq?.unit_rate ? diff * boq.unit_rate : 0
                     return (
-                      <tr key={c.id} className="border-b border-slate-100 dark:border-slate-700">
-                        <td className="px-3 py-2 text-slate-700 dark:text-slate-200">{c.description}</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-slate-500">{fmt(c.previous_qty)}</td>
-                        <td className="px-3 py-2 text-right tabular-nums font-medium">{fmt(c.new_qty)}</td>
-                        <td className={cn('px-3 py-2 text-right tabular-nums font-medium', diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-slate-500')}>
+                      <tr key={c.id} className="border-b border-[var(--color-border)] dark:border-[var(--color-border)]">
+                        <td className="px-3 py-2 text-[var(--color-text-secondary)] dark:text-slate-200">{c.description}</td>
+                        <td className="px-3 py-2 text-end tabular-nums text-[var(--color-text-muted)]">{fmt(c.previous_qty)}</td>
+                        <td className="px-3 py-2 text-end tabular-nums font-medium">{fmt(c.new_qty)}</td>
+                        <td className={cn('px-3 py-2 text-end tabular-nums font-medium', diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-[var(--color-text-muted)]')}>
                           {diff > 0 ? '+' : ''}{fmt(diff)}
                         </td>
-                        <td className={cn('px-3 py-2 text-right tabular-nums', impact > 0 ? 'text-green-600' : impact < 0 ? 'text-red-600' : 'text-slate-500')}>
+                        <td className={cn('px-3 py-2 text-end tabular-nums', impact > 0 ? 'text-green-600' : impact < 0 ? 'text-red-600' : 'text-[var(--color-text-muted)]')}>
                           {impact !== 0 ? fmt(impact) : '-'}
                         </td>
                         <td className="px-3 py-2 text-center">
@@ -189,7 +189,7 @@ export function DrawingIntelligence({ projectId, drawings }: DrawingIntelligence
       {/* Auto Update Suggestions */}
       <Card>
         <CardContent className="p-4">
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] dark:text-slate-200 mb-3 flex items-center gap-2">
             <Brain size={16} className="text-purple-500" />
             Auto Quantity Update Suggestions
             {pendingSuggestions.length > 0 && (
@@ -198,7 +198,7 @@ export function DrawingIntelligence({ projectId, drawings }: DrawingIntelligence
           </h3>
 
           {suggestions.length === 0 ? (
-            <div className="text-center py-8 text-sm text-slate-400">
+            <div className="text-center py-8 text-sm text-[var(--color-text-muted)]">
               <CheckCircle2 size={32} className="mx-auto mb-2 text-green-400" />
               No update suggestions. All quantities are up to date.
             </div>
@@ -212,22 +212,22 @@ export function DrawingIntelligence({ projectId, drawings }: DrawingIntelligence
                     className={cn(
                       'flex items-center gap-3 p-3 rounded-lg border transition-colors',
                       sug.status === 'applied' ? 'border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-900/10' :
-                      sug.status === 'dismissed' ? 'border-slate-200 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-800/50 opacity-50' :
-                      'border-blue-200 bg-blue-50/30 dark:border-blue-800 dark:bg-blue-900/10'
+                      sug.status === 'dismissed' ? 'border-[var(--color-border)] bg-[var(--color-surface-elevated)]/50 dark:border-[var(--color-border)] dark:bg-[var(--color-surface-elevated)]/50 opacity-50' :
+                      'border-blue-200 bg-[var(--color-info-bg)]/30 dark:border-blue-800 dark:bg-[var(--color-info-bg)]/10'
                     )}
                   >
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-slate-900 dark:text-white">{sug.boqItem.description}</div>
-                      <div className="text-xs text-slate-500 mt-0.5">
+                      <div className="text-sm font-medium text-[var(--color-text)] dark:text-white">{sug.boqItem.description}</div>
+                      <div className="text-xs text-[var(--color-text-muted)] mt-0.5">
                         {sug.boqItem.code && <span className="font-mono mr-2">{sug.boqItem.code}</span>}
                         {sug.source}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="tabular-nums text-slate-500">{fmt(sug.currentQty)}</span>
-                      <ArrowRight size={14} className="text-slate-400" />
+                      <span className="tabular-nums text-[var(--color-text-muted)]">{fmt(sug.currentQty)}</span>
+                      <ArrowRight size={14} className="text-[var(--color-text-muted)]" />
                       <span className={cn('tabular-nums font-medium', diff > 0 ? 'text-green-600' : 'text-red-600')}>{fmt(sug.suggestedQty)}</span>
-                      <span className="text-xs text-slate-400">{sug.boqItem.unit}</span>
+                      <span className="text-xs text-[var(--color-text-muted)]">{sug.boqItem.unit}</span>
                     </div>
                     {sug.status === 'pending' ? (
                       <div className="flex items-center gap-1">
@@ -236,7 +236,7 @@ export function DrawingIntelligence({ projectId, drawings }: DrawingIntelligence
                         </Button>
                         <button
                           onClick={() => handleDismiss(sug.id)}
-                          className="p-1.5 rounded text-slate-400 hover:text-red-500 transition-colors"
+                          className="p-1.5 rounded text-[var(--color-text-muted)] hover:text-red-500 transition-colors"
                         >
                           <XCircle size={16} />
                         </button>

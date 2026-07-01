@@ -39,7 +39,7 @@ export function CenterPanel() {
   return (
     <div className="flex flex-col h-full bg-[#f8f9fa] dark:bg-[#0a0b0f] overflow-hidden">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-3 h-10 bg-white dark:bg-[#0f1117] border-b border-slate-200/60 dark:border-white/[0.04] shrink-0">
+      <div className="flex items-center justify-between px-3 h-10 bg-[var(--color-surface)] border-b border-[var(--color-border)] shrink-0">
         <div className="flex items-center gap-2">
           {/* Drawing selector tabs */}
           <div className="flex items-center gap-0.5 overflow-x-auto max-w-[400px] scrollbar-none">
@@ -51,7 +51,7 @@ export function CenterPanel() {
                   'flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium rounded-md whitespace-nowrap transition-all',
                   drawing?.id === d.id
                     ? 'bg-indigo-100 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 shadow-sm'
-                    : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.03]'
+                    : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-elevated)]'
                 )}
               >
                 <FileText size={10} />
@@ -66,7 +66,7 @@ export function CenterPanel() {
           <button
             onClick={() => canPrev && selectDrawing(data.drawings[currentIndex - 1])}
             disabled={!canPrev}
-            className="p-1.5 rounded text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] disabled:opacity-30 transition-colors"
+            className="p-1.5 rounded text-[var(--color-text-muted)] hover:bg-[var(--color-surface-elevated)] disabled:opacity-30 transition-colors"
             title="Previous drawing"
           >
             <ChevronLeft size={14} />
@@ -74,23 +74,23 @@ export function CenterPanel() {
           <button
             onClick={() => canNext && selectDrawing(data.drawings[currentIndex + 1])}
             disabled={!canNext}
-            className="p-1.5 rounded text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] disabled:opacity-30 transition-colors"
+            className="p-1.5 rounded text-[var(--color-text-muted)] hover:bg-[var(--color-surface-elevated)] disabled:opacity-30 transition-colors"
             title="Next drawing"
           >
             <ChevronRight size={14} />
           </button>
-          <div className="w-px h-4 bg-slate-200 dark:bg-white/[0.06] mx-1" />
-          <button onClick={() => setZoom(z => Math.min(3, z + 0.25))} className="p-1.5 rounded text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04]" title="Zoom in">
+          <div className="w-px h-4 bg-[var(--color-border)] mx-1" />
+          <button onClick={() => setZoom(z => Math.min(3, z + 0.25))} className="p-1.5 rounded text-[var(--color-text-muted)] hover:bg-[var(--color-surface-elevated)]" title="Zoom in">
             <ZoomIn size={14} />
           </button>
-          <span className="text-[10px] tabular-nums text-slate-500 w-10 text-center">{Math.round(zoom * 100)}%</span>
-          <button onClick={() => setZoom(z => Math.max(0.25, z - 0.25))} className="p-1.5 rounded text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04]" title="Zoom out">
+          <span className="text-[10px] tabular-nums text-[var(--color-text-muted)] w-10 text-center">{Math.round(zoom * 100)}%</span>
+          <button onClick={() => setZoom(z => Math.max(0.25, z - 0.25))} className="p-1.5 rounded text-[var(--color-text-muted)] hover:bg-[var(--color-surface-elevated)]" title="Zoom out">
             <ZoomOut size={14} />
           </button>
-          <button onClick={() => setRotation(r => (r + 90) % 360)} className="p-1.5 rounded text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04]" title="Rotate">
+          <button onClick={() => setRotation(r => (r + 90) % 360)} className="p-1.5 rounded text-[var(--color-text-muted)] hover:bg-[var(--color-surface-elevated)]" title="Rotate">
             <RotateCw size={14} />
           </button>
-          <button onClick={() => { setZoom(1); setRotation(0) }} className="p-1.5 rounded text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04]" title="Reset view">
+          <button onClick={() => { setZoom(1); setRotation(0) }} className="p-1.5 rounded text-[var(--color-text-muted)] hover:bg-[var(--color-surface-elevated)]" title="Reset view">
             <Maximize2 size={14} />
           </button>
           {drawing && (
@@ -109,16 +109,16 @@ export function CenterPanel() {
         <AnimatePresence mode="wait">
           {!drawing ? (
             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
-              <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-slate-100 dark:bg-white/[0.03] flex items-center justify-center">
-                <ImageIcon size={32} className="text-slate-300 dark:text-slate-600" />
+              <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-[var(--color-surface-elevated)] flex items-center justify-center">
+                <ImageIcon size={32} className="text-[var(--color-border)]" />
               </div>
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No Drawings</p>
-              <p className="text-[11px] text-slate-400 mt-1">Upload drawings to view them here</p>
+              <p className="text-sm font-medium text-[var(--color-text-muted)]">No Drawings</p>
+              <p className="text-[11px] text-[var(--color-text-muted)] mt-1">Upload drawings to view them here</p>
             </motion.div>
           ) : loadingUrl ? (
             <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-2">
               <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-              <span className="text-[11px] text-slate-500">Loading drawing...</span>
+              <span className="text-[11px] text-[var(--color-text-muted)]">Loading drawing...</span>
             </motion.div>
           ) : isPdf && imageUrl ? (
             <motion.div key="pdf" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2 }} className="w-full h-full">
@@ -143,12 +143,12 @@ export function CenterPanel() {
               <div className="w-24 h-24 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900/20 dark:to-indigo-800/20 flex items-center justify-center shadow-lg">
                 <ImageIcon size={36} className="text-indigo-500" />
               </div>
-              <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1">{drawing.name}</h3>
-              <p className="text-[11px] text-slate-500 mb-1">
+              <h3 className="text-base font-semibold text-[var(--color-text)] mb-1">{drawing.name}</h3>
+              <p className="text-[11px] text-[var(--color-text-muted)] mb-1">
                 {drawing.drawing_number && <span className="font-mono">{drawing.drawing_number} · </span>}
                 {drawing.drawing_type} · Rev {drawing.revision_number ?? '—'}
               </p>
-              <p className="text-[10px] text-slate-400 mb-4">
+              <p className="text-[10px] text-[var(--color-text-muted)] mb-4">
                 {drawing.file_type?.toUpperCase()} · {drawing.file_size ? `${(drawing.file_size / 1024 / 1024).toFixed(1)} MB` : 'Unknown size'}
               </p>
               <a
@@ -165,7 +165,7 @@ export function CenterPanel() {
 
       {/* Status bar */}
       {drawing && (
-        <div className="flex items-center justify-between px-3 h-6 bg-white dark:bg-[#0f1117] border-t border-slate-100 dark:border-white/[0.04] text-[10px] text-slate-400 shrink-0">
+        <div className="flex items-center justify-between px-3 h-6 bg-[var(--color-surface)] border-t border-[var(--color-border)] text-[10px] text-[var(--color-text-muted)] shrink-0">
           <div className="flex items-center gap-3">
             <span>{drawing.name}</span>
             <span className="font-mono">{drawing.drawing_number}</span>

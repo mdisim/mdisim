@@ -8,7 +8,7 @@ export interface Column<T> {
   key: string
   header: string
   width?: string
-  align?: 'left' | 'center' | 'right'
+  align?: 'start' | 'center' | 'end'
   sortable?: boolean
   render?: (row: T, index: number) => ReactNode
 }
@@ -69,27 +69,28 @@ export function DataTable<T>({
   return (
     <div
       className={cn(
-        'border border-slate-200 dark:border-slate-700/60 rounded-xl overflow-hidden bg-white dark:bg-slate-800/50',
+        'border border-[var(--color-border)] rounded-xl overflow-hidden bg-[var(--color-surface)]',
         className
       )}
       style={maxHeight ? { maxHeight, overflowY: 'auto' } : undefined}
     >
       <table className="w-full text-sm">
         <thead className={cn(
-          'bg-slate-50/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider',
+          'bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)] text-xs uppercase tracking-wider',
           stickyHeader && 'sticky top-0 z-10'
         )}>
           <tr>
             {columns.map((col) => (
               <th
                 key={col.key}
+                scope="col"
                 style={col.width ? { width: col.width } : undefined}
                 className={cn(
                   cellPad,
-                  'font-semibold text-left',
+                  'font-semibold text-start',
                   col.align === 'center' && 'text-center',
-                  col.align === 'right' && 'text-right',
-                  col.sortable && 'cursor-pointer select-none hover:text-slate-900 dark:hover:text-slate-200 transition-colors'
+                  col.align === 'end' && 'text-end',
+                  col.sortable && 'cursor-pointer select-none hover:text-[var(--color-text)] transition-colors'
                 )}
                 onClick={col.sortable ? () => handleSort(col.key) : undefined}
               >
@@ -105,10 +106,10 @@ export function DataTable<T>({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-slate-700/40">
+        <tbody className="divide-y divide-[var(--color-border)]">
           {sorted.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="text-center py-12 text-slate-400 dark:text-slate-500">
+              <td colSpan={columns.length} className="text-center py-12 text-[var(--color-text-muted)]">
                 {emptyMessage}
               </td>
             </tr>
@@ -118,8 +119,8 @@ export function DataTable<T>({
               onClick={onRowClick ? () => onRowClick(row) : undefined}
               className={cn(
                 'transition-colors',
-                idx % 2 === 1 && 'bg-slate-50/50 dark:bg-slate-800/30',
-                onRowClick && 'cursor-pointer hover:bg-blue-50/50 dark:hover:bg-blue-900/10'
+                idx % 2 === 1 && 'bg-[var(--color-surface-elevated)]/40',
+                onRowClick && 'cursor-pointer hover:bg-[var(--color-amber)]/5'
               )}
             >
               {columns.map((col) => (
@@ -127,9 +128,9 @@ export function DataTable<T>({
                   key={col.key}
                   className={cn(
                     cellPad,
-                    'text-slate-700 dark:text-slate-300',
+                    'text-[var(--color-text-secondary)]',
                     col.align === 'center' && 'text-center',
-                    col.align === 'right' && 'text-right'
+                    col.align === 'end' && 'text-end'
                   )}
                 >
                   {col.render

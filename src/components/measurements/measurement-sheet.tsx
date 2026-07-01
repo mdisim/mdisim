@@ -133,27 +133,27 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
   const deductionsTotal = deductions.reduce((s, l) => s + Math.abs(l.quantity), 0)
 
   return (
-    <div className="bg-slate-50">
+    <div className="bg-[var(--color-surface-elevated)]">
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-slate-100 border-b border-slate-200">
-              <th className="w-[36px] px-2 py-2 text-center text-[11px] font-semibold text-slate-500 uppercase">#</th>
+            <tr className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border)]">
+              <th className="w-[36px] px-2 py-2 text-center text-[11px] font-semibold text-[var(--color-text-muted)] uppercase">#</th>
               <th className="w-[28px]" />
               {COLUMNS.map((col) => (
                 <th
                   key={col.key}
                   className={cn(
-                    'px-2 py-2 text-left text-[11px] font-semibold text-slate-500 uppercase',
+                    'px-2 py-2 text-left text-[11px] font-semibold text-[var(--color-text-muted)] uppercase',
                     col.width,
-                    col.numeric && 'text-right'
+                    col.numeric && 'text-end'
                   )}
                 >
                   {col.label}
                 </th>
               ))}
-              <th className="w-[80px] px-2 py-2 text-right text-[11px] font-semibold text-slate-500 uppercase">Qty</th>
+              <th className="w-[80px] px-2 py-2 text-end text-[11px] font-semibold text-[var(--color-text-muted)] uppercase">Qty</th>
               <th className="w-[80px]" />
             </tr>
           </thead>
@@ -162,12 +162,12 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
               <tr
                 key={line.id}
                 className={cn(
-                  'border-b border-slate-100 hover:bg-white transition-colors group',
+                  'border-b border-[var(--color-border)] hover:bg-white transition-colors group',
                   line.is_deduction && 'bg-red-50/50'
                 )}
               >
                 {/* Line number */}
-                <td className="px-2 py-1.5 text-center text-xs text-slate-400 tabular-nums">
+                <td className="px-2 py-1.5 text-center text-xs text-[var(--color-text-muted)] tabular-nums">
                   {line.line_number}
                 </td>
 
@@ -196,7 +196,7 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
                   return (
                     <td
                       key={col.key}
-                      className={cn('px-1 py-0.5', col.width, col.numeric && 'text-right')}
+                      className={cn('px-1 py-0.5', col.width, col.numeric && 'text-end')}
                     >
                       {isEditing ? (
                         <input
@@ -208,16 +208,16 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
                           onKeyDown={handleKeyDown}
                           className={cn(
                             'w-full px-1.5 py-1 text-sm rounded border border-blue-400 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500',
-                            col.numeric && 'text-right tabular-nums'
+                            col.numeric && 'text-end tabular-nums'
                           )}
                         />
                       ) : (
                         <div
                           onClick={() => startEdit(line.id, col.key, value as string | number | null)}
                           className={cn(
-                            'w-full px-1.5 py-1 text-sm rounded cursor-text hover:bg-blue-50/50 min-h-[28px] transition-colors',
-                            col.numeric && 'text-right tabular-nums',
-                            !displayValue && 'text-slate-300'
+                            'w-full px-1.5 py-1 text-sm rounded cursor-text hover:bg-[var(--color-info-bg)]/50 min-h-[28px] transition-colors',
+                            col.numeric && 'text-end tabular-nums',
+                            !displayValue && 'text-[var(--color-text-secondary)]'
                           )}
                         >
                           {displayValue || '—'}
@@ -228,10 +228,10 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
                 })}
 
                 {/* Calculated quantity */}
-                <td className="px-2 py-1.5 text-right">
+                <td className="px-2 py-1.5 text-end">
                   <span className={cn(
                     'text-sm font-semibold tabular-nums',
-                    line.is_deduction ? 'text-red-600' : 'text-slate-900'
+                    line.is_deduction ? 'text-red-600' : 'text-[var(--color-text)]'
                   )}>
                     {formatQty(line.quantity)}
                   </span>
@@ -242,14 +242,14 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
                   <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => handleDuplicate(line.id)}
-                      className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-blue-600"
+                      className="p-1 rounded hover:bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)] hover:text-[var(--color-info)]"
                       title="Duplicate line"
                     >
                       <Copy size={12} />
                     </button>
                     <button
                       onClick={() => handleDelete(line.id)}
-                      className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-500"
+                      className="p-1 rounded hover:bg-red-50 text-[var(--color-text-muted)] hover:text-red-500"
                       title="Delete line"
                     >
                       <Trash2 size={12} />
@@ -263,12 +263,12 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
       </div>
 
       {/* Footer: totals + add buttons */}
-      <div className="px-4 py-3 border-t border-slate-200 flex items-center justify-between">
+      <div className="px-4 py-3 border-t border-[var(--color-border)] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <button
             onClick={() => handleAddLine(false)}
             disabled={adding}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--color-info)] bg-[var(--color-info-bg)] hover:bg-[var(--color-info-bg)] rounded-lg transition-colors disabled:opacity-50"
           >
             <Plus size={12} />
             Add Line
@@ -284,19 +284,19 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
         </div>
 
         <div className="flex items-center gap-6 text-xs">
-          <div className="text-right">
-            <span className="text-slate-500">Additions:</span>
+          <div className="text-end">
+            <span className="text-[var(--color-text-muted)]">Additions:</span>
             <span className="ml-2 font-semibold text-green-700 tabular-nums">{formatQty(additionsTotal)}</span>
           </div>
-          <div className="text-right">
-            <span className="text-slate-500">Deductions:</span>
+          <div className="text-end">
+            <span className="text-[var(--color-text-muted)]">Deductions:</span>
             <span className="ml-2 font-semibold text-red-600 tabular-nums">−{formatQty(deductionsTotal)}</span>
           </div>
-          <div className="text-right border-l border-slate-300 pl-6">
-            <span className="text-slate-500">Total:</span>
+          <div className="text-end border-l border-[var(--color-border)] pl-6">
+            <span className="text-[var(--color-text-muted)]">Total:</span>
             <span className={cn(
               'ml-2 font-bold text-sm tabular-nums',
-              item.net_qty < 0 ? 'text-red-600' : 'text-slate-900'
+              item.net_qty < 0 ? 'text-red-600' : 'text-[var(--color-text)]'
             )}>
               {formatQty(item.net_qty)} {item.unit}
             </span>

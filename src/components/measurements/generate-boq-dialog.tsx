@@ -43,26 +43,26 @@ export function GenerateBOQDialog({
     <Modal isOpen={isOpen} onClose={onClose} title="Generate BOQ Items" size="lg">
       <div className="space-y-5">
         {/* Count */}
-        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+        <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">
           <FileSpreadsheet size={16} className="text-amber-500" />
           <span>
-            <span className="font-semibold text-slate-900 dark:text-white">{selectedItems.length}</span> measurement
+            <span className="font-semibold text-[var(--color-text)] dark:text-white">{selectedItems.length}</span> measurement
             item{selectedItems.length !== 1 ? 's' : ''} selected
           </span>
         </div>
 
         {/* Options */}
-        <div className="space-y-3 bg-slate-50 dark:bg-slate-900 rounded-lg p-4">
+        <div className="space-y-3 bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface)] rounded-lg p-4">
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
               checked={linkLibrary}
               onChange={(e) => setLinkLibrary(e.target.checked)}
-              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              className="rounded border-[var(--color-border)] text-[var(--color-info)] focus:ring-blue-500"
             />
             <div>
-              <div className="text-sm font-medium text-slate-700 dark:text-slate-200">Auto-link to library items</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">Match codes against the pricing library</div>
+              <div className="text-sm font-medium text-[var(--color-text-secondary)] dark:text-slate-200">Auto-link to library items</div>
+              <div className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">Match codes against the pricing library</div>
             </div>
           </label>
           <label className="flex items-center gap-3 cursor-pointer">
@@ -70,44 +70,44 @@ export function GenerateBOQDialog({
               type="checkbox"
               checked={copyRates}
               onChange={(e) => setCopyRates(e.target.checked)}
-              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              className="rounded border-[var(--color-border)] text-[var(--color-info)] focus:ring-blue-500"
             />
             <div>
-              <div className="text-sm font-medium text-slate-700 dark:text-slate-200">Copy rates from library</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">Pre-fill unit rates for matched items</div>
+              <div className="text-sm font-medium text-[var(--color-text-secondary)] dark:text-slate-200">Copy rates from library</div>
+              <div className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">Pre-fill unit rates for matched items</div>
             </div>
           </label>
         </div>
 
         {/* Preview table */}
-        <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+        <div className="border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-lg overflow-hidden">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-slate-100 dark:bg-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                <th className="px-3 py-2 border-r border-slate-200 dark:border-slate-700">Code</th>
-                <th className="px-3 py-2 border-r border-slate-200 dark:border-slate-700">Description</th>
-                <th className="px-3 py-2 border-r border-slate-200 text-right">Qty</th>
+              <tr className="bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated)] text-xs font-semibold text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] uppercase tracking-wider">
+                <th className="px-3 py-2 border-r border-[var(--color-border)] dark:border-[var(--color-border)]">Code</th>
+                <th className="px-3 py-2 border-r border-[var(--color-border)] dark:border-[var(--color-border)]">Description</th>
+                <th className="px-3 py-2 border-r border-[var(--color-border)] text-end">Qty</th>
                 <th className="px-3 py-2 text-center">Unit</th>
               </tr>
             </thead>
             <tbody>
               {selectedItems.map((item) => (
-                <tr key={item.id} className="border-t border-slate-100 dark:border-slate-700 text-xs">
-                  <td className="px-3 py-2 border-r border-slate-200 font-medium text-slate-700 dark:text-slate-200">
+                <tr key={item.id} className="border-t border-[var(--color-border)] dark:border-[var(--color-border)] text-xs">
+                  <td className="px-3 py-2 border-r border-[var(--color-border)] font-medium text-[var(--color-text-secondary)] dark:text-slate-200">
                     {item.item_code || '—'}
                   </td>
-                  <td className="px-3 py-2 border-r border-slate-200 text-slate-600 dark:text-slate-300 max-w-[250px] truncate">
+                  <td className="px-3 py-2 border-r border-[var(--color-border)] text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] max-w-[250px] truncate">
                     {item.description}
                   </td>
-                  <td className="px-3 py-2 border-r border-slate-200 text-right tabular-nums font-medium">
+                  <td className="px-3 py-2 border-r border-[var(--color-border)] text-end tabular-nums font-medium">
                     {formatQty(item.net_qty)}
                   </td>
-                  <td className="px-3 py-2 text-center text-slate-500">{item.unit}</td>
+                  <td className="px-3 py-2 text-center text-[var(--color-text-muted)]">{item.unit}</td>
                 </tr>
               ))}
               {selectedItems.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-3 py-6 text-center text-xs text-slate-400 dark:text-slate-500">
+                  <td colSpan={4} className="px-3 py-6 text-center text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">
                     No items selected
                   </td>
                 </tr>

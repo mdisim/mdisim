@@ -72,10 +72,10 @@ export default function TakeoffPage() {
   if (error || !drawing || !drawingUrl) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-120px)] gap-4 bg-[#0e0e10]">
-        <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-          <AlertTriangle size={22} className="text-red-400" />
+        <div className="w-12 h-12 rounded-2xl bg-[var(--color-danger-bg)] border border-[var(--color-danger)]/20 flex items-center justify-center">
+          <AlertTriangle size={22} className="text-[var(--color-danger)]" />
         </div>
-        <p className="text-sm text-red-400 max-w-xs text-center">{error ?? 'Failed to load drawing'}</p>
+        <p className="text-sm text-[var(--color-danger)] max-w-xs text-center">{error ?? 'Failed to load drawing'}</p>
         <div className="flex gap-2">
           <button
             onClick={() => setRetryCount(c => c + 1)}

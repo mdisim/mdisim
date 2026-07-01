@@ -112,7 +112,7 @@ export default function QuantitiesPage() {
     return (
       <div className="p-4 md:p-6 max-w-7xl mx-auto">
         <div className="flex flex-col items-center justify-center py-12 gap-3">
-          <p className="text-sm text-red-400">{error}</p>
+          <p className="text-sm text-[var(--color-danger)]">{error}</p>
           <button onClick={load} className="px-4 py-2 text-sm font-medium bg-[color:var(--color-amber)] text-[color:var(--color-on-amber)] rounded-xl hover:opacity-90">{t.quantities.retry}</button>
         </div>
       </div>

@@ -205,7 +205,7 @@ export function MeasurementGrid({
 
     if (!isActive) {
       return (
-        <td className="px-2 py-1.5 bg-slate-50 dark:bg-slate-900 text-slate-300 text-center text-xs select-none border-r border-slate-200 dark:border-slate-700">
+        <td className="px-2 py-1.5 bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface)] text-[var(--color-text-secondary)] text-center text-xs select-none border-r border-[var(--color-border)] dark:border-[var(--color-border)]">
           &mdash;
         </td>
       )
@@ -213,7 +213,7 @@ export function MeasurementGrid({
 
     if (isEditing) {
       return (
-        <td className="px-0 py-0 border-r border-slate-200 dark:border-slate-700">
+        <td className="px-0 py-0 border-r border-[var(--color-border)] dark:border-[var(--color-border)]">
           <input
             ref={inputRef}
             type={inputType}
@@ -223,8 +223,8 @@ export function MeasurementGrid({
             onBlur={() => commitEdit(cellKey)}
             onKeyDown={(e) => handleKeyDown(e, cellKey)}
             className={cn(
-              'w-full h-full px-2 py-1.5 text-xs border-2 border-blue-400 ring-1 ring-blue-500 outline-none bg-white dark:bg-slate-800',
-              inputType === 'number' && 'text-right',
+              'w-full h-full px-2 py-1.5 text-xs border-2 border-blue-400 ring-1 ring-blue-500 outline-none bg-white dark:bg-[var(--color-surface-elevated)]',
+              inputType === 'number' && 'text-end',
             )}
             style={width ? { minWidth: width } : undefined}
           />
@@ -237,13 +237,13 @@ export function MeasurementGrid({
     return (
       <td
         className={cn(
-          'px-2 py-1.5 text-xs cursor-pointer border-r border-slate-200 dark:border-slate-700 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors',
-          inputType === 'number' && 'text-right tabular-nums',
+          'px-2 py-1.5 text-xs cursor-pointer border-r border-[var(--color-border)] dark:border-[var(--color-border)] hover:bg-[var(--color-info-bg)]/50 dark:hover:bg-[var(--color-info-bg)]/20 transition-colors',
+          inputType === 'number' && 'text-end tabular-nums',
           isDeduction && typeof value === 'number' && 'text-red-600',
         )}
         onClick={() => startEdit(cellKey, value)}
       >
-        {displayValue || <span className="text-slate-300 dark:text-slate-600">&nbsp;</span>}
+        {displayValue || <span className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">&nbsp;</span>}
       </td>
     )
   }
@@ -265,31 +265,31 @@ export function MeasurementGrid({
   const allSelected = items.length > 0 && items.every((i) => selectedItems.has(i.id))
 
   return (
-    <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-800 shadow-sm">
+    <div className="border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-lg overflow-hidden bg-white dark:bg-[var(--color-surface-elevated)] shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse min-w-[1000px]">
           <thead className="sticky top-0 z-10">
-            <tr className="bg-slate-100 dark:bg-slate-700 border-b border-slate-300 dark:border-slate-600 text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-              <th className="w-8 px-2 py-2.5 border-r border-slate-200 dark:border-slate-700">
+            <tr className="bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated)] border-b border-[var(--color-border)] dark:border-[var(--color-border)] text-xs font-semibold text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] uppercase tracking-wider">
+              <th className="w-8 px-2 py-2.5 border-r border-[var(--color-border)] dark:border-[var(--color-border)]">
                 <input
                   type="checkbox"
                   checked={allSelected}
                   onChange={onSelectAll}
-                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-[var(--color-border)] text-[var(--color-info)] focus:ring-blue-500"
                 />
               </th>
-              <th className="w-8 px-2 py-2.5 border-r border-slate-200 dark:border-slate-700" />
-              <th className="w-8 px-2 py-2.5 border-r border-slate-200 text-center">+/−</th>
-              <th className="px-2 py-2.5 border-r border-slate-200 min-w-[80px]">Code</th>
-              <th className="px-2 py-2.5 border-r border-slate-200 min-w-[200px]">Description</th>
-              <th className="px-2 py-2.5 border-r border-slate-200 w-16 text-center">Type</th>
-              <th className="px-2 py-2.5 border-r border-slate-200 w-14 text-center">Unit</th>
-              <th className="px-2 py-2.5 border-r border-slate-200 w-16 text-right">Nr</th>
-              <th className="px-2 py-2.5 border-r border-slate-200 w-20 text-right">Length</th>
-              <th className="px-2 py-2.5 border-r border-slate-200 w-20 text-right">Width</th>
-              <th className="px-2 py-2.5 border-r border-slate-200 w-20 text-right">Height</th>
-              <th className="px-2 py-2.5 border-r border-slate-200 w-24">Formula</th>
-              <th className="px-2 py-2.5 border-r border-slate-200 w-24 text-right">Quantity</th>
+              <th className="w-8 px-2 py-2.5 border-r border-[var(--color-border)] dark:border-[var(--color-border)]" />
+              <th className="w-8 px-2 py-2.5 border-r border-[var(--color-border)] text-center">+/−</th>
+              <th className="px-2 py-2.5 border-r border-[var(--color-border)] min-w-[80px]">Code</th>
+              <th className="px-2 py-2.5 border-r border-[var(--color-border)] min-w-[200px]">Description</th>
+              <th className="px-2 py-2.5 border-r border-[var(--color-border)] w-16 text-center">Type</th>
+              <th className="px-2 py-2.5 border-r border-[var(--color-border)] w-14 text-center">Unit</th>
+              <th className="px-2 py-2.5 border-r border-[var(--color-border)] w-16 text-end">Nr</th>
+              <th className="px-2 py-2.5 border-r border-[var(--color-border)] w-20 text-end">Length</th>
+              <th className="px-2 py-2.5 border-r border-[var(--color-border)] w-20 text-end">Width</th>
+              <th className="px-2 py-2.5 border-r border-[var(--color-border)] w-20 text-end">Height</th>
+              <th className="px-2 py-2.5 border-r border-[var(--color-border)] w-24">Formula</th>
+              <th className="px-2 py-2.5 border-r border-[var(--color-border)] w-24 text-end">Quantity</th>
               <th className="px-2 py-2.5 w-10" />
             </tr>
           </thead>
@@ -304,7 +304,7 @@ export function MeasurementGrid({
                 <SectionGroup key={sectionName}>
                   {/* Section header */}
                   <tr
-                    className="bg-slate-800 text-white cursor-pointer select-none"
+                    className="bg-[var(--color-surface-elevated)] text-white cursor-pointer select-none"
                     onClick={() => toggleSection(sectionName)}
                   >
                     <td colSpan={2} className="px-2 py-2">
@@ -313,7 +313,7 @@ export function MeasurementGrid({
                     <td colSpan={10} className="px-2 py-2 text-xs font-bold uppercase tracking-wide">
                       {sectionName}
                     </td>
-                    <td className="px-2 py-2 text-xs text-right font-medium tabular-nums">
+                    <td className="px-2 py-2 text-xs text-end font-medium tabular-nums">
                       {formatQty(sectionNet)}
                     </td>
                     <td />
@@ -333,42 +333,42 @@ export function MeasurementGrid({
                           {/* Item row */}
                           <tr
                             className={cn(
-                              'bg-blue-50 dark:bg-blue-900/20 font-semibold border-l-4 border-l-blue-500 border-b border-slate-200 dark:border-slate-700',
-                              'hover:bg-blue-100/70 dark:hover:bg-blue-900/30 transition-colors',
+                              'bg-[var(--color-info-bg)] font-semibold border-l-4 border-l-blue-500 border-b border-[var(--color-border)] dark:border-[var(--color-border)]',
+                              'hover:bg-[var(--color-info-bg)]/70 dark:hover:bg-[var(--color-info-bg)]/30 transition-colors',
                             )}
                           >
-                            <td className="px-2 py-2 border-r border-slate-200 dark:border-slate-700">
+                            <td className="px-2 py-2 border-r border-[var(--color-border)] dark:border-[var(--color-border)]">
                               <input
                                 type="checkbox"
                                 checked={selectedItems.has(item.id)}
                                 onChange={() => onToggleSelect(item.id)}
-                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                className="rounded border-[var(--color-border)] text-[var(--color-info)] focus:ring-blue-500"
                               />
                             </td>
                             <td
-                              className="px-2 py-2 border-r border-slate-200 cursor-pointer"
+                              className="px-2 py-2 border-r border-[var(--color-border)] cursor-pointer"
                               onClick={() => toggleItem(item.id)}
                             >
                               {itemExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                             </td>
-                            <td className="px-2 py-2 border-r border-slate-200 dark:border-slate-700" />
+                            <td className="px-2 py-2 border-r border-[var(--color-border)] dark:border-[var(--color-border)]" />
                             {renderEditableCell(`${item.id}:item_code`, item.item_code, true, false, 'text')}
                             {renderEditableCell(`${item.id}:description`, item.description, true, false, 'text')}
-                            <td className="px-2 py-2 border-r border-slate-200 text-xs text-center text-slate-500 dark:text-slate-400">
+                            <td className="px-2 py-2 border-r border-[var(--color-border)] text-xs text-center text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">
                               {item.measurement_type}
                             </td>
-                            <td className="px-2 py-2 border-r border-slate-200 text-xs text-center text-slate-500 dark:text-slate-400">
+                            <td className="px-2 py-2 border-r border-[var(--color-border)] text-xs text-center text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">
                               {item.unit}
                             </td>
                             {/* Empty dimension cells for item row */}
-                            <td colSpan={5} className="border-r border-slate-200 dark:border-slate-700" />
-                            <td className="px-2 py-2 border-r border-slate-200 text-xs text-right font-bold tabular-nums">
+                            <td colSpan={5} className="border-r border-[var(--color-border)] dark:border-[var(--color-border)]" />
+                            <td className="px-2 py-2 border-r border-[var(--color-border)] text-xs text-end font-bold tabular-nums">
                               {formatQty(itemNet)}
                             </td>
                             <td className="px-2 py-1 text-center">
                               <button
                                 onClick={() => onDeleteItem(item.id)}
-                                className="p-1 text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors"
+                                className="p-1 text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] hover:text-red-500 transition-colors"
                                 title="Delete item"
                               >
                                 <Trash2 size={13} />
@@ -392,14 +392,14 @@ export function MeasurementGrid({
                                 <tr
                                   key={line.id}
                                   className={cn(
-                                    'border-b border-slate-100 dark:border-slate-700 transition-colors',
-                                    line.is_deduction ? 'bg-red-50/50 dark:bg-red-900/20' : 'bg-white dark:bg-slate-800',
-                                    'hover:bg-slate-50 dark:hover:bg-slate-700',
+                                    'border-b border-[var(--color-border)] dark:border-[var(--color-border)] transition-colors',
+                                    line.is_deduction ? 'bg-red-50/50 dark:bg-red-900/20' : 'bg-white dark:bg-[var(--color-surface-elevated)]',
+                                    'hover:bg-[var(--color-surface-elevated)] dark:hover:bg-[var(--color-surface-elevated)]',
                                   )}
                                 >
-                                  <td className="border-r border-slate-200 dark:border-slate-700" />
-                                  <td className="border-r border-slate-200 dark:border-slate-700" />
-                                  <td className="px-2 py-1.5 border-r border-slate-200 text-center">
+                                  <td className="border-r border-[var(--color-border)] dark:border-[var(--color-border)]" />
+                                  <td className="border-r border-[var(--color-border)] dark:border-[var(--color-border)]" />
+                                  <td className="px-2 py-1.5 border-r border-[var(--color-border)] text-center">
                                     <button
                                       onClick={async () => {
                                         await onUpdateLine(line.id, { is_deduction: !line.is_deduction })
@@ -416,7 +416,7 @@ export function MeasurementGrid({
                                     </button>
                                   </td>
                                   {/* Code col - line number */}
-                                  <td className="px-2 py-1.5 border-r border-slate-200 text-xs text-slate-400 dark:text-slate-500 pl-6">
+                                  <td className="px-2 py-1.5 border-r border-[var(--color-border)] text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] pl-6">
                                     {line.line_number}
                                   </td>
                                   {/* Description */}
@@ -428,8 +428,8 @@ export function MeasurementGrid({
                                     'text',
                                   )}
                                   {/* Type + Unit - empty for lines */}
-                                  <td className="border-r border-slate-200 dark:border-slate-700" />
-                                  <td className="border-r border-slate-200 dark:border-slate-700" />
+                                  <td className="border-r border-[var(--color-border)] dark:border-[var(--color-border)]" />
+                                  <td className="border-r border-[var(--color-border)] dark:border-[var(--color-border)]" />
                                   {/* Nr */}
                                   {renderEditableCell(
                                     `${line.id}:nr`,
@@ -473,7 +473,7 @@ export function MeasurementGrid({
                                   {/* Quantity */}
                                   <td
                                     className={cn(
-                                      'px-2 py-1.5 border-r border-slate-200 text-xs text-right tabular-nums font-medium',
+                                      'px-2 py-1.5 border-r border-[var(--color-border)] text-xs text-end tabular-nums font-medium',
                                       line.is_deduction && 'text-red-600',
                                     )}
                                   >
@@ -484,18 +484,18 @@ export function MeasurementGrid({
                                   <td className="px-1 py-1 text-center relative">
                                     <button
                                       onClick={() => setLineMenu(lineMenu === line.id ? null : line.id)}
-                                      className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                      className="p-1 text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] dark:hover:text-[var(--color-text-secondary)] transition-colors"
                                     >
                                       <MoreHorizontal size={13} />
                                     </button>
                                     {lineMenu === line.id && (
-                                      <div className="absolute right-0 top-full z-20 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg py-1 min-w-[140px]">
+                                      <div className="absolute right-0 top-full z-20 bg-white dark:bg-[var(--color-surface-elevated)] border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-lg shadow-lg py-1 min-w-[140px]">
                                         <button
                                           onClick={() => {
                                             onDuplicateLine(line.id)
                                             setLineMenu(null)
                                           }}
-                                          className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 w-full"
+                                          className="flex items-center gap-2 px-3 py-1.5 text-xs text-[var(--color-text-secondary)] dark:text-slate-200 hover:bg-[var(--color-surface-elevated)] dark:hover:bg-[var(--color-surface-elevated)] w-full"
                                         >
                                           <Copy size={12} /> Duplicate
                                         </button>
@@ -517,20 +517,20 @@ export function MeasurementGrid({
 
                           {/* Item subtotal */}
                           {itemExpanded && lines.length > 0 && (
-                            <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-                              <td colSpan={4} className="border-r border-slate-200 dark:border-slate-700" />
-                              <td colSpan={8} className="px-2 py-1.5 text-xs text-slate-500 dark:text-slate-400 italic">
+                            <tr className="bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface)] border-b border-[var(--color-border)] dark:border-[var(--color-border)]">
+                              <td colSpan={4} className="border-r border-[var(--color-border)] dark:border-[var(--color-border)]" />
+                              <td colSpan={8} className="px-2 py-1.5 text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] italic">
                                 <span className="mr-4">
                                   Add: <span className="font-medium tabular-nums">{formatQty(itemAdditions)}</span>
                                 </span>
                                 <span className="mr-4 text-red-500">
                                   Ded: <span className="font-medium tabular-nums">−{formatQty(itemDeductions)}</span>
                                 </span>
-                                <span className="font-semibold text-slate-700 dark:text-slate-200">
+                                <span className="font-semibold text-[var(--color-text-secondary)] dark:text-slate-200">
                                   Net: <span className="tabular-nums">{formatQty(itemNet)}</span>
                                 </span>
                               </td>
-                              <td className="px-2 py-1.5 border-r border-slate-200 text-xs text-right font-medium italic tabular-nums">
+                              <td className="px-2 py-1.5 border-r border-[var(--color-border)] text-xs text-end font-medium italic tabular-nums">
                                 {formatQty(itemNet)}
                               </td>
                               <td />
@@ -539,12 +539,12 @@ export function MeasurementGrid({
 
                           {/* Add line buttons */}
                           {itemExpanded && (
-                            <tr className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                            <tr className="bg-white dark:bg-[var(--color-surface-elevated)] border-b border-[var(--color-border)] dark:border-[var(--color-border)]">
                               <td colSpan={14} className="px-6 py-1.5">
                                 <div className="flex gap-2">
                                   <button
                                     onClick={() => onAddLine(item.id, false)}
-                                    className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+                                    className="flex items-center gap-1 text-xs text-[var(--color-info)] hover:text-[var(--color-info)] dark:hover:text-[var(--color-info)] font-medium"
                                   >
                                     <Plus size={12} /> Add line
                                   </button>
@@ -564,12 +564,12 @@ export function MeasurementGrid({
 
                   {/* Section subtotal */}
                   {sectionExpanded && (
-                    <tr className="bg-slate-100 dark:bg-slate-700 border-b-2 border-slate-300 dark:border-slate-600">
-                      <td colSpan={4} className="border-r border-slate-200 dark:border-slate-700" />
-                      <td colSpan={8} className="px-2 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 italic">
+                    <tr className="bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated)] border-b-2 border-[var(--color-border)] dark:border-[var(--color-border)]">
+                      <td colSpan={4} className="border-r border-[var(--color-border)] dark:border-[var(--color-border)]" />
+                      <td colSpan={8} className="px-2 py-2 text-xs font-semibold text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] italic">
                         Section Total — {sectionName}
                       </td>
-                      <td className="px-2 py-2 text-xs text-right font-bold tabular-nums border-r border-slate-200 dark:border-slate-700">
+                      <td className="px-2 py-2 text-xs text-end font-bold tabular-nums border-r border-[var(--color-border)] dark:border-[var(--color-border)]">
                         {formatQty(sectionNet)}
                       </td>
                       <td />
@@ -580,15 +580,15 @@ export function MeasurementGrid({
             })}
           </tbody>
           <tfoot>
-            <tr className="bg-slate-800 text-white">
+            <tr className="bg-[var(--color-surface-elevated)] text-white">
               <td colSpan={4} />
               <td colSpan={8} className="px-2 py-3 text-xs font-bold uppercase tracking-wide">
                 Grand Total
-                <span className="ml-4 font-normal text-slate-300">
+                <span className="ml-4 font-normal text-[var(--color-text-secondary)]">
                   Add: {formatQty(grandTotal.additions)} | Ded: −{formatQty(grandTotal.deductions)}
                 </span>
               </td>
-              <td className="px-2 py-3 text-sm text-right font-bold tabular-nums">
+              <td className="px-2 py-3 text-sm text-end font-bold tabular-nums">
                 {formatQty(grandTotal.net)}
               </td>
               <td />

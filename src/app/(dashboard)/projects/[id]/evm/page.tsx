@@ -64,8 +64,8 @@ function getHealthStatus(
   labels: { onTrack: string; critical: string; overBudget: string; behindSchedule: string; atRisk: string },
 ): { label: string; color: string; bg: string; icon: typeof CheckCircle2 } {
   if (spi >= 1 && cpi >= 1) return { label: labels.onTrack, color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20', icon: CheckCircle2 }
-  if (spi < 0.9 && cpi < 0.9) return { label: labels.critical, color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20', icon: XCircle }
-  if (cpi < 1) return { label: labels.overBudget, color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20', icon: AlertTriangle }
+  if (spi < 0.9 && cpi < 0.9) return { label: labels.critical, color: 'text-[var(--color-danger)]', bg: 'bg-[var(--color-danger-bg)] border-[var(--color-danger)]/20', icon: XCircle }
+  if (cpi < 1) return { label: labels.overBudget, color: 'text-[var(--color-danger)]', bg: 'bg-[var(--color-danger-bg)] border-[var(--color-danger)]/20', icon: AlertTriangle }
   if (spi < 1) return { label: labels.behindSchedule, color: 'text-[var(--color-amber)]', bg: 'bg-[var(--color-amber)]/10 border-[var(--color-amber)]/20', icon: Clock }
   return { label: labels.atRisk, color: 'text-[var(--color-amber)]', bg: 'bg-[var(--color-amber)]/10 border-[var(--color-amber)]/20', icon: AlertTriangle }
 }
@@ -320,8 +320,8 @@ export default function EVMPage() {
     return (
       <div className="p-4 md:p-8 min-h-screen bg-[var(--background)]">
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4">
-            <AlertTriangle size={28} className="text-red-400" />
+          <div className="w-14 h-14 rounded-2xl bg-[var(--color-danger-bg)] border border-[var(--color-danger)]/20 flex items-center justify-center mb-4">
+            <AlertTriangle size={28} className="text-[var(--color-danger)]" />
           </div>
           <h3 className="text-base font-semibold text-[var(--color-text)] mb-2">{error}</h3>
           <Button onClick={load} className="mt-4">
@@ -412,7 +412,7 @@ export default function EVMPage() {
           const isAmber = kpi.good === null
           const iconBg = isAmber
             ? 'bg-[var(--color-amber)] text-[var(--color-on-amber)]'
-            : kpi.good ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
+            : kpi.good ? 'bg-green-500/10 text-green-400' : 'bg-[var(--color-danger-bg)] text-[var(--color-danger)]'
           return (
             <motion.div key={kpi.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
               <div className="p-3 rounded-xl bg-[var(--color-surface-elevated)] border border-[var(--color-border)] hover:border-[var(--color-amber)]/30 transition-colors">
@@ -445,11 +445,11 @@ export default function EVMPage() {
           <div className="mt-4 space-y-2.5 border-t border-[var(--color-border)] pt-4">
             <div className="flex justify-between items-center">
               <span className="text-xs text-[var(--color-text-muted)]">{t.evm.schedulePerformance}</span>
-              <span className={cn('text-sm font-bold tabular-nums', evm.spi >= 1 ? 'text-green-400' : 'text-red-400')}>{fmtIdx(evm.spi)}</span>
+              <span className={cn('text-sm font-bold tabular-nums', evm.spi >= 1 ? 'text-green-400' : 'text-[var(--color-danger)]')}>{fmtIdx(evm.spi)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-xs text-[var(--color-text-muted)]">{t.evm.costPerformance}</span>
-              <span className={cn('text-sm font-bold tabular-nums', evm.cpi >= 1 ? 'text-green-400' : 'text-red-400')}>{fmtIdx(evm.cpi)}</span>
+              <span className={cn('text-sm font-bold tabular-nums', evm.cpi >= 1 ? 'text-green-400' : 'text-[var(--color-danger)]')}>{fmtIdx(evm.cpi)}</span>
             </div>
           </div>
         </div>
@@ -467,7 +467,7 @@ export default function EVMPage() {
                 <span className={cn('text-sm font-bold tabular-nums',
                   'isTcpi' in v && v.isTcpi
                     ? 'text-[var(--color-text)]'
-                    : v.good ? 'text-green-400' : 'text-red-400'
+                    : v.good ? 'text-green-400' : 'text-[var(--color-danger)]'
                 )}>
                   {'isTcpi' in v && v.isTcpi ? fmtIdx(v.value) : fmt(v.value, evm.currency)}
                 </span>
@@ -500,7 +500,7 @@ export default function EVMPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-[var(--color-text-secondary)]">{t.evm.vacLabel}</span>
-                <span className={cn('text-sm font-bold tabular-nums', evm.vac >= 0 ? 'text-green-400' : 'text-red-400')}>
+                <span className={cn('text-sm font-bold tabular-nums', evm.vac >= 0 ? 'text-green-400' : 'text-[var(--color-danger)]')}>
                   {fmt(evm.vac, evm.currency)}
                 </span>
               </div>

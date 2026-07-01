@@ -353,7 +353,7 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-8">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-md">
-          <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-[var(--color-danger-bg)] flex items-center justify-center mx-auto mb-4">
             <AlertTriangle size={28} className="text-red-500" />
           </div>
           <h2 className="text-lg font-bold text-[var(--foreground)] mb-2">{t.dashboard.dashboardUnavailable}</h2>
@@ -457,7 +457,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
           {([
             { label: t.dashboard.totalProjects, value: totalProjects, icon: FolderKanban, gradient: 'from-violet-600 to-indigo-600', trend: undefined, glass: true },
-            { label: t.dashboard.totalBudget, value: totalContractValue, icon: Briefcase, gradient: 'from-blue-600 to-cyan-600', prefix: '$', decimals: 2, glass: true },
+            { label: t.dashboard.totalBudget, value: totalContractValue, icon: Briefcase, gradient: 'from-[var(--color-info)] to-[var(--color-info-light)]', prefix: '$', decimals: 2, glass: true },
             { label: t.dashboard.activeTenders, value: activeTenders, icon: Receipt, gradient: 'from-purple-600 to-fuchsia-600', glass: true },
             { label: t.dashboard.totalPayments, value: totalPaid, icon: DollarSign, gradient: 'from-emerald-600 to-teal-600', prefix: '$', decimals: 2, glass: true },
             { label: t.dashboard.completion, value: completionRate, icon: Target, gradient: 'from-amber-600 to-orange-600', suffix: '%', decimals: 1, glass: true },

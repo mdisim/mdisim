@@ -614,7 +614,7 @@ export default function CostControlPage() {
           >
             <StatCard label={t.costControl.actualCost} value={actualCost} decimals={2} icon={TrendingDown} gradient="from-[var(--color-danger)] to-rose-700" compact />
             <StatCard label={t.costControl.committed} value={committedCost} decimals={2} icon={Clock} gradient="from-[var(--color-warning)] to-orange-600" compact />
-            <StatCard label={t.costControl.forecast} value={forecastCost} decimals={2} icon={TrendingUp} gradient="from-[var(--color-info)] to-blue-700" compact />
+            <StatCard label={t.costControl.forecast} value={forecastCost} decimals={2} icon={TrendingUp} gradient="from-[var(--color-info)] to-[var(--color-info-light)]" compact />
           </motion.div>
 
           <SectionCard
