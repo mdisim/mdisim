@@ -29,7 +29,7 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  let user = null
+  let user: { id: string } | null = null
   try {
     const { data } = await supabase.auth.getUser()
     user = data.user

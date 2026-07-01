@@ -40,7 +40,7 @@ function CashFlowChart({ data }: { data: { month: string; income: number; expens
               transition={{ duration: 0.8, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
             />
             <motion.div
-              className="flex-1 rounded-t-sm bg-[#60a5fa] opacity-60"
+              className="flex-1 rounded-t-sm bg-[var(--color-info)] opacity-60"
               initial={{ height: 0 }}
               animate={{ height: `${(d.expense / max) * 100}%` }}
               transition={{ duration: 0.8, delay: i * 0.05 + 0.1, ease: [0.16, 1, 0.3, 1] }}
@@ -85,7 +85,7 @@ function ProjectCard({ project, summary, onClick, t }: { project: Project; summa
           project.status === 'active'
             ? 'bg-[var(--color-amber)]/10 text-[var(--color-amber)] border border-[var(--color-amber)]/20'
             : project.status === 'completed'
-            ? 'bg-[#60a5fa]/10 text-[#60a5fa] border border-[#60a5fa]/20'
+            ? 'bg-[var(--color-info)]/10 text-[var(--color-info)] border border-[var(--color-info)]/20'
             : 'bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)] border border-[var(--color-border)]'
         )}>
           {project.status}
@@ -314,7 +314,7 @@ export default function DashboardPage() {
           label: `Variation ${v.status}`,
           detail: `${s.project.name} - ${v.title ?? v.variation_no}`,
           time: v.created_at ?? s.project.updated_at,
-          color: v.status === 'approved' ? '#60a5fa' : '#f87171',
+          color: v.status === 'approved' ? 'var(--color-info)' : '#f87171',
           icon: v.status === 'approved' ? CheckCircle2 : AlertTriangle,
         })
       }
@@ -456,11 +456,11 @@ export default function DashboardPage() {
         {/* ── KPI Cards ── */}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
           {([
-            { label: t.dashboard.totalProjects, value: totalProjects, icon: FolderKanban, gradient: 'from-violet-600 to-indigo-600', trend: undefined, glass: true },
-            { label: t.dashboard.totalBudget, value: totalContractValue, icon: Briefcase, gradient: 'from-[var(--color-info)] to-[var(--color-info-light)]', prefix: '$', decimals: 2, glass: true },
-            { label: t.dashboard.activeTenders, value: activeTenders, icon: Receipt, gradient: 'from-purple-600 to-fuchsia-600', glass: true },
-            { label: t.dashboard.totalPayments, value: totalPaid, icon: DollarSign, gradient: 'from-emerald-600 to-teal-600', prefix: '$', decimals: 2, glass: true },
-            { label: t.dashboard.completion, value: completionRate, icon: Target, gradient: 'from-amber-600 to-orange-600', suffix: '%', decimals: 1, glass: true },
+            { label: t.dashboard.totalProjects, value: totalProjects, icon: FolderKanban, gradient: 'from-[#ffd165] to-[#eab308]', trend: undefined, glass: true },
+            { label: t.dashboard.totalBudget, value: totalContractValue, icon: Briefcase, gradient: 'from-[#ffd165]/60 to-[#eab308]/60', prefix: '$', decimals: 2, glass: true },
+            { label: t.dashboard.activeTenders, value: activeTenders, icon: Receipt, gradient: 'from-[#9b8f79] to-[#4f4633]', glass: true },
+            { label: t.dashboard.totalPayments, value: totalPaid, icon: DollarSign, gradient: 'from-[#22c55e] to-[#16a34a]', prefix: '$', decimals: 2, glass: true },
+            { label: t.dashboard.completion, value: completionRate, icon: Target, gradient: 'from-[#ffd165] to-[#eab308]', suffix: '%', decimals: 1, glass: true },
           ] as const).map((kpi, index) => (
             <motion.div key={kpi.label} variants={fadeUp}>
               <StatCard
@@ -509,7 +509,7 @@ export default function DashboardPage() {
                     <CashFlowChart data={cashFlowData} />
                     <div className="flex items-center justify-center gap-5 mt-3 text-[10px] text-[var(--color-text-muted)]">
                       <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[var(--color-amber)]" />{t.dashboard.income}</span>
-                      <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#60a5fa]" />{t.dashboard.expense}</span>
+                      <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[var(--color-info)]" />{t.dashboard.expense}</span>
                     </div>
                   </>
                 ) : (
@@ -660,7 +660,7 @@ export default function DashboardPage() {
                       title={t.dashboard.pendingPayments}
                       value={fmtCompact(pendingPayments)}
                       subtitle={t.dashboard.awaitingClientApproval}
-                      color="#60a5fa"
+                      color="var(--color-info)"
                     />
                   )}
                   {pendingVariations > 0 && (
@@ -728,7 +728,7 @@ export default function DashboardPage() {
                             <div className="text-[12px] font-semibold text-[var(--foreground)] group-hover:text-[var(--color-amber)] transition-colors">{s.project.name}</div>
                           </td>
                           <td className="py-3 pe-4 text-end text-[12px] font-medium text-[var(--color-text-secondary)] tabular-nums">{fmtCompact(contractVal)}</td>
-                          <td className="py-3 pe-4 text-end text-[12px] font-medium text-[#60a5fa] tabular-nums">{varApproved > 0 ? `+${fmtCompact(varApproved)}` : '-'}</td>
+                          <td className="py-3 pe-4 text-end text-[12px] font-medium text-[var(--color-info)] tabular-nums">{varApproved > 0 ? `+${fmtCompact(varApproved)}` : '-'}</td>
                           <td className="py-3 pe-4 text-end text-[12px] font-medium text-[#f87171] tabular-nums">{fmtCompact(actual)}</td>
                           <td className={cn('py-3 pe-4 text-end text-[12px] font-bold tabular-nums', profit >= 0 ? 'text-[#22c55e]' : 'text-[#f87171]')}>{fmtCompact(profit)}</td>
                           <td className="py-3 text-end">

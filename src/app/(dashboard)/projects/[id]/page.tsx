@@ -42,9 +42,9 @@ import { useI18n } from '@/lib/i18n'
 import { useToast } from '@/components/ui/toast'
 
 const SEVERITY_STYLES: Record<AlertSeverity, { bg: string; border: string; icon: typeof AlertTriangle; iconColor: string; label: string }> = {
-  critical: { bg: 'bg-[#f87171]/5', border: 'border-[#f87171]/20', icon: XCircle, iconColor: 'text-[#f87171]', label: 'Critical' },
+  critical: { bg: 'bg-[var(--color-danger-bg)]/5', border: 'border-[var(--color-danger)]/20', icon: XCircle, iconColor: 'text-[var(--color-danger-light)]', label: 'Critical' },
   warning: { bg: 'bg-[var(--color-amber)]/5', border: 'border-[var(--color-amber)]/20', icon: AlertTriangle, iconColor: 'text-[var(--color-amber)]', label: 'Warning' },
-  info: { bg: 'bg-[#60a5fa]/5', border: 'border-[#60a5fa]/20', icon: Info, iconColor: 'text-[#60a5fa]', label: 'Info' },
+  info: { bg: 'bg-[var(--color-info-bg)]', border: 'border-[var(--color-info)]/20', icon: Info, iconColor: 'text-[var(--color-info-light)]', label: 'Info' },
 }
 
 const CATEGORY_ICONS: Record<string, typeof FileSpreadsheet> = {
@@ -75,7 +75,7 @@ function ScoreRing({ score, size = 120 }: { score: number; size?: number }) {
   const radius = (size - 12) / 2
   const circumference = 2 * Math.PI * radius
   const offset = circumference - (score / 100) * circumference
-  const color = score >= 80 ? '#22c55e' : score >= 60 ? '#eab308' : '#f87171'
+  const color = score >= 80 ? 'var(--color-success-light)' : score >= 60 ? '#eab308' : 'var(--color-danger-light)'
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
@@ -96,7 +96,7 @@ function ScoreRing({ score, size = 120 }: { score: number; size?: number }) {
 
 function DimensionBar({ dim }: { dim: HealthDimension }) {
   const pct = (dim.score / dim.maxScore) * 100
-  const color = dim.status === 'good' ? '#22c55e' : dim.status === 'warning' ? '#eab308' : '#f87171'
+  const color = dim.status === 'good' ? 'var(--color-success-light)' : dim.status === 'warning' ? '#eab308' : 'var(--color-danger-light)'
   const Icon = DIMENSION_ICONS[dim.id] ?? Activity
 
   return (
@@ -159,7 +159,7 @@ function AlertCard({ alert }: { alert: Alert }) {
 }
 
 function RecommendationCard({ rec, t }: { rec: Recommendation; t: TranslationKeys }) {
-  const priorityColor = rec.priority === 'high' ? '#f87171' : rec.priority === 'medium' ? '#eab308' : '#60a5fa'
+  const priorityColor = rec.priority === 'high' ? 'var(--color-danger-light)' : rec.priority === 'medium' ? '#eab308' : 'var(--color-info-light)'
   const EffortIcon = rec.effort === 'quick' ? Zap : rec.effort === 'moderate' ? Wrench : Building2
   const effortLabel = rec.effort === 'quick' ? t.intelligence.effortQuick : rec.effort === 'moderate' ? t.intelligence.effortModerate : t.intelligence.effortSignificant
 
@@ -167,7 +167,7 @@ function RecommendationCard({ rec, t }: { rec: Recommendation; t: TranslationKey
     <div
       className={cn(
         'border border-[var(--color-border)] rounded-xl p-3 border-s-4',
-        rec.priority === 'high' ? 'border-s-[#f87171]' : rec.priority === 'medium' ? 'border-s-[#eab308]' : 'border-s-[#60a5fa]'
+        rec.priority === 'high' ? 'border-s-[var(--color-danger-light)]' : rec.priority === 'medium' ? 'border-s-[#eab308]' : 'border-s-[var(--color-info-light)]'
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -256,8 +256,8 @@ export default function ProjectIntelligencePage() {
     return (
       <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-8">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-md">
-          <div className="w-16 h-16 rounded-2xl bg-[#f87171]/10 flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle size={28} className="text-[#f87171]" />
+          <div className="w-16 h-16 rounded-2xl bg-[var(--color-danger-bg)]/10 flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle size={28} className="text-[var(--color-danger-light)]" />
           </div>
           <h2 className="text-lg font-bold text-[var(--foreground)] mb-2">{t.intelligence.failedToLoad}</h2>
           <p className="text-sm text-[var(--color-text-muted)] mb-6">{error}</p>
@@ -336,9 +336,9 @@ export default function ProjectIntelligencePage() {
                 <ScoreRing score={health.overall} />
                 <p className="text-xs text-[var(--color-text-muted)] text-center mt-3 max-w-[240px]">{health.summary}</p>
                 <div className="flex items-center gap-4 mt-4 text-[10px]">
-                  <span className="flex items-center gap-1 text-[#f87171]"><XCircle size={12} /> {criticals.length} {t.intelligence.critical}</span>
+                  <span className="flex items-center gap-1 text-[var(--color-danger-light)]"><XCircle size={12} /> {criticals.length} {t.intelligence.critical}</span>
                   <span className="flex items-center gap-1 text-[var(--color-amber)]"><AlertTriangle size={12} /> {warnings.length} {t.intelligence.warning}</span>
-                  <span className="flex items-center gap-1 text-[#60a5fa]"><Info size={12} /> {infos.length} {t.intelligence.info}</span>
+                  <span className="flex items-center gap-1 text-[var(--color-info-light)]"><Info size={12} /> {infos.length} {t.intelligence.info}</span>
                 </div>
               </div>
             </SectionCard>
@@ -346,12 +346,12 @@ export default function ProjectIntelligencePage() {
 
           {/* Today's Priorities */}
           <motion.div variants={fadeUp} className="lg:col-span-2">
-            <SectionCard title={t.intelligence.requiresAttentionToday} icon={Target} iconColor="text-[#f87171]" className="h-full">
+            <SectionCard title={t.intelligence.requiresAttentionToday} icon={Target} iconColor="text-[var(--color-danger-light)]" className="h-full">
               {criticals.length === 0 && highRecs.length === 0 ? (
-                <div className="flex items-center gap-3 p-4 bg-[#22c55e]/5 border border-[#22c55e]/20 rounded-xl">
-                  <CheckCircle2 size={24} className="text-[#22c55e]" />
+                <div className="flex items-center gap-3 p-4 bg-[var(--color-success-bg)] border border-[var(--color-success)]/20 rounded-xl">
+                  <CheckCircle2 size={24} className="text-[var(--color-success-light)]" />
                   <div>
-                    <p className="text-sm font-medium text-[#22c55e]">{t.intelligence.allClear}</p>
+                    <p className="text-sm font-medium text-[var(--color-success-light)]">{t.intelligence.allClear}</p>
                     <p className="text-xs text-[var(--color-text-muted)]">{t.intelligence.noCriticalIssues}</p>
                   </div>
                 </div>

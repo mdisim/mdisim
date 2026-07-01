@@ -78,13 +78,13 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
     >
       {/* Logo */}
       <div className={cn('flex items-center gap-3 px-4 py-5 border-b border-[#4f4633]', collapsed && 'justify-center px-2')}>
-        <div className="w-9 h-9 bg-[#ffd165]/10 rounded-[var(--radius-md)] flex items-center justify-center shrink-0 border border-[#ffd165]/20">
-          <span className="text-[#ffd165] font-bold text-base">A</span>
+        <div className="w-8 h-8 rounded bg-[#eab308] flex items-center justify-center shrink-0 shadow-[0_2px_8px_rgba(234,179,8,0.3)]">
+          <span className="text-[#604700] font-bold text-sm leading-none">A</span>
         </div>
         {!collapsed && (
           <div className="flex-1 min-w-0">
-            <h1 className="text-[var(--color-text)] font-bold text-sm tracking-widest">ANGEL D.C.</h1>
-            <p className="text-[var(--color-amber)]/80 text-[10px] font-medium mt-0.5 tracking-wide">{t.sidebar.tagline}</p>
+            <span className="text-[#ffd165] font-bold text-[11px] tracking-widest uppercase leading-none block font-mono">ANGEL D.C.</span>
+            <span className="text-[#d3c5ac] text-[10px] font-medium mt-0.5 block">Construction Intelligence</span>
           </div>
         )}
         <button

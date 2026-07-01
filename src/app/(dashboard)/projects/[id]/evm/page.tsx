@@ -63,7 +63,7 @@ function getHealthStatus(
   cpi: number,
   labels: { onTrack: string; critical: string; overBudget: string; behindSchedule: string; atRisk: string },
 ): { label: string; color: string; bg: string; icon: typeof CheckCircle2 } {
-  if (spi >= 1 && cpi >= 1) return { label: labels.onTrack, color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20', icon: CheckCircle2 }
+  if (spi >= 1 && cpi >= 1) return { label: labels.onTrack, color: 'text-[var(--color-success-light)]', bg: 'bg-[var(--color-success-bg)] border-[var(--color-success)]/20', icon: CheckCircle2 }
   if (spi < 0.9 && cpi < 0.9) return { label: labels.critical, color: 'text-[var(--color-danger)]', bg: 'bg-[var(--color-danger-bg)] border-[var(--color-danger)]/20', icon: XCircle }
   if (cpi < 1) return { label: labels.overBudget, color: 'text-[var(--color-danger)]', bg: 'bg-[var(--color-danger-bg)] border-[var(--color-danger)]/20', icon: AlertTriangle }
   if (spi < 1) return { label: labels.behindSchedule, color: 'text-[var(--color-amber)]', bg: 'bg-[var(--color-amber)]/10 border-[var(--color-amber)]/20', icon: Clock }
@@ -201,8 +201,8 @@ function SCurveChart({ evm, legend }: { evm: EVMData; legend: { pv: string; ev: 
         ) : null)}
         {/* S-Curves — Amber (PV), Blue (EV), Red-accent (AC) */}
         <polyline points={polyline(evm.pvCurve)} fill="none" stroke="#eab308" strokeWidth={2.5} strokeLinecap="round" />
-        <polyline points={polyline(evm.evCurve)} fill="none" stroke="#3b82f6" strokeWidth={2.5} strokeLinecap="round" />
-        <polyline points={polyline(evm.acCurve)} fill="none" stroke="#ef4444" strokeWidth={2} strokeDasharray="6,3" strokeLinecap="round" />
+        <polyline points={polyline(evm.evCurve)} fill="none" stroke="var(--color-info-light)" strokeWidth={2.5} strokeLinecap="round" />
+        <polyline points={polyline(evm.acCurve)} fill="none" stroke="var(--color-danger-light)" strokeWidth={2} strokeDasharray="6,3" strokeLinecap="round" />
       </svg>
       {/* Legend */}
       <div className="flex items-center justify-center gap-6 mt-3 text-xs font-semibold">
@@ -213,7 +213,7 @@ function SCurveChart({ evm, legend }: { evm: EVMData; legend: { pv: string; ev: 
           <span className="w-4 h-0.5 bg-[var(--color-blue)] inline-block rounded" /> {legend.ev}
         </span>
         <span className="flex items-center gap-1.5 text-[var(--color-text-muted)]">
-          <span className="w-4 h-0.5 bg-red-400 inline-block rounded" /> {legend.ac}
+          <span className="w-4 h-0.5 bg-[var(--color-danger-light)] inline-block rounded" /> {legend.ac}
         </span>
       </div>
     </div>
@@ -244,7 +244,7 @@ function IndicesChart({ spi, cpi }: { spi: number; cpi: number }) {
 
       {bars.map((b) => {
         const barH = (b.value / maxVal) * ch
-        const color = b.value >= 1 ? '#22c55e' : '#ef4444'
+        const color = b.value >= 1 ? 'var(--color-success-light)' : 'var(--color-danger-light)'
         return (
           <g key={b.label}>
             <rect x={b.x} y={yPos(b.value)} width={barW} height={barH} rx={4} fill={color} opacity={0.85} />
@@ -412,7 +412,7 @@ export default function EVMPage() {
           const isAmber = kpi.good === null
           const iconBg = isAmber
             ? 'bg-[var(--color-amber)] text-[var(--color-on-amber)]'
-            : kpi.good ? 'bg-green-500/10 text-green-400' : 'bg-[var(--color-danger-bg)] text-[var(--color-danger)]'
+            : kpi.good ? 'bg-[var(--color-success-bg)] text-[var(--color-success-light)]' : 'bg-[var(--color-danger-bg)] text-[var(--color-danger)]'
           return (
             <motion.div key={kpi.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
               <div className="p-3 rounded-xl bg-[var(--color-surface-elevated)] border border-[var(--color-border)] hover:border-[var(--color-amber)]/30 transition-colors">
@@ -445,11 +445,11 @@ export default function EVMPage() {
           <div className="mt-4 space-y-2.5 border-t border-[var(--color-border)] pt-4">
             <div className="flex justify-between items-center">
               <span className="text-xs text-[var(--color-text-muted)]">{t.evm.schedulePerformance}</span>
-              <span className={cn('text-sm font-bold tabular-nums', evm.spi >= 1 ? 'text-green-400' : 'text-[var(--color-danger)]')}>{fmtIdx(evm.spi)}</span>
+              <span className={cn('text-sm font-bold tabular-nums', evm.spi >= 1 ? 'text-[var(--color-success-light)]' : 'text-[var(--color-danger)]')}>{fmtIdx(evm.spi)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-xs text-[var(--color-text-muted)]">{t.evm.costPerformance}</span>
-              <span className={cn('text-sm font-bold tabular-nums', evm.cpi >= 1 ? 'text-green-400' : 'text-[var(--color-danger)]')}>{fmtIdx(evm.cpi)}</span>
+              <span className={cn('text-sm font-bold tabular-nums', evm.cpi >= 1 ? 'text-[var(--color-success-light)]' : 'text-[var(--color-danger)]')}>{fmtIdx(evm.cpi)}</span>
             </div>
           </div>
         </div>
@@ -467,7 +467,7 @@ export default function EVMPage() {
                 <span className={cn('text-sm font-bold tabular-nums',
                   'isTcpi' in v && v.isTcpi
                     ? 'text-[var(--color-text)]'
-                    : v.good ? 'text-green-400' : 'text-[var(--color-danger)]'
+                    : v.good ? 'text-[var(--color-success-light)]' : 'text-[var(--color-danger)]'
                 )}>
                   {'isTcpi' in v && v.isTcpi ? fmtIdx(v.value) : fmt(v.value, evm.currency)}
                 </span>
@@ -500,7 +500,7 @@ export default function EVMPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-[var(--color-text-secondary)]">{t.evm.vacLabel}</span>
-                <span className={cn('text-sm font-bold tabular-nums', evm.vac >= 0 ? 'text-green-400' : 'text-[var(--color-danger)]')}>
+                <span className={cn('text-sm font-bold tabular-nums', evm.vac >= 0 ? 'text-[var(--color-success-light)]' : 'text-[var(--color-danger)]')}>
                   {fmt(evm.vac, evm.currency)}
                 </span>
               </div>

@@ -113,8 +113,8 @@ export default function ProjectsPage() {
               <FolderKanban size={20} className="text-[var(--color-amber)]" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-[var(--foreground)]">{t.projects.title}</h1>
-              <p className="text-[11px] text-[var(--color-text-muted)] uppercase tracking-widest">
+              <h1 className="text-[28px] font-bold tracking-[-0.02em] text-[#e5e1e4] leading-tight">{t.projects.title}</h1>
+              <p className="text-[11px] text-[#9b8f79] uppercase tracking-[0.12em] font-mono mt-0.5">
                 {projects.length} {projects.length === 1 ? 'project' : 'projects'}
               </p>
             </div>
@@ -127,8 +127,8 @@ export default function ProjectsPage() {
                 className={cn(
                   'p-1.5 rounded-lg transition-all',
                   view === 'grid'
-                    ? 'bg-[var(--color-amber)] text-[var(--color-on-amber)]'
-                    : 'text-[var(--color-text-muted)] hover:text-[var(--foreground)]'
+                    ? 'bg-[#eab308] text-[#604700]'
+                    : 'text-[#9b8f79] hover:text-[#e5e1e4]'
                 )}
                 title={t.dashboard.gridView}
                 aria-label={t.dashboard.gridView}
@@ -142,8 +142,8 @@ export default function ProjectsPage() {
                 className={cn(
                   'p-1.5 rounded-lg transition-all',
                   view === 'list'
-                    ? 'bg-[var(--color-amber)] text-[var(--color-on-amber)]'
-                    : 'text-[var(--color-text-muted)] hover:text-[var(--foreground)]'
+                    ? 'bg-[#eab308] text-[#604700]'
+                    : 'text-[#9b8f79] hover:text-[#e5e1e4]'
                 )}
                 title={t.dashboard.listView}
                 aria-label={t.dashboard.listView}
@@ -219,7 +219,7 @@ export default function ProjectsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35, delay: idx * 0.05, ease: 'easeOut' }}
                   onClick={() => router.push(`/projects/${project.id}/measurements`)}
-                  className="group relative bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] overflow-hidden hover:border-[var(--color-amber)]/40 transition-all duration-300 cursor-pointer hover:bg-[var(--color-surface-elevated)]"
+                  className="group relative bg-[#201f22] rounded-2xl border border-[#4f4633] overflow-hidden hover:border-[#ffd165]/30 transition-all duration-300 cursor-pointer hover:bg-[#2a2a2c]"
                 >
                   {/* Top amber accent line */}
                   <div className="h-[2px] w-full" style={{ background: accentColor }} />
@@ -242,7 +242,7 @@ export default function ProjectsPage() {
                       </button>
                     </div>
 
-                    <h3 className="font-bold text-[var(--foreground)] mb-2 truncate">{project.name}</h3>
+                    <h3 className="font-semibold text-[#e5e1e4] text-base mb-2 truncate">{project.name}</h3>
 
                     <div className="space-y-1.5 mb-4">
                       {project.client_name && (
@@ -259,7 +259,7 @@ export default function ProjectsPage() {
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-[var(--color-border)]">
+                    <div className="flex items-center justify-between pt-3 border-t border-[#4f4633]">
                       <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)]">
                         <Calendar size={12} />
                         <span>{formatDate(project.updated_at)}</span>

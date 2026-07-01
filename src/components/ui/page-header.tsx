@@ -23,16 +23,16 @@ export function PageHeader({ icon: Icon, title, subtitle, gradient, badge, actio
       className={cn('flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8', className)}
     >
       <div className="flex items-center gap-4">
-        <div className={cn('p-3 rounded-2xl bg-gradient-to-br text-white shadow-lg', gradient)}>
-          <Icon size={24} />
+        <div className={cn('p-3 rounded-xl bg-gradient-to-br shadow-lg', gradient)}>
+          <Icon size={22} className="text-[#604700]" />
         </div>
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-[var(--color-text)] tracking-tight">{title}</h1>
+            <h1 className="text-[28px] font-bold text-[#e5e1e4] tracking-[-0.02em] leading-tight">{title}</h1>
             {badge}
           </div>
           {subtitle && (
-            <p className="text-sm text-[var(--color-text-secondary)] mt-0.5">{subtitle}</p>
+            <p className="text-sm text-[#d3c5ac] mt-0.5">{subtitle}</p>
           )}
         </div>
       </div>

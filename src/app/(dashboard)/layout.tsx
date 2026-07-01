@@ -13,20 +13,14 @@ export default async function DashboardLayout({
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
-
-  const { data: projects } = await supabase
-    .from('projects')
-    .select('id, name')
-    .order('created_at', { ascending: false })
+  if (!user) { redirect('/login') }
+  const { data: p } = await supabase.from('projects').select('id, name').order('created_at', { ascending: false })
+  const projects = p ?? []
 
   return (
     <I18nProvider>
       <div className="flex h-screen overflow-hidden bg-[var(--background)]">
-        <AppSidebar userEmail={user.email} />
+        <AppSidebar userEmail={user?.email} />
         <div className="flex-1 flex flex-col min-w-0">
           <DashboardHeader />
           <main className="flex-1 overflow-y-auto">
