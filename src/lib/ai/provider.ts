@@ -46,7 +46,6 @@ export class AnthropicProvider implements AIProvider {
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: options?.maxTokens ?? 8192,
-      thinking: { type: 'adaptive' },
       messages: apiMessages,
     })
 
