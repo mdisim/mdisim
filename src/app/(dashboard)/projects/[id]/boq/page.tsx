@@ -28,6 +28,7 @@ import {
   Hash,
   PieChart,
   Search,
+  Paperclip,
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
 import { cn } from '@/lib/utils'
@@ -49,6 +50,7 @@ import { exportBOQToExcel } from '@/lib/export/boq-excel'
 import { exportBOQToPDF } from '@/lib/export/boq-pdf'
 import { parseBOQExcel } from '@/lib/import/boq-excel'
 import type { ImportedBOQRow } from '@/lib/import/boq-excel'
+import { BOQEvidenceCenter } from '@/components/boq/boq-evidence-center'
 
 interface EditingCell {
   itemId: string
@@ -82,6 +84,7 @@ export default function BOQPage() {
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([])
   const [librarySearch, setLibrarySearch] = useState('')
   const [libraryLoaded, setLibraryLoaded] = useState(false)
+  const [evidenceItem, setEvidenceItem] = useState<BOQItem | null>(null)
 
   const [form, setForm] = useState({
     code: '',
@@ -681,6 +684,14 @@ export default function BOQPage() {
                           <td className="px-1 py-0.5">
                             <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                               <button
+                                onClick={() => setEvidenceItem(item)}
+                                className="p-1 rounded hover:bg-[var(--color-amber)]/10 text-[color:var(--color-border)] hover:text-[color:var(--color-amber)] transition-colors"
+                                title="Evidence Center"
+                                aria-label="Evidence Center"
+                              >
+                                <Paperclip size={13} />
+                              </button>
+                              <button
                                 onClick={() => handleOpenLibraryLink(item.id)}
                                 className={cn(
                                   'p-1 rounded transition-colors',
@@ -978,6 +989,16 @@ export default function BOQPage() {
           </div>
         </div>
       </Modal>
+
+      {/* BOQ Evidence Center drawer */}
+      {evidenceItem && (
+        <BOQEvidenceCenter
+          isOpen={!!evidenceItem}
+          onClose={() => setEvidenceItem(null)}
+          boqItem={evidenceItem}
+          projectId={projectId}
+        />
+      )}
 
       <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title={t.boq.confirmTitle} size="sm">
         <p className="text-sm text-[color:var(--color-text-secondary)] mb-4">{confirmAction?.message}</p>

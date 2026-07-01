@@ -446,6 +446,54 @@ export interface QuantityChange {
   created_at: string
 }
 
+// ── Quantity Attachments ────────────────────────────────────────────────
+
+export type AttachmentFileType = 'photo' | 'pdf' | 'excel' | 'word' | 'dwg' | 'other'
+export type AttachmentCategory = 'site_photo' | 'inspection' | 'drawing' | 'calculation' | 'specification' | 'correspondence' | 'other'
+
+export interface QuantityAttachment {
+  id: string
+  project_id: string
+  mi_id: string | null
+  boq_item_id: string | null
+  drawing_measurement_id: string | null
+  file_path: string
+  file_name: string
+  file_type: AttachmentFileType
+  file_size: number | null
+  mime_type: string | null
+  title: string | null
+  description: string | null
+  category: AttachmentCategory
+  uploaded_by: string | null
+  created_at: string
+}
+
+// ── Measurement Sketches ────────────────────────────────────────────────
+
+export type SketchSnapshotType = 'auto' | 'manual'
+
+export interface MeasurementSketch {
+  id: string
+  project_id: string
+  drawing_id: string | null
+  drawing_measurement_id: string | null
+  mi_id: string | null
+  file_path: string | null
+  quantity: number | null
+  unit: string | null
+  formula: string | null
+  scale_label: string | null
+  page_number: number | null
+  drawing_name: string | null
+  drawing_number: string | null
+  revision_number: string | null
+  drawing_ref: string | null
+  notes: string | null
+  snapshot_type: SketchSnapshotType
+  created_at: string
+}
+
 // ── Auth / profile types ────────────────────────────────────────────────
 
 export interface Profile {

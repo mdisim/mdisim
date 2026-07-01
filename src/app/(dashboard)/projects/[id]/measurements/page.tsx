@@ -29,7 +29,8 @@ import { SectionCard } from '@/components/ui/section-card'
 import { MeasurementGrid } from '@/components/measurements/measurement-grid'
 import { MeasurementToolbar } from '@/components/measurements/measurement-toolbar'
 import { GenerateBOQDialog } from '@/components/measurements/generate-boq-dialog'
-import { Ruler, Plus, Image, ArrowRight, BarChart3, GitBranch, FileText, Layers } from 'lucide-react'
+import { Ruler, Plus, Image, ArrowRight, BarChart3, GitBranch, FileText, Layers, Paperclip } from 'lucide-react'
+import { AttachmentsPanel } from '@/components/attachments/attachments-panel'
 import { cn } from '@/lib/utils'
 import { useI18n } from '@/lib/i18n'
 import { getProject } from '@/app/actions/projects'
@@ -67,6 +68,7 @@ export default function MeasurementsPage() {
   const [showGenerateBOQ, setShowGenerateBOQ] = useState(false)
   const [confirmAction, setConfirmAction] = useState<{ message: string; onConfirm: () => void } | null>(null)
   const [creating, setCreating] = useState(false)
+  const [attachmentsItemId, setAttachmentsItemId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const [createForm, setCreateForm] = useState({
@@ -548,6 +550,7 @@ export default function MeasurementsPage() {
               onUpdateLine={handleUpdateLine}
               onDeleteLine={handleDeleteLine}
               onDuplicateLine={handleDuplicateLine}
+              onAttachments={(id) => setAttachmentsItemId(id)}
             />
           </div>
         </motion.div>
@@ -599,6 +602,33 @@ export default function MeasurementsPage() {
         selectedItems={items.filter((item) => selectedItems.has(item.id))}
         onGenerate={handleGenerateBOQ}
       />
+
+      {/* Attachments drawer */}
+      {attachmentsItemId && (() => {
+        const mi = items.find((i) => i.id === attachmentsItemId)
+        return mi ? (
+          <>
+            <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setAttachmentsItemId(null)} />
+            <div className="fixed inset-y-0 end-0 z-50 w-full max-w-[420px] bg-[var(--color-surface-low)] border-s border-[var(--color-border)] flex flex-col shadow-2xl">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">
+                <div>
+                  <p className="text-[10px] font-mono text-[var(--color-amber)] uppercase tracking-widest mb-0.5">Attachments</p>
+                  <p className="text-sm font-semibold text-[var(--color-text)] line-clamp-1">{mi.description}</p>
+                </div>
+                <button onClick={() => setAttachmentsItemId(null)} className="p-1.5 rounded-lg hover:bg-[var(--color-surface-hover)] text-[var(--color-text-muted)]">
+                  <Paperclip size={16} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4">
+                <AttachmentsPanel
+                  projectId={projectId}
+                  miId={mi.id}
+                />
+              </div>
+            </div>
+          </>
+        ) : null
+      })()}
     </motion.div>
   )
 }

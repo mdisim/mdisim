@@ -23,6 +23,8 @@ import { getMeasurementItems } from '@/app/actions/measurements'
 import { getPaymentCerts } from '@/app/actions/payments'
 import { getDashboardSummaries } from '@/app/actions/dashboard'
 import { getProject } from '@/app/actions/projects'
+import { getAttachments } from '@/app/actions/attachments'
+import { getSketches } from '@/app/actions/sketches'
 import { exportBOQToPDF } from '@/lib/export/boq-pdf'
 import { exportBOQToExcel } from '@/lib/export/boq-excel'
 import { exportMeasurementsToPDF } from '@/lib/export/measurements-pdf'
@@ -33,6 +35,9 @@ import { exportPaymentReportToPDF } from '@/lib/export/payment-pdf'
 import { exportPaymentReportToExcel } from '@/lib/export/payment-excel'
 import { exportEVMReportToPDF } from '@/lib/export/evm-pdf'
 import { exportEVMReportToExcel } from '@/lib/export/evm-excel'
+import { generateEvidenceReport } from '@/lib/export/evidence-report'
+import { getProfile } from '@/app/actions/profile'
+import { getRateAnalyses } from '@/app/actions/rate-analysis'
 import { useI18n } from '@/lib/i18n'
 
 const reportCards = [
@@ -69,6 +74,13 @@ const reportCards = [
     title: 'EVM Report',
     description: 'Earned Value Management performance metrics',
     icon: TrendingUp,
+    amberAccent: true,
+  },
+  {
+    key: 'evidence',
+    title: 'Quantity Backup Report',
+    description: 'Engineering evidence report: sketches, drawings, measurements, QR code — per BOQ item',
+    icon: FileBarChart,
     amberAccent: true,
   },
 ] as const
@@ -160,6 +172,49 @@ export default function ReportsPage() {
           }
           break
         }
+        case 'evidence': {
+          const [project, boqItems, allMeasurements, profileData, rateAnalyses] = await Promise.all([
+            getProject(projectId),
+            getBOQItems(projectId),
+            getMeasurementItems(projectId),
+            getProfile(),
+            getRateAnalyses(projectId),
+          ])
+          if (!project) throw new Error('Project not found')
+          if (boqItems.length === 0) throw new Error('No BOQ items found. Add BOQ items first.')
+
+          const co = (profileData?.profile as Record<string, unknown> | null)?.companies as Record<string, unknown> | null
+          const company = co ? {
+            name: (co.name as string) ?? project.name,
+            logo_url: (co.logo_url as string) ?? null,
+            address: (co.address as string) ?? null,
+            phone: (co.phone as string) ?? null,
+            email: (co.email as string) ?? null,
+            registration_number: (co.registration_number as string) ?? null,
+          } : null
+
+          // Generate evidence report for the first BOQ item with measurements
+          // (In production this would be per-item; for now we generate for the highest-value item)
+          const targetItem = boqItems.sort((a, b) => (b.total_amount ?? 0) - (a.total_amount ?? 0))[0]
+          const linkedMeasurements = allMeasurements.filter(m => m.id === targetItem.mi_id)
+          const rateAnalysis = rateAnalyses.find(r => r.boq_item_id === targetItem.id) ?? null
+
+          generateEvidenceReport({
+            boqItem: targetItem,
+            projectName: project.name,
+            measurements: linkedMeasurements,
+            sourceDrawings: [],
+            quantityChanges: [],
+            rateAnalysis,
+            costEntries: [],
+            payments: { totalCertified: 0, contractAmount: targetItem.total_amount ?? 0 },
+            drawingMeasurements: [],
+            company,
+            engineerName: (profileData?.profile as Record<string, unknown> | null)?.full_name as string ?? 'Engineer',
+            currency: project.currency ?? 'USD',
+          })
+          break
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate report')
@@ -233,17 +288,20 @@ export default function ReportsPage() {
                       onClick={() => handleGenerate(card.key, 'pdf')}
                       className="flex-1"
                     >
-                      <FileText size={13} className="me-1.5" /> PDF
+                      <FileText size={13} className="me-1.5" />
+                      {card.key === 'evidence' ? 'Generate Report' : 'PDF'}
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      loading={isLoadingExcel}
-                      onClick={() => handleGenerate(card.key, 'excel')}
-                      className="flex-1"
-                    >
-                      <Download size={13} className="me-1.5" /> Excel
-                    </Button>
+                    {card.key !== 'evidence' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        loading={isLoadingExcel}
+                        onClick={() => handleGenerate(card.key, 'excel')}
+                        className="flex-1"
+                      >
+                        <Download size={13} className="me-1.5" /> Excel
+                      </Button>
+                    )}
                   </div>
                 </div>
               </motion.div>

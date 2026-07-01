@@ -10,6 +10,7 @@ import {
   Trash2,
   Copy,
   MoreHorizontal,
+  Paperclip,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -82,6 +83,7 @@ interface MeasurementGridProps {
   onAddItem: () => void
   onAddLine: (itemId: string, isDeduction?: boolean) => Promise<void>
   onDeleteItem: (id: string) => Promise<void>
+  onAttachments?: (id: string) => void
   onDeleteLine: (id: string) => Promise<void>
   onDuplicateLine: (id: string) => Promise<void>
   selectedItems: Set<string>
@@ -107,6 +109,7 @@ export function MeasurementGrid({
   selectedItems,
   onToggleSelect,
   onSelectAll,
+  onAttachments,
 }: MeasurementGridProps) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(() => new Set(items.map((i) => i.id)))
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
@@ -366,13 +369,24 @@ export function MeasurementGrid({
                               {formatQty(itemNet)}
                             </td>
                             <td className="px-2 py-1 text-center">
-                              <button
-                                onClick={() => onDeleteItem(item.id)}
-                                className="p-1 text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] hover:text-red-500 transition-colors"
-                                title="Delete item"
-                              >
-                                <Trash2 size={13} />
-                              </button>
+                              <div className="flex items-center gap-0.5">
+                                {onAttachments && (
+                                  <button
+                                    onClick={() => onAttachments(item.id)}
+                                    className="p-1 text-[var(--color-text-muted)] hover:text-[var(--color-amber)] transition-colors"
+                                    title="Attachments"
+                                  >
+                                    <Paperclip size={13} />
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => onDeleteItem(item.id)}
+                                  className="p-1 text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] hover:text-red-500 transition-colors"
+                                  title="Delete item"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </div>
                             </td>
                           </tr>
 
