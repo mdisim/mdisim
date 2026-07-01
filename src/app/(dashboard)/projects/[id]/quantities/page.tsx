@@ -191,13 +191,13 @@ export default function QuantitiesPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-[color:var(--color-surface)] border-b border-[color:var(--color-border)]">
-                  <th className="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colDrawing}</th>
-                  <th className="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colNumber}</th>
-                  <th className="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colType}</th>
-                  <th className="text-right px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colMeasurements}</th>
-                  <th className="text-right px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colLinear}</th>
-                  <th className="text-right px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colArea}</th>
-                  <th className="text-right px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colCounts}</th>
+                  <th className="text-start px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colDrawing}</th>
+                  <th className="text-start px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colNumber}</th>
+                  <th className="text-start px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colType}</th>
+                  <th className="text-end px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colMeasurements}</th>
+                  <th className="text-end px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colLinear}</th>
+                  <th className="text-end px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colArea}</th>
+                  <th className="text-end px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colCounts}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[color:var(--color-border)]/50">
@@ -216,10 +216,10 @@ export default function QuantitiesPage() {
                       <td className="px-4 py-3 font-medium text-[color:var(--color-text)]">{d.name}</td>
                       <td className="px-4 py-3 font-mono text-xs text-[color:var(--color-text-secondary)]">{d.drawing_number ?? '-'}</td>
                       <td className="px-4 py-3"><Badge variant="default">{d.drawing_type}</Badge></td>
-                      <td className="px-4 py-3 text-right tabular-nums font-mono font-medium text-[color:var(--color-text)]">{d.measurements.length}</td>
-                      <td className="px-4 py-3 text-right tabular-nums font-mono text-[color:var(--color-text-secondary)]">{linear > 0 ? fmt(linear) : '-'}</td>
-                      <td className="px-4 py-3 text-right tabular-nums font-mono text-[color:var(--color-text-secondary)]">{area > 0 ? fmt(area) : '-'}</td>
-                      <td className="px-4 py-3 text-right tabular-nums font-mono text-[color:var(--color-text-secondary)]">{counts > 0 ? counts : '-'}</td>
+                      <td className="px-4 py-3 text-end tabular-nums font-mono font-medium text-[color:var(--color-text)]">{d.measurements.length}</td>
+                      <td className="px-4 py-3 text-end tabular-nums font-mono text-[color:var(--color-text-secondary)]">{linear > 0 ? fmt(linear) : '-'}</td>
+                      <td className="px-4 py-3 text-end tabular-nums font-mono text-[color:var(--color-text-secondary)]">{area > 0 ? fmt(area) : '-'}</td>
+                      <td className="px-4 py-3 text-end tabular-nums font-mono text-[color:var(--color-text-secondary)]">{counts > 0 ? counts : '-'}</td>
                     </tr>
                   )
                 })}
@@ -227,10 +227,10 @@ export default function QuantitiesPage() {
               <tfoot>
                 <tr className="bg-[color:var(--color-amber)]/5 border-t-2 border-[color:var(--color-amber)]/30">
                   <td colSpan={3} className="px-4 py-3 font-bold text-[color:var(--color-amber)]">{t.quantities.projectTotal}</td>
-                  <td className="px-4 py-3 text-right tabular-nums font-mono font-bold text-[color:var(--color-amber)]">{allMeasurements.length}</td>
-                  <td className="px-4 py-3 text-right tabular-nums font-mono font-bold text-[color:var(--color-amber)]">{fmt(totalLinear)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums font-mono font-bold text-[color:var(--color-amber)]">{fmt(totalArea)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums font-mono font-bold text-[color:var(--color-amber)]">{totalCounts}</td>
+                  <td className="px-4 py-3 text-end tabular-nums font-mono font-bold text-[color:var(--color-amber)]">{allMeasurements.length}</td>
+                  <td className="px-4 py-3 text-end tabular-nums font-mono font-bold text-[color:var(--color-amber)]">{fmt(totalLinear)}</td>
+                  <td className="px-4 py-3 text-end tabular-nums font-mono font-bold text-[color:var(--color-amber)]">{fmt(totalArea)}</td>
+                  <td className="px-4 py-3 text-end tabular-nums font-mono font-bold text-[color:var(--color-amber)]">{totalCounts}</td>
                 </tr>
               </tfoot>
             </table>
@@ -242,7 +242,7 @@ export default function QuantitiesPage() {
       {activeTab === 'by-drawing' && (
         <div>
           <div className="mb-3 relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--color-text-secondary)]" />
+            <Search size={16} className="absolute start-3 top-1/2 -translate-y-1/2 text-[color:var(--color-text-secondary)]" />
             <input
               type="text"
               placeholder={t.quantities.searchDrawings}
@@ -280,9 +280,9 @@ export default function QuantitiesPage() {
                         <table className="w-full text-xs">
                           <thead>
                             <tr className="bg-[color:var(--color-surface)]">
-                              <th className="text-left px-4 py-2 font-mono uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colLabel}</th>
+                              <th className="text-start px-4 py-2 font-mono uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colLabel}</th>
                               <th className="text-center px-4 py-2 font-mono uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colTool}</th>
-                              <th className="text-right px-4 py-2 font-mono uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colQuantity}</th>
+                              <th className="text-end px-4 py-2 font-mono uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colQuantity}</th>
                               <th className="text-center px-4 py-2 font-mono uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colUnit}</th>
                               <th className="text-center px-4 py-2 font-mono uppercase tracking-widest text-[color:var(--color-text-secondary)]">{t.quantities.colPage}</th>
                             </tr>
@@ -292,7 +292,7 @@ export default function QuantitiesPage() {
                               <tr key={m.id} className="hover:bg-[color:var(--color-amber)]/5 transition-colors">
                                 <td className="px-4 py-2 text-[color:var(--color-text)]">{m.label || `${t.quantities.measurementFallback} ${i + 1}`}</td>
                                 <td className="px-4 py-2 text-center"><Badge variant="default">{m.tool_type}</Badge></td>
-                                <td className="px-4 py-2 text-right tabular-nums font-mono font-medium text-[color:var(--color-text)]">{fmt(m.quantity)}</td>
+                                <td className="px-4 py-2 text-end tabular-nums font-mono font-medium text-[color:var(--color-text)]">{fmt(m.quantity)}</td>
                                 <td className="px-4 py-2 text-center text-[color:var(--color-text-secondary)]">{m.unit ?? 'px'}</td>
                                 <td className="px-4 py-2 text-center text-[color:var(--color-text-secondary)]">{m.page_number}</td>
                               </tr>
@@ -387,9 +387,9 @@ export default function QuantitiesPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-[color:var(--color-surface)] border-b border-[color:var(--color-border)]">
-                      <th className="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)] sticky start-0 bg-[color:var(--color-surface)]">{t.quantities.colMetric}</th>
+                      <th className="text-start px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)] sticky start-0 bg-[color:var(--color-surface)]">{t.quantities.colMetric}</th>
                       {compareDrawings.map(d => (
-                        <th key={d.id} className="text-right px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)] min-w-[120px]">{d.name}</th>
+                        <th key={d.id} className="text-end px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-text-secondary)] min-w-[120px]">{d.name}</th>
                       ))}
                     </tr>
                   </thead>
@@ -409,7 +409,7 @@ export default function QuantitiesPage() {
                           else if (metric.key === 'Area') val = d.measurements.filter(m => m.tool_type === 'area' || m.tool_type === 'rectangle' || m.tool_type === 'circle').reduce((s, m) => s + m.quantity, 0)
                           else val = d.measurements.filter(m => m.tool_type === 'count').reduce((s, m) => s + m.quantity, 0)
                           return (
-                            <td key={d.id} className="px-4 py-3 text-right tabular-nums font-mono font-medium text-[color:var(--color-text)]">
+                            <td key={d.id} className="px-4 py-3 text-end tabular-nums font-mono font-medium text-[color:var(--color-text)]">
                               {metric.key === 'Total Measurements' || metric.key === 'Count' ? val : fmt(val)}
                             </td>
                           )

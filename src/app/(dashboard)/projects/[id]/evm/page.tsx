@@ -210,7 +210,7 @@ function SCurveChart({ evm, legend }: { evm: EVMData; legend: { pv: string; ev: 
           <span className="w-4 h-0.5 bg-[var(--color-amber)] inline-block rounded" /> {legend.pv}
         </span>
         <span className="flex items-center gap-1.5 text-[var(--color-text-muted)]">
-          <span className="w-4 h-0.5 bg-blue-500 inline-block rounded" /> {legend.ev}
+          <span className="w-4 h-0.5 bg-[var(--color-blue)] inline-block rounded" /> {legend.ev}
         </span>
         <span className="flex items-center gap-1.5 text-[var(--color-text-muted)]">
           <span className="w-4 h-0.5 bg-red-400 inline-block rounded" /> {legend.ac}

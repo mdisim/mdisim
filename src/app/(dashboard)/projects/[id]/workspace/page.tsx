@@ -153,7 +153,7 @@ function WorkspaceInner({ projectId, projectName }: { projectId: string; project
             {viewMode === '3d' && <BimViewer />}
             {viewMode === 'split' && (
               <div className="flex h-full">
-                <div className="flex-1 overflow-hidden border-r border-[var(--color-border)]">
+                <div className="flex-1 overflow-hidden border-e border-[var(--color-border)]">
                   <WorkspaceDrawingViewer />
                 </div>
                 <div className="flex-1 overflow-hidden">

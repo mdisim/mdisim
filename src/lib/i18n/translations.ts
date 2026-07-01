@@ -5,6 +5,7 @@ export const translations = {
       search: 'Search...', loading: 'Loading...', retry: 'Retry',
       export: 'Export', import: 'Import', add: 'Add', edit: 'Edit',
       noData: 'No data available', comingSoon: 'Coming Soon',
+      lightMode: 'Switch to light mode', darkMode: 'Switch to dark mode',
     },
     nav: {
       dashboard: 'Dashboard', projects: 'Projects', settings: 'Settings',
@@ -687,6 +688,7 @@ export const translations = {
       search: 'بحث...', loading: 'جاري التحميل...', retry: 'إعادة المحاولة',
       export: 'تصدير', import: 'استيراد', add: 'إضافة', edit: 'تعديل',
       noData: 'لا توجد بيانات', comingSoon: 'قريباً',
+      lightMode: 'التبديل إلى الوضع الفاتح', darkMode: 'التبديل إلى الوضع الداكن',
     },
     nav: {
       dashboard: 'لوحة التحكم', projects: 'المشاريع', settings: 'الإعدادات',
@@ -1369,6 +1371,7 @@ export const translations = {
       search: 'חיפוש...', loading: 'טוען...', retry: 'נסה שוב',
       export: 'ייצוא', import: 'ייבוא', add: 'הוסף', edit: 'ערוך',
       noData: 'אין נתונים', comingSoon: 'בקרוב',
+      lightMode: 'עבור למצב בהיר', darkMode: 'עבור למצב כהה',
     },
     nav: {
       dashboard: 'לוח בקרה', projects: 'פרויקטים', settings: 'הגדרות',

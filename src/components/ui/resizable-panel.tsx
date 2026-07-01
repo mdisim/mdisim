@@ -90,9 +90,9 @@ export function ResizablePanel({
         className={cn(
           'group relative flex h-full w-1 flex-shrink-0 cursor-col-resize items-center justify-center',
           'bg-slate-200 dark:bg-slate-700',
-          'hover:bg-blue-500',
+          'hover:bg-[var(--color-amber)]',
           'transition-colors duration-150',
-          isDragging && 'bg-blue-500'
+          isDragging && 'bg-[var(--color-amber)]'
         )}
       >
         <div className="flex flex-col gap-1">

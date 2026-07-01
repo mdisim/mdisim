@@ -17,7 +17,7 @@ type DockTab = 'ai' | 'evidence' | 'history' | 'cost' | 'activity' | 'reports'
 
 const DOCK_TABS: { key: DockTab; label: string; icon: typeof Bot; color: string }[] = [
   { key: 'ai', label: 'AI Engineer', icon: Bot, color: 'text-violet-500' },
-  { key: 'evidence', label: 'Evidence Center', icon: Layers, color: 'text-blue-500' },
+  { key: 'evidence', label: 'Evidence Center', icon: Layers, color: 'text-[var(--color-blue)]' },
   { key: 'history', label: 'Quantity History', icon: GitCompare, color: 'text-amber-500' },
   { key: 'cost', label: 'Cost Summary', icon: DollarSign, color: 'text-emerald-500' },
   { key: 'activity', label: 'Activity', icon: Activity, color: 'text-cyan-500' },
@@ -46,7 +46,7 @@ export function BottomDock({ projectId, projectName }: { projectId: string; proj
                 'flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-md transition-all',
                 activeTab === tab.key && expanded
                   ? 'bg-slate-100 dark:bg-white/[0.04] text-slate-900 dark:text-white'
-                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.02]'
+                  : 'text-[var(--color-text-muted)] hover:text-slate-700 dark:hover:text-[var(--color-text-secondary)] hover:bg-slate-50 dark:hover:bg-white/[0.02]'
               )}
             >
               <tab.icon size={12} className={activeTab === tab.key && expanded ? tab.color : ''} />
@@ -56,7 +56,7 @@ export function BottomDock({ projectId, projectName }: { projectId: string; proj
         </div>
         <button
           onClick={() => setExpanded(!expanded)}
-          className="p-1 rounded text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors"
+          className="p-1 rounded text-[var(--color-text-muted)] hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors"
         >
           {expanded ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
         </button>
@@ -124,7 +124,7 @@ function AIEngineerTab({ projectId, projectName }: { projectId: string; projectN
               </div>
               <div>
                 <p className="text-[11px] font-medium text-slate-700 dark:text-slate-200">AI Engineering Assistant</p>
-                <p className="text-[10px] text-slate-400">Ask about costs, quantities, rates, comparisons, or get recommendations.</p>
+                <p className="text-[10px] text-[var(--color-text-muted)]">Ask about costs, quantities, rates, comparisons, or get recommendations.</p>
               </div>
             </div>
           )}
@@ -134,12 +134,12 @@ function AIEngineerTab({ projectId, projectName }: { projectId: string; projectN
                 'w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px]',
                 msg.role === 'user' ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-violet-100 dark:bg-violet-900/30'
               )}>
-                {msg.role === 'user' ? <User size={11} className="text-blue-600" /> : <Bot size={11} className="text-violet-600" />}
+                {msg.role === 'user' ? <User size={11} className="text-[var(--color-blue)]" /> : <Bot size={11} className="text-[var(--color-indigo)]" />}
               </div>
               <div className={cn(
                 'max-w-[80%] rounded-xl px-3 py-1.5 text-[11px] leading-relaxed',
                 msg.role === 'user'
-                  ? 'bg-blue-600 text-white rounded-tr-sm'
+                  ? 'bg-[var(--color-blue)] text-white rounded-tr-sm'
                   : 'bg-slate-100 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 rounded-tl-sm'
               )}>
                 {msg.content}
@@ -147,7 +147,7 @@ function AIEngineerTab({ projectId, projectName }: { projectId: string; projectN
             </div>
           ))}
           {loading && (
-            <div className="flex items-center gap-2 text-[11px] text-slate-500">
+            <div className="flex items-center gap-2 text-[11px] text-[var(--color-text-muted)]">
               <Loader2 size={12} className="animate-spin text-violet-500" />
               Analyzing...
             </div>
@@ -175,7 +175,7 @@ function AIEngineerTab({ projectId, projectName }: { projectId: string; projectN
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') sendMessage(input) }}
               placeholder="Ask the AI Engineer..."
-              className="flex-1 px-3 py-2 text-[11px] bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400"
+              className="flex-1 px-3 py-2 text-[11px] bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder:text-[var(--color-text-muted)]"
             />
             <button
               onClick={() => sendMessage(input)}
@@ -215,16 +215,16 @@ function TimelineTab() {
           <div key={i} className="relative pb-3">
             <div className={cn(
               'absolute left-[-17px] w-2.5 h-2.5 rounded-full border-2 border-white dark:border-[#0f1117]',
-              ev.type === 'payment' ? 'bg-green-500' : ev.type === 'variation' ? 'bg-amber-500' : 'bg-blue-500'
+              ev.type === 'payment' ? 'bg-green-500' : ev.type === 'variation' ? 'bg-amber-500' : 'bg-[var(--color-blue)]'
             )} style={{ top: 2 }} />
             <div className="flex items-center gap-2 text-[11px]">
-              <span className="text-slate-400 text-[10px] font-mono w-20 shrink-0">{ev.date}</span>
+              <span className="text-[var(--color-text-muted)] text-[10px] font-mono w-20 shrink-0">{ev.date}</span>
               <span className="text-slate-700 dark:text-slate-200 flex-1 truncate">{ev.label}</span>
-              {ev.value && <span className="tabular-nums text-slate-500 shrink-0">{ev.value}</span>}
+              {ev.value && <span className="tabular-nums text-[var(--color-text-muted)] shrink-0">{ev.value}</span>}
             </div>
           </div>
         ))}
-        {events.length === 0 && <div className="text-[11px] text-slate-400 py-4">No timeline events</div>}
+        {events.length === 0 && <div className="text-[11px] text-[var(--color-text-muted)] py-4">No timeline events</div>}
       </div>
     </div>
   )
@@ -238,24 +238,24 @@ function ActivityTab() {
   return (
     <div className="h-full overflow-y-auto px-4 py-2 space-y-3">
       <div>
-        <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Recent BOQ Items</div>
+        <div className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-1">Recent BOQ Items</div>
         {recentBoq.map(b => (
           <div key={b.id} className="flex items-center gap-2 text-[11px] py-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-            <span className="font-mono text-[9px] text-slate-400 w-8">{b.code ?? '—'}</span>
-            <span className="flex-1 truncate text-slate-600 dark:text-slate-300">{b.description}</span>
-            <span className="tabular-nums text-slate-400 shrink-0">{fmt(b.quantity)} {b.unit}</span>
+            <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-blue)]" />
+            <span className="font-mono text-[9px] text-[var(--color-text-muted)] w-8">{b.code ?? '—'}</span>
+            <span className="flex-1 truncate text-slate-600 dark:text-[var(--color-text-secondary)]">{b.description}</span>
+            <span className="tabular-nums text-[var(--color-text-muted)] shrink-0">{fmt(b.quantity)} {b.unit}</span>
           </div>
         ))}
       </div>
       <div>
-        <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Recent Measurements</div>
+        <div className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-1">Recent Measurements</div>
         {recentMeasurements.map(m => (
           <div key={m.id} className="flex items-center gap-2 text-[11px] py-1">
             <div className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
-            <span className="font-mono text-[9px] text-slate-400 w-8">{m.item_code ?? '—'}</span>
-            <span className="flex-1 truncate text-slate-600 dark:text-slate-300">{m.description}</span>
-            <span className="tabular-nums text-slate-400 shrink-0">{fmt(m.net_qty)} {m.unit}</span>
+            <span className="font-mono text-[9px] text-[var(--color-text-muted)] w-8">{m.item_code ?? '—'}</span>
+            <span className="flex-1 truncate text-slate-600 dark:text-[var(--color-text-secondary)]">{m.description}</span>
+            <span className="tabular-nums text-[var(--color-text-muted)] shrink-0">{fmt(m.net_qty)} {m.unit}</span>
           </div>
         ))}
       </div>
@@ -285,7 +285,7 @@ function CostTab() {
         ].map(card => (
           <div key={card.label} className="bg-slate-50 dark:bg-white/[0.02] rounded-lg p-2.5 border border-slate-100 dark:border-white/[0.04]">
             <div className={cn('w-1.5 h-1.5 rounded-full bg-gradient-to-r mb-1.5', card.color)} />
-            <div className="text-[9px] text-slate-400 uppercase tracking-wider">{card.label}</div>
+            <div className="text-[9px] text-[var(--color-text-muted)] uppercase tracking-wider">{card.label}</div>
             <div className="text-[13px] font-bold tabular-nums text-slate-900 dark:text-white mt-0.5">{card.value}</div>
           </div>
         ))}
@@ -293,7 +293,7 @@ function CostTab() {
       {/* Budget bar */}
       {contractValue > 0 && (
         <div className="mt-3">
-          <div className="flex justify-between text-[10px] text-slate-500 mb-1">
+          <div className="flex justify-between text-[10px] text-[var(--color-text-muted)] mb-1">
             <span>Budget Utilization</span>
             <span className="tabular-nums">{((totalSpent / contractValue) * 100).toFixed(1)}%</span>
           </div>
@@ -336,7 +336,7 @@ function TasksTab() {
   return (
     <div className="h-full overflow-y-auto px-4 py-2">
       <div className="flex items-center gap-4 mb-3">
-        <div className="text-[11px] text-slate-500">
+        <div className="text-[11px] text-[var(--color-text-muted)]">
           <span className="font-semibold text-slate-700 dark:text-slate-200">{tasks.filter(t => t.status === 'done').length}</span> / {tasks.length} completed
         </div>
         <div className="flex-1 h-1.5 bg-slate-100 dark:bg-white/[0.04] rounded-full overflow-hidden">
@@ -348,18 +348,18 @@ function TasksTab() {
           <div className={cn(
             'w-4 h-4 rounded flex items-center justify-center',
             task.status === 'done' ? 'bg-green-100 dark:bg-green-500/10' :
-            task.status === 'active' ? 'bg-blue-100 dark:bg-blue-500/10' :
+            task.status === 'active' ? 'bg-blue-100 dark:bg-[var(--color-blue)]/10' :
             'bg-slate-100 dark:bg-white/[0.04]'
           )}>
             {task.status === 'done' ? <CheckCircle size={10} className="text-green-500" /> :
-             task.status === 'active' ? <Activity size={10} className="text-blue-500" /> :
+             task.status === 'active' ? <Activity size={10} className="text-[var(--color-blue)]" /> :
              <div className="w-2 h-2 rounded-sm border border-slate-300 dark:border-slate-600" />}
           </div>
           <span className={cn(
             'flex-1',
-            task.status === 'done' ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-200'
+            task.status === 'done' ? 'text-[var(--color-text-muted)] line-through' : 'text-slate-700 dark:text-slate-200'
           )}>{task.label}</span>
-          <span className="text-[9px] text-slate-400 bg-slate-50 dark:bg-white/[0.02] px-1.5 py-0.5 rounded">{task.category}</span>
+          <span className="text-[9px] text-[var(--color-text-muted)] bg-slate-50 dark:bg-white/[0.02] px-1.5 py-0.5 rounded">{task.category}</span>
         </div>
       ))}
     </div>
@@ -372,7 +372,7 @@ function EvidenceTab() {
 
   if (!item) {
     return (
-      <div className="h-full flex items-center justify-center text-[11px] text-slate-400">
+      <div className="h-full flex items-center justify-center text-[11px] text-[var(--color-text-muted)]">
         Select a BOQ item to see its evidence summary
       </div>
     )
@@ -381,8 +381,8 @@ function EvidenceTab() {
   return (
     <div className="h-full overflow-y-auto px-4 py-2">
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <div className="bg-blue-50/80 dark:bg-blue-500/5 rounded-lg p-2.5 border border-blue-100 dark:border-blue-500/10">
-          <div className="text-[8px] text-blue-500 uppercase tracking-wider font-bold">Quantity</div>
+        <div className="bg-blue-50/80 dark:bg-[var(--color-blue)]/5 rounded-lg p-2.5 border border-blue-100 dark:border-blue-500/10">
+          <div className="text-[8px] text-[var(--color-blue)] uppercase tracking-wider font-bold">Quantity</div>
           <div className="text-[14px] font-bold tabular-nums text-blue-700 dark:text-blue-300">{fmt(item.quantity)}</div>
           <div className="text-[9px] text-blue-400">{item.unit}</div>
         </div>
@@ -422,7 +422,7 @@ function QuantityHistoryTab() {
 
   if (changes.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center text-[11px] text-slate-400">
+      <div className="h-full flex items-center justify-center text-[11px] text-[var(--color-text-muted)]">
         No quantity changes recorded yet
       </div>
     )
@@ -441,14 +441,14 @@ function QuantityHistoryTab() {
                 qc.difference > 0 ? 'bg-green-500' : qc.difference < 0 ? 'bg-red-500' : 'bg-slate-400'
               )} style={{ top: 2 }} />
               <div className="flex items-center gap-2 text-[11px]">
-                <span className="text-slate-400 text-[10px] font-mono w-20 shrink-0">{qc.created_at.slice(0, 10)}</span>
-                <span className="font-mono text-[9px] text-slate-400 w-12 shrink-0">{boqItem?.code ?? '—'}</span>
+                <span className="text-[var(--color-text-muted)] text-[10px] font-mono w-20 shrink-0">{qc.created_at.slice(0, 10)}</span>
+                <span className="font-mono text-[9px] text-[var(--color-text-muted)] w-12 shrink-0">{boqItem?.code ?? '—'}</span>
                 <span className="text-slate-700 dark:text-slate-200 flex-1 truncate">{qc.description}</span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/[0.04] text-slate-500 capitalize">{qc.change_type}</span>
-                <span className="tabular-nums text-slate-400 shrink-0">{fmt(qc.previous_qty)} → {fmt(qc.new_qty)}</span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/[0.04] text-[var(--color-text-muted)] capitalize">{qc.change_type}</span>
+                <span className="tabular-nums text-[var(--color-text-muted)] shrink-0">{fmt(qc.previous_qty)} → {fmt(qc.new_qty)}</span>
                 <span className={cn(
                   'tabular-nums font-medium shrink-0',
-                  qc.difference > 0 ? 'text-green-600' : qc.difference < 0 ? 'text-red-500' : 'text-slate-400'
+                  qc.difference > 0 ? 'text-green-600' : qc.difference < 0 ? 'text-red-500' : 'text-[var(--color-text-muted)]'
                 )}>
                   {qc.difference > 0 ? '+' : ''}{fmt(qc.difference)}
                 </span>
@@ -476,12 +476,12 @@ function ReportsTab({ projectId }: { projectId: string }) {
           <a
             key={r.href}
             href={`/projects/${projectId}/reports`}
-            className="flex items-center gap-2.5 p-3 rounded-lg border border-slate-100 dark:border-white/[0.04] hover:border-blue-300 dark:hover:border-blue-500/30 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-all group"
+            className="flex items-center gap-2.5 p-3 rounded-lg border border-slate-100 dark:border-white/[0.04] hover:border-blue-300 dark:hover:border-blue-500/30 hover:bg-blue-50/50 dark:hover:bg-[var(--color-blue)]/5 transition-all group"
           >
-            <r.icon size={16} className="text-slate-400 group-hover:text-blue-500 transition-colors shrink-0" />
+            <r.icon size={16} className="text-[var(--color-text-muted)] group-hover:text-[var(--color-blue)] transition-colors shrink-0" />
             <div>
               <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200">{r.label}</div>
-              <div className="text-[9px] text-slate-400">{r.desc}</div>
+              <div className="text-[9px] text-[var(--color-text-muted)]">{r.desc}</div>
             </div>
           </a>
         ))}

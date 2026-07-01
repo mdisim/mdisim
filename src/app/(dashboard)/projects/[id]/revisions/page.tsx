@@ -31,6 +31,7 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/lib/i18n'
 
 type RevisionWithDrawing = DrawingRevision & { drawingName: string }
 
@@ -39,6 +40,7 @@ const fadeUp: Variants = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y:
 
 export default function RevisionsPage() {
   const { id: projectId } = useParams<{ id: string }>()
+  const { t } = useI18n()
   const [drawings, setDrawings] = useState<Drawing[]>([])
   const [revisionMap, setRevisionMap] = useState<Record<string, DrawingRevision[]>>({})
   const [changes, setChanges] = useState<QuantityChange[]>([])
@@ -139,13 +141,13 @@ export default function RevisionsPage() {
           <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
             <AlertTriangle size={28} className="text-red-400" />
           </div>
-          <h2 className="text-lg font-bold text-[var(--color-text)] mb-2">Unable to Load Revisions</h2>
+          <h2 className="text-lg font-bold text-[var(--color-text)] mb-2">{t.revisions.unableToLoad}</h2>
           <p className="text-sm text-[var(--color-text-muted)] mb-6">{error}</p>
           <button
             onClick={load}
             className="px-5 py-2.5 bg-[var(--color-amber)] text-[var(--color-on-amber)] text-sm font-bold rounded-xl hover:opacity-90 transition-opacity"
           >
-            Retry
+            {t.revisions.retry}
           </button>
         </motion.div>
       </div>
@@ -192,30 +194,30 @@ export default function RevisionsPage() {
 
         {/* Compare Section */}
         <motion.div variants={fadeUp}>
-          <SectionCard title="Compare Revisions" icon={GitCompare} iconColor="text-[var(--color-amber)]" glass>
+          <SectionCard title={t.revisions.compareRevisions} icon={GitCompare} iconColor="text-[var(--color-amber)]" glass>
             <div className="flex items-center gap-3 flex-wrap">
               <div className="flex-1 min-w-[200px]">
-                <label className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-1.5 block">Drawing</label>
+                <label className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-1.5 block">{t.revisions.drawing}</label>
                 <select
                   className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]/40"
                   value={selectedDrawingId}
                   onChange={e => { setSelectedDrawingId(e.target.value); setRevA(''); setRevB('') }}
                 >
-                  <option value="">Select drawing...</option>
+                  <option value="">{t.revisions.selectDrawing}</option>
                   {drawingsWithRevisions.map(d => (
-                    <option key={d.id} value={d.id}>{d.name} ({revisionMap[d.id]?.length ?? 0} revisions)</option>
+                    <option key={d.id} value={d.id}>{d.name} ({revisionMap[d.id]?.length ?? 0} {t.revisions.revisionsCount})</option>
                   ))}
                 </select>
               </div>
               <div className="min-w-[160px]">
-                <label className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-1.5 block">Revision A (From)</label>
+                <label className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-1.5 block">{t.revisions.revisionAFrom}</label>
                 <select
                   className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]/40"
                   value={revA}
                   onChange={e => setRevA(e.target.value)}
                   disabled={!selectedDrawingId}
                 >
-                  <option value="">Select...</option>
+                  <option value="">{t.revisions.select}</option>
                   {selectedRevisions.map(r => (
                     <option key={r.id} value={r.id}>Rev {r.revision_number} — {r.revision_date}</option>
                   ))}
@@ -223,14 +225,14 @@ export default function RevisionsPage() {
               </div>
               <ArrowRight size={18} className="text-[var(--color-amber)] mt-5 shrink-0" />
               <div className="min-w-[160px]">
-                <label className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-1.5 block">Revision B (To)</label>
+                <label className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider mb-1.5 block">{t.revisions.revisionBTo}</label>
                 <select
                   className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]/40"
                   value={revB}
                   onChange={e => setRevB(e.target.value)}
                   disabled={!selectedDrawingId}
                 >
-                  <option value="">Select...</option>
+                  <option value="">{t.revisions.select}</option>
                   {selectedRevisions.filter(r => r.id !== revA).map(r => (
                     <option key={r.id} value={r.id}>Rev {r.revision_number} — {r.revision_date}</option>
                   ))}
@@ -253,13 +255,13 @@ export default function RevisionsPage() {
                     <table className="w-full text-sm min-w-[600px]">
                       <thead>
                         <tr className="bg-[var(--color-surface)] border-b border-[var(--color-border)]">
-                          <th className="text-left px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Description</th>
-                          <th className="text-center px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Unit</th>
-                          <th className="text-right px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Old Qty</th>
-                          <th className="text-right px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">New Qty</th>
-                          <th className="text-right px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Difference</th>
-                          <th className="text-right px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">% Change</th>
-                          <th className="text-center px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Type</th>
+                          <th scope="col" className="text-start px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">{t.revisions.colDescription}</th>
+                          <th scope="col" className="text-center px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">{t.revisions.colUnit}</th>
+                          <th scope="col" className="text-end px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">{t.revisions.colOldQty}</th>
+                          <th scope="col" className="text-end px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">{t.revisions.colNewQty}</th>
+                          <th scope="col" className="text-end px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">{t.revisions.colDifference}</th>
+                          <th scope="col" className="text-end px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">{t.revisions.colPercentChange}</th>
+                          <th scope="col" className="text-center px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">{t.revisions.colType}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -270,12 +272,12 @@ export default function RevisionsPage() {
                             <tr key={c.id} className="border-b border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] transition-colors">
                               <td className="px-3 py-2.5 text-[var(--color-text)]">{c.description}</td>
                               <td className="px-3 py-2.5 text-center text-[var(--color-text-muted)]">{c.unit}</td>
-                              <td className="px-3 py-2.5 text-right tabular-nums text-[var(--color-text-muted)]">{fmt(c.previous_qty)}</td>
-                              <td className="px-3 py-2.5 text-right tabular-nums font-semibold text-[var(--color-text)]">{fmt(c.new_qty)}</td>
-                              <td className={cn('px-3 py-2.5 text-right tabular-nums font-semibold', diff > 0 ? 'text-green-500' : diff < 0 ? 'text-red-400' : 'text-[var(--color-text-muted)]')}>
+                              <td className="px-3 py-2.5 text-end tabular-nums text-[var(--color-text-muted)]">{fmt(c.previous_qty)}</td>
+                              <td className="px-3 py-2.5 text-end tabular-nums font-semibold text-[var(--color-text)]">{fmt(c.new_qty)}</td>
+                              <td className={cn('px-3 py-2.5 text-end tabular-nums font-semibold', diff > 0 ? 'text-green-500' : diff < 0 ? 'text-red-400' : 'text-[var(--color-text-muted)]')}>
                                 {diff > 0 ? '+' : ''}{fmt(diff)}
                               </td>
-                              <td className={cn('px-3 py-2.5 text-right tabular-nums', diff > 0 ? 'text-green-500' : diff < 0 ? 'text-red-400' : 'text-[var(--color-text-muted)]')}>
+                              <td className={cn('px-3 py-2.5 text-end tabular-nums', diff > 0 ? 'text-green-500' : diff < 0 ? 'text-red-400' : 'text-[var(--color-text-muted)]')}>
                                 {diff > 0 ? '+' : ''}{pct.toFixed(1)}%
                               </td>
                               <td className="px-3 py-2.5 text-center">
@@ -319,7 +321,7 @@ export default function RevisionsPage() {
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: i * 0.04 }}
-                        className="relative pl-10"
+                        className="relative ps-10"
                       >
                         {/* Timeline dot */}
                         <div className={cn(
@@ -355,7 +357,7 @@ export default function RevisionsPage() {
                               )}
                               {relatedChanges.length > 0 && (
                                 <div className="space-y-1">
-                                  <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Quantity Changes</span>
+                                  <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">{t.revisions.quantityChanges}</span>
                                   {relatedChanges.map(c => {
                                     const diff = c.new_qty - c.previous_qty
                                     return (
@@ -386,18 +388,18 @@ export default function RevisionsPage() {
         {/* All Quantity Changes Table */}
         {changes.length > 0 && (
           <motion.div variants={fadeUp}>
-            <SectionCard title="Quantity Change Report" icon={FileText} iconColor="text-[var(--color-amber)]">
+            <SectionCard title={t.revisions.quantityChangeReport} icon={FileText} iconColor="text-[var(--color-amber)]">
               <div className="border border-[var(--color-border)] rounded-xl overflow-hidden overflow-x-auto">
                 <table className="w-full text-sm min-w-[600px]">
                   <thead>
                     <tr className="bg-[var(--color-surface)] border-b border-[var(--color-border)]">
-                      <th className="text-left px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Description</th>
-                      <th className="text-center px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Unit</th>
-                      <th className="text-right px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Previous</th>
-                      <th className="text-right px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">New</th>
-                      <th className="text-right px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Diff</th>
-                      <th className="text-center px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Type</th>
-                      <th className="text-left px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Date</th>
+                      <th scope="col" className="text-start px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">{t.revisions.colDescription}</th>
+                      <th scope="col" className="text-center px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">{t.revisions.colUnit}</th>
+                      <th scope="col" className="text-end px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">{t.revisions.colPrevious}</th>
+                      <th scope="col" className="text-end px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">{t.revisions.colNew}</th>
+                      <th scope="col" className="text-end px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">{t.revisions.colDiff}</th>
+                      <th scope="col" className="text-center px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">{t.revisions.colType}</th>
+                      <th scope="col" className="text-start px-3 py-2.5 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">{t.revisions.colDate}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -407,9 +409,9 @@ export default function RevisionsPage() {
                         <tr key={c.id} className="border-b border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] transition-colors">
                           <td className="px-3 py-2.5 text-[var(--color-text)]">{c.description}</td>
                           <td className="px-3 py-2.5 text-center text-[var(--color-text-muted)]">{c.unit}</td>
-                          <td className="px-3 py-2.5 text-right tabular-nums text-[var(--color-text-muted)]">{fmt(c.previous_qty)}</td>
-                          <td className="px-3 py-2.5 text-right tabular-nums font-semibold text-[var(--color-text)]">{fmt(c.new_qty)}</td>
-                          <td className={cn('px-3 py-2.5 text-right tabular-nums font-semibold', diff > 0 ? 'text-green-500' : diff < 0 ? 'text-red-400' : 'text-[var(--color-text-muted)]')}>
+                          <td className="px-3 py-2.5 text-end tabular-nums text-[var(--color-text-muted)]">{fmt(c.previous_qty)}</td>
+                          <td className="px-3 py-2.5 text-end tabular-nums font-semibold text-[var(--color-text)]">{fmt(c.new_qty)}</td>
+                          <td className={cn('px-3 py-2.5 text-end tabular-nums font-semibold', diff > 0 ? 'text-green-500' : diff < 0 ? 'text-red-400' : 'text-[var(--color-text-muted)]')}>
                             {diff > 0 ? '+' : ''}{fmt(diff)}
                           </td>
                           <td className="px-3 py-2.5 text-center">

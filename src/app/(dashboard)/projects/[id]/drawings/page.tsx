@@ -303,7 +303,7 @@ export default function DrawingsPage() {
                   setForm({ ...form, name: f.name.replace(/\.[^.]+$/, '') })
                 }
               }}
-              className="text-sm text-[var(--color-text-secondary)] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:uppercase file:tracking-wider file:bg-[var(--color-amber)]/10 file:text-[var(--color-amber)] hover:file:bg-[var(--color-amber)]/20 transition-all"
+              className="text-sm text-[var(--color-text-secondary)] file:me-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:uppercase file:tracking-wider file:bg-[var(--color-amber)]/10 file:text-[var(--color-amber)] hover:file:bg-[var(--color-amber)]/20 transition-all"
             />
           </div>
           {error && (

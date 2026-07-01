@@ -16,7 +16,7 @@ const LANGUAGES = [
 export function DashboardHeader() {
   const [dark, setDark] = useState(false)
   const [langOpen, setLangOpen] = useState(false)
-  const { locale, setLocale } = useI18n()
+  const { t, locale, setLocale } = useI18n()
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark')
@@ -28,19 +28,21 @@ export function DashboardHeader() {
     setDark(next)
     if (next) {
       document.documentElement.classList.add('dark')
+      localStorage.setItem('angel-dc-theme', 'dark')
     } else {
       document.documentElement.classList.remove('dark')
+      localStorage.setItem('angel-dc-theme', 'light')
     }
     window.dispatchEvent(new CustomEvent('theme-change', { detail: { dark: next } }))
   }
 
   return (
-    <header className="h-14 shrink-0 border-b border-slate-200 dark:border-white/[0.06] bg-white dark:bg-slate-900 flex items-center justify-between px-4 lg:px-6">
+    <header className="h-14 shrink-0 border-b border-[var(--color-border)] bg-[var(--color-surface)] flex items-center justify-between px-4 lg:px-6">
       {/* Breadcrumb area */}
-      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-        <span className="hidden lg:inline text-slate-400 dark:text-slate-500">ANGEL D.C.</span>
-        <span className="hidden lg:inline text-slate-300 dark:text-slate-600">/</span>
-        <span className="font-medium text-slate-700 dark:text-slate-200">Dashboard</span>
+      <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+        <span className="hidden lg:inline text-[var(--color-text-muted)] opacity-60 font-mono text-xs uppercase tracking-widest">ANGEL D.C.</span>
+        <span className="hidden lg:inline opacity-30">/</span>
+        <span className="font-medium text-[var(--color-text)]">{t.nav.dashboard}</span>
       </div>
 
       {/* Right side controls */}
@@ -52,7 +54,9 @@ export function DashboardHeader() {
         <div className="relative">
           <button
             onClick={() => setLangOpen(!langOpen)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors"
+            aria-label="Switch language"
+            aria-expanded={langOpen}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] transition-colors"
           >
             <Globe size={14} />
             <span className="text-xs uppercase">{locale}</span>
@@ -61,16 +65,16 @@ export function DashboardHeader() {
           {langOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setLangOpen(false)} />
-              <div className="absolute right-0 top-full mt-1 z-20 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/[0.08] rounded-lg shadow-lg shadow-black/10 py-1 min-w-[80px]">
+              <div className="absolute end-0 top-full mt-1 z-20 bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-xl shadow-[var(--shadow-dropdown)] py-1 min-w-[80px]">
                 {LANGUAGES.map((lang) => (
                   <button
                     key={lang.code}
                     onClick={() => { setLocale(lang.code as Locale); setLangOpen(false) }}
                     className={cn(
-                      'w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors',
+                      'w-full px-3 py-1.5 text-start text-sm hover:bg-[var(--color-surface-hover)] transition-colors',
                       locale === lang.code
-                        ? 'text-blue-500 font-medium'
-                        : 'text-slate-600 dark:text-slate-300'
+                        ? 'text-[var(--color-amber)] font-semibold'
+                        : 'text-[var(--color-text-secondary)]'
                     )}
                   >
                     {lang.label}
@@ -83,9 +87,9 @@ export function DashboardHeader() {
 
         {/* Notifications */}
         <button
-          className="relative p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors cursor-default opacity-60"
-          title="Notifications — Coming soon"
-          aria-label="Notifications — Coming soon"
+          className="relative p-2 rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] transition-colors cursor-default opacity-60"
+          title={t.common.comingSoon}
+          aria-label={t.common.comingSoon}
           disabled
         >
           <Bell size={16} />
@@ -94,8 +98,9 @@ export function DashboardHeader() {
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors"
+          className="p-2 rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-amber)] transition-colors"
           title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+          aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
         >
           {dark ? <Sun size={16} /> : <Moon size={16} />}
         </button>
