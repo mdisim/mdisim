@@ -6,11 +6,10 @@ import Link from 'next/link'
 import { Mail, Lock, Loader2, ArrowRight, Fingerprint, ShieldCheck } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { signIn } from '@/app/actions/auth'
-import { useI18n } from '@/lib/i18n'
 
 export default function LoginPage() {
   const router = useRouter()
-  const { t, locale, setLocale } = useI18n()
+  const [locale, setLocale] = useState<'en' | 'ar' | 'he'>('en')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
