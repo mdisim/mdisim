@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { HardHat, Mail, Lock, Loader2, CheckCircle, ArrowRight, User } from 'lucide-react'
+import { Mail, Lock, Loader2, CheckCircle, ArrowRight, ShieldCheck } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { signUp } from '@/app/actions/auth'
 
@@ -34,28 +34,29 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[#0e0e10] flex items-center justify-center p-4">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 start-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-[var(--color-amber)]/5 blur-[120px]" />
+      <div className="min-h-screen bg-[#131315] flex items-center justify-center p-6">
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-[#ffd165]/4 blur-[120px]" />
         </div>
         <motion.div
-          className="relative bg-[var(--color-surface)] rounded-2xl p-8 max-w-md w-full text-center border border-[var(--color-border)] shadow-2xl shadow-black/40"
+          className="relative glass-card rounded-2xl p-8 max-w-md w-full text-center"
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         >
-          <div className="w-14 h-14 bg-[var(--color-amber)]/15 border border-[var(--color-amber)]/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <CheckCircle size={28} className="text-[var(--color-amber)]" />
+          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#ffd165]/30 to-transparent" />
+          <div className="w-14 h-14 bg-[#ffd165]/10 border border-[#ffd165]/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <CheckCircle size={28} className="text-[#ffd165]" />
           </div>
-          <h2 className="text-white text-xl font-semibold mb-2">Check your email</h2>
-          <p className="text-[var(--color-text-muted)] text-sm">
+          <h2 className="text-[#e5e1e4] text-xl font-semibold mb-2">Check your email</h2>
+          <p className="text-[#9b8f79] text-sm">
             We sent a confirmation link to{' '}
-            <strong className="text-white">{email}</strong>.{' '}
+            <strong className="text-[#e5e1e4]">{email}</strong>.{' '}
             Click it to activate your account.
           </p>
           <Link
             href="/login"
-            className="mt-6 inline-flex items-center gap-1.5 text-[var(--color-amber)] hover:opacity-80 transition-opacity text-sm font-medium"
+            className="mt-6 inline-flex items-center gap-1.5 text-[#ffd165] hover:opacity-80 transition-opacity text-sm font-medium"
           >
             Back to login
           </Link>
@@ -65,106 +66,140 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0e0e10] flex items-center justify-center p-4">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 start-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-[var(--color-amber)]/5 blur-[120px]" />
+    <div className="min-h-screen bg-[#131315] text-[#e5e1e4] flex flex-col overflow-x-hidden">
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[400px] rounded-full bg-[#ffd165]/4 blur-[120px]" />
       </div>
 
-      <motion.div
-        className="relative w-full max-w-md"
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-14 h-14 bg-[var(--color-amber)] rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-[var(--color-amber)]/20">
-            <HardHat size={28} className="text-[var(--color-on-amber)]" />
+      {/* Header */}
+      <header className="w-full flex justify-between items-center px-6 py-4 z-10 relative">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-[#ffd165]/10 rounded-lg flex items-center justify-center border border-[#ffd165]/20">
+            <span className="text-[#ffd165] font-bold text-lg leading-none">A</span>
           </div>
-          <h1 className="text-white text-2xl font-bold tracking-widest">ANGEL D.C.</h1>
-          <p className="text-[var(--color-amber)]/70 text-xs mt-1 tracking-widest uppercase font-mono">Construction Intelligence</p>
+          <div className="flex flex-col -space-y-0.5">
+            <span className="text-[#e5e1e4] font-semibold text-[22px] tracking-tight leading-none">Angel D.C.</span>
+            <span className="text-[#ffd165] text-[10px] tracking-[0.2em] uppercase opacity-80 font-mono">Construction Intelligence</span>
+          </div>
         </div>
+      </header>
 
-        <div className="bg-[var(--color-surface)] rounded-2xl p-8 border border-[var(--color-border)] shadow-2xl shadow-black/40">
-          <h2 className="text-white text-xl font-semibold mb-1">Create account</h2>
-          <p className="text-[var(--color-text-muted)] text-sm mb-6">Start managing your projects</p>
+      {/* Main */}
+      <main className="flex-grow flex flex-col items-center justify-center px-6 relative z-10 py-8">
+        <motion.div
+          className="w-full max-w-[440px]"
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className="text-center mb-8">
+            <h1 className="text-[36px] leading-[44px] font-semibold tracking-[-0.02em] text-[#e5e1e4]">Request Node Access</h1>
+            <p className="text-[#d3c5ac] text-sm mt-2 opacity-80">Join the global structural intelligence network.</p>
+          </div>
 
-          <form onSubmit={handleRegister} className="space-y-4">
-            <div>
-              <label className="block text-sm text-[var(--color-text-secondary)] mb-1.5" htmlFor="reg-email">Email</label>
-              <div className="relative">
-                <Mail size={16} className="absolute start-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
-                <input
-                  id="reg-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                  autoComplete="email"
-                  className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border)] text-white placeholder-[var(--color-text-muted)] rounded-xl ps-10 pe-4 py-2.5 text-sm focus:outline-none focus:border-[var(--color-amber)] focus:ring-2 focus:ring-[var(--color-amber)]/30 transition-all"
-                />
+          <div className="glass-card p-8 rounded-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#ffd165]/30 to-transparent" />
+
+            <form onSubmit={handleRegister} className="space-y-5">
+              <div className="space-y-2">
+                <label htmlFor="reg-email" className="block text-[#d3c5ac] text-[11px] uppercase tracking-widest font-mono opacity-70 ms-1">
+                  Corporate Identity
+                </label>
+                <div className="relative group">
+                  <Mail size={18} className="absolute start-4 top-1/2 -translate-y-1/2 text-[#9b8f79] group-focus-within:text-[#ffd165] transition-colors" />
+                  <input
+                    id="reg-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Work email address"
+                    required
+                    autoComplete="email"
+                    className="w-full bg-[#0e0e10]/40 border border-[#4f4633]/20 rounded-xl py-4 ps-12 pe-4 text-sm text-[#e5e1e4] placeholder:text-[#9b8f79]/50 focus:outline-none focus:ring-1 focus:ring-[#ffd165]/50 focus:border-[#ffd165]/50 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="reg-password" className="block text-[#d3c5ac] text-[11px] uppercase tracking-widest font-mono opacity-70 ms-1">
+                  Security Key
+                </label>
+                <div className="relative group">
+                  <Lock size={18} className="absolute start-4 top-1/2 -translate-y-1/2 text-[#9b8f79] group-focus-within:text-[#ffd165] transition-colors" />
+                  <input
+                    id="reg-password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Min. 8 characters"
+                    minLength={8}
+                    required
+                    autoComplete="new-password"
+                    className="w-full bg-[#0e0e10]/40 border border-[#4f4633]/20 rounded-xl py-4 ps-12 pe-4 text-sm text-[#e5e1e4] placeholder:text-[#9b8f79]/50 focus:outline-none focus:ring-1 focus:ring-[#ffd165]/50 focus:border-[#ffd165]/50 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="reg-confirm" className="block text-[#d3c5ac] text-[11px] uppercase tracking-widest font-mono opacity-70 ms-1">
+                  Confirm Key
+                </label>
+                <div className="relative group">
+                  <Lock size={18} className="absolute start-4 top-1/2 -translate-y-1/2 text-[#9b8f79] group-focus-within:text-[#ffd165] transition-colors" />
+                  <input
+                    id="reg-confirm"
+                    type="password"
+                    value={confirm}
+                    onChange={(e) => setConfirm(e.target.value)}
+                    placeholder="Repeat security key"
+                    required
+                    autoComplete="new-password"
+                    className="w-full bg-[#0e0e10]/40 border border-[#4f4633]/20 rounded-xl py-4 ps-12 pe-4 text-sm text-[#e5e1e4] placeholder:text-[#9b8f79]/50 focus:outline-none focus:ring-1 focus:ring-[#ffd165]/50 focus:border-[#ffd165]/50 transition-all"
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <div className="bg-[var(--color-danger-bg)] border border-[var(--color-danger)]/30 rounded-xl px-4 py-3 text-[var(--color-danger)] text-sm">
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#eab308] text-[#604700] font-semibold text-base py-4 rounded-xl shadow-lg premium-glow disabled:opacity-50 active:scale-[0.96] transition-all relative overflow-hidden group"
+              >
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  {loading ? <Loader2 size={18} className="animate-spin" /> : <ArrowRight size={18} />}
+                  {loading ? 'Creating access…' : 'Create Account →'}
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+              </button>
+            </form>
+
+            <div className="mt-8 flex justify-between items-center px-2">
+              <p className="text-[11px] text-[#d3c5ac]">
+                Already registered?{' '}
+                <Link href="/login" className="text-[#ffd165] font-semibold hover:underline">
+                  Access Dashboard
+                </Link>
+              </p>
+              <div className="flex items-center gap-2 opacity-40">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-[10px] text-[#9b8f79] font-mono">SECURE-V1</span>
               </div>
             </div>
+          </div>
+        </motion.div>
+      </main>
 
-            <div>
-              <label className="block text-sm text-[var(--color-text-secondary)] mb-1.5" htmlFor="reg-password">Password</label>
-              <div className="relative">
-                <Lock size={16} className="absolute start-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
-                <input
-                  id="reg-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Min. 8 characters"
-                  minLength={8}
-                  required
-                  autoComplete="new-password"
-                  className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border)] text-white placeholder-[var(--color-text-muted)] rounded-xl ps-10 pe-4 py-2.5 text-sm focus:outline-none focus:border-[var(--color-amber)] focus:ring-2 focus:ring-[var(--color-amber)]/30 transition-all"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm text-[var(--color-text-secondary)] mb-1.5" htmlFor="reg-confirm">Confirm Password</label>
-              <div className="relative">
-                <Lock size={16} className="absolute start-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
-                <input
-                  id="reg-confirm"
-                  type="password"
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                  placeholder="Repeat password"
-                  required
-                  autoComplete="new-password"
-                  className="w-full bg-[var(--color-surface-elevated)] border border-[var(--color-border)] text-white placeholder-[var(--color-text-muted)] rounded-xl ps-10 pe-4 py-2.5 text-sm focus:outline-none focus:border-[var(--color-amber)] focus:ring-2 focus:ring-[var(--color-amber)]/30 transition-all"
-                />
-              </div>
-            </div>
-
-            {error && (
-              <div className="bg-[var(--color-danger-bg)] border border-[var(--color-danger)]/30 rounded-xl px-4 py-3 text-[var(--color-danger)] text-sm">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[var(--color-amber)] hover:opacity-90 disabled:opacity-50 text-[var(--color-on-amber)] font-semibold rounded-xl py-2.5 text-sm transition-all active:scale-95 flex items-center justify-center gap-2"
-            >
-              {loading ? <Loader2 size={16} className="animate-spin" /> : <User size={16} />}
-              {loading ? 'Creating account…' : 'Create Account'}
-            </button>
-          </form>
-
-          <p className="text-center text-sm text-[var(--color-text-muted)] mt-6">
-            Already have an account?{' '}
-            <Link href="/login" className="text-[var(--color-amber)] hover:opacity-80 transition-opacity font-medium">
-              Sign in
-            </Link>
-          </p>
-        </div>
-      </motion.div>
+      <footer className="w-full p-6 z-10 relative">
+        <p className="text-[11px] text-[#d3c5ac]/30 flex items-center justify-center gap-3 tracking-widest text-center font-mono">
+          <ShieldCheck size={16} />
+          <span>ANGEL D.C. CONSTRUCTION INTELLIGENCE · ENTERPRISE PLATFORM · SECURE NODE v1.2</span>
+        </p>
+      </footer>
     </div>
   )
 }

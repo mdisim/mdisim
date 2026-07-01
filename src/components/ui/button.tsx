@@ -16,7 +16,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       primary:
-        'bg-[var(--color-amber)] text-[var(--color-on-amber)] hover:brightness-110 focus-visible:ring-[var(--color-amber)] shadow-[0_4px_14px_-2px_rgba(234,179,8,0.35)]',
+        'bg-[var(--color-amber-cta)] text-[var(--color-on-amber)] hover:brightness-110 focus-visible:ring-[var(--color-amber-cta)] shadow-[0_4px_14px_-2px_rgba(234,179,8,0.35)]',
       secondary:
         'bg-[var(--color-surface-elevated)] text-[var(--color-text)] border border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] focus-visible:ring-[var(--color-border-strong)]',
       danger:
@@ -26,7 +26,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       outline:
         'border border-[var(--color-amber)]/50 bg-transparent text-[var(--color-amber)] hover:bg-[var(--color-amber)]/10 focus-visible:ring-[var(--color-amber)]',
       accent:
-        'bg-[var(--color-amber)] text-[var(--color-on-amber)] hover:brightness-110 focus-visible:ring-[var(--color-amber)]',
+        'bg-[var(--color-amber-cta)] text-[var(--color-on-amber)] hover:brightness-110 focus-visible:ring-[var(--color-amber-cta)]',
     }
 
     const sizes = {

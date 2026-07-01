@@ -772,10 +772,10 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
     if (converting) {
       return (
         <div className="flex flex-col h-full items-center justify-center gap-6 p-8">
-          <div className="animate-spin h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full" />
+          <div className="animate-spin h-10 w-10 border-4 border-[var(--color-amber-cta)] border-t-transparent rounded-full" />
           <div className="text-center max-w-md">
-            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">Converting DWG to DXF...</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+            <h3 className="text-lg font-semibold text-[var(--color-text-muted)] dark:text-[var(--color-text)] mb-2">Converting DWG to DXF...</h3>
+            <p className="text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] leading-relaxed">
               Automatically converting your DWG file so it can be viewed in the browser. This may take a moment.
             </p>
           </div>
@@ -789,19 +789,19 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
             <FileWarning size={32} className="text-red-500" />
           </div>
           <div className="text-center max-w-lg">
-            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">DWG Conversion Failed</h3>
+            <h3 className="text-lg font-semibold text-[var(--color-text-muted)] dark:text-[var(--color-text)] mb-2">DWG Conversion Failed</h3>
             <p className="text-sm text-red-600 dark:text-red-400 mb-3">{convertError}</p>
             <button
               onClick={() => { setConvertError(null); setConvertLog([]); setConvertedDxfUrl(null); setConvertRetry(r => r + 1); }}
-              className="px-4 py-2 mb-3 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 mb-3 bg-[var(--color-amber-cta)] text-white text-sm font-medium rounded-lg hover:bg-[var(--color-amber-cta)] transition-colors"
             >
               Retry Conversion
             </button>
             {convertLog.length > 0 && (
-              <div className="text-left bg-slate-900 dark:bg-slate-950 rounded-lg p-3 max-h-64 overflow-y-auto">
-                <p className="text-[10px] font-semibold text-slate-400 uppercase mb-1.5">Pipeline Log</p>
+              <div className="text-left bg-[var(--color-surface)] dark:bg-[#0e0e10] rounded-lg p-3 max-h-64 overflow-y-auto">
+                <p className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase mb-1.5">Pipeline Log</p>
                 {convertLog.map((line, i) => (
-                  <p key={i} className="text-[11px] font-mono text-slate-300 leading-relaxed">{line}</p>
+                  <p key={i} className="text-[11px] font-mono text-[var(--color-text-secondary)] leading-relaxed">{line}</p>
                 ))}
               </div>
             )}
@@ -845,30 +845,30 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
 
       <div className="flex flex-1 overflow-hidden">
         {/* Main canvas area */}
-        <div className="flex-1 relative overflow-hidden bg-slate-200 dark:bg-slate-900">
+        <div className="flex-1 relative overflow-hidden bg-[var(--color-surface)] dark:bg-[var(--color-surface)]">
           <ZoomControls zoom={zoom} onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} onFitToPage={handleFitToPage} onZoomSet={handleZoomSet} />
 
           <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
-            <button onClick={() => setShowShortcuts(true)} className="p-1.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur rounded-lg shadow-sm hover:bg-white dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400" title="Keyboard shortcuts (?)">
+            <button onClick={() => setShowShortcuts(true)} className="p-1.5 bg-white/90 dark:bg-[var(--color-surface-elevated)]/90 backdrop-blur rounded-lg shadow-sm hover:bg-white dark:hover:bg-[var(--color-surface-elevated)] transition-colors text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]" title="Keyboard shortcuts (?)">
               <Keyboard size={16} />
             </button>
-            <button onClick={() => setShowPanel(v => !v)} className="p-1.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur rounded-lg shadow-sm hover:bg-white dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400" title={showPanel ? 'Hide panel (Tab)' : 'Show panel (Tab)'}>
+            <button onClick={() => setShowPanel(v => !v)} className="p-1.5 bg-white/90 dark:bg-[var(--color-surface-elevated)]/90 backdrop-blur rounded-lg shadow-sm hover:bg-white dark:hover:bg-[var(--color-surface-elevated)] transition-colors text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]" title={showPanel ? 'Hide panel (Tab)' : 'Show panel (Tab)'}>
               {showPanel ? <PanelRightClose size={16} /> : <PanelRightOpen size={16} />}
             </button>
           </div>
 
-          <div className="absolute bottom-3 right-3 z-10 flex items-center gap-3 bg-white/95 dark:bg-slate-800/95 backdrop-blur rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+          <div className="absolute bottom-3 right-3 z-10 flex items-center gap-3 bg-white/95 dark:bg-[var(--color-surface-elevated)]/95 backdrop-blur rounded-lg shadow-lg border border-[var(--color-border)] dark:border-[var(--color-border)] px-3 py-1.5 text-[11px] text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">
             {activeTool && (
               <>
-                <span className="font-medium text-slate-700 dark:text-slate-200">{TOOL_LABELS[activeTool] ?? activeTool}</span>
-                <span className="text-slate-300 dark:text-slate-600">|</span>
+                <span className="font-medium text-[var(--color-text)]">{TOOL_LABELS[activeTool] ?? activeTool}</span>
+                <span className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">|</span>
               </>
             )}
             <span className="flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
               DXF
             </span>
-            <span className="text-slate-300 dark:text-slate-600">|</span>
+            <span className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">|</span>
             <span>{measurements.length} measurement{measurements.length !== 1 ? 's' : ''}</span>
           </div>
 
@@ -876,16 +876,16 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
             {loading ? (
               <div className="flex items-center justify-center h-full">
                 <div className="flex flex-col items-center gap-3">
-                  <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full" />
-                  <p className="text-xs text-slate-400">Parsing DXF file...</p>
+                  <div className="animate-spin h-8 w-8 border-4 border-[var(--color-amber-cta)] border-t-transparent rounded-full" />
+                  <p className="text-xs text-[var(--color-text-muted)]">Parsing DXF file...</p>
                 </div>
               </div>
             ) : parseError ? (
               <div className="flex items-center justify-center h-full">
                 <div className="flex flex-col items-center gap-3 text-center px-6">
                   <AlertTriangle size={28} className="text-amber-500" />
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Failed to parse DXF</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">{parseError}</p>
+                  <p className="text-sm font-medium text-[var(--color-text)]">Failed to parse DXF</p>
+                  <p className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] max-w-sm">{parseError}</p>
                 </div>
               </div>
             ) : (
@@ -911,7 +911,7 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
         {showPanel && (
           <>
             <div
-              className="w-1 flex-shrink-0 cursor-col-resize bg-slate-200 dark:bg-slate-700 hover:bg-blue-400 dark:hover:bg-blue-500 active:bg-blue-500 transition-colors relative group"
+              className="w-1 flex-shrink-0 cursor-col-resize bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] hover:bg-[var(--color-amber-cta)] dark:hover:bg-[var(--color-amber-cta)] active:bg-[var(--color-amber-cta)] transition-colors relative group"
               onMouseDown={(e) => {
                 e.preventDefault()
                 panelDragRef.current = { startX: e.clientX, startW: panelWidth }
@@ -933,25 +933,25 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
                 document.addEventListener('mouseup', onUp)
               }}
             >
-              <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-slate-300 dark:bg-slate-600 group-hover:bg-blue-400 dark:group-hover:bg-blue-400 transition-colors" />
+              <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] group-hover:bg-[var(--color-amber-cta)] dark:group-hover:bg-[var(--color-amber-cta)] transition-colors" />
             </div>
-            <div style={{ width: panelWidth }} className="flex-shrink-0 flex flex-col bg-white dark:bg-slate-800">
+            <div style={{ width: panelWidth }} className="flex-shrink-0 flex flex-col bg-white dark:bg-[var(--color-surface-elevated)]">
               <div className="flex flex-col" style={{ height: '45%', minHeight: 120 }}>
-                <div className="px-3 py-1.5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between gap-1 shrink-0">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">Measurements ({measurements.length})</span>
+                <div className="px-3 py-1.5 border-b border-[var(--color-border)] dark:border-[var(--color-border)] flex items-center justify-between gap-1 shrink-0">
+                  <span className="text-xs font-semibold text-[var(--color-text)]">Measurements ({measurements.length})</span>
                   <div className="flex items-center gap-1">
                     {measurements.length > 0 && (
-                      <button onClick={handleToggleLinkMode} className={cn('flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-colors', linkMode ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700')}>
+                      <button onClick={handleToggleLinkMode} className={cn('flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-colors', linkMode ? 'bg-[var(--color-amber)]/10 text-[var(--color-amber)]' : 'text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]')}>
                         <Link2 size={10} />{linkMode ? `${selectedForLink.length} sel` : 'Link'}
                       </button>
                     )}
                     {linkMode && selectedForLink.length > 0 && (
                       <>
                         <button onClick={() => handleOpenBOQPicker(selectedForLink)} className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium bg-emerald-600 text-white rounded hover:bg-emerald-700 transition-colors">Link ({selectedForLink.length})</button>
-                        <button onClick={() => { setSelectedForLink([]); setLinkMode(false) }} className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 px-0.5">x</button>
+                        <button onClick={() => { setSelectedForLink([]); setLinkMode(false) }} className="text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text)] dark:hover:text-[var(--color-text-secondary)] px-0.5">x</button>
                       </>
                     )}
-                    <button onClick={() => setPanelTab(panelTab === 'scales' ? 'measurements' : 'scales')} className={cn('px-2 py-0.5 rounded text-[10px] font-medium transition-colors', panelTab === 'scales' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700')}>Scales</button>
+                    <button onClick={() => setPanelTab(panelTab === 'scales' ? 'measurements' : 'scales')} className={cn('px-2 py-0.5 rounded text-[10px] font-medium transition-colors', panelTab === 'scales' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]')}>Scales</button>
                   </div>
                 </div>
                 <div className="flex-1 min-h-0 overflow-y-auto">
@@ -972,7 +972,7 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
                   )}
                 </div>
               </div>
-              <div className="h-px bg-slate-200 dark:bg-slate-700 shrink-0" />
+              <div className="h-px bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] shrink-0" />
               <div className="flex-1 min-h-0 flex flex-col">
                 <LiveBOQPanel
                   projectId={projectId} drawingId={drawingId} measurementCount={measurements.length}

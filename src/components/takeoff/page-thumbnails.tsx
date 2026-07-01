@@ -65,9 +65,9 @@ export function PageThumbnails({ pdfDoc, currentPage, pageCount, onPageChange }:
   return (
     <div
       ref={containerRef}
-      className="flex-shrink-0 w-[140px] bg-slate-100 dark:bg-slate-800/50 border-r border-slate-200 dark:border-slate-700 overflow-y-auto py-2 px-2 space-y-2 hidden md:block"
+      className="flex-shrink-0 w-[140px] bg-[var(--color-surface)] dark:bg-[var(--color-surface-elevated)]/50 border-r border-[var(--color-border)] dark:border-[var(--color-border)] overflow-y-auto py-2 px-2 space-y-2 hidden md:block"
     >
-      <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider px-1 mb-1">
+      <div className="text-[10px] font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] uppercase tracking-wider px-1 mb-1">
         Pages
       </div>
       {Array.from({ length: pageCount }, (_, i) => i + 1).map(p => (
@@ -78,11 +78,11 @@ export function PageThumbnails({ pdfDoc, currentPage, pageCount, onPageChange }:
           className={cn(
             'w-full rounded-lg overflow-hidden border-2 transition-all',
             p === currentPage
-              ? 'border-blue-500 shadow-md shadow-blue-500/20'
-              : 'border-transparent hover:border-slate-300 dark:hover:border-slate-600',
+              ? 'border-[var(--color-amber)] shadow-md shadow-blue-500/20'
+              : 'border-transparent hover:border-[var(--color-border)] dark:hover:border-[var(--color-border)]',
           )}
         >
-          <div className="relative bg-white dark:bg-slate-700">
+          <div className="relative bg-white dark:bg-[var(--color-surface-hover)]">
             {thumbnails.has(p) ? (
               <img
                 src={thumbnails.get(p)!}
@@ -92,13 +92,13 @@ export function PageThumbnails({ pdfDoc, currentPage, pageCount, onPageChange }:
               />
             ) : (
               <div className="w-full aspect-[3/4] flex items-center justify-center">
-                <div className="animate-pulse w-8 h-8 rounded bg-slate-200 dark:bg-slate-600" />
+                <div className="animate-pulse w-8 h-8 rounded bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)]" />
               </div>
             )}
             <div className={cn(
               'absolute bottom-0 inset-x-0 text-center py-0.5 text-[10px] font-medium',
               p === currentPage
-                ? 'bg-blue-500 text-white'
+                ? 'bg-[var(--color-amber-cta)] text-white'
                 : 'bg-black/40 text-white'
             )}>
               {p}

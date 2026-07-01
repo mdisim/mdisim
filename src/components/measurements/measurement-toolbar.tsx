@@ -124,10 +124,10 @@ export function MeasurementToolbar({
             value={activeSection ?? ''}
             onChange={(e) => onSectionFilter(e.target.value || null)}
             className={cn(
-              'text-xs px-2.5 py-1.5 rounded-lg border border-[var(--color-border)] dark:border-[var(--color-border)] bg-white dark:bg-[var(--color-surface-elevated)]/80 text-[var(--color-text-secondary)] dark:text-slate-200',
-              'focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400',
+              'text-xs px-2.5 py-1.5 rounded-lg border border-[var(--color-border)] dark:border-[var(--color-border)] bg-white dark:bg-[var(--color-surface-elevated)]/80 text-[var(--color-text-secondary)] dark:text-[var(--color-text)]',
+              'focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]/40 focus:border-[var(--color-amber)]',
               'transition-colors',
-              activeSection && 'border-blue-400 dark:border-blue-500 bg-[var(--color-info-bg)] dark:bg-[var(--color-info-bg)]/30 text-[var(--color-info)] dark:text-[var(--color-info)]',
+              activeSection && 'border-[var(--color-amber)] dark:border-[var(--color-amber)] bg-[var(--color-info-bg)] dark:bg-[var(--color-info-bg)]/30 text-[var(--color-info)] dark:text-[var(--color-info)]',
             )}
           >
             <option value="">All Sections{sectionCount > 0 ? ` (${sectionCount})` : ''}</option>
@@ -147,8 +147,8 @@ export function MeasurementToolbar({
             value={searchQuery}
             onChange={(e) => onSearch(e.target.value)}
             className={cn(
-              'w-full text-xs pl-7 pr-3 py-1.5 rounded-lg border border-[var(--color-border)] dark:border-[var(--color-border)] bg-white dark:bg-[var(--color-surface-elevated)]/80 text-[var(--color-text-secondary)] dark:text-slate-200',
-              'focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400',
+              'w-full text-xs pl-7 pr-3 py-1.5 rounded-lg border border-[var(--color-border)] dark:border-[var(--color-border)] bg-white dark:bg-[var(--color-surface-elevated)]/80 text-[var(--color-text-secondary)] dark:text-[var(--color-text)]',
+              'focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]/40 focus:border-[var(--color-amber)]',
               'placeholder-slate-400 dark:placeholder-slate-500 transition-colors',
             )}
           />
@@ -156,7 +156,7 @@ export function MeasurementToolbar({
       </div>
 
       {/* Summary Stats Bar */}
-      <div className="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-px rounded-xl overflow-hidden border border-[var(--color-border)] dark:border-[var(--color-border)] bg-slate-200 dark:bg-[var(--color-surface-elevated)]">
+      <div className="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-px rounded-xl overflow-hidden border border-[var(--color-border)] dark:border-[var(--color-border)] bg-[var(--color-surface)] dark:bg-[var(--color-surface-elevated)]">
         <StatCell label="Total Items" value={itemCount} />
         <StatCell label="Additions Qty" value={totalAdditions} className="text-emerald-600 dark:text-emerald-400" prefix="+" />
         <StatCell label="Deductions Qty" value={totalDeductions} className="text-red-500 dark:text-red-400" prefix="-" />

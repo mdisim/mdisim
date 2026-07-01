@@ -437,7 +437,7 @@ export function WorkspaceDrawingViewer() {
   return (
     <div className="flex flex-col h-full bg-[#f8f9fa] dark:bg-[#0a0b0f] overflow-hidden">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-3 h-10 bg-white dark:bg-[#0f1117] border-b border-slate-200/60 dark:border-white/[0.04] shrink-0">
+      <div className="flex items-center justify-between px-3 h-10 bg-white dark:bg-[#0f1117] border-b border-[var(--color-border)]/60 dark:border-white/[0.04] shrink-0">
         <div className="flex items-center gap-2">
           {/* Drawing tabs */}
           <div className="flex items-center gap-0.5 overflow-x-auto max-w-[400px] scrollbar-none">
@@ -449,7 +449,7 @@ export function WorkspaceDrawingViewer() {
                   'flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium rounded-md whitespace-nowrap transition-all',
                   drawing?.id === d.id
                     ? 'bg-indigo-100 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 shadow-sm'
-                    : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.03]'
+                    : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] dark:hover:bg-white/[0.03]'
                 )}
               >
                 <FileText size={10} />
@@ -464,7 +464,7 @@ export function WorkspaceDrawingViewer() {
           <button
             onClick={() => canPrev && selectDrawing(data.drawings[currentIndex - 1])}
             disabled={!canPrev}
-            className="p-1.5 rounded text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] disabled:opacity-30 transition-colors"
+            className="p-1.5 rounded text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] dark:hover:bg-white/[0.04] disabled:opacity-30 transition-colors"
             title="Previous drawing"
           >
             <ChevronLeft size={14} />
@@ -472,39 +472,39 @@ export function WorkspaceDrawingViewer() {
           <button
             onClick={() => canNext && selectDrawing(data.drawings[currentIndex + 1])}
             disabled={!canNext}
-            className="p-1.5 rounded text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] disabled:opacity-30 transition-colors"
+            className="p-1.5 rounded text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] dark:hover:bg-white/[0.04] disabled:opacity-30 transition-colors"
             title="Next drawing"
           >
             <ChevronRight size={14} />
           </button>
-          <div className="w-px h-4 bg-slate-200 dark:bg-white/[0.06] mx-1" />
+          <div className="w-px h-4 bg-[var(--color-surface)] dark:bg-white/[0.06] mx-1" />
           <button
             onClick={() => setTransform(prev => ({ ...prev, zoom: Math.min(5, prev.zoom + 0.25) }))}
-            className="p-1.5 rounded text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04]"
+            className="p-1.5 rounded text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] dark:hover:bg-white/[0.04]"
             title="Zoom in"
           >
             <ZoomIn size={14} />
           </button>
-          <span className="text-[10px] tabular-nums text-slate-500 w-10 text-center">
+          <span className="text-[10px] tabular-nums text-[var(--color-text-muted)] w-10 text-center">
             {Math.round(transform.zoom * 100)}%
           </span>
           <button
             onClick={() => setTransform(prev => ({ ...prev, zoom: Math.max(0.1, prev.zoom - 0.25) }))}
-            className="p-1.5 rounded text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04]"
+            className="p-1.5 rounded text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] dark:hover:bg-white/[0.04]"
             title="Zoom out"
           >
             <ZoomOut size={14} />
           </button>
           <button
             onClick={() => setTransform(prev => ({ ...prev, rotation: (prev.rotation + 90) % 360 }))}
-            className="p-1.5 rounded text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04]"
+            className="p-1.5 rounded text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] dark:hover:bg-white/[0.04]"
             title="Rotate"
           >
             <RotateCw size={14} />
           </button>
           <button
             onClick={fitToPage}
-            className="p-1.5 rounded text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.04]"
+            className="p-1.5 rounded text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] dark:hover:bg-white/[0.04]"
             title="Fit to page"
           >
             <Maximize2 size={14} />
@@ -523,11 +523,11 @@ export function WorkspaceDrawingViewer() {
               className="flex items-center justify-center h-full"
             >
               <div className="text-center">
-                <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-slate-100 dark:bg-white/[0.03] flex items-center justify-center">
-                  <ImageIcon size={32} className="text-slate-300 dark:text-slate-600" />
+                <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-[var(--color-surface)] dark:bg-white/[0.03] flex items-center justify-center">
+                  <ImageIcon size={32} className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]" />
                 </div>
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No Drawings</p>
-                <p className="text-[11px] text-slate-400 mt-1">Upload drawings to view them here</p>
+                <p className="text-sm font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">No Drawings</p>
+                <p className="text-[11px] text-[var(--color-text-muted)] mt-1">Upload drawings to view them here</p>
               </div>
             </motion.div>
           ) : loading ? (
@@ -539,7 +539,7 @@ export function WorkspaceDrawingViewer() {
             >
               <div className="flex flex-col items-center gap-2">
                 <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                <span className="text-[11px] text-slate-500">Loading drawing...</span>
+                <span className="text-[11px] text-[var(--color-text-muted)]">Loading drawing...</span>
               </div>
             </motion.div>
           ) : (
@@ -593,7 +593,7 @@ export function WorkspaceDrawingViewer() {
         {drawing && (
           <div className="absolute top-3 right-3 z-10">
             <div
-              className="w-10 h-10 rounded-full bg-white/90 dark:bg-slate-800/90 backdrop-blur shadow-lg border border-slate-200/60 dark:border-white/[0.06] flex items-center justify-center"
+              className="w-10 h-10 rounded-full bg-white/90 dark:bg-[var(--color-surface-elevated)]/90 backdrop-blur shadow-lg border border-[var(--color-border)]/60 dark:border-white/[0.06] flex items-center justify-center"
               style={{ transform: `rotate(-${transform.rotation}deg)` }}
               title="North"
             >
@@ -612,7 +612,7 @@ export function WorkspaceDrawingViewer() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="absolute bottom-16 left-3 z-10 bg-white/90 dark:bg-slate-800/90 backdrop-blur rounded-lg shadow-lg border border-slate-200/60 dark:border-white/[0.06] px-2.5 py-1 text-[10px] font-mono text-slate-600 dark:text-slate-300 tabular-nums"
+            className="absolute bottom-16 left-3 z-10 bg-white/90 dark:bg-[var(--color-surface-elevated)]/90 backdrop-blur rounded-lg shadow-lg border border-[var(--color-border)]/60 dark:border-white/[0.06] px-2.5 py-1 text-[10px] font-mono text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)] tabular-nums"
           >
             {Math.round(transform.zoom * 100)}%
           </motion.div>
@@ -623,7 +623,7 @@ export function WorkspaceDrawingViewer() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="absolute bottom-3 right-3 z-10 bg-white/95 dark:bg-slate-800/95 backdrop-blur rounded-lg shadow-lg border border-slate-200/60 dark:border-white/[0.06] overflow-hidden"
+            className="absolute bottom-3 right-3 z-10 bg-white/95 dark:bg-[var(--color-surface-elevated)]/95 backdrop-blur rounded-lg shadow-lg border border-[var(--color-border)]/60 dark:border-white/[0.06] overflow-hidden"
           >
             <canvas
               ref={minimapCanvasRef}
@@ -647,13 +647,13 @@ export function WorkspaceDrawingViewer() {
                 top: tooltipPos.y - 8,
               }}
             >
-              <div className="bg-slate-900/95 dark:bg-slate-700/95 backdrop-blur text-white rounded-lg shadow-xl px-3 py-2 text-[11px] max-w-[240px]">
+              <div className="bg-[var(--color-surface)]/95 dark:bg-[var(--color-surface-hover)]/95 backdrop-blur text-white rounded-lg shadow-xl px-3 py-2 text-[11px] max-w-[240px]">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <Info size={10} className="text-slate-400" />
+                  <Info size={10} className="text-[var(--color-text-muted)]" />
                   <span className="font-semibold capitalize">{hoveredMeasurement.tool_type}</span>
                 </div>
                 {hoveredMeasurement.label && (
-                  <p className="text-slate-300 mb-0.5">{hoveredMeasurement.label}</p>
+                  <p className="text-[var(--color-text-secondary)] mb-0.5">{hoveredMeasurement.label}</p>
                 )}
                 <p className="font-mono text-indigo-300">
                   {hoveredMeasurement.quantity % 1 === 0
@@ -664,8 +664,8 @@ export function WorkspaceDrawingViewer() {
                   {hoveredMeasurement.unit ?? 'px'}
                 </p>
                 {highlightedIds.has(hoveredMeasurement.id) && (
-                  <div className="mt-1 flex items-center gap-1 text-[9px] text-blue-300">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                  <div className="mt-1 flex items-center gap-1 text-[9px] text-[var(--color-amber)]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-amber)]" />
                     Linked to selected item
                   </div>
                 )}
@@ -677,7 +677,7 @@ export function WorkspaceDrawingViewer() {
 
       {/* Status bar */}
       {drawing && (
-        <div className="flex items-center justify-between px-3 h-6 bg-white dark:bg-[#0f1117] border-t border-slate-100 dark:border-white/[0.04] text-[10px] text-slate-400 shrink-0">
+        <div className="flex items-center justify-between px-3 h-6 bg-white dark:bg-[#0f1117] border-t border-[var(--color-border)] dark:border-white/[0.04] text-[10px] text-[var(--color-text-muted)] shrink-0">
           <div className="flex items-center gap-3">
             <span>{drawing.name}</span>
             {drawing.drawing_number && <span className="font-mono">{drawing.drawing_number}</span>}
@@ -688,7 +688,7 @@ export function WorkspaceDrawingViewer() {
               <span>{currentDrawingMeasurements.length} measurement{currentDrawingMeasurements.length !== 1 ? 's' : ''}</span>
             )}
             {highlightedIds.size > 0 && (
-              <span className="text-blue-400">{highlightedIds.size} highlighted</span>
+              <span className="text-[var(--color-amber)]">{highlightedIds.size} highlighted</span>
             )}
             <span>{drawing.file_type?.toUpperCase()}</span>
             {drawing.file_size && <span>{(drawing.file_size / 1024 / 1024).toFixed(1)} MB</span>}

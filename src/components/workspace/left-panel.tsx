@@ -71,19 +71,19 @@ export function LeftPanel() {
   return (
     <div className="flex flex-col h-full bg-white dark:bg-[#0f1117] overflow-hidden">
       {/* Explorer Header */}
-      <div className="px-3 py-2.5 border-b border-slate-200/60 dark:border-white/[0.04]">
+      <div className="px-3 py-2.5 border-b border-[var(--color-border)]/60 dark:border-white/[0.04]">
         <div className="flex items-center gap-2 mb-2">
-          <FolderOpen size={13} className="text-slate-400" />
-          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.08em]">Explorer</span>
+          <FolderOpen size={13} className="text-[var(--color-text-muted)]" />
+          <span className="text-[10px] font-bold text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] uppercase tracking-[0.08em]">Explorer</span>
         </div>
         <div className="relative">
-          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Filter..."
-            className="w-full pl-8 pr-3 py-1.5 text-[11px] bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/[0.06] rounded-lg text-slate-700 dark:text-slate-200 placeholder:text-slate-400 outline-none focus:border-blue-400 dark:focus:border-blue-500 transition-colors"
+            className="w-full pl-8 pr-3 py-1.5 text-[11px] bg-[var(--color-surface)] dark:bg-white/[0.03] border border-[var(--color-border)]/60 dark:border-white/[0.06] rounded-lg text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] outline-none focus:border-[var(--color-amber)] dark:focus:border-[var(--color-amber)] transition-colors"
           />
         </div>
       </div>
@@ -95,15 +95,15 @@ export function LeftPanel() {
             {/* Section header */}
             <button
               onClick={() => toggle(sec.key)}
-              className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors group"
+              className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[var(--color-surface-hover)] dark:hover:bg-white/[0.02] transition-colors group"
             >
               {expanded.has(sec.key)
-                ? <ChevronDown size={12} className="text-slate-400 shrink-0" />
-                : <ChevronRight size={12} className="text-slate-400 shrink-0" />
+                ? <ChevronDown size={12} className="text-[var(--color-text-muted)] shrink-0" />
+                : <ChevronRight size={12} className="text-[var(--color-text-muted)] shrink-0" />
               }
-              <sec.icon size={13} className="text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 shrink-0" />
-              <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 flex-1 text-left">{sec.label}</span>
-              <span className="text-[10px] tabular-nums text-slate-400 bg-slate-100 dark:bg-white/[0.04] px-1.5 py-0.5 rounded-full">
+              <sec.icon size={13} className="text-[var(--color-text-muted)] group-hover:text-[var(--color-text)] dark:group-hover:text-[var(--color-text-secondary)] shrink-0" />
+              <span className="text-[11px] font-semibold text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)] flex-1 text-left">{sec.label}</span>
+              <span className="text-[10px] tabular-nums text-[var(--color-text-muted)] bg-[var(--color-surface)] dark:bg-white/[0.04] px-1.5 py-0.5 rounded-full">
                 {sec.key === 'boq' ? data.boqItems.length
                   : sec.key === 'drawings' ? data.drawings.length
                   : sec.key === 'measurements' ? data.measurementItems.length
@@ -128,8 +128,8 @@ export function LeftPanel() {
                       {Array.from(boqSections.entries()).map(([section, items]) => (
                         <div key={section}>
                           <div className="px-3 py-1 flex items-center gap-1.5">
-                            <Package size={10} className="text-slate-300 dark:text-slate-600" />
-                            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{section}</span>
+                            <Package size={10} className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]" />
+                            <span className="text-[9px] font-bold text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] uppercase tracking-wider">{section}</span>
                           </div>
                           {items.map(item => (
                             <button
@@ -138,19 +138,19 @@ export function LeftPanel() {
                               className={cn(
                                 'w-full text-left pl-7 pr-3 py-1.5 flex items-center gap-2 transition-all text-[11px] group',
                                 selection.boqItem?.id === item.id
-                                  ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border-s-2 border-blue-500 ps-[26px]'
-                                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.02]'
+                                  ? 'bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber-cta)]/10 text-[var(--color-amber)] dark:text-[var(--color-amber)] border-s-2 border-[var(--color-amber)] ps-[26px]'
+                                  : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]'
                               )}
                             >
-                              <span className="font-mono text-[9px] text-slate-400 dark:text-slate-500 w-8 shrink-0">{item.code ?? '—'}</span>
+                              <span className="font-mono text-[9px] text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] w-8 shrink-0">{item.code ?? '—'}</span>
                               <span className="truncate flex-1">{item.description}</span>
-                              <span className="tabular-nums text-[10px] text-slate-400 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">{fmt(item.quantity)}</span>
+                              <span className="tabular-nums text-[10px] text-[var(--color-text-muted)] shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">{fmt(item.quantity)}</span>
                             </button>
                           ))}
                         </div>
                       ))}
                       {filteredBoq.length === 0 && (
-                        <div className="px-7 py-3 text-[10px] text-slate-400 italic">No items match</div>
+                        <div className="px-7 py-3 text-[10px] text-[var(--color-text-muted)] italic">No items match</div>
                       )}
                     </div>
                   )}
@@ -166,16 +166,16 @@ export function LeftPanel() {
                             'w-full text-left pl-7 pr-3 py-1.5 flex items-center gap-2 transition-all text-[11px] group',
                             selection.drawing?.id === d.id
                               ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-s-2 border-indigo-500 ps-[26px]'
-                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.02]'
+                              : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]'
                           )}
                         >
-                          <ImageIcon size={11} className="text-slate-400 shrink-0" />
+                          <ImageIcon size={11} className="text-[var(--color-text-muted)] shrink-0" />
                           <span className="truncate flex-1">{d.drawing_number ?? d.name}</span>
-                          <span className="text-[9px] text-slate-400 shrink-0 uppercase">{d.file_type}</span>
+                          <span className="text-[9px] text-[var(--color-text-muted)] shrink-0 uppercase">{d.file_type}</span>
                         </button>
                       ))}
                       {data.drawings.length === 0 && (
-                        <div className="px-7 py-3 text-[10px] text-slate-400 italic">No drawings uploaded</div>
+                        <div className="px-7 py-3 text-[10px] text-[var(--color-text-muted)] italic">No drawings uploaded</div>
                       )}
                     </div>
                   )}
@@ -191,16 +191,16 @@ export function LeftPanel() {
                             'w-full text-left pl-7 pr-3 py-1.5 flex items-center gap-2 transition-all text-[11px] group',
                             selection.measurement?.id === m.id
                               ? 'bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-s-2 border-cyan-500 ps-[26px]'
-                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.02]'
+                              : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]'
                           )}
                         >
-                          <span className="font-mono text-[9px] text-slate-400 w-8 shrink-0">{m.item_code ?? '—'}</span>
+                          <span className="font-mono text-[9px] text-[var(--color-text-muted)] w-8 shrink-0">{m.item_code ?? '—'}</span>
                           <span className="truncate flex-1">{m.description}</span>
-                          <span className="tabular-nums text-[10px] text-slate-400 shrink-0">{fmt(m.net_qty)}</span>
+                          <span className="tabular-nums text-[10px] text-[var(--color-text-muted)] shrink-0">{fmt(m.net_qty)}</span>
                         </button>
                       ))}
                       {filteredMeasurements.length === 0 && (
-                        <div className="px-7 py-3 text-[10px] text-slate-400 italic">No measurements</div>
+                        <div className="px-7 py-3 text-[10px] text-[var(--color-text-muted)] italic">No measurements</div>
                       )}
                     </div>
                   )}
@@ -212,7 +212,7 @@ export function LeftPanel() {
                         <div key={cat.id}>
                           <button
                             onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
-                            className="w-full text-left pl-7 pr-3 py-1.5 flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.02]"
+                            className="w-full text-left pl-7 pr-3 py-1.5 flex items-center gap-2 text-[11px] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]"
                           >
                             {selectedCategory === cat.id ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
                             <span className="truncate">{cat.name}</span>
@@ -227,7 +227,7 @@ export function LeftPanel() {
                                     'w-full text-left px-3 py-1 text-[10px] transition-colors',
                                     selection.libraryItem?.id === item.id
                                       ? 'text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-500/10'
-                                      : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                      : 'text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] hover:text-[var(--color-text)] dark:hover:text-[var(--color-text-secondary)]'
                                   )}
                                 >
                                   {item.description}
@@ -238,7 +238,7 @@ export function LeftPanel() {
                         </div>
                       ))}
                       {data.categories.length === 0 && (
-                        <div className="px-7 py-3 text-[10px] text-slate-400 italic">No categories</div>
+                        <div className="px-7 py-3 text-[10px] text-[var(--color-text-muted)] italic">No categories</div>
                       )}
                     </div>
                   )}
@@ -248,26 +248,26 @@ export function LeftPanel() {
                     <div className="pb-1">
                       {drawingsWithRevisions.map(d => (
                         <div key={d.id} className="pl-7 pr-3 py-1.5">
-                          <div className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-400 mb-1">
-                            <Eye size={10} className="text-slate-400" />
+                          <div className="flex items-center gap-2 text-[11px] text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] mb-1">
+                            <Eye size={10} className="text-[var(--color-text-muted)]" />
                             <span className="font-medium truncate">{d.name}</span>
                           </div>
                           <div className="pl-4 space-y-0.5">
                             {(data.revisions[d.id] ?? []).map(rev => (
-                              <div key={rev.id} className="flex items-center gap-2 text-[10px] text-slate-500">
+                              <div key={rev.id} className="flex items-center gap-2 text-[10px] text-[var(--color-text-muted)]">
                                 <div className={cn(
                                   'w-1.5 h-1.5 rounded-full',
-                                  rev.status === 'current' ? 'bg-green-500' : rev.status === 'draft' ? 'bg-amber-500' : 'bg-slate-400'
+                                  rev.status === 'current' ? 'bg-green-500' : rev.status === 'draft' ? 'bg-amber-500' : 'bg-[var(--color-text-muted)]'
                                 )} />
                                 <span className="font-mono">Rev {rev.revision_number}</span>
-                                <span className="text-slate-400">{rev.revision_date}</span>
+                                <span className="text-[var(--color-text-muted)]">{rev.revision_date}</span>
                               </div>
                             ))}
                           </div>
                         </div>
                       ))}
                       {drawingsWithRevisions.length === 0 && (
-                        <div className="px-7 py-3 text-[10px] text-slate-400 italic">No revisions</div>
+                        <div className="px-7 py-3 text-[10px] text-[var(--color-text-muted)] italic">No revisions</div>
                       )}
                     </div>
                   )}

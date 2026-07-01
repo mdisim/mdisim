@@ -91,22 +91,22 @@ export function PdfViewer({ url }: PdfViewerProps) {
   return (
     <div className="flex flex-col gap-3">
       {/* Toolbar */}
-      <div className="flex items-center justify-between bg-slate-100 rounded-lg px-3 py-2">
+      <div className="flex items-center justify-between bg-[var(--color-surface)] rounded-lg px-3 py-2">
         <div className="flex items-center gap-1">
           <button
             onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page <= 1}
-            className="p-1.5 rounded hover:bg-slate-200 disabled:opacity-40 transition-colors"
+            className="p-1.5 rounded hover:bg-[var(--color-surface-hover)] disabled:opacity-40 transition-colors"
           >
             <ChevronLeft size={16} />
           </button>
-          <span className="text-sm text-slate-600 min-w-[80px] text-center">
+          <span className="text-sm text-[var(--color-text-muted)] min-w-[80px] text-center">
             {page} / {totalPages}
           </span>
           <button
             onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page >= totalPages}
-            className="p-1.5 rounded hover:bg-slate-200 disabled:opacity-40 transition-colors"
+            className="p-1.5 rounded hover:bg-[var(--color-surface-hover)] disabled:opacity-40 transition-colors"
           >
             <ChevronRight size={16} />
           </button>
@@ -114,22 +114,22 @@ export function PdfViewer({ url }: PdfViewerProps) {
         <div className="flex items-center gap-1">
           <button
             onClick={() => { setScale(Math.max(0.5, scale - 0.25)); setOffset({ x: 0, y: 0 }) }}
-            className="p-1.5 rounded hover:bg-slate-200 transition-colors"
+            className="p-1.5 rounded hover:bg-[var(--color-surface-hover)] transition-colors"
             aria-label="Zoom out"
           >
             <ZoomOut size={16} />
           </button>
-          <span className="text-xs text-slate-500 min-w-[48px] text-center">
+          <span className="text-xs text-[var(--color-text-muted)] min-w-[48px] text-center">
             {Math.round(scale * 100)}%
           </span>
           <button
             onClick={() => { setScale(Math.min(4, scale + 0.25)); setOffset({ x: 0, y: 0 }) }}
-            className="p-1.5 rounded hover:bg-slate-200 transition-colors"
+            className="p-1.5 rounded hover:bg-[var(--color-surface-hover)] transition-colors"
             aria-label="Zoom in"
           >
             <ZoomIn size={16} />
           </button>
-          <button onClick={fitToWidth} className="p-1.5 rounded hover:bg-slate-200 transition-colors ml-1" title="Fit width" aria-label="Fit to width">
+          <button onClick={fitToWidth} className="p-1.5 rounded hover:bg-[var(--color-surface-hover)] transition-colors ml-1" title="Fit width" aria-label="Fit to width">
             <Maximize2 size={16} />
           </button>
         </div>
@@ -138,7 +138,7 @@ export function PdfViewer({ url }: PdfViewerProps) {
       {/* Canvas area */}
       <div
         ref={containerRef}
-        className="relative overflow-hidden bg-slate-200 rounded-lg"
+        className="relative overflow-hidden bg-[var(--color-surface)] rounded-lg"
         style={{ height: '70vh', cursor: dragging ? 'grabbing' : 'grab' }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -147,7 +147,7 @@ export function PdfViewer({ url }: PdfViewerProps) {
       >
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+            <div className="animate-spin h-8 w-8 border-4 border-[var(--color-amber-cta)] border-t-transparent rounded-full" />
           </div>
         ) : (
           <canvas

@@ -388,7 +388,7 @@ export function BimViewer({ modelUrl, onElementSelect, highlightedElements }: Bi
         'p-1.5 rounded-md transition-all duration-150',
         active
           ? 'bg-indigo-500/20 text-indigo-400 shadow-sm'
-          : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.06]',
+          : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-white/[0.06]',
       )}
     >
       {children}
@@ -477,13 +477,13 @@ export function BimViewer({ modelUrl, onElementSelect, highlightedElements }: Bi
   if (!modelUrl) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-[#f8f9fa] dark:bg-[#0a0b0f] text-center px-8">
-        <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/[0.04] flex items-center justify-center mb-5">
-          <Box size={28} className="text-slate-300 dark:text-white/20" />
+        <div className="w-16 h-16 rounded-2xl bg-[var(--color-surface)] dark:bg-white/[0.03] border border-[var(--color-border)]/60 dark:border-white/[0.04] flex items-center justify-center mb-5">
+          <Box size={28} className="text-[var(--color-text-secondary)] dark:text-white/20" />
         </div>
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-white/70 mb-1.5">
+        <h3 className="text-sm font-semibold text-[var(--color-text-muted)] dark:text-white/70 mb-1.5">
           No 3D Model
         </h3>
-        <p className="text-xs text-slate-500 dark:text-white/30 max-w-[240px] leading-relaxed">
+        <p className="text-xs text-[var(--color-text-muted)] dark:text-white/30 max-w-[240px] leading-relaxed">
           Upload IFC or GLB files to visualize the building model in 3D with interactive element selection.
         </p>
       </div>

@@ -72,14 +72,14 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
   const sidebar = (
     <aside
       className={cn(
-        'flex flex-col h-full bg-[var(--color-surface)]/95 backdrop-blur-2xl transition-all duration-300 ease-in-out border-e border-[var(--color-border)]',
+        'flex flex-col h-full bg-[#1c1b1d] transition-all duration-300 ease-in-out border-e border-[#4f4633]',
         collapsed ? 'w-[68px]' : 'w-64'
       )}
     >
       {/* Logo */}
-      <div className={cn('flex items-center gap-3 px-4 py-5 border-b border-[var(--color-border)]', collapsed && 'justify-center px-2')}>
-        <div className="w-9 h-9 bg-[var(--color-amber)] rounded-[var(--radius-md)] flex items-center justify-center shrink-0 shadow-[0_4px_14px_-2px_rgba(234,179,8,0.35)]">
-          <HardHat size={20} className="text-[var(--color-on-amber)]" />
+      <div className={cn('flex items-center gap-3 px-4 py-5 border-b border-[#4f4633]', collapsed && 'justify-center px-2')}>
+        <div className="w-9 h-9 bg-[#ffd165]/10 rounded-[var(--radius-md)] flex items-center justify-center shrink-0 border border-[#ffd165]/20">
+          <span className="text-[#ffd165] font-bold text-base">A</span>
         </div>
         {!collapsed && (
           <div className="flex-1 min-w-0">
@@ -112,7 +112,7 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
 
       {/* Language switcher */}
       <div className={cn(
-        'px-3 py-2 border-t border-[var(--color-border)] flex items-center gap-1',
+        'px-3 py-2 border-t border-[#4f4633] flex items-center gap-1',
         collapsed ? 'px-2 flex-col' : 'justify-center'
       )}>
         {LANGUAGES.map((lang) => (
@@ -133,7 +133,7 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
 
       {/* User area */}
       <div className={cn(
-        'px-3 py-3 border-t border-[var(--color-border)]',
+        'px-3 py-3 border-t border-[#4f4633]',
         collapsed && 'px-2'
       )}>
         {!collapsed && userEmail ? (
@@ -170,7 +170,7 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
       </div>
 
       {/* Collapse toggle - desktop only */}
-      <div className="hidden lg:block px-2 py-2 border-t border-[var(--color-border)]">
+      <div className="hidden lg:block px-2 py-2 border-t border-[#4f4633]">
         <button
           onClick={() => setCollapsed(!collapsed)}
           className={cn(
@@ -189,7 +189,7 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
       {/* Mobile toggle */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed top-4 start-4 z-40 lg:hidden p-3 min-h-11 min-w-11 bg-[var(--color-surface-elevated)] rounded-[var(--radius-md)] text-[var(--color-text)] shadow-[var(--shadow-lg)] border border-[var(--color-border)]"
+        className="fixed top-4 start-4 z-40 lg:hidden p-3 min-h-11 min-w-11 bg-[var(--color-surface-elevated)] rounded-[var(--radius-md)] text-[var(--color-text)] shadow-[var(--shadow-lg)] border border-[#4f4633]"
         aria-label={t.sidebar.navigation}
         title={t.sidebar.navigation}
       >

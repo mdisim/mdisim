@@ -114,7 +114,7 @@ export const MeasurementList = React.memo(function MeasurementList({
     <div className="flex flex-col h-full">
       {/* Multi-select toggle (header is shown by parent) */}
       {measurements.length > 0 && !externalSelectedIds && (
-        <div className="px-3 py-1 border-b border-slate-100 dark:border-slate-700/50 flex items-center justify-end">
+        <div className="px-3 py-1 border-b border-[var(--color-border)] dark:border-[var(--color-border)]/50 flex items-center justify-end">
           <button
             onClick={() => {
               setMultiSelectMode(v => !v)
@@ -123,8 +123,8 @@ export const MeasurementList = React.memo(function MeasurementList({
             className={cn(
               'p-1 rounded text-xs transition-colors',
               multiSelectMode
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300',
+                ? 'bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber)]/10 text-[var(--color-amber)] dark:text-[var(--color-amber)]'
+                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] dark:hover:text-[var(--color-text-secondary)]',
             )}
             title="Multi-select mode"
           >
@@ -135,14 +135,14 @@ export const MeasurementList = React.memo(function MeasurementList({
 
       {/* Multi-select toolbar */}
       {multiSelectMode && (
-        <div className="px-3 py-1.5 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2 bg-blue-50/50 dark:bg-blue-900/10">
+        <div className="px-3 py-1.5 border-b border-[var(--color-border)] dark:border-[var(--color-border)] flex items-center gap-2 bg-[var(--color-amber)]/5 dark:bg-[var(--color-amber)]/10">
           <button
             onClick={selectAll}
-            className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            className="text-xs text-[var(--color-amber)] dark:text-[var(--color-amber)] hover:underline"
           >
             {selectedIds.size === measurements.length ? 'Deselect All' : 'Select All'}
           </button>
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-[var(--color-text-muted)]">
             {selectedIds.size} selected
           </span>
           {selectedIds.size > 0 && onLinkToBOQ && (
@@ -184,20 +184,20 @@ export const MeasurementList = React.memo(function MeasurementList({
             <div key={toolType}>
               <button
                 onClick={() => setCollapsed((p) => ({ ...p, [toolType]: !isCollapsed }))}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-750"
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]"
               >
                 {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
                 <Icon size={14} />
                 <span>{meta.label}</span>
                 <span className="ml-auto flex items-center gap-2">
-                  <span className="text-slate-400">{items.length}</span>
+                  <span className="text-[var(--color-text-muted)]">{items.length}</span>
                   {!isCollapsed && meta.unitType !== 'count' && (
-                    <span className="text-[10px] font-mono text-slate-400">
+                    <span className="text-[10px] font-mono text-[var(--color-text-muted)]">
                       Σ {total.toFixed(2)} {unitLabel}
                     </span>
                   )}
                   {!isCollapsed && meta.unitType === 'count' && (
-                    <span className="text-[10px] font-mono text-slate-400">
+                    <span className="text-[10px] font-mono text-[var(--color-text-muted)]">
                       Σ {total}
                     </span>
                   )}
@@ -223,10 +223,10 @@ export const MeasurementList = React.memo(function MeasurementList({
                       className={cn(
                         'flex items-center gap-2 px-3 py-1.5 cursor-pointer text-sm transition-colors group',
                         active && !multiSelectMode
-                          ? 'bg-blue-50 dark:bg-blue-900/30'
+                          ? 'bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber)]/10'
                           : selected
-                          ? 'bg-blue-50/80 dark:bg-blue-900/20'
-                          : 'hover:bg-slate-50 dark:hover:bg-slate-750',
+                          ? 'bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber)]/10'
+                          : 'hover:bg-[var(--color-surface-hover)]',
                       )}
                     >
                       {multiSelectMode && (
@@ -235,7 +235,7 @@ export const MeasurementList = React.memo(function MeasurementList({
                           checked={selected}
                           onChange={() => toggleSelect(m.id)}
                           onClick={e => e.stopPropagation()}
-                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                          className="rounded border-[var(--color-border)] text-[var(--color-amber)] focus:ring-[var(--color-amber)]"
                         />
                       )}
 
@@ -254,7 +254,7 @@ export const MeasurementList = React.memo(function MeasurementList({
                             if (e.key === 'Enter') commitEdit(m.id)
                             if (e.key === 'Escape') setEditingId(null)
                           }}
-                          className="flex-1 min-w-0 bg-transparent border-b border-blue-400 text-sm outline-none text-slate-700 dark:text-slate-200"
+                          className="flex-1 min-w-0 bg-transparent border-b border-[var(--color-amber)] text-sm outline-none text-[var(--color-text)]"
                           onClick={(e) => e.stopPropagation()}
                         />
                       ) : (
@@ -263,13 +263,13 @@ export const MeasurementList = React.memo(function MeasurementList({
                             e.stopPropagation()
                             startEdit(m)
                           }}
-                          className="flex-1 min-w-0 truncate text-slate-700 dark:text-slate-200"
+                          className="flex-1 min-w-0 truncate text-[var(--color-text)]"
                         >
                           {m.label || `${meta.label.slice(0, -1)} ${idx + 1}`}
                         </span>
                       )}
 
-                      <span className="text-xs text-slate-400 whitespace-nowrap tabular-nums">
+                      <span className="text-xs text-[var(--color-text-muted)] whitespace-nowrap tabular-nums">
                         {formatQty(m)} {m.unit ?? 'px'}
                       </span>
 
@@ -279,7 +279,7 @@ export const MeasurementList = React.memo(function MeasurementList({
                             e.stopPropagation()
                             onDelete(m.id)
                           }}
-                          className="p-0.5 rounded text-slate-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                          className="p-0.5 rounded text-[var(--color-text-muted)] hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
                           style={{ opacity: active ? 1 : undefined }}
                         >
                           <Trash2 size={14} />
@@ -293,7 +293,7 @@ export const MeasurementList = React.memo(function MeasurementList({
         })}
 
         {measurements.length === 0 && (
-          <div className="px-3 py-8 text-center text-sm text-slate-400">
+          <div className="px-3 py-8 text-center text-sm text-[var(--color-text-muted)]">
             No measurements yet. Select a tool and click on the drawing.
           </div>
         )}
@@ -301,7 +301,7 @@ export const MeasurementList = React.memo(function MeasurementList({
 
       {/* Summary */}
       {measurements.length > 0 && (
-        <div className="border-t border-slate-200 dark:border-slate-700 px-3 py-2 text-xs text-slate-500 dark:text-slate-400 space-y-0.5">
+        <div className="border-t border-[var(--color-border)] dark:border-[var(--color-border)] px-3 py-2 text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] space-y-0.5">
           <div className="flex justify-between">
             <span>Total</span>
             <span className="font-medium">{totalCount} measurement{totalCount !== 1 ? 's' : ''}</span>
@@ -332,7 +332,7 @@ export const MeasurementList = React.memo(function MeasurementList({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setContextMenu(null)} onContextMenu={(e) => { e.preventDefault(); setContextMenu(null) }} />
           <div
-            className="fixed z-50 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-1 min-w-[160px]"
+            className="fixed z-50 bg-white dark:bg-[var(--color-surface-elevated)] rounded-lg shadow-xl border border-[var(--color-border)] dark:border-[var(--color-border)] py-1 min-w-[160px]"
             style={{ left: contextMenu.x, top: contextMenu.y }}
           >
             {onLinkToBOQ && (
@@ -341,9 +341,9 @@ export const MeasurementList = React.memo(function MeasurementList({
                   onLinkToBOQ([contextMenu.id])
                   setContextMenu(null)
                 }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-amber-cta)] dark:hover:bg-[var(--color-amber)]/10 transition-colors"
               >
-                <Link2 size={14} className="text-blue-500" />
+                <Link2 size={14} className="text-[var(--color-amber)]" />
                 Link to BOQ
               </button>
             )}
@@ -353,12 +353,12 @@ export const MeasurementList = React.memo(function MeasurementList({
                 if (m) { setEditingId(m.id); setEditValue(m.label ?? '') }
                 setContextMenu(null)
               }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] transition-colors"
             >
-              <Ruler size={14} className="text-slate-400" />
+              <Ruler size={14} className="text-[var(--color-text-muted)]" />
               Rename
             </button>
-            <div className="h-px bg-slate-200 dark:bg-slate-700 my-1" />
+            <div className="h-px bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] my-1" />
             <button
               onClick={() => {
                 onDelete(contextMenu.id)

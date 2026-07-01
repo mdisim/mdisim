@@ -207,7 +207,7 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
                           onBlur={saveEdit}
                           onKeyDown={handleKeyDown}
                           className={cn(
-                            'w-full px-1.5 py-1 text-sm rounded border border-blue-400 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500',
+                            'w-full px-1.5 py-1 text-sm rounded border border-[var(--color-amber)] bg-white focus:outline-none focus:ring-1 focus:ring-[var(--color-amber)]',
                             col.numeric && 'text-end tabular-nums'
                           )}
                         />

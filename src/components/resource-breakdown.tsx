@@ -307,7 +307,7 @@ export default function ResourceBreakdown({ rateAnalyses }: ResourceBreakdownPro
                   {cat.resources.map((res, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center gap-2 px-5 py-2 text-xs text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-elevated)]/80 dark:hover:bg-[var(--color-surface-elevated)]/50 transition-colors border-t border-slate-50 dark:border-[var(--color-border)]"
+                      className="flex items-center gap-2 px-5 py-2 text-xs text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-elevated)]/80 dark:hover:bg-[var(--color-surface-elevated)]/50 transition-colors border-t border-[var(--color-border)] dark:border-[var(--color-border)]"
                     >
                       <div className="flex-1 min-w-0 truncate">{res.description}</div>
                       <div className="w-24 hidden md:block truncate text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]" title={res.analysisDescription}>
@@ -342,7 +342,7 @@ export default function ResourceBreakdown({ rateAnalyses }: ResourceBreakdownPro
       <Card className="!shadow-sm border-2 border-[var(--color-border)] dark:border-[var(--color-border)]">
         <CardContent className="!py-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-bold text-[var(--color-text)] dark:text-slate-100 uppercase tracking-wider">
+            <span className="text-sm font-bold text-[var(--color-text)] dark:text-[var(--color-text)] uppercase tracking-wider">
               Grand Total
             </span>
             <span className="text-xl font-bold text-[var(--color-info)] tabular-nums">

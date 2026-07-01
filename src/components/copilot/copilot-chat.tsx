@@ -119,7 +119,7 @@ function MessageBubble({ message }: { message: CopilotMessage }) {
         'max-w-[85%] rounded-xl px-3 py-2 text-[12px] leading-relaxed relative group',
         isUser
           ? 'bg-[var(--color-info-bg)] text-white rounded-tr-sm'
-          : 'bg-white dark:bg-[var(--color-surface-elevated)] border border-[var(--color-border)] dark:border-[var(--color-border)] text-[var(--color-text-secondary)] dark:text-slate-200 rounded-tl-sm',
+          : 'bg-white dark:bg-[var(--color-surface-elevated)] border border-[var(--color-border)] dark:border-[var(--color-border)] text-[var(--color-text-secondary)] dark:text-[var(--color-text)] rounded-tl-sm',
       )}>
         {isUser ? (
           <p>{message.content}</p>
@@ -181,7 +181,7 @@ function ApiKeyDialog({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClose
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)] dark:border-[var(--color-border)]">
           <div className="flex items-center gap-2">
             <Key size={16} className="text-violet-500" />
-            <h3 className="text-sm font-semibold text-[var(--color-text)] dark:text-slate-200">API Key Setup</h3>
+            <h3 className="text-sm font-semibold text-[var(--color-text)] dark:text-[var(--color-text)]">API Key Setup</h3>
           </div>
           <button onClick={onClose} className="p-1 text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] dark:hover:text-[var(--color-text-secondary)]">
             <X size={14} />
@@ -196,7 +196,7 @@ function ApiKeyDialog({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClose
             value={apiKey}
             onChange={e => setApiKey(e.target.value)}
             placeholder="sk-ant-..."
-            className="w-full px-3 py-2 text-sm bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface)] border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-lg outline-none focus:border-violet-400 dark:focus:border-violet-600 text-[var(--color-text)] dark:text-slate-200 placeholder-slate-400"
+            className="w-full px-3 py-2 text-sm bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface)] border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-lg outline-none focus:border-violet-400 dark:focus:border-violet-600 text-[var(--color-text)] dark:text-[var(--color-text)] placeholder-slate-400"
             onKeyDown={e => { if (e.key === 'Enter') handleSave() }}
           />
           {dialogError && (
@@ -205,7 +205,7 @@ function ApiKeyDialog({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClose
           <button
             onClick={handleSave}
             disabled={!apiKey.trim() || saving}
-            className="w-full py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 rounded-lg transition-colors flex items-center justify-center gap-2"
+            className="w-full py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 disabled:bg-[var(--color-surface)] dark:disabled:bg-[var(--color-surface-hover)] rounded-lg transition-colors flex items-center justify-center gap-2"
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Key size={14} />}
             {saving ? 'Saving...' : 'Save API Key'}
@@ -337,10 +337,10 @@ export function CopilotChat({ projectId, projectName, currentPage }: CopilotChat
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-[var(--color-info-light)] flex items-center justify-center">
               <Bot size={18} className="text-white" />
             </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white dark:border-slate-900" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white dark:border-[var(--color-border)]" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-[var(--color-text)] dark:text-slate-200">AI Copilot</h3>
+            <h3 className="text-sm font-semibold text-[var(--color-text)] dark:text-[var(--color-text)]">AI Copilot</h3>
             <p className="text-[10px] text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] truncate max-w-[200px]">{projectName}</p>
           </div>
         </div>
@@ -369,7 +369,7 @@ export function CopilotChat({ projectId, projectName, currentPage }: CopilotChat
             <div className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-100 to-[var(--color-info-light)] dark:from-violet-900/20 dark:to-[var(--color-info-light)]/20 flex items-center justify-center mb-3">
               <Sparkles size={26} className="text-violet-500" />
             </div>
-            <h4 className="text-sm font-semibold text-[var(--color-text)] dark:text-slate-200 mb-1">How can I help?</h4>
+            <h4 className="text-sm font-semibold text-[var(--color-text)] dark:text-[var(--color-text)] mb-1">How can I help?</h4>
             <p className="text-[11px] text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] text-center max-w-[280px] mb-4">
               I have full context of this project — drawings, BOQ, measurements, costs, contracts, and more. Ask me anything.
             </p>
@@ -440,13 +440,13 @@ export function CopilotChat({ projectId, projectName, currentPage }: CopilotChat
             onKeyDown={handleKeyDown}
             placeholder="Ask about your project..."
             rows={1}
-            className="flex-1 bg-transparent px-3 py-2.5 text-sm text-[var(--color-text)] dark:text-slate-200 placeholder-slate-400 resize-none outline-none max-h-24"
+            className="flex-1 bg-transparent px-3 py-2.5 text-sm text-[var(--color-text)] dark:text-[var(--color-text)] placeholder-slate-400 resize-none outline-none max-h-24"
             style={{ minHeight: '40px' }}
           />
           <button
             onClick={() => sendMessage(input)}
             disabled={!input.trim() || isLoading}
-            className="p-2.5 text-white bg-violet-600 hover:bg-violet-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 rounded-lg mr-1 mb-1 transition-colors"
+            className="p-2.5 text-white bg-violet-600 hover:bg-violet-700 disabled:bg-[var(--color-surface)] dark:disabled:bg-[var(--color-surface-hover)] rounded-lg mr-1 mb-1 transition-colors"
           >
             <Send size={16} />
           </button>

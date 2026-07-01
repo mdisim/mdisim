@@ -58,14 +58,14 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
       <div className="space-y-5">
         {SHORTCUTS.map(section => (
           <div key={section.section}>
-            <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+            <h4 className="text-xs font-semibold text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] uppercase tracking-wider mb-2">
               {section.section}
             </h4>
             <div className="space-y-1">
               {section.items.map(item => (
                 <div key={item.key} className="flex items-center justify-between py-1">
-                  <span className="text-sm text-slate-700 dark:text-slate-300">{item.desc}</span>
-                  <kbd className="px-2 py-0.5 text-xs font-mono bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded border border-slate-200 dark:border-slate-600">
+                  <span className="text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)]">{item.desc}</span>
+                  <kbd className="px-2 py-0.5 text-xs font-mono bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)] rounded border border-[var(--color-border)] dark:border-[var(--color-border)]">
                     {item.key}
                   </kbd>
                 </div>

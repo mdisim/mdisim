@@ -223,7 +223,7 @@ export function MeasurementGrid({
             onBlur={() => commitEdit(cellKey)}
             onKeyDown={(e) => handleKeyDown(e, cellKey)}
             className={cn(
-              'w-full h-full px-2 py-1.5 text-xs border-2 border-blue-400 ring-1 ring-blue-500 outline-none bg-white dark:bg-[var(--color-surface-elevated)]',
+              'w-full h-full px-2 py-1.5 text-xs border-2 border-[var(--color-amber)] ring-1 ring-blue-500 outline-none bg-white dark:bg-[var(--color-surface-elevated)]',
               inputType === 'number' && 'text-end',
             )}
             style={width ? { minWidth: width } : undefined}
@@ -275,7 +275,7 @@ export function MeasurementGrid({
                   type="checkbox"
                   checked={allSelected}
                   onChange={onSelectAll}
-                  className="rounded border-[var(--color-border)] text-[var(--color-info)] focus:ring-blue-500"
+                  className="rounded border-[var(--color-border)] text-[var(--color-info)] focus:ring-[var(--color-amber)]"
                 />
               </th>
               <th className="w-8 px-2 py-2.5 border-r border-[var(--color-border)] dark:border-[var(--color-border)]" />
@@ -342,7 +342,7 @@ export function MeasurementGrid({
                                 type="checkbox"
                                 checked={selectedItems.has(item.id)}
                                 onChange={() => onToggleSelect(item.id)}
-                                className="rounded border-[var(--color-border)] text-[var(--color-info)] focus:ring-blue-500"
+                                className="rounded border-[var(--color-border)] text-[var(--color-info)] focus:ring-[var(--color-amber)]"
                               />
                             </td>
                             <td
@@ -495,7 +495,7 @@ export function MeasurementGrid({
                                             onDuplicateLine(line.id)
                                             setLineMenu(null)
                                           }}
-                                          className="flex items-center gap-2 px-3 py-1.5 text-xs text-[var(--color-text-secondary)] dark:text-slate-200 hover:bg-[var(--color-surface-elevated)] dark:hover:bg-[var(--color-surface-elevated)] w-full"
+                                          className="flex items-center gap-2 px-3 py-1.5 text-xs text-[var(--color-text-secondary)] dark:text-[var(--color-text)] hover:bg-[var(--color-surface-elevated)] dark:hover:bg-[var(--color-surface-elevated)] w-full"
                                         >
                                           <Copy size={12} /> Duplicate
                                         </button>
@@ -526,7 +526,7 @@ export function MeasurementGrid({
                                 <span className="mr-4 text-red-500">
                                   Ded: <span className="font-medium tabular-nums">−{formatQty(itemDeductions)}</span>
                                 </span>
-                                <span className="font-semibold text-[var(--color-text-secondary)] dark:text-slate-200">
+                                <span className="font-semibold text-[var(--color-text-secondary)] dark:text-[var(--color-text)]">
                                   Net: <span className="tabular-nums">{formatQty(itemNet)}</span>
                                 </span>
                               </td>

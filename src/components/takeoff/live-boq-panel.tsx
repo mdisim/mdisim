@@ -149,28 +149,28 @@ export function LiveBOQPanel({
     value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700">
+    <div className="flex flex-col h-full bg-white dark:bg-[var(--color-surface-elevated)] border-l border-[var(--color-border)] dark:border-[var(--color-border)]">
       {/* Header */}
-      <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2">
+      <div className="px-3 py-2 border-b border-[var(--color-border)] dark:border-[var(--color-border)] flex items-center gap-2">
         <FileSpreadsheet size={14} className="text-emerald-600 dark:text-emerald-400" />
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+        <h3 className="text-sm font-semibold text-[var(--color-text)]">
           Live BOQ
         </h3>
-        <span className="ml-auto text-[10px] text-slate-400 dark:text-slate-500">
+        <span className="ml-auto text-[10px] text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">
           {boqItems.length} items
         </span>
       </div>
 
       {/* Link Mode Banner */}
       {linkMode && (
-        <div className="px-3 py-2 bg-blue-50 dark:bg-blue-900/30 border-b border-blue-200 dark:border-blue-800">
+        <div className="px-3 py-2 bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber)]/10 border-b border-[var(--color-amber)]/20 dark:border-[var(--color-amber)]/20">
           <div className="flex items-center gap-2">
-            <LinkIcon size={14} className="text-blue-600 dark:text-blue-400" />
-            <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">
+            <LinkIcon size={14} className="text-[var(--color-amber)] dark:text-[var(--color-amber)]" />
+            <span className="text-xs font-semibold text-[var(--color-amber)] dark:text-[var(--color-amber)]">
               Select BOQ Item to Link
             </span>
           </div>
-          <p className="text-[10px] text-blue-600 dark:text-blue-400 mt-0.5">
+          <p className="text-[10px] text-[var(--color-amber)] dark:text-[var(--color-amber)] mt-0.5">
             {selectedMeasurementIds.length} measurement{selectedMeasurementIds.length !== 1 ? 's' : ''} selected
           </p>
         </div>
@@ -178,7 +178,7 @@ export function LiveBOQPanel({
 
       {/* Quick Add Button / Form */}
       {linkMode && (
-        <div className="border-b border-slate-200 dark:border-slate-700">
+        <div className="border-b border-[var(--color-border)] dark:border-[var(--color-border)]">
           {!showQuickAdd ? (
             <button
               onClick={() => setShowQuickAdd(true)}
@@ -188,14 +188,14 @@ export function LiveBOQPanel({
               Quick Add BOQ Item
             </button>
           ) : (
-            <div className="p-3 space-y-2 bg-slate-50 dark:bg-slate-750">
+            <div className="p-3 space-y-2 bg-[var(--color-surface)] dark:bg-[var(--color-surface)]">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                <span className="text-xs font-semibold text-[var(--color-text)]">
                   New BOQ Item
                 </span>
                 <button
                   onClick={() => setShowQuickAdd(false)}
-                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                  className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] dark:hover:text-[var(--color-text-secondary)]"
                 >
                   <X size={14} />
                 </button>
@@ -206,14 +206,14 @@ export function LiveBOQPanel({
                 value={quickAddDesc}
                 onChange={e => setQuickAddDesc(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleQuickAdd()}
-                className="w-full px-2 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                className="w-full px-2 py-1.5 text-xs border border-[var(--color-border)] dark:border-[var(--color-border)] rounded bg-white dark:bg-[var(--color-surface-hover)] text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 autoFocus
               />
               <div className="flex items-center gap-2">
                 <select
                   value={quickAddUnit}
                   onChange={e => setQuickAddUnit(e.target.value)}
-                  className="flex-1 px-2 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  className="flex-1 px-2 py-1.5 text-xs border border-[var(--color-border)] dark:border-[var(--color-border)] rounded bg-white dark:bg-[var(--color-surface-hover)] text-[var(--color-text)] focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 >
                   <option value="m">m</option>
                   <option value="m2">m²</option>
@@ -231,7 +231,7 @@ export function LiveBOQPanel({
                     'flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded transition-colors',
                     quickAddDesc.trim() && !quickAddLoading
                       ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                      : 'bg-slate-200 text-slate-400 dark:bg-slate-600 dark:text-slate-500 cursor-not-allowed'
+                      : 'bg-[var(--color-surface)] text-[var(--color-text-muted)] dark:bg-[var(--color-surface-hover)] dark:text-[var(--color-text-muted)] cursor-not-allowed'
                   )}
                 >
                   {quickAddLoading ? (
@@ -254,11 +254,11 @@ export function LiveBOQPanel({
         {loading ? (
           <div className="p-4 space-y-3">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-8 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />
+              <div key={i} className="h-8 bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] rounded animate-pulse" />
             ))}
           </div>
         ) : boqItems.length === 0 && measurementItems.length === 0 ? (
-          <div className="px-3 py-8 text-center text-sm text-slate-400 dark:text-slate-500">
+          <div className="px-3 py-8 text-center text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">
             <FileSpreadsheet size={24} className="mx-auto mb-2 opacity-50" />
             <p>No BOQ items yet.</p>
             <p className="text-xs mt-1">
@@ -276,7 +276,7 @@ export function LiveBOQPanel({
                 <div key={section}>
                   <button
                     onClick={() => setCollapsed(p => ({ ...p, [section]: !isCollapsed }))}
-                    className="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-750 border-b border-slate-100 dark:border-slate-700"
+                    className="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] border-b border-[var(--color-border)] dark:border-[var(--color-border)]"
                   >
                     {isCollapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
                     <span className="truncate">{section}</span>
@@ -299,13 +299,13 @@ export function LiveBOQPanel({
                       <div
                         key={item.id}
                         className={cn(
-                          'px-3 py-1.5 border-b border-slate-50 dark:border-slate-700/50 transition-colors cursor-pointer',
+                          'px-3 py-1.5 border-b border-[var(--color-border)] dark:border-[var(--color-border)]/50 transition-colors cursor-pointer',
                           linkMode
-                            ? 'hover:bg-blue-50 dark:hover:bg-blue-900/20'
-                            : 'hover:bg-slate-50 dark:hover:bg-slate-750',
+                            ? 'hover:bg-[var(--color-amber-cta)] dark:hover:bg-[var(--color-amber)]/10'
+                            : 'hover:bg-[var(--color-surface-hover)]',
                           isLinking && 'bg-emerald-50 dark:bg-emerald-900/20',
-                          isActive && 'bg-blue-50 dark:bg-blue-900/30 ring-1 ring-inset ring-blue-400 dark:ring-blue-500',
-                          isHighlighted && !isActive && 'bg-blue-50/50 dark:bg-blue-900/15',
+                          isActive && 'bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber)]/10 ring-1 ring-inset ring-blue-400 dark:ring-blue-500',
+                          isHighlighted && !isActive && 'bg-[var(--color-amber)]/5 dark:bg-[var(--color-amber)]/10',
                         )}
                         onClick={linkMode ? () => handleLinkClick(item.id) : () => {
                           if (!onBOQItemSelect) return
@@ -319,11 +319,11 @@ export function LiveBOQPanel({
                       >
                         <div className="flex items-start gap-2">
                           {item.code && (
-                            <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 shrink-0 mt-0.5">
+                            <span className="text-[10px] font-mono text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] shrink-0 mt-0.5">
                               {item.code}
                             </span>
                           )}
-                          <span className="text-xs text-slate-700 dark:text-slate-300 flex-1 min-w-0 truncate">
+                          <span className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)] flex-1 min-w-0 truncate">
                             {item.description}
                           </span>
                           {/* Link mode button */}
@@ -333,7 +333,7 @@ export function LiveBOQPanel({
                                 e.stopPropagation()
                                 handleLinkClick(item.id)
                               }}
-                              className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/40 rounded hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors"
+                              className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-amber)] dark:text-[var(--color-amber)] bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber)]/10 rounded hover:bg-[var(--color-amber-cta)] dark:hover:bg-[var(--color-amber)]/10 transition-colors"
                             >
                               <Link2 size={10} />
                               Link
@@ -346,16 +346,16 @@ export function LiveBOQPanel({
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-3 mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
+                        <div className="flex items-center gap-3 mt-0.5 text-[10px] text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">
                           {/* Linked measurement count */}
                           {hasLinkedMeasurements && (
-                            <span className="inline-flex items-center gap-0.5 text-blue-500 dark:text-blue-400" title="Linked measurements">
+                            <span className="inline-flex items-center gap-0.5 text-[var(--color-amber)] dark:text-[var(--color-amber)]" title="Linked measurements">
                               <Ruler size={9} />
                               <span>{linkedCount}</span>
                             </span>
                           )}
                           {/* Quantity display */}
-                          <span className="font-medium text-slate-600 dark:text-slate-300">
+                          <span className="font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)]">
                             {item.quantity?.toFixed(2) ?? '0.00'} {item.unit}
                           </span>
                           {/* Sync indicator */}
@@ -384,7 +384,7 @@ export function LiveBOQPanel({
                             </>
                           )}
                           {hasLinkedMeasurements && !linkMode && (
-                            <span title="Linked to measurement"><Link2 size={10} className="text-blue-400" /></span>
+                            <span title="Linked to measurement"><Link2 size={10} className="text-[var(--color-amber)]" /></span>
                           )}
                         </div>
                       </div>
@@ -397,26 +397,26 @@ export function LiveBOQPanel({
             {/* Unlinked measurement items */}
             {unlinkedMI.length > 0 && (
               <div>
-                <div className="px-3 py-1.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-700 bg-amber-50/50 dark:bg-amber-900/10">
+                <div className="px-3 py-1.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider border-b border-[var(--color-border)] dark:border-[var(--color-border)] bg-amber-50/50 dark:bg-amber-900/10">
                   Not in BOQ ({unlinkedMI.length})
                 </div>
                 {unlinkedMI.map(mi => (
                   <div
                     key={mi.id}
-                    className="px-3 py-1.5 border-b border-slate-50 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-750"
+                    className="px-3 py-1.5 border-b border-[var(--color-border)] dark:border-[var(--color-border)]/50 hover:bg-[var(--color-surface-hover)]"
                   >
                     <div className="flex items-start gap-2">
                       {mi.item_code && (
-                        <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 shrink-0 mt-0.5">
+                        <span className="text-[10px] font-mono text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] shrink-0 mt-0.5">
                           {mi.item_code}
                         </span>
                       )}
-                      <span className="text-xs text-slate-700 dark:text-slate-300 flex-1 min-w-0 truncate">
+                      <span className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)] flex-1 min-w-0 truncate">
                         {mi.description}
                       </span>
                     </div>
-                    <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                      <span className="font-medium text-slate-600 dark:text-slate-300">
+                    <div className="text-[10px] text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] mt-0.5">
+                      <span className="font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)]">
                         {mi.net_qty?.toFixed(2) ?? '0.00'} {mi.unit}
                       </span>
                       <span className="ml-2 text-amber-500">(not linked)</span>
@@ -431,19 +431,19 @@ export function LiveBOQPanel({
 
       {/* Grand Total Footer */}
       {boqItems.length > 0 && (
-        <div className="border-t border-slate-200 dark:border-slate-700 px-3 py-2 text-xs text-slate-500 dark:text-slate-400 space-y-1">
+        <div className="border-t border-[var(--color-border)] dark:border-[var(--color-border)] px-3 py-2 text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] space-y-1">
           <div className="flex justify-between">
             <span>BOQ Items</span>
-            <span className="font-medium text-slate-700 dark:text-slate-200">{boqItems.length}</span>
+            <span className="font-medium text-[var(--color-text)]">{boqItems.length}</span>
           </div>
           <div className="flex justify-between">
             <span>Linked</span>
-            <span className="font-medium text-blue-600 dark:text-blue-400">
+            <span className="font-medium text-[var(--color-amber)] dark:text-[var(--color-amber)]">
               {boqItems.filter(i => i.mi_id).length}
             </span>
           </div>
-          <div className="flex justify-between pt-1 border-t border-slate-100 dark:border-slate-700">
-            <span className="font-semibold text-slate-700 dark:text-slate-200">Grand Total</span>
+          <div className="flex justify-between pt-1 border-t border-[var(--color-border)] dark:border-[var(--color-border)]">
+            <span className="font-semibold text-[var(--color-text)]">Grand Total</span>
             <span className="font-bold text-emerald-600 dark:text-emerald-400">
               {formatCurrency(grandTotal)}
             </span>

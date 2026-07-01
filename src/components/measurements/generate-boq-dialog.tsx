@@ -61,7 +61,7 @@ export function GenerateBOQDialog({
               className="rounded border-[var(--color-border)] text-[var(--color-info)] focus:ring-blue-500"
             />
             <div>
-              <div className="text-sm font-medium text-[var(--color-text-secondary)] dark:text-slate-200">Auto-link to library items</div>
+              <div className="text-sm font-medium text-[var(--color-text-secondary)] dark:text-[var(--color-text)]">Auto-link to library items</div>
               <div className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">Match codes against the pricing library</div>
             </div>
           </label>
@@ -73,7 +73,7 @@ export function GenerateBOQDialog({
               className="rounded border-[var(--color-border)] text-[var(--color-info)] focus:ring-blue-500"
             />
             <div>
-              <div className="text-sm font-medium text-[var(--color-text-secondary)] dark:text-slate-200">Copy rates from library</div>
+              <div className="text-sm font-medium text-[var(--color-text-secondary)] dark:text-[var(--color-text)]">Copy rates from library</div>
               <div className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">Pre-fill unit rates for matched items</div>
             </div>
           </label>
@@ -93,7 +93,7 @@ export function GenerateBOQDialog({
             <tbody>
               {selectedItems.map((item) => (
                 <tr key={item.id} className="border-t border-[var(--color-border)] dark:border-[var(--color-border)] text-xs">
-                  <td className="px-3 py-2 border-r border-[var(--color-border)] font-medium text-[var(--color-text-secondary)] dark:text-slate-200">
+                  <td className="px-3 py-2 border-r border-[var(--color-border)] font-medium text-[var(--color-text-secondary)] dark:text-[var(--color-text)]">
                     {item.item_code || '—'}
                   </td>
                   <td className="px-3 py-2 border-r border-[var(--color-border)] text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] max-w-[250px] truncate">

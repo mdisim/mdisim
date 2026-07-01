@@ -88,13 +88,13 @@ function ToolButton({
       className={cn(
         'p-2 rounded-md transition-colors relative group',
         active
-          ? 'bg-gradient-to-b from-blue-500 to-blue-600 text-white shadow-sm'
-          : 'text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700',
+          ? 'bg-gradient-to-b from-[var(--color-amber)] to-[var(--color-amber-cta)] text-white shadow-sm'
+          : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] dark:text-[var(--color-text-secondary)] dark:hover:bg-[var(--color-surface-hover)]',
         className,
       )}
     >
       <Icon size={20} />
-      <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs bg-slate-900 text-white px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+      <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs bg-[var(--color-surface)] text-white px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
         {label}
       </span>
     </button>
@@ -127,7 +127,7 @@ function SnapMenu({ config, onChange }: { config: SnapConfig; onChange: (c: Snap
           'flex items-center gap-1 px-2 py-2 rounded-md transition-colors',
           config.enabled
             ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20'
-            : 'text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700',
+            : 'text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] dark:hover:bg-[var(--color-surface-hover)]',
         )}
       >
         <Magnet size={18} />
@@ -137,36 +137,36 @@ function SnapMenu({ config, onChange }: { config: SnapConfig; onChange: (c: Snap
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 z-50 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 p-2 min-w-[180px]">
-            <label className="flex items-center gap-2 px-2 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-200 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-750 rounded">
+          <div className="absolute top-full left-0 mt-1 z-50 bg-white dark:bg-[var(--color-surface-elevated)] rounded-lg shadow-xl border border-[var(--color-border)] dark:border-[var(--color-border)] p-2 min-w-[180px]">
+            <label className="flex items-center gap-2 px-2 py-1.5 text-sm font-medium text-[var(--color-text)] cursor-pointer hover:bg-[var(--color-surface-hover)] rounded">
               <input
                 type="checkbox"
                 checked={config.enabled}
                 onChange={() => toggleField('enabled')}
-                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-[var(--color-border)] text-[var(--color-amber)] focus:ring-[var(--color-amber)]"
               />
               Snap Enabled
             </label>
-            <div className="h-px bg-slate-200 dark:bg-slate-700 my-1" />
+            <div className="h-px bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] my-1" />
             {SNAP_MODES.map(mode => (
               <label
                 key={mode.key}
-                className="flex items-center gap-2 px-2 py-1 text-sm text-slate-600 dark:text-slate-300 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-750 rounded"
+                className="flex items-center gap-2 px-2 py-1 text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)] cursor-pointer hover:bg-[var(--color-surface-hover)] rounded"
               >
                 <input
                   type="checkbox"
                   checked={config[mode.key]}
                   onChange={() => toggleField(mode.key)}
                   disabled={!config.enabled}
-                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-[var(--color-border)] text-[var(--color-amber)] focus:ring-[var(--color-amber)]"
                 />
                 <span className={cn('w-2 h-2 rounded-full', mode.color)} />
                 {mode.label}
               </label>
             ))}
-            <div className="h-px bg-slate-200 dark:bg-slate-700 my-1" />
+            <div className="h-px bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] my-1" />
             <div className="px-2 py-1">
-              <label className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              <label className="text-[10px] text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] uppercase tracking-wider">
                 Snap Radius
               </label>
               <input
@@ -177,7 +177,7 @@ function SnapMenu({ config, onChange }: { config: SnapConfig; onChange: (c: Snap
                 onChange={e => onChange({ ...config, snapRadius: Number(e.target.value) })}
                 className="w-full h-1 mt-1"
               />
-              <span className="text-xs text-slate-500">{config.snapRadius}px</span>
+              <span className="text-xs text-[var(--color-text-muted)]">{config.snapRadius}px</span>
             </div>
           </div>
         </>
@@ -212,10 +212,10 @@ export const TakeoffToolbar = React.memo(function TakeoffToolbar({
   const measureTools = useMemo(() => TOOLS.filter((t) => t.group === 'measure'), [])
 
   return (
-    <div className="flex items-center gap-1 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-3 py-1.5 flex-wrap shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
+    <div className="flex items-center gap-1 bg-white dark:bg-[var(--color-surface-elevated)] border-b border-[var(--color-border)] dark:border-[var(--color-border)] px-3 py-1.5 flex-wrap shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
       {/* Navigation */}
-      <div className="flex flex-col items-center pr-2 border-r border-slate-200 dark:border-slate-700">
-        <span className="text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-0.5">Navigation</span>
+      <div className="flex flex-col items-center pr-2 border-r border-[var(--color-border)] dark:border-[var(--color-border)]">
+        <span className="text-[9px] uppercase tracking-wider text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] mb-0.5">Navigation</span>
         <div className="flex items-center gap-0.5">
         {navTools.map((t) => (
           <ToolButton
@@ -230,8 +230,8 @@ export const TakeoffToolbar = React.memo(function TakeoffToolbar({
       </div>
 
       {/* Measurement tools */}
-      <div className="flex flex-col items-center px-2 border-r border-slate-200 dark:border-slate-700">
-        <span className="text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-0.5">Measurement</span>
+      <div className="flex flex-col items-center px-2 border-r border-[var(--color-border)] dark:border-[var(--color-border)]">
+        <span className="text-[9px] uppercase tracking-wider text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] mb-0.5">Measurement</span>
         <div className="flex items-center gap-0.5">
         {measureTools.map((t) => (
           <ToolButton
@@ -246,7 +246,7 @@ export const TakeoffToolbar = React.memo(function TakeoffToolbar({
       </div>
 
       {/* Calibration */}
-      <div className="flex items-center gap-0.5 px-2 border-r border-slate-200 dark:border-slate-700">
+      <div className="flex items-center gap-0.5 px-2 border-r border-[var(--color-border)] dark:border-[var(--color-border)]">
         <ToolButton
           icon={Crosshair}
           label="Calibrate Scale"
@@ -256,7 +256,7 @@ export const TakeoffToolbar = React.memo(function TakeoffToolbar({
       </div>
 
       {/* Snap & Grid */}
-      <div className="flex items-center gap-0.5 px-2 border-r border-slate-200 dark:border-slate-700">
+      <div className="flex items-center gap-0.5 px-2 border-r border-[var(--color-border)] dark:border-[var(--color-border)]">
         {snapConfig && onSnapConfigChange && (
           <SnapMenu config={snapConfig} onChange={onSnapConfigChange} />
         )}
@@ -272,7 +272,7 @@ export const TakeoffToolbar = React.memo(function TakeoffToolbar({
 
       {/* Volume Calculator */}
       {onVolumeCalculator && (
-        <div className="flex items-center gap-0.5 px-2 border-r border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-0.5 px-2 border-r border-[var(--color-border)] dark:border-[var(--color-border)]">
           <ToolButton
             icon={Box}
             label="Volume Calculator"
@@ -284,7 +284,7 @@ export const TakeoffToolbar = React.memo(function TakeoffToolbar({
 
       {/* AI Analyze */}
       {onAIAnalyze && (
-        <div className="flex items-center gap-0.5 px-2 border-r border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-0.5 px-2 border-r border-[var(--color-border)] dark:border-[var(--color-border)]">
           <button
             onClick={onAIAnalyze}
             disabled={isAIAnalyzing}
@@ -293,7 +293,7 @@ export const TakeoffToolbar = React.memo(function TakeoffToolbar({
               'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors',
               isAIAnalyzing
                 ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-500 animate-pulse'
-                : 'bg-gradient-to-r from-violet-500 to-blue-500 text-white hover:from-violet-600 hover:to-blue-600 shadow-sm',
+                : 'bg-gradient-to-r from-violet-500 to-[var(--color-amber)] text-white hover:from-violet-600 hover:to-[var(--color-amber-cta)] shadow-sm',
             )}
           >
             <Brain size={16} className={isAIAnalyzing ? 'animate-spin' : ''} />
@@ -303,7 +303,7 @@ export const TakeoffToolbar = React.memo(function TakeoffToolbar({
       )}
 
       {/* Color picker */}
-      <div className="flex items-center gap-1 px-2 border-r border-slate-200 dark:border-slate-700">
+      <div className="flex items-center gap-1 px-2 border-r border-[var(--color-border)] dark:border-[var(--color-border)]">
         {COLORS.map((c) => (
           <button
             key={c}
@@ -312,7 +312,7 @@ export const TakeoffToolbar = React.memo(function TakeoffToolbar({
             className={cn(
               'w-5 h-5 rounded-full border-2 transition-transform',
               activeColor === c
-                ? 'border-slate-900 dark:border-white scale-110'
+                ? 'border-[var(--color-border)] dark:border-white scale-110'
                 : 'border-transparent hover:scale-110',
             )}
             style={{ backgroundColor: c }}
@@ -326,7 +326,7 @@ export const TakeoffToolbar = React.memo(function TakeoffToolbar({
           onClick={onUndo}
           disabled={!canUndo}
           title="Undo (Ctrl+Z)"
-          className="p-2 rounded-md text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700 disabled:opacity-40 transition-colors"
+          className="p-2 rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] dark:text-[var(--color-text-secondary)] dark:hover:bg-[var(--color-surface-hover)] disabled:opacity-40 transition-colors"
         >
           <Undo2 size={18} />
         </button>
@@ -335,7 +335,7 @@ export const TakeoffToolbar = React.memo(function TakeoffToolbar({
             onClick={onRedo}
             disabled={!canRedo}
             title="Redo (Ctrl+Shift+Z)"
-            className="p-2 rounded-md text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700 disabled:opacity-40 transition-colors"
+            className="p-2 rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] dark:text-[var(--color-text-secondary)] dark:hover:bg-[var(--color-surface-hover)] disabled:opacity-40 transition-colors"
           >
             <Redo2 size={18} />
           </button>
@@ -345,7 +345,7 @@ export const TakeoffToolbar = React.memo(function TakeoffToolbar({
             if (activeMeasurementId) onDeleteMeasurement(activeMeasurementId)
           }}
           title="Delete Selected (Del)"
-          className="p-2 rounded-md text-slate-600 hover:bg-red-100 hover:text-red-600 dark:text-slate-300 dark:hover:bg-red-900/30 transition-colors"
+          className="p-2 rounded-md text-[var(--color-text-muted)] hover:bg-red-100 hover:text-red-600 dark:text-[var(--color-text-secondary)] dark:hover:bg-red-900/30 transition-colors"
         >
           <Trash2 size={18} />
         </button>

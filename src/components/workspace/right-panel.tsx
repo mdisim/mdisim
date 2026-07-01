@@ -51,9 +51,9 @@ function LinkedItem({ icon: Icon, label, sublabel, onClick }: {
       <Icon size={12} className="text-[var(--color-text-muted)] group-hover:text-[var(--color-amber)] transition-colors shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="text-[11px] text-[var(--color-text-secondary)] truncate">{label}</div>
-        {sublabel && <div className="text-[10px] text-slate-400 truncate">{sublabel}</div>}
+        {sublabel && <div className="text-[10px] text-[var(--color-text-muted)] truncate">{sublabel}</div>}
       </div>
-      <ArrowRight size={10} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+      <ArrowRight size={10} className="text-[var(--color-text-secondary)] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
     </button>
   )
 }
@@ -97,16 +97,16 @@ function BOQDetail() {
       {/* Header */}
       <div className="px-4 py-3">
         <div className="flex items-center gap-2 mb-2">
-          <div className="p-1.5 rounded-lg bg-blue-500/10">
-            <FileSpreadsheet size={14} className="text-blue-500" />
+          <div className="p-1.5 rounded-lg bg-[var(--color-amber-cta)]/10">
+            <FileSpreadsheet size={14} className="text-[var(--color-amber)]" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[10px] font-mono text-slate-400">{item.code ?? '—'}</div>
-            <div className="text-[12px] font-semibold text-slate-900 dark:text-white truncate">{item.description}</div>
+            <div className="text-[10px] font-mono text-[var(--color-text-muted)]">{item.code ?? '—'}</div>
+            <div className="text-[12px] font-semibold text-[var(--color-text-muted)] dark:text-white truncate">{item.description}</div>
           </div>
         </div>
         {item.section && (
-          <Badge color="bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400">
+          <Badge color="bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">
             <Package size={8} className="mr-1" />{item.section}
           </Badge>
         )}
@@ -114,7 +114,7 @@ function BOQDetail() {
 
       {/* Properties */}
       <div>
-        <SectionTitle icon={Info} title="Properties" color="text-blue-500" />
+        <SectionTitle icon={Info} title="Properties" color="text-[var(--color-amber)]" />
         <div className="py-1">
           <PropRow label="Unit" value={item.unit} />
           <PropRow label="Quantity" value={fmt(item.quantity)} mono />
@@ -151,11 +151,11 @@ function BOQDetail() {
             <PropRow label="Unit Rate" value={fmt(linkedRateAnalysis.unit_rate)} mono />
             {linkedRateAnalysis.resources && linkedRateAnalysis.resources.length > 0 && (
               <div className="px-4 py-2">
-                <div className="text-[9px] font-bold text-slate-400 uppercase mb-1">Resources ({linkedRateAnalysis.resources.length})</div>
+                <div className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase mb-1">Resources ({linkedRateAnalysis.resources.length})</div>
                 {linkedRateAnalysis.resources.slice(0, 5).map(r => (
                   <div key={r.id} className="flex items-center justify-between text-[10px] py-0.5">
-                    <span className="text-slate-500 truncate">{r.description}</span>
-                    <span className="tabular-nums text-slate-600 dark:text-slate-300 shrink-0 ml-2">{fmt(r.total_amount)}</span>
+                    <span className="text-[var(--color-text-muted)] truncate">{r.description}</span>
+                    <span className="tabular-nums text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)] shrink-0 ml-2">{fmt(r.total_amount)}</span>
                   </div>
                 ))}
               </div>
@@ -206,11 +206,11 @@ function BOQDetail() {
           <SectionTitle icon={Activity} title="Payment History" color="text-green-500" />
           <div className="px-4 py-2">
             <div className="flex items-center justify-between text-[11px] mb-2">
-              <span className="text-slate-500">Total Certified</span>
-              <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{fmt(totalPaid)}</span>
+              <span className="text-[var(--color-text-muted)]">Total Certified</span>
+              <span className="font-semibold tabular-nums text-[var(--color-text)]">{fmt(totalPaid)}</span>
             </div>
             {item.total_amount != null && totalPaid > 0 && (
-              <div className="h-1.5 bg-slate-100 dark:bg-white/[0.04] rounded-full overflow-hidden">
+              <div className="h-1.5 bg-[var(--color-surface)] dark:bg-white/[0.04] rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-all"
                   style={{ width: `${Math.min(100, (totalPaid / item.total_amount) * 100)}%` }}
@@ -237,13 +237,13 @@ function DrawingDetail() {
             <ImageIcon size={14} className="text-indigo-500" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[12px] font-semibold text-slate-900 dark:text-white truncate">{drawing.name}</div>
-            <div className="text-[10px] text-slate-400">{drawing.drawing_number ?? '—'}</div>
+            <div className="text-[12px] font-semibold text-[var(--color-text-muted)] dark:text-white truncate">{drawing.name}</div>
+            <div className="text-[10px] text-[var(--color-text-muted)]">{drawing.drawing_number ?? '—'}</div>
           </div>
         </div>
         <div className="flex gap-1.5">
           <Badge color="bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">{drawing.drawing_type}</Badge>
-          <Badge color="bg-slate-100 dark:bg-white/[0.06] text-slate-500">{drawing.file_type?.toUpperCase()}</Badge>
+          <Badge color="bg-[var(--color-surface-hover)] text-[var(--color-text-muted)]">{drawing.file_type?.toUpperCase()}</Badge>
         </div>
       </div>
 
@@ -275,8 +275,8 @@ function DrawingDetail() {
                 )}>
                   {m.tool_type[0].toUpperCase()}
                 </div>
-                <span className="flex-1 truncate text-slate-600 dark:text-slate-300">{m.label || `#${i + 1}`}</span>
-                <span className="tabular-nums text-slate-500 shrink-0">{fmt(m.quantity)} {m.unit ?? 'px'}</span>
+                <span className="flex-1 truncate text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)]">{m.label || `#${i + 1}`}</span>
+                <span className="tabular-nums text-[var(--color-text-muted)] shrink-0">{fmt(m.quantity)} {m.unit ?? 'px'}</span>
               </div>
             ))}
           </div>
@@ -286,7 +286,7 @@ function DrawingDetail() {
       {/* Linked BOQ Items */}
       {linkedBoqItems.length > 0 && (
         <div>
-          <SectionTitle icon={FileSpreadsheet} title={`BOQ Items (${linkedBoqItems.length})`} color="text-blue-500" />
+          <SectionTitle icon={FileSpreadsheet} title={`BOQ Items (${linkedBoqItems.length})`} color="text-[var(--color-amber)]" />
           {linkedBoqItems.map(b => (
             <LinkedItem
               key={b.id}
@@ -307,14 +307,14 @@ function DrawingDetail() {
             <div key={rev.id} className="flex items-center gap-2 px-4 py-1.5 text-[11px]">
               <div className={cn(
                 'w-2 h-2 rounded-full',
-                rev.status === 'current' ? 'bg-green-500' : rev.status === 'draft' ? 'bg-amber-500' : 'bg-slate-400'
+                rev.status === 'current' ? 'bg-green-500' : rev.status === 'draft' ? 'bg-amber-500' : 'bg-[var(--color-text-muted)]'
               )} />
-              <span className="font-mono text-slate-500">Rev {rev.revision_number}</span>
-              <span className="text-slate-400 text-[10px]">{rev.revision_date}</span>
+              <span className="font-mono text-[var(--color-text-muted)]">Rev {rev.revision_number}</span>
+              <span className="text-[var(--color-text-muted)] text-[10px]">{rev.revision_date}</span>
               <Badge color={
                 rev.status === 'current' ? 'bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400' :
                 rev.status === 'draft' ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-600' :
-                'bg-slate-100 dark:bg-white/[0.06] text-slate-500'
+                'bg-[var(--color-surface-hover)] text-[var(--color-text-muted)]'
               }>
                 {rev.status}
               </Badge>
@@ -339,13 +339,13 @@ function MeasurementDetail() {
             <Ruler size={14} className="text-cyan-500" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[10px] font-mono text-slate-400">{item.item_code ?? '—'}</div>
-            <div className="text-[12px] font-semibold text-slate-900 dark:text-white truncate">{item.description}</div>
+            <div className="text-[10px] font-mono text-[var(--color-text-muted)]">{item.item_code ?? '—'}</div>
+            <div className="text-[12px] font-semibold text-[var(--color-text-muted)] dark:text-white truncate">{item.description}</div>
           </div>
         </div>
         <div className="flex gap-1.5">
           <Badge color="bg-cyan-100 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">{item.measurement_type}</Badge>
-          <Badge color="bg-slate-100 dark:bg-white/[0.06] text-slate-500">{item.unit}</Badge>
+          <Badge color="bg-[var(--color-surface-hover)] text-[var(--color-text-muted)]">{item.unit}</Badge>
         </div>
       </div>
 
@@ -372,14 +372,14 @@ function MeasurementDetail() {
                 'flex items-center gap-2 px-4 py-1.5 text-[10px]',
                 l.is_deduction && 'bg-red-50/50 dark:bg-red-500/5'
               )}>
-                <span className="w-4 text-center text-slate-400 font-mono">{i + 1}</span>
-                <span className="flex-1 truncate text-slate-600 dark:text-slate-300">{l.description || '—'}</span>
-                <span className="tabular-nums text-slate-400 shrink-0">
+                <span className="w-4 text-center text-[var(--color-text-muted)] font-mono">{i + 1}</span>
+                <span className="flex-1 truncate text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)]">{l.description || '—'}</span>
+                <span className="tabular-nums text-[var(--color-text-muted)] shrink-0">
                   {l.nr ?? ''} × {l.length ?? ''} × {l.width ?? ''} × {l.height ?? ''}
                 </span>
                 <span className={cn(
                   'tabular-nums font-medium shrink-0 w-16 text-right',
-                  l.is_deduction ? 'text-red-500' : 'text-slate-700 dark:text-slate-200'
+                  l.is_deduction ? 'text-red-500' : 'text-[var(--color-text)]'
                 )}>
                   {l.is_deduction ? '-' : ''}{fmt(l.quantity)}
                 </span>
@@ -391,7 +391,7 @@ function MeasurementDetail() {
 
       {linkedBoqItems.length > 0 && (
         <div>
-          <SectionTitle icon={FileSpreadsheet} title={`BOQ Items (${linkedBoqItems.length})`} color="text-blue-500" />
+          <SectionTitle icon={FileSpreadsheet} title={`BOQ Items (${linkedBoqItems.length})`} color="text-[var(--color-amber)]" />
           {linkedBoqItems.map(b => (
             <LinkedItem key={b.id} icon={FileSpreadsheet} label={b.description} sublabel={b.code ?? undefined} onClick={() => selectBoqItem(b)} />
           ))}
@@ -413,8 +413,8 @@ function LibraryItemDetail() {
             <BookOpen size={14} className="text-teal-500" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[10px] font-mono text-slate-400">{item.code ?? '—'}</div>
-            <div className="text-[12px] font-semibold text-slate-900 dark:text-white">{item.description}</div>
+            <div className="text-[10px] font-mono text-[var(--color-text-muted)]">{item.code ?? '—'}</div>
+            <div className="text-[12px] font-semibold text-[var(--color-text-muted)] dark:text-white">{item.description}</div>
           </div>
         </div>
       </div>
@@ -439,10 +439,10 @@ export function RightPanel() {
   return (
     <div className="flex flex-col h-full bg-white dark:bg-[#0f1117] overflow-hidden">
       {/* Panel header */}
-      <div className="px-3 py-2.5 border-b border-slate-200/60 dark:border-white/[0.04]">
+      <div className="px-3 py-2.5 border-b border-[var(--color-border)]/60 dark:border-white/[0.04]">
         <div className="flex items-center gap-2">
-          <Layers size={13} className="text-slate-400" />
-          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.08em]">
+          <Layers size={13} className="text-[var(--color-text-muted)]" />
+          <span className="text-[10px] font-bold text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] uppercase tracking-[0.08em]">
             {selection.type === 'boq' ? 'BOQ Item'
               : selection.type === 'drawing' ? 'Drawing'
               : selection.type === 'measurement' ? 'Measurement'
@@ -477,11 +477,11 @@ export function RightPanel() {
           )}
           {!selection.type && (
             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-16 px-6 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/[0.04] flex items-center justify-center mb-3">
-                <Sparkles size={20} className="text-slate-300 dark:text-slate-600" />
+              <div className="w-12 h-12 rounded-2xl bg-[var(--color-surface)] dark:bg-white/[0.04] flex items-center justify-center mb-3">
+                <Sparkles size={20} className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]" />
               </div>
-              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">No Selection</p>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500 max-w-[180px]">
+              <p className="text-[11px] font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] mb-1">No Selection</p>
+              <p className="text-[10px] text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] max-w-[180px]">
                 Select a BOQ item, drawing, or measurement to view its properties and linked data.
               </p>
             </motion.div>

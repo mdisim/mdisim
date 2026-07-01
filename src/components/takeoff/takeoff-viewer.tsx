@@ -1404,24 +1404,24 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
         />
 
         {/* Main canvas area */}
-        <div className="flex-1 relative overflow-hidden bg-slate-200 dark:bg-slate-900">
+        <div className="flex-1 relative overflow-hidden bg-[var(--color-surface)] dark:bg-[var(--color-surface)]">
           {/* Page controls (for quick nav when no thumbnails visible) */}
           {pageCount > 1 && (
-            <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-white/90 dark:bg-slate-800/90 backdrop-blur rounded-lg px-3 py-1 shadow-sm text-sm">
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-white/90 dark:bg-[var(--color-surface-elevated)]/90 backdrop-blur rounded-lg px-3 py-1 shadow-sm text-sm">
               <button
                 onClick={() => goToPage(page - 1)}
                 disabled={page <= 1}
-                className="text-slate-600 dark:text-slate-300 disabled:opacity-40"
+                className="text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)] disabled:opacity-40"
               >
                 Prev
               </button>
-              <span className="text-slate-500 dark:text-slate-400">
+              <span className="text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">
                 {page} / {pageCount}
               </span>
               <button
                 onClick={() => goToPage(page + 1)}
                 disabled={page >= pageCount}
-                className="text-slate-600 dark:text-slate-300 disabled:opacity-40"
+                className="text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)] disabled:opacity-40"
               >
                 Next
               </button>
@@ -1441,14 +1441,14 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
           <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
             <button
               onClick={() => setShowShortcuts(true)}
-              className="p-1.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur rounded-lg shadow-sm hover:bg-white dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400"
+              className="p-1.5 bg-white/90 dark:bg-[var(--color-surface-elevated)]/90 backdrop-blur rounded-lg shadow-sm hover:bg-white dark:hover:bg-[var(--color-surface-elevated)] transition-colors text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]"
               title="Keyboard shortcuts (?)"
             >
               <Keyboard size={16} />
             </button>
             <button
               onClick={() => setShowPanel((v) => !v)}
-              className="p-1.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur rounded-lg shadow-sm hover:bg-white dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400"
+              className="p-1.5 bg-white/90 dark:bg-[var(--color-surface-elevated)]/90 backdrop-blur rounded-lg shadow-sm hover:bg-white dark:hover:bg-[var(--color-surface-elevated)] transition-colors text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]"
               title={showPanel ? 'Hide panel (Tab)' : 'Show panel (Tab)'}
             >
               {showPanel ? <PanelRightClose size={16} /> : <PanelRightOpen size={16} />}
@@ -1456,14 +1456,14 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
           </div>
 
           {/* Status bar */}
-          <div className="absolute bottom-3 right-3 z-10 flex items-center gap-3 bg-white/95 dark:bg-slate-800/95 backdrop-blur rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+          <div className="absolute bottom-3 right-3 z-10 flex items-center gap-3 bg-white/95 dark:bg-[var(--color-surface-elevated)]/95 backdrop-blur rounded-lg shadow-lg border border-[var(--color-border)] dark:border-[var(--color-border)] px-3 py-1.5 text-[11px] text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">
             {/* Active tool name */}
             {activeTool && (
               <>
-                <span className="font-medium text-slate-700 dark:text-slate-200">
+                <span className="font-medium text-[var(--color-text)]">
                   {TOOL_LABELS[activeTool] ?? activeTool}
                 </span>
-                <span className="text-slate-300 dark:text-slate-600">|</span>
+                <span className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">|</span>
               </>
             )}
             {/* Snap mode indicators */}
@@ -1477,7 +1477,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
                   {snapConfig.nearest && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: SNAP_TYPE_COLORS.nearest }} title="Nearest snap" />}
                   {snapConfig.grid && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: SNAP_TYPE_COLORS.grid }} title="Grid snap" />}
                 </span>
-                <span className="text-slate-300 dark:text-slate-600">|</span>
+                <span className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">|</span>
               </>
             )}
             {scale ? (
@@ -1491,11 +1491,11 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
                 No scale
               </span>
             )}
-            <span className="text-slate-300 dark:text-slate-600">|</span>
+            <span className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">|</span>
             <span>{measurements.length} measurement{measurements.length !== 1 ? 's' : ''}</span>
             {mousePos && (
               <>
-                <span className="text-slate-300 dark:text-slate-600">|</span>
+                <span className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">|</span>
                 <span className="font-mono">
                   {realWorldCoords
                     ? `${realWorldCoords.x.toFixed(2)}, ${realWorldCoords.y.toFixed(2)} ${scale!.unit}`
@@ -1506,7 +1506,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
             )}
             {currentSnap && (
               <>
-                <span className="text-slate-300 dark:text-slate-600">|</span>
+                <span className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">|</span>
                 <span className="flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: SNAP_TYPE_COLORS[currentSnap.type] ?? '#F59E0B' }} />
                   {currentSnap.type}
@@ -1515,7 +1515,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
             )}
             {showGrid && (
               <>
-                <span className="text-slate-300 dark:text-slate-600">|</span>
+                <span className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)]">|</span>
                 <span>Grid</span>
               </>
             )}
@@ -1529,16 +1529,16 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
             {loading ? (
               <div className="flex items-center justify-center h-full">
                 <div className="flex flex-col items-center gap-3">
-                  <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full" />
-                  <p className="text-xs text-slate-400">Loading drawing...</p>
+                  <div className="animate-spin h-8 w-8 border-4 border-[var(--color-amber-cta)] border-t-transparent rounded-full" />
+                  <p className="text-xs text-[var(--color-text-muted)]">Loading drawing...</p>
                 </div>
               </div>
             ) : pdfError ? (
               <div className="flex items-center justify-center h-full">
                 <div className="flex flex-col items-center gap-3 text-center px-6">
                   <AlertTriangle size={28} className="text-amber-500" />
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Failed to load drawing</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">{pdfError}</p>
+                  <p className="text-sm font-medium text-[var(--color-text)]">Failed to load drawing</p>
+                  <p className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] max-w-sm">{pdfError}</p>
                 </div>
               </div>
             ) : (
@@ -1587,7 +1587,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
         {showPanel && (
           <>
           <div
-            className="w-1 flex-shrink-0 cursor-col-resize bg-slate-200 dark:bg-slate-700 hover:bg-blue-400 dark:hover:bg-blue-500 active:bg-blue-500 transition-colors relative group"
+            className="w-1 flex-shrink-0 cursor-col-resize bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] hover:bg-[var(--color-amber-cta)] dark:hover:bg-[var(--color-amber-cta)] active:bg-[var(--color-amber-cta)] transition-colors relative group"
             onMouseDown={(e) => {
               e.preventDefault()
               panelDragRef.current = { startX: e.clientX, startW: panelWidth }
@@ -1609,14 +1609,14 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
               document.addEventListener('mouseup', onUp)
             }}
           >
-            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-slate-300 dark:bg-slate-600 group-hover:bg-blue-400 dark:group-hover:bg-blue-400 transition-colors" />
+            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] group-hover:bg-[var(--color-amber-cta)] dark:group-hover:bg-[var(--color-amber-cta)] transition-colors" />
           </div>
-          <div style={{ width: panelWidth }} className="flex-shrink-0 flex flex-col bg-white dark:bg-slate-800">
+          <div style={{ width: panelWidth }} className="flex-shrink-0 flex flex-col bg-white dark:bg-[var(--color-surface-elevated)]">
             {/* Top half: Measurements + Scales */}
             <div className="flex flex-col" style={{ height: '45%', minHeight: 120 }}>
               {/* Measurements header with link mode + scales toggle */}
-              <div className="px-3 py-1.5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between gap-1 shrink-0">
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+              <div className="px-3 py-1.5 border-b border-[var(--color-border)] dark:border-[var(--color-border)] flex items-center justify-between gap-1 shrink-0">
+                <span className="text-xs font-semibold text-[var(--color-text)]">
                   Measurements ({measurements.length})
                 </span>
                 <div className="flex items-center gap-1">
@@ -1626,8 +1626,8 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
                       className={cn(
                         'flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-colors',
                         linkMode
-                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                          : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                          ? 'bg-[var(--color-amber)]/10 text-[var(--color-amber)]'
+                          : 'text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]'
                       )}
                     >
                       <Link2 size={10} />
@@ -1644,7 +1644,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
                       </button>
                       <button
                         onClick={() => { setSelectedForLink([]); setLinkMode(false) }}
-                        className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 px-0.5"
+                        className="text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text)] dark:hover:text-[var(--color-text-secondary)] px-0.5"
                       >
                         ×
                       </button>
@@ -1656,7 +1656,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
                       'px-2 py-0.5 rounded text-[10px] font-medium transition-colors',
                       panelTab === 'scales'
                         ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-                        : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                        : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]'
                     )}
                   >
                     Scales
@@ -1698,7 +1698,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
             </div>
 
             {/* Divider */}
-            <div className="h-px bg-slate-200 dark:bg-slate-700 shrink-0" />
+            <div className="h-px bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] shrink-0" />
 
             {/* Bottom half: Live BOQ */}
             <div className="flex-1 min-h-0 flex flex-col">

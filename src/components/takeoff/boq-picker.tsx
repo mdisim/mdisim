@@ -132,9 +132,9 @@ export function BOQPicker({
       size="md"
     >
       <div className="space-y-3">
-        <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-          <Link2 size={14} className="text-blue-600 dark:text-blue-400" />
-          <span className="text-sm text-blue-700 dark:text-blue-300">
+        <div className="flex items-center gap-2 px-3 py-2 bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber)]/10 rounded-lg border border-[var(--color-amber)]/20 dark:border-[var(--color-amber)]/20">
+          <Link2 size={14} className="text-[var(--color-amber)] dark:text-[var(--color-amber)]" />
+          <span className="text-sm text-[var(--color-amber)] dark:text-[var(--color-amber)]">
             Linking <strong>{measurementLabel}</strong> to a BOQ item
           </span>
         </div>
@@ -143,26 +143,26 @@ export function BOQPicker({
         <div className="relative">
           <Search
             size={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]"
           />
           <input
             type="text"
             placeholder="Search by code, description, or section..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
+            className="w-full pl-9 pr-3 py-2 text-sm border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-lg bg-white dark:bg-[var(--color-surface-elevated)] text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]/40 focus:border-[var(--color-amber)]"
             autoFocus
           />
         </div>
 
         {/* BOQ items list */}
-        <div className="max-h-[340px] overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg">
+        <div className="max-h-[340px] overflow-y-auto border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-lg">
           {loading ? (
             <div className="p-6 text-center">
-              <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto" />
+              <div className="animate-spin h-6 w-6 border-2 border-[var(--color-amber-cta)] border-t-transparent rounded-full mx-auto" />
             </div>
           ) : filtered.length === 0 ? (
-            <div className="p-6 text-center text-sm text-slate-400 dark:text-slate-500">
+            <div className="p-6 text-center text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">
               <FileSpreadsheet
                 size={24}
                 className="mx-auto mb-2 opacity-50"
@@ -185,7 +185,7 @@ export function BOQPicker({
                         return next
                       })
                     }
-                    className="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-750 border-b border-slate-100 dark:border-slate-700/50 sticky top-0 bg-white dark:bg-slate-800 z-10"
+                    className="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] border-b border-[var(--color-border)] dark:border-[var(--color-border)]/50 sticky top-0 bg-white dark:bg-[var(--color-surface-elevated)] z-10"
                   >
                     {isCollapsed ? (
                       <ChevronRight size={12} />
@@ -207,31 +207,31 @@ export function BOQPicker({
                           onClick={() => handleLink(item.id)}
                           disabled={!!linking || !!linkedId}
                           className={cn(
-                            'w-full flex items-center gap-3 px-3 py-2 text-left border-b border-slate-50 dark:border-slate-700/30 transition-colors',
+                            'w-full flex items-center gap-3 px-3 py-2 text-left border-b border-[var(--color-border)] dark:border-[var(--color-border)]/30 transition-colors',
                             isLinked
                               ? 'bg-emerald-50 dark:bg-emerald-900/20'
                               : isLinking
-                                ? 'bg-blue-50 dark:bg-blue-900/20'
-                                : 'hover:bg-blue-50 dark:hover:bg-blue-900/10',
+                                ? 'bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber)]/10'
+                                : 'hover:bg-[var(--color-amber-cta)] dark:hover:bg-[var(--color-amber)]/10',
                           )}
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               {item.code && (
-                                <span className="text-[10px] font-mono px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-slate-500 dark:text-slate-400">
+                                <span className="text-[10px] font-mono px-1.5 py-0.5 bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] rounded text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">
                                   {item.code}
                                 </span>
                               )}
-                              <span className="text-sm text-slate-700 dark:text-slate-200 truncate">
+                              <span className="text-sm text-[var(--color-text)] truncate">
                                 {item.description}
                               </span>
                             </div>
-                            <div className="flex items-center gap-3 mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
+                            <div className="flex items-center gap-3 mt-0.5 text-[10px] text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">
                               <span>
                                 {item.quantity?.toFixed(2)} {item.unit}
                               </span>
                               {item.mi_id && (
-                                <span className="inline-flex items-center gap-0.5 text-blue-500">
+                                <span className="inline-flex items-center gap-0.5 text-[var(--color-amber)]">
                                   <Link2 size={8} /> linked
                                 </span>
                               )}
@@ -249,9 +249,9 @@ export function BOQPicker({
                                 <Check size={12} /> Linked
                               </span>
                             ) : isLinking ? (
-                              <span className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+                              <span className="animate-spin h-4 w-4 border-2 border-[var(--color-amber-cta)] border-t-transparent rounded-full" />
                             ) : (
-                              <span className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                              <span className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-[var(--color-amber)] dark:text-[var(--color-amber)] bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber)]/10 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Link2 size={10} />
                               </span>
                             )}
@@ -266,7 +266,7 @@ export function BOQPicker({
         </div>
 
         {/* Create new BOQ item section */}
-        <div className="border-t border-slate-200 dark:border-slate-700 pt-3">
+        <div className="border-t border-[var(--color-border)] dark:border-[var(--color-border)] pt-3">
           {!showCreate ? (
             <button
               onClick={() => setShowCreate(true)}
@@ -276,14 +276,14 @@ export function BOQPicker({
               Create New BOQ Item & Link
             </button>
           ) : (
-            <div className="space-y-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+            <div className="space-y-3 p-3 bg-[var(--color-surface)] dark:bg-[var(--color-surface)]/50 rounded-lg border border-[var(--color-border)] dark:border-[var(--color-border)]">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <span className="text-sm font-semibold text-[var(--color-text)]">
                   New BOQ Item
                 </span>
                 <button
                   onClick={() => setShowCreate(false)}
-                  className="text-slate-400 hover:text-slate-600"
+                  className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
                 >
                   ×
                 </button>
@@ -296,13 +296,13 @@ export function BOQPicker({
                   placeholder="e.g. 1.01"
                 />
                 <div>
-                  <label className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-1 block">
+                  <label className="text-xs font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)] mb-1 block">
                     Unit
                   </label>
                   <select
                     value={newUnit}
                     onChange={(e) => setNewUnit(e.target.value)}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-border)] dark:border-[var(--color-border)] bg-white dark:bg-[var(--color-surface-elevated)] text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]/40"
                   >
                     <option value="m">m</option>
                     <option value="m2">m²</option>

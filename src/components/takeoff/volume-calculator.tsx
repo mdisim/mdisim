@@ -167,12 +167,12 @@ export function VolumeCalculator({ isOpen, onClose, onAddMeasurement, drawingMea
     <Modal isOpen={isOpen} onClose={onClose} title="Volume Calculator" size="md">
       <div className="space-y-4">
         {/* Preset / Custom toggle */}
-        <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700 pb-2">
+        <div className="flex gap-1 border-b border-[var(--color-border)] dark:border-[var(--color-border)] pb-2">
           <button
             onClick={() => setCustomMode(false)}
             className={cn(
               'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
-              !customMode ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'text-slate-500 hover:text-slate-700'
+              !customMode ? 'bg-[var(--color-amber)]/10 text-[var(--color-amber)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
             )}
           >
             <Calculator size={12} className="inline mr-1" /> Presets
@@ -181,7 +181,7 @@ export function VolumeCalculator({ isOpen, onClose, onAddMeasurement, drawingMea
             onClick={() => setCustomMode(true)}
             className={cn(
               'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
-              customMode ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'text-slate-500 hover:text-slate-700'
+              customMode ? 'bg-[var(--color-amber)]/10 text-[var(--color-amber)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
             )}
           >
             Custom Formula
@@ -201,8 +201,8 @@ export function VolumeCalculator({ isOpen, onClose, onAddMeasurement, drawingMea
                     className={cn(
                       'flex flex-col items-center gap-1 p-2.5 rounded-lg border text-xs transition-colors',
                       activePreset === p.id
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                        : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                        ? 'border-[var(--color-amber)] bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber)]/10 text-[var(--color-amber)] dark:text-[var(--color-amber)]'
+                        : 'border-[var(--color-border)] dark:border-[var(--color-border)] text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] hover:border-[var(--color-border)]'
                     )}
                   >
                     <Icon size={20} />
@@ -213,21 +213,21 @@ export function VolumeCalculator({ isOpen, onClose, onAddMeasurement, drawingMea
             </div>
 
             {/* Formula display */}
-            <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-3 text-center">
-              <span className="text-xs text-slate-500 uppercase tracking-wider">Formula</span>
-              <div className="text-lg font-mono font-bold text-slate-900 dark:text-white mt-1">{preset.formula}</div>
+            <div className="bg-[var(--color-surface)] dark:bg-[var(--color-surface)] rounded-lg p-3 text-center">
+              <span className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">Formula</span>
+              <div className="text-lg font-mono font-bold text-[var(--color-text-muted)] dark:text-white mt-1">{preset.formula}</div>
             </div>
 
             {/* Input fields */}
             <div className="grid grid-cols-2 gap-3">
               {preset.fields.map(f => (
                 <div key={f.key}>
-                  <label className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-1 block">
+                  <label className="text-xs font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)] mb-1 block">
                     {f.label} ({f.unit})
                     {drawingMeasurements && drawingMeasurements.length > 0 && (
                       <button
                         onClick={() => setLinkedField(linkedField === f.key ? '' : f.key)}
-                        className={cn('ml-2 text-[10px]', linkedField === f.key ? 'text-blue-600' : 'text-slate-400 hover:text-blue-500')}
+                        className={cn('ml-2 text-[10px]', linkedField === f.key ? 'text-[var(--color-amber)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-amber)]')}
                       >
                         [Link]
                       </button>
@@ -237,7 +237,7 @@ export function VolumeCalculator({ isOpen, onClose, onAddMeasurement, drawingMea
                     <select
                       value={linkedMeasurement}
                       onChange={e => setLinkedMeasurement(e.target.value)}
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-blue-300 dark:border-blue-600 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-amber)]/30 dark:border-[var(--color-amber-cta)] bg-white dark:bg-[var(--color-surface-elevated)] dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]"
                     >
                       <option value="">Select measurement...</option>
                       {drawingMeasurements!.map(dm => (
@@ -261,7 +261,7 @@ export function VolumeCalculator({ isOpen, onClose, onAddMeasurement, drawingMea
           <>
             {/* Custom formula */}
             <div>
-              <label className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-1 block">
+              <label className="text-xs font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)] mb-1 block">
                 Formula (use variable names like L, W, D)
               </label>
               <Input
@@ -273,7 +273,7 @@ export function VolumeCalculator({ isOpen, onClose, onAddMeasurement, drawingMea
             <div className="grid grid-cols-3 gap-2">
               {['L', 'W', 'D', 'H', 'N', 'R'].map(v => (
                 <div key={v}>
-                  <label className="text-xs text-slate-500">{v}</label>
+                  <label className="text-xs text-[var(--color-text-muted)]">{v}</label>
                   <Input
                     type="number"
                     step="any"
@@ -288,16 +288,16 @@ export function VolumeCalculator({ isOpen, onClose, onAddMeasurement, drawingMea
         )}
 
         {/* Result */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-4 text-center">
-          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">Volume</span>
-          <div className="text-3xl font-bold tabular-nums text-blue-700 dark:text-blue-300 mt-1">
+        <div className="bg-gradient-to-r from-[var(--color-amber)]/5 to-indigo-50 dark:from-[var(--color-amber)]/10 dark:to-indigo-900/20 rounded-lg p-4 text-center">
+          <span className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] uppercase tracking-wider">Volume</span>
+          <div className="text-3xl font-bold tabular-nums text-[var(--color-amber)] dark:text-[var(--color-amber)] mt-1">
             {volume.toFixed(3)} <span className="text-lg">m³</span>
           </div>
         </div>
 
         {/* Add to measurement book */}
         {onAddMeasurement && (
-          <div className="flex items-end gap-3 pt-2 border-t border-slate-200 dark:border-slate-700">
+          <div className="flex items-end gap-3 pt-2 border-t border-[var(--color-border)] dark:border-[var(--color-border)]">
             <div className="flex-1">
               <Input
                 label="Description"

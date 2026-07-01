@@ -141,7 +141,7 @@ export function DrawingIntelligence({ projectId, drawings }: DrawingIntelligence
       {changes.length > 0 && (
         <Card>
           <CardContent className="p-4">
-            <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] dark:text-slate-200 mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] dark:text-[var(--color-text)] mb-3 flex items-center gap-2">
               <AlertTriangle size={16} className="text-amber-500" />
               Revision Impact Analysis
             </h3>
@@ -164,7 +164,7 @@ export function DrawingIntelligence({ projectId, drawings }: DrawingIntelligence
                     const impact = boq?.unit_rate ? diff * boq.unit_rate : 0
                     return (
                       <tr key={c.id} className="border-b border-[var(--color-border)] dark:border-[var(--color-border)]">
-                        <td className="px-3 py-2 text-[var(--color-text-secondary)] dark:text-slate-200">{c.description}</td>
+                        <td className="px-3 py-2 text-[var(--color-text-secondary)] dark:text-[var(--color-text)]">{c.description}</td>
                         <td className="px-3 py-2 text-end tabular-nums text-[var(--color-text-muted)]">{fmt(c.previous_qty)}</td>
                         <td className="px-3 py-2 text-end tabular-nums font-medium">{fmt(c.new_qty)}</td>
                         <td className={cn('px-3 py-2 text-end tabular-nums font-medium', diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-[var(--color-text-muted)]')}>
@@ -189,7 +189,7 @@ export function DrawingIntelligence({ projectId, drawings }: DrawingIntelligence
       {/* Auto Update Suggestions */}
       <Card>
         <CardContent className="p-4">
-          <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] dark:text-slate-200 mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] dark:text-[var(--color-text)] mb-3 flex items-center gap-2">
             <Brain size={16} className="text-purple-500" />
             Auto Quantity Update Suggestions
             {pendingSuggestions.length > 0 && (
@@ -213,7 +213,7 @@ export function DrawingIntelligence({ projectId, drawings }: DrawingIntelligence
                       'flex items-center gap-3 p-3 rounded-lg border transition-colors',
                       sug.status === 'applied' ? 'border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-900/10' :
                       sug.status === 'dismissed' ? 'border-[var(--color-border)] bg-[var(--color-surface-elevated)]/50 dark:border-[var(--color-border)] dark:bg-[var(--color-surface-elevated)]/50 opacity-50' :
-                      'border-blue-200 bg-[var(--color-info-bg)]/30 dark:border-blue-800 dark:bg-[var(--color-info-bg)]/10'
+                      'border-[var(--color-amber)]/20 bg-[var(--color-info-bg)]/30 dark:border-[var(--color-amber)]/20 dark:bg-[var(--color-info-bg)]/10'
                     )}
                   >
                     <div className="flex-1 min-w-0">

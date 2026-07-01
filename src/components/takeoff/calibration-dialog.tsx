@@ -34,14 +34,14 @@ export function CalibrationDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4">
+      <div className="relative bg-white dark:bg-[var(--color-surface-elevated)] rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+          <h2 className="text-lg font-semibold text-[var(--color-text-muted)] dark:text-[var(--color-text)]">
             Set Scale
           </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            className="p-1 rounded-md hover:bg-[var(--color-surface-hover)] dark:hover:bg-[var(--color-surface-hover)] transition-colors"
           >
             <X size={18} />
           </button>
@@ -49,18 +49,18 @@ export function CalibrationDialog({
 
         <div className="space-y-3">
           <div>
-            <label className="block text-sm text-slate-500 dark:text-slate-400 mb-1">
+            <label className="block text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] mb-1">
               Pixel distance measured
             </label>
             <input
               readOnly
               value={`${pixelDistance.toFixed(1)} px`}
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-sm text-slate-600 dark:text-slate-300"
+              className="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] dark:border-[var(--color-border)] bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)]"
             />
           </div>
 
           <div>
-            <label className="block text-sm text-slate-500 dark:text-slate-400 mb-1">
+            <label className="block text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] mb-1">
               Real-world distance
             </label>
             <div className="flex gap-2">
@@ -73,12 +73,12 @@ export function CalibrationDialog({
                 onChange={(e) => setRealLength(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleConfirm()}
                 autoFocus
-                className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 rounded-lg border border-[var(--color-border)] dark:border-[var(--color-border)] bg-white dark:bg-[var(--color-surface-hover)] text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text)] outline-none focus:ring-2 focus:ring-[var(--color-amber)]"
               />
               <select
                 value={unit}
                 onChange={(e) => setUnit(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 rounded-lg border border-[var(--color-border)] dark:border-[var(--color-border)] bg-white dark:bg-[var(--color-surface-hover)] text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text)] outline-none focus:ring-2 focus:ring-[var(--color-amber)]"
               >
                 {UNITS.map((u) => (
                   <option key={u} value={u}>
@@ -89,9 +89,9 @@ export function CalibrationDialog({
             </div>
           </div>
 
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">
             The two points you marked represent{' '}
-            <strong className="text-slate-700 dark:text-slate-200">
+            <strong className="text-[var(--color-text)]">
               {realLength || '___'} {unit}
             </strong>{' '}
             in real life.
@@ -101,7 +101,7 @@ export function CalibrationDialog({
         <div className="flex justify-end gap-2 pt-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            className="px-4 py-2 text-sm rounded-lg border border-[var(--color-border)] dark:border-[var(--color-border)] text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] dark:hover:bg-[var(--color-surface-hover)] transition-colors"
           >
             Cancel
           </button>
@@ -111,8 +111,8 @@ export function CalibrationDialog({
             className={cn(
               'px-4 py-2 text-sm rounded-lg font-medium transition-colors',
               realLength && parseFloat(realLength) > 0
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'bg-slate-200 text-slate-400 cursor-not-allowed',
+                ? 'bg-[var(--color-amber-cta)] text-white hover:bg-[var(--color-amber-cta)]'
+                : 'bg-[var(--color-surface)] text-[var(--color-text-muted)] cursor-not-allowed',
             )}
           >
             Set Scale

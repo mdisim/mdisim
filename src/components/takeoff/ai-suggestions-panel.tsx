@@ -46,7 +46,7 @@ interface AISuggestionsPanelProps {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  wall: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+  wall: 'bg-[var(--color-amber)]/10 text-[var(--color-amber)] dark:bg-[var(--color-amber)]/10 dark:text-[var(--color-amber)]',
   slab: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
   beam: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
   column: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
@@ -61,7 +61,7 @@ const TYPE_COLORS: Record<string, string> = {
   rebar: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
   block: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
   finish: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300',
-  other: 'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300',
+  other: 'bg-[var(--color-surface)] text-[var(--color-text-muted)] dark:bg-[var(--color-surface)]/30 dark:text-[var(--color-text-secondary)]',
 }
 
 const TRADE_COLORS: Record<Trade, string> = {
@@ -111,17 +111,17 @@ function ElementCard({
         'border rounded-lg transition-all',
         status === 'approved'
           ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-900/10 opacity-70'
-          : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600',
+          : 'border-[var(--color-border)] dark:border-[var(--color-border)] hover:border-[var(--color-amber)]/30 dark:hover:border-[var(--color-amber-cta)]',
       )}
       onMouseEnter={() => onHighlight(element)}
       onMouseLeave={() => onHighlight(null)}
     >
       <div className="flex items-center gap-1.5 p-2 cursor-pointer" onClick={() => setExpanded(!expanded)}>
-        {expanded ? <ChevronDown size={12} className="text-slate-400 shrink-0" /> : <ChevronRight size={12} className="text-slate-400 shrink-0" />}
+        {expanded ? <ChevronDown size={12} className="text-[var(--color-text-muted)] shrink-0" /> : <ChevronRight size={12} className="text-[var(--color-text-muted)] shrink-0" />}
         <span className={cn('px-1.5 py-0.5 rounded text-[9px] font-bold uppercase shrink-0', TYPE_COLORS[element.type] || TYPE_COLORS.other)}>
           {element.label}
         </span>
-        <span className="text-[11px] text-slate-600 dark:text-slate-300 truncate flex-1">{element.description}</span>
+        <span className="text-[11px] text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)] truncate flex-1">{element.description}</span>
         <ConfidenceBadge value={element.confidence} />
         {element.isRepeated && element.repeatCount && element.repeatCount > 1 && (
           <span className="flex items-center gap-0.5 text-[9px] text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20 px-1 rounded">
@@ -132,16 +132,16 @@ function ElementCard({
       </div>
 
       {expanded && (
-        <div className="px-2.5 pb-2.5 pt-1 space-y-2 border-t border-slate-100 dark:border-slate-700/50">
+        <div className="px-2.5 pb-2.5 pt-1 space-y-2 border-t border-[var(--color-border)] dark:border-[var(--color-border)]/50">
           {/* Details */}
           <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
             {element.material && (
-              <><span className="text-slate-400">Material</span><span className="text-slate-600 dark:text-slate-300">{element.material}</span></>
+              <><span className="text-[var(--color-text-muted)]">Material</span><span className="text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)]">{element.material}</span></>
             )}
             {element.dimensions && (
               <>
-                <span className="text-slate-400">Dimensions</span>
-                <span className="text-slate-600 dark:text-slate-300">
+                <span className="text-[var(--color-text-muted)]">Dimensions</span>
+                <span className="text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)]">
                   {[
                     element.dimensions.length && `L:${element.dimensions.length}`,
                     element.dimensions.width && `W:${element.dimensions.width}`,
@@ -152,15 +152,15 @@ function ElementCard({
                 </span>
               </>
             )}
-            <span className="text-slate-400">Quantity</span>
-            <span className="text-slate-600 dark:text-slate-300 font-medium">{element.estimatedQuantity ?? '—'} {element.suggestedUnit}</span>
-            <span className="text-slate-400">Trade</span>
-            <span className="text-slate-600 dark:text-slate-300 capitalize">{element.trade}</span>
+            <span className="text-[var(--color-text-muted)]">Quantity</span>
+            <span className="text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)] font-medium">{element.estimatedQuantity ?? '—'} {element.suggestedUnit}</span>
+            <span className="text-[var(--color-text-muted)]">Trade</span>
+            <span className="text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)] capitalize">{element.trade}</span>
           </div>
 
           {/* Reasoning */}
           {element.reasoning && (
-            <div className="flex items-start gap-1.5 p-2 bg-blue-50 dark:bg-blue-900/10 rounded text-[10px] text-blue-700 dark:text-blue-300">
+            <div className="flex items-start gap-1.5 p-2 bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber)]/10 rounded text-[10px] text-[var(--color-amber)] dark:text-[var(--color-amber)]">
               <Info size={12} className="shrink-0 mt-0.5" />
               <span>{element.reasoning}</span>
             </div>
@@ -169,30 +169,30 @@ function ElementCard({
           {editing ? (
             <div className="space-y-1.5">
               <div>
-                <label className="text-[10px] text-slate-400 uppercase tracking-wider">BOQ Description</label>
+                <label className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wider">BOQ Description</label>
                 <input
                   value={desc}
                   onChange={e => setDesc(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border rounded bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600"
+                  className="w-full px-2 py-1 text-xs border rounded bg-white dark:bg-[var(--color-surface-elevated)] border-[var(--color-border)] dark:border-[var(--color-border)]"
                 />
               </div>
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Quantity</label>
+                  <label className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wider">Quantity</label>
                   <input type="number" value={qty} onChange={e => setQty(e.target.value)}
-                    className="w-full px-2 py-1 text-xs border rounded bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600" />
+                    className="w-full px-2 py-1 text-xs border rounded bg-white dark:bg-[var(--color-surface-elevated)] border-[var(--color-border)] dark:border-[var(--color-border)]" />
                 </div>
                 <div className="w-20">
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Unit</label>
+                  <label className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wider">Unit</label>
                   <select value={unit} onChange={e => setUnit(e.target.value)}
-                    className="w-full px-2 py-1 text-xs border rounded bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600">
+                    className="w-full px-2 py-1 text-xs border rounded bg-white dark:bg-[var(--color-surface-elevated)] border-[var(--color-border)] dark:border-[var(--color-border)]">
                     {['m', 'm²', 'm³', 'lm', 'nr', 'kg', 'ton', 'l'].map(u => <option key={u} value={u}>{u}</option>)}
                   </select>
                 </div>
               </div>
               <div className="flex gap-1 justify-end">
-                <button onClick={() => setEditing(false)} className="px-2 py-1 text-[10px] text-slate-500 hover:text-slate-700">Cancel</button>
-                <button onClick={() => setEditing(false)} className="px-2 py-1 text-[10px] bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
+                <button onClick={() => setEditing(false)} className="px-2 py-1 text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text)]">Cancel</button>
+                <button onClick={() => setEditing(false)} className="px-2 py-1 text-[10px] bg-[var(--color-amber-cta)] text-white rounded hover:bg-[var(--color-amber-cta)]">Save</button>
               </div>
             </div>
           ) : null}
@@ -207,7 +207,7 @@ function ElementCard({
               </button>
               <button
                 onClick={() => setEditing(true)}
-                className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded hover:bg-slate-200 transition-colors"
+                className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)] bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] rounded hover:bg-[var(--color-surface-hover)] transition-colors"
               >
                 <Edit3 size={11} /> Edit
               </button>
@@ -236,18 +236,18 @@ function BOQGroupCard({
   const [approvedItems, setApprovedItems] = useState<Set<string>>(new Set())
 
   return (
-    <div className={cn('border rounded-lg border-s-4 overflow-hidden', TRADE_COLORS[group.trade] || 'border-s-slate-400', 'border-slate-200 dark:border-slate-700')}>
+    <div className={cn('border rounded-lg border-s-4 overflow-hidden', TRADE_COLORS[group.trade] || 'border-s-slate-400', 'border-[var(--color-border)] dark:border-[var(--color-border)]')}>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center justify-between w-full px-3 py-2 text-left bg-slate-50 dark:bg-slate-900/50"
+        className="flex items-center justify-between w-full px-3 py-2 text-left bg-[var(--color-surface)] dark:bg-[var(--color-surface)]/50"
       >
         <div className="flex items-center gap-2">
           {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{group.tradeLabel}</span>
-          <span className="text-[10px] text-slate-400">{group.items.length} items</span>
+          <span className="text-xs font-semibold text-[var(--color-text)]">{group.tradeLabel}</span>
+          <span className="text-[10px] text-[var(--color-text-muted)]">{group.items.length} items</span>
         </div>
         {group.subtotal !== null && group.subtotal > 0 && (
-          <span className="text-[10px] font-mono text-slate-500">${group.subtotal.toLocaleString()}</span>
+          <span className="text-[10px] font-mono text-[var(--color-text-muted)]">${group.subtotal.toLocaleString()}</span>
         )}
       </button>
 
@@ -260,19 +260,19 @@ function BOQGroupCard({
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-mono text-[10px] text-slate-400 shrink-0">{item.code}</span>
-                      <span className="text-slate-700 dark:text-slate-200 font-medium truncate">{item.description}</span>
+                      <span className="font-mono text-[10px] text-[var(--color-text-muted)] shrink-0">{item.code}</span>
+                      <span className="text-[var(--color-text)] font-medium truncate">{item.description}</span>
                     </div>
-                    <div className="flex items-center gap-3 mt-0.5 text-[10px] text-slate-500">
+                    <div className="flex items-center gap-3 mt-0.5 text-[10px] text-[var(--color-text-muted)]">
                       <span className="font-medium">{item.quantity} {item.unit}</span>
                       {item.unitRate !== null && <span>@ ${item.unitRate}/{item.unit}</span>}
-                      {item.amount !== null && <span className="font-medium text-slate-700 dark:text-slate-300">${item.amount.toLocaleString()}</span>}
+                      {item.amount !== null && <span className="font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)]">${item.amount.toLocaleString()}</span>}
                       <ConfidenceBadge value={item.confidence} />
                     </div>
                     {item.materialBreakdown && (
-                      <div className="flex flex-wrap gap-2 mt-1 text-[9px] text-slate-500">
+                      <div className="flex flex-wrap gap-2 mt-1 text-[9px] text-[var(--color-text-muted)]">
                         {item.materialBreakdown.concrete && (
-                          <span className="px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/20 rounded">
+                          <span className="px-1.5 py-0.5 bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber)]/10 rounded">
                             Concrete: {item.materialBreakdown.concrete.volume}m³ {item.materialBreakdown.concrete.grade}
                           </span>
                         )}
@@ -312,7 +312,7 @@ function BOQGroupCard({
                   )}
                 </div>
                 {item.reasoning && (
-                  <div className="flex items-start gap-1 mt-1.5 p-1.5 bg-slate-50 dark:bg-slate-900/50 rounded text-[10px] text-slate-500">
+                  <div className="flex items-start gap-1 mt-1.5 p-1.5 bg-[var(--color-surface)] dark:bg-[var(--color-surface)]/50 rounded text-[10px] text-[var(--color-text-muted)]">
                     <Info size={10} className="shrink-0 mt-0.5" />
                     <span>{item.reasoning}</span>
                   </div>
@@ -368,21 +368,21 @@ export function AISuggestionsPanel({
   ]
 
   return (
-    <div className="absolute top-0 right-0 z-30 w-[340px] h-full bg-white dark:bg-slate-800 border-s border-slate-200 dark:border-slate-700 shadow-xl flex flex-col">
+    <div className="absolute top-0 right-0 z-30 w-[340px] h-full bg-white dark:bg-[var(--color-surface-elevated)] border-s border-[var(--color-border)] dark:border-[var(--color-border)] shadow-xl flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-violet-50 to-blue-50 dark:from-violet-900/20 dark:to-blue-900/20">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border)] dark:border-[var(--color-border)] bg-gradient-to-r from-violet-50 to-[var(--color-amber)]/3 dark:from-violet-900/20 dark:to-[var(--color-amber)]/5">
         <div className="flex items-center gap-2">
           <Brain size={18} className="text-violet-600 dark:text-violet-400" />
-          <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">AI Engineer</span>
+          <span className="text-sm font-semibold text-[var(--color-text-muted)] dark:text-[var(--color-text)]">AI Engineer</span>
         </div>
-        <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+        <button onClick={onClose} className="p-1 text-[var(--color-text-muted)] hover:text-[var(--color-text)] dark:hover:text-[var(--color-text-secondary)]">
           <X size={16} />
         </button>
       </div>
 
       {/* Tabs */}
       {result && !result.error && (
-        <div className="flex border-b border-slate-200 dark:border-slate-700">
+        <div className="flex border-b border-[var(--color-border)] dark:border-[var(--color-border)]">
           {TABS.map(t => (
             <button
               key={t.id}
@@ -391,7 +391,7 @@ export function AISuggestionsPanel({
                 'flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-medium transition-colors border-b-2',
                 tab === t.id
                   ? 'border-violet-500 text-violet-600 dark:text-violet-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300',
+                  : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)] dark:hover:text-[var(--color-text-secondary)]',
               )}
             >
               <t.icon size={14} />
@@ -416,15 +416,15 @@ export function AISuggestionsPanel({
         {/* Empty state */}
         {!result && !isAnalyzing && (
           <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-violet-100 to-blue-100 dark:from-violet-900/30 dark:to-blue-900/30 flex items-center justify-center mb-4">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-violet-100 to-[var(--color-amber)]/10 dark:from-violet-900/30 dark:to-[var(--color-amber)]/5 flex items-center justify-center mb-4">
               <Sparkles size={36} className="text-violet-500" />
             </div>
-            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">AI Engineering Assistant</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 max-w-[250px]">
+            <h3 className="text-sm font-semibold text-[var(--color-text-muted)] dark:text-[var(--color-text)] mb-1">AI Engineering Assistant</h3>
+            <p className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] mb-2 max-w-[250px]">
               Analyze this drawing to detect structural elements, generate a preliminary BOQ, calculate material quantities, and estimate costs.
             </p>
-            <div className="text-left text-[11px] text-slate-500 dark:text-slate-400 space-y-1.5 mb-5">
-              <div className="flex items-center gap-2"><Layers size={13} className="text-blue-500" /> Detect walls, slabs, beams, columns, MEP</div>
+            <div className="text-left text-[11px] text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] space-y-1.5 mb-5">
+              <div className="flex items-center gap-2"><Layers size={13} className="text-[var(--color-amber)]" /> Detect walls, slabs, beams, columns, MEP</div>
               <div className="flex items-center gap-2"><Ruler size={13} className="text-amber-500" /> Read dimensions & detect scale</div>
               <div className="flex items-center gap-2"><Repeat size={13} className="text-violet-500" /> Find repeated patterns</div>
               <div className="flex items-center gap-2"><FileSpreadsheet size={13} className="text-emerald-500" /> Generate preliminary BOQ by trade</div>
@@ -432,7 +432,7 @@ export function AISuggestionsPanel({
             </div>
             <button
               onClick={onAnalyze}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-blue-600 text-white rounded-lg hover:from-violet-700 hover:to-blue-700 transition-colors text-sm font-medium shadow-md"
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-[var(--color-amber-cta)] text-white rounded-lg hover:from-violet-700 hover:to-[var(--color-amber-dark)] transition-colors text-sm font-medium shadow-md"
             >
               <Brain size={18} />
               Analyze Drawing
@@ -447,8 +447,8 @@ export function AISuggestionsPanel({
               <div className="w-16 h-16 rounded-full border-4 border-violet-200 dark:border-violet-800 border-t-violet-600 dark:border-t-violet-400 animate-spin" />
               <Brain size={24} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-violet-600 dark:text-violet-400" />
             </div>
-            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">AI is analyzing...</h3>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 space-y-1 mt-2">
+            <h3 className="text-sm font-semibold text-[var(--color-text-muted)] dark:text-[var(--color-text)] mb-1">AI is analyzing...</h3>
+            <div className="text-[11px] text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] space-y-1 mt-2">
               <p className="animate-pulse">Detecting engineering elements...</p>
               <p className="animate-pulse delay-300">Reading dimensions & scale...</p>
               <p className="animate-pulse delay-700">Generating preliminary BOQ...</p>
@@ -480,19 +480,19 @@ export function AISuggestionsPanel({
         {result && !result.error && (
           <>
             {/* Stats bar */}
-            <div className="p-2 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
+            <div className="p-2 bg-[var(--color-surface)] dark:bg-[var(--color-surface)]/50 border-b border-[var(--color-border)] dark:border-[var(--color-border)]">
               <div className="grid grid-cols-3 gap-1 text-center text-[10px]">
-                <div className="p-1.5 bg-white dark:bg-slate-800 rounded">
-                  <div className="font-bold text-sm text-slate-800 dark:text-slate-200">{stats?.totalElements ?? 0}</div>
-                  <div className="text-slate-400">Elements</div>
+                <div className="p-1.5 bg-white dark:bg-[var(--color-surface-elevated)] rounded">
+                  <div className="font-bold text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text)]">{stats?.totalElements ?? 0}</div>
+                  <div className="text-[var(--color-text-muted)]">Elements</div>
                 </div>
-                <div className="p-1.5 bg-white dark:bg-slate-800 rounded">
-                  <div className="font-bold text-sm text-slate-800 dark:text-slate-200">{stats?.boqItems ?? 0}</div>
-                  <div className="text-slate-400">BOQ Items</div>
+                <div className="p-1.5 bg-white dark:bg-[var(--color-surface-elevated)] rounded">
+                  <div className="font-bold text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text)]">{stats?.boqItems ?? 0}</div>
+                  <div className="text-[var(--color-text-muted)]">BOQ Items</div>
                 </div>
-                <div className="p-1.5 bg-white dark:bg-slate-800 rounded">
-                  <div className="font-bold text-sm text-slate-800 dark:text-slate-200">{stats?.detectedDimensions ?? 0}</div>
-                  <div className="text-slate-400">Dimensions</div>
+                <div className="p-1.5 bg-white dark:bg-[var(--color-surface-elevated)] rounded">
+                  <div className="font-bold text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text)]">{stats?.detectedDimensions ?? 0}</div>
+                  <div className="text-[var(--color-text-muted)]">Dimensions</div>
                 </div>
               </div>
 
@@ -516,7 +516,7 @@ export function AISuggestionsPanel({
                 </div>
               )}
 
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 italic">{result.drawing.summary}</p>
+              <p className="text-[10px] text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] mt-1.5 italic">{result.drawing.summary}</p>
             </div>
 
             {/* Elements tab */}
@@ -550,7 +550,7 @@ export function AISuggestionsPanel({
                   />
                 ))}
                 {result.boq.length === 0 && (
-                  <p className="text-center text-xs text-slate-400 py-8">No BOQ items generated</p>
+                  <p className="text-center text-xs text-[var(--color-text-muted)] py-8">No BOQ items generated</p>
                 )}
               </div>
             )}
@@ -559,17 +559,17 @@ export function AISuggestionsPanel({
             {tab === 'cost' && (
               <div className="p-2 space-y-3">
                 {result.totalEstimatedCost !== null && result.totalEstimatedCost > 0 ? (
-                  <div className="p-4 bg-gradient-to-br from-emerald-50 to-blue-50 dark:from-emerald-900/20 dark:to-blue-900/20 rounded-lg text-center">
-                    <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Estimated Cost</p>
-                    <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">
+                  <div className="p-4 bg-gradient-to-br from-emerald-50 to-[var(--color-amber)]/3 dark:from-emerald-900/20 dark:to-[var(--color-amber)]/5 rounded-lg text-center">
+                    <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-1">Estimated Cost</p>
+                    <p className="text-2xl font-bold text-[var(--color-text-muted)] dark:text-[var(--color-text)]">
                       ${result.totalEstimatedCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </p>
-                    <p className="text-[10px] text-slate-500 mt-1">{result.currency} · {result.boq.length} trades · {stats?.boqItems} items</p>
+                    <p className="text-[10px] text-[var(--color-text-muted)] mt-1">{result.currency} · {result.boq.length} trades · {stats?.boqItems} items</p>
                   </div>
                 ) : (
                   <div className="text-center py-6">
-                    <DollarSign size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-2" />
-                    <p className="text-xs text-slate-500 mb-3">Estimate unit rates using AI to get a project cost estimate.</p>
+                    <DollarSign size={32} className="mx-auto text-[var(--color-text-secondary)] dark:text-[var(--color-text-muted)] mb-2" />
+                    <p className="text-xs text-[var(--color-text-muted)] mb-3">Estimate unit rates using AI to get a project cost estimate.</p>
                     <button
                       onClick={onEstimateCosts}
                       disabled={isEstimatingCosts}
@@ -584,12 +584,12 @@ export function AISuggestionsPanel({
                 {/* Trade breakdown */}
                 {result.boq.filter(g => (g.subtotal ?? 0) > 0).length > 0 && (
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1.5">By Trade</p>
+                    <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] mb-1.5">By Trade</p>
                     <div className="space-y-1">
                       {result.boq.filter(g => (g.subtotal ?? 0) > 0).map((g, i) => (
                         <div key={i} className={cn('flex items-center justify-between px-2 py-1.5 rounded text-[11px] border-s-3', TRADE_COLORS[g.trade])}>
-                          <span className="text-slate-600 dark:text-slate-300">{g.tradeLabel}</span>
-                          <span className="font-mono font-medium text-slate-800 dark:text-slate-200">${(g.subtotal ?? 0).toLocaleString()}</span>
+                          <span className="text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)]">{g.tradeLabel}</span>
+                          <span className="font-mono font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text)]">${(g.subtotal ?? 0).toLocaleString()}</span>
                         </div>
                       ))}
                     </div>
@@ -599,10 +599,10 @@ export function AISuggestionsPanel({
             )}
 
             {/* Re-analyze */}
-            <div className="p-2 border-t border-slate-200 dark:border-slate-700">
+            <div className="p-2 border-t border-[var(--color-border)] dark:border-[var(--color-border)]">
               <button
                 onClick={onAnalyze}
-                className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700 border border-dashed border-slate-300 dark:border-slate-600 rounded-lg hover:border-slate-400 transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] border border-dashed border-[var(--color-border)] dark:border-[var(--color-border)] rounded-lg hover:border-[var(--color-border)] transition-colors"
               >
                 <Brain size={14} /> Re-analyze Page
               </button>
