@@ -1,14 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { getDrawing, getDrawingUrl } from '@/app/actions/drawings'
-import type { Drawing } from '@/lib/types'
+import type { Drawing, DrawingMeasurement } from '@/lib/types'
 import { DRAWING_TYPES } from '@/lib/types'
 import { ArrowLeft, Maximize2, Minimize2, AlertTriangle } from 'lucide-react'
 import { TakeoffViewer } from '@/components/takeoff/takeoff-viewer'
 import { DwgViewer } from '@/components/takeoff/dwg-viewer'
 import { ImageViewer } from '@/components/takeoff/image-viewer'
+import { SaveToQuantitiesDialog } from '@/components/takeoff/save-to-quantities-dialog'
 
 export default function TakeoffPage() {
   const { id: projectId, drawingId } = useParams<{ id: string; drawingId: string }>()
@@ -19,6 +20,11 @@ export default function TakeoffPage() {
   const [error, setError] = useState<string | null>(null)
   const [fullscreen, setFullscreen] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
+  const [pendingMeasurement, setPendingMeasurement] = useState<{ dm: DrawingMeasurement; canvas: string | null } | null>(null)
+
+  const handleMeasurementSaved = useCallback((dm: DrawingMeasurement, canvasDataUrl: string | null) => {
+    setPendingMeasurement({ dm, canvas: canvasDataUrl })
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -142,8 +148,8 @@ export default function TakeoffPage() {
         </button>
       </div>
 
-      {/* Takeoff workspace — canvas rendering code untouched */}
-      <div className="flex-1 min-h-0">
+      {/* Takeoff workspace */}
+      <div className="flex-1 min-h-0 relative">
         {drawing.file_type === 'pdf' ? (
           <TakeoffViewer
             drawingId={drawing.id}
@@ -152,6 +158,7 @@ export default function TakeoffPage() {
             pageCount={drawing.page_count}
             drawingName={drawing.name}
             drawingType={drawing.drawing_type}
+            onMeasurementSaved={handleMeasurementSaved}
           />
         ) : drawing.file_type === 'dwg' || drawing.file_type === 'dxf' ? (
           <DwgViewer
@@ -170,6 +177,20 @@ export default function TakeoffPage() {
             drawingUrl={drawingUrl}
             drawingName={drawing.name}
             drawingType={drawing.drawing_type}
+          />
+        )}
+        {pendingMeasurement && (
+          <SaveToQuantitiesDialog
+            dm={pendingMeasurement.dm}
+            canvasDataUrl={pendingMeasurement.canvas}
+            projectId={projectId}
+            drawingId={drawing.id}
+            drawingName={drawing.name}
+            drawingNumber={drawing.drawing_number ?? undefined}
+            revisionNumber={drawing.revision_number ?? undefined}
+            pageNumber={pendingMeasurement.dm.page_number}
+            onSaved={() => setPendingMeasurement(null)}
+            onClose={() => setPendingMeasurement(null)}
           />
         )}
       </div>

@@ -66,6 +66,7 @@ interface TakeoffViewerProps {
   pageCount: number
   drawingName?: string
   drawingType?: string
+  onMeasurementSaved?: (dm: DrawingMeasurement, canvasDataUrl: string | null) => void
 }
 
 type ToolType = DrawingToolType | 'select' | 'pan' | 'polygon' | 'wall'
@@ -143,7 +144,7 @@ function measurementsToSnapGeometry(measurements: DrawingMeasurement[]): SnapGeo
   return result
 }
 
-export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, drawingName, drawingType }: TakeoffViewerProps) {
+export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, drawingName, drawingType, onMeasurementSaved }: TakeoffViewerProps) {
   // PDF state
   const [pdfDoc, setPdfDoc] = useState<unknown>(null)
   const [page, setPage] = useState(1)
@@ -542,10 +543,14 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
           measurementId: result.data!.id,
           newData: result.data,
         }))
+        if (onMeasurementSaved) {
+          const snap = overlayCanvasRef.current?.toDataURL('image/png') ?? null
+          onMeasurementSaved(result.data, snap)
+        }
       }
       await loadData()
     },
-    [drawingId, page, scale, activeColor, loadData],
+    [drawingId, page, scale, activeColor, loadData, onMeasurementSaved],
   )
 
   // ── Mouse handlers ───────────────────────────────────────────────────

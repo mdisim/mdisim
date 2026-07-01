@@ -422,3 +422,107 @@ export async function duplicateMeasurementLine(id: string): Promise<{ data?: Mea
   return { data: data as MeasurementLine }
 }
 
+
+// ── Create full chain from drawing measurement ──────────────────────────
+// One-call action: drawing measurement → measurement item → measurement line → BOQ item
+
+export async function createQuantityFromDrawing(params: {
+  projectId: string
+  drawingMeasurementId: string
+  description: string
+  unit: string
+  section?: string
+}): Promise<{ miId: string; boqItemId: string; error?: string }> {
+  if (!isValidUUID(params.projectId)) return { miId: '', boqItemId: '', error: 'Invalid project ID' }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { miId: '', boqItemId: '', error: 'Not authenticated' }
+
+  const { data: dm } = await supabase
+    .from('qb_drawing_measurements')
+    .select('*')
+    .eq('id', params.drawingMeasurementId)
+    .single()
+
+  if (!dm) return { miId: '', boqItemId: '', error: 'Drawing measurement not found' }
+
+  const toolToType: Record<string, MeasurementType> = {
+    line: 'length', polyline: 'length',
+    area: 'area', rectangle: 'area', circle: 'area',
+    count: 'count',
+  }
+  const mType: MeasurementType = toolToType[(dm as Record<string, unknown>).tool_type as string] ?? 'length'
+
+  const { data: maxOrder } = await supabase
+    .from('qb_measurement_items')
+    .select('sort_order')
+    .eq('project_id', params.projectId)
+    .order('sort_order', { ascending: false })
+    .limit(1)
+    .single()
+
+  const { data: mi, error: miErr } = await supabase
+    .from('qb_measurement_items')
+    .insert({
+      project_id: params.projectId,
+      description: params.description,
+      unit: params.unit,
+      measurement_type: mType,
+      section: params.section ?? null,
+      sort_order: ((maxOrder as { sort_order: number } | null)?.sort_order ?? -1) + 1,
+      created_by: user.id,
+    })
+    .select()
+    .single()
+
+  if (miErr || !mi) return { miId: '', boqItemId: '', error: miErr?.message ?? 'Failed to create measurement item' }
+  const miId = (mi as { id: string }).id
+
+  const qty = (dm as Record<string, unknown>).quantity as number ?? 0
+  await supabase
+    .from('qb_measurement_lines')
+    .insert({
+      item_id: miId,
+      line_number: 1,
+      sort_order: 0,
+      description: `Takeoff: ${(dm as Record<string, unknown>).tool_type}`,
+      drawing_measurement_id: params.drawingMeasurementId,
+      drawing_id: (dm as Record<string, unknown>).drawing_id as string,
+      page_number: (dm as Record<string, unknown>).page_number as number ?? 1,
+      scale_id: (dm as Record<string, unknown>).scale_id as string ?? null,
+      geo_json: (dm as Record<string, unknown>).coordinates,
+      quantity: qty,
+      nr: 1,
+      is_deduction: false,
+      formula: String(qty),
+    })
+
+  const { data: maxBoqOrder } = await supabase
+    .from('qb_boq_items')
+    .select('sort_order')
+    .eq('project_id', params.projectId)
+    .order('sort_order', { ascending: false })
+    .limit(1)
+    .single()
+
+  const { data: boq, error: boqErr } = await supabase
+    .from('qb_boq_items')
+    .insert({
+      project_id: params.projectId,
+      mi_id: miId,
+      description: params.description,
+      unit: params.unit,
+      quantity: qty,
+      original_quantity: qty,
+      unit_rate: 0,
+      section: params.section ?? null,
+      sort_order: ((maxBoqOrder as { sort_order: number } | null)?.sort_order ?? -1) + 1,
+    })
+    .select()
+    .single()
+
+  if (boqErr || !boq) return { miId, boqItemId: '', error: boqErr?.message ?? 'Failed to create BOQ item' }
+
+  return { miId, boqItemId: (boq as { id: string }).id }
+}
