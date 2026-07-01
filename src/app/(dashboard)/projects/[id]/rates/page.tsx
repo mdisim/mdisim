@@ -466,7 +466,7 @@ export default function RateAnalysisPage() {
                 }}
                 className="w-full px-3 py-2.5 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]/40 transition-shadow"
               >
-                <option value="">None — standalone analysis</option>
+                <option value="">{t.rates.noneStandalone}</option>
                 {unlinkedBOQ.map(b => (
                   <option key={b.id} value={b.id}>{b.code ? `${b.code} — ` : ''}{b.description}</option>
                 ))}

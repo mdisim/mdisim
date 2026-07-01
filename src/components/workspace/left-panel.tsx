@@ -138,7 +138,7 @@ export function LeftPanel() {
                               className={cn(
                                 'w-full text-left pl-7 pr-3 py-1.5 flex items-center gap-2 transition-all text-[11px] group',
                                 selection.boqItem?.id === item.id
-                                  ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border-l-2 border-blue-500 pl-[26px]'
+                                  ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border-s-2 border-blue-500 ps-[26px]'
                                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.02]'
                               )}
                             >
@@ -165,7 +165,7 @@ export function LeftPanel() {
                           className={cn(
                             'w-full text-left pl-7 pr-3 py-1.5 flex items-center gap-2 transition-all text-[11px] group',
                             selection.drawing?.id === d.id
-                              ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-l-2 border-indigo-500 pl-[26px]'
+                              ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-s-2 border-indigo-500 ps-[26px]'
                               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.02]'
                           )}
                         >
@@ -190,7 +190,7 @@ export function LeftPanel() {
                           className={cn(
                             'w-full text-left pl-7 pr-3 py-1.5 flex items-center gap-2 transition-all text-[11px] group',
                             selection.measurement?.id === m.id
-                              ? 'bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-l-2 border-cyan-500 pl-[26px]'
+                              ? 'bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-s-2 border-cyan-500 ps-[26px]'
                               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.02]'
                           )}
                         >

@@ -65,18 +65,18 @@ const TYPE_COLORS: Record<string, string> = {
 }
 
 const TRADE_COLORS: Record<Trade, string> = {
-  concrete: 'border-l-blue-500',
-  masonry: 'border-l-orange-500',
-  steel: 'border-l-red-500',
-  carpentry: 'border-l-amber-600',
-  plumbing: 'border-l-teal-500',
-  electrical: 'border-l-yellow-500',
-  mechanical: 'border-l-indigo-500',
-  finishing: 'border-l-pink-500',
-  earthwork: 'border-l-stone-500',
-  roads: 'border-l-gray-500',
-  landscaping: 'border-l-green-500',
-  general: 'border-l-slate-400',
+  concrete: 'border-s-blue-500',
+  masonry: 'border-s-orange-500',
+  steel: 'border-s-red-500',
+  carpentry: 'border-s-amber-600',
+  plumbing: 'border-s-teal-500',
+  electrical: 'border-s-yellow-500',
+  mechanical: 'border-s-indigo-500',
+  finishing: 'border-s-pink-500',
+  earthwork: 'border-s-stone-500',
+  roads: 'border-s-gray-500',
+  landscaping: 'border-s-green-500',
+  general: 'border-s-slate-400',
 }
 
 function ConfidenceBadge({ value }: { value: number }) {
@@ -236,7 +236,7 @@ function BOQGroupCard({
   const [approvedItems, setApprovedItems] = useState<Set<string>>(new Set())
 
   return (
-    <div className={cn('border rounded-lg border-l-4 overflow-hidden', TRADE_COLORS[group.trade] || 'border-l-slate-400', 'border-slate-200 dark:border-slate-700')}>
+    <div className={cn('border rounded-lg border-s-4 overflow-hidden', TRADE_COLORS[group.trade] || 'border-s-slate-400', 'border-slate-200 dark:border-slate-700')}>
       <button
         onClick={() => setExpanded(!expanded)}
         className="flex items-center justify-between w-full px-3 py-2 text-left bg-slate-50 dark:bg-slate-900/50"
@@ -368,7 +368,7 @@ export function AISuggestionsPanel({
   ]
 
   return (
-    <div className="absolute top-0 right-0 z-30 w-[340px] h-full bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 shadow-xl flex flex-col">
+    <div className="absolute top-0 right-0 z-30 w-[340px] h-full bg-white dark:bg-slate-800 border-s border-slate-200 dark:border-slate-700 shadow-xl flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-violet-50 to-blue-50 dark:from-violet-900/20 dark:to-blue-900/20">
         <div className="flex items-center gap-2">
@@ -587,7 +587,7 @@ export function AISuggestionsPanel({
                     <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1.5">By Trade</p>
                     <div className="space-y-1">
                       {result.boq.filter(g => (g.subtotal ?? 0) > 0).map((g, i) => (
-                        <div key={i} className={cn('flex items-center justify-between px-2 py-1.5 rounded text-[11px] border-l-3', TRADE_COLORS[g.trade])}>
+                        <div key={i} className={cn('flex items-center justify-between px-2 py-1.5 rounded text-[11px] border-s-3', TRADE_COLORS[g.trade])}>
                           <span className="text-slate-600 dark:text-slate-300">{g.tradeLabel}</span>
                           <span className="font-mono font-medium text-slate-800 dark:text-slate-200">${(g.subtotal ?? 0).toLocaleString()}</span>
                         </div>
