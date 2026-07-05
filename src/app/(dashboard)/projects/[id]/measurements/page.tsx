@@ -15,8 +15,10 @@ import {
 } from '@/app/actions/measurements'
 import { generateBOQFromMeasurements, getBOQItems } from '@/app/actions/boq'
 import { getDrawings } from '@/app/actions/drawings'
+import { getDrawingRevisionsForProject } from '@/app/actions/drawing-revisions'
+import { getSketches } from '@/app/actions/sketches'
 import { getRateAnalyses } from '@/app/actions/rate-analysis'
-import type { MeasurementItem, MeasurementType, BOQItem, Drawing, RateAnalysis } from '@/lib/types'
+import type { MeasurementItem, MeasurementLine, MeasurementType, BOQItem, Drawing, DrawingRevision, MeasurementSketch, RateAnalysis } from '@/lib/types'
 import { MEASUREMENT_UNITS, MEASUREMENT_TYPES } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -29,6 +31,7 @@ import { SectionCard } from '@/components/ui/section-card'
 import { MeasurementGrid } from '@/components/measurements/measurement-grid'
 import { MeasurementToolbar } from '@/components/measurements/measurement-toolbar'
 import { GenerateBOQDialog } from '@/components/measurements/generate-boq-dialog'
+import { LineSketchModal } from '@/components/measurements/line-sketch-modal'
 import { Ruler, Plus, Image, ArrowRight, BarChart3, GitBranch, FileText, Layers, Paperclip } from 'lucide-react'
 import { AttachmentsPanel } from '@/components/attachments/attachments-panel'
 import { cn } from '@/lib/utils'
@@ -56,6 +59,9 @@ export default function MeasurementsPage() {
   const [items, setItems] = useState<MeasurementItem[]>([])
   const [boqItems, setBoqItems] = useState<BOQItem[]>([])
   const [drawings, setDrawings] = useState<Drawing[]>([])
+  const [revisions, setRevisions] = useState<DrawingRevision[]>([])
+  const [sketches, setSketches] = useState<MeasurementSketch[]>([])
+  const [sketchLine, setSketchLine] = useState<MeasurementLine | null>(null)
   const [rateAnalyses, setRateAnalyses] = useState<RateAnalysis[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
@@ -85,15 +91,19 @@ export default function MeasurementsPage() {
     setLoading(true)
     setError(null)
     try {
-      const [data, boq, dwgs, rates] = await Promise.all([
+      const [data, boq, dwgs, revs, sk, rates] = await Promise.all([
         getMeasurementItems(projectId),
         getBOQItems(projectId),
         getDrawings(projectId),
+        getDrawingRevisionsForProject(projectId),
+        getSketches({ projectId }),
         getRateAnalyses(projectId),
       ])
       setItems(data)
       setBoqItems(boq)
       setDrawings(dwgs)
+      setRevisions(revs)
+      setSketches(sk)
       setRateAnalyses(rates)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load measurements')
@@ -223,7 +233,13 @@ export default function MeasurementsPage() {
     return Array.from(set).sort()
   }, [items])
 
-  const drawingsById = useMemo(() => Object.fromEntries(drawings.map((d) => [d.id, d])), [drawings])
+  const sketchesByLineId = useMemo(() => {
+    const map: Record<string, MeasurementSketch[]> = {}
+    for (const s of sketches) {
+      if (s.line_id) map[s.line_id] = map[s.line_id] ? [...map[s.line_id], s] : [s]
+    }
+    return map
+  }, [sketches])
 
   const filteredItems = useMemo(() => {
     let result = items
@@ -553,7 +569,10 @@ export default function MeasurementsPage() {
               onDeleteLine={handleDeleteLine}
               onDuplicateLine={handleDuplicateLine}
               onAttachments={(id) => setAttachmentsItemId(id)}
-              drawingsById={drawingsById}
+              drawings={drawings}
+              revisions={revisions}
+              sketchesByLineId={sketchesByLineId}
+              onManageSketches={(line) => setSketchLine(line)}
             />
           </div>
         </motion.div>
@@ -630,6 +649,20 @@ export default function MeasurementsPage() {
               </div>
             </div>
           </>
+        ) : null
+      })()}
+
+      {sketchLine && (() => {
+        const parentItem = items.find((i) => i.id === sketchLine.item_id)
+        return parentItem ? (
+          <LineSketchModal
+            projectId={projectId}
+            line={sketchLine}
+            measurementItem={parentItem}
+            sketches={sketchesByLineId[sketchLine.id] ?? []}
+            onClose={() => setSketchLine(null)}
+            onChange={load}
+          />
         ) : null
       })()}
     </motion.div>
