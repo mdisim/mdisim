@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import type { MeasurementItem, MeasurementLine, MeasurementType, Drawing, DrawingRevision, MeasurementSketch } from '@/lib/types'
+import type { MeasurementItem, MeasurementLine, MeasurementType, Drawing, DrawingRevision, MeasurementSketch, QuantityAttachment } from '@/lib/types'
 import {
   ChevronDown,
   ChevronRight,
@@ -11,7 +11,6 @@ import {
   Copy,
   MoreHorizontal,
   Paperclip,
-  Image as ImageIcon,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -93,7 +92,8 @@ interface MeasurementGridProps {
   drawings?: Drawing[]
   revisions?: DrawingRevision[]
   sketchesByLineId?: Record<string, MeasurementSketch[]>
-  onManageSketches?: (line: MeasurementLine) => void
+  attachmentsByLineId?: Record<string, QuantityAttachment[]>
+  onManageEvidence?: (line: MeasurementLine) => void
 }
 
 // ── Cell key for navigation ─────────────────────────────────────────────
@@ -118,7 +118,8 @@ export function MeasurementGrid({
   drawings = [],
   revisions = [],
   sketchesByLineId = {},
-  onManageSketches,
+  attachmentsByLineId = {},
+  onManageEvidence,
 }: MeasurementGridProps) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(() => new Set(items.map((i) => i.id)))
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
@@ -308,7 +309,7 @@ export function MeasurementGrid({
               <th className="px-2 py-2.5 border-r border-[var(--color-border)] w-32">Drawing</th>
               <th className="px-2 py-2.5 border-r border-[var(--color-border)] w-24">Revision</th>
               <th className="px-2 py-2.5 border-r border-[var(--color-border)] w-24 text-end">Quantity</th>
-              <th className="px-2 py-2.5 w-10 text-center">Sketch</th>
+              <th className="px-2 py-2.5 w-10 text-center">Evidence</th>
               <th className="px-2 py-2.5 w-10" />
             </tr>
           </thead>
@@ -570,21 +571,26 @@ export function MeasurementGrid({
                                     {line.is_deduction ? '−' : ''}
                                     {formatQty(Math.abs(previewQty))}
                                   </td>
-                                  {/* Sketch */}
+                                  {/* Evidence: sketches + attachments */}
                                   <td className="px-1 py-1 text-center">
-                                    <button
-                                      onClick={() => onManageSketches?.(line)}
-                                      className={cn(
-                                        'inline-flex items-center gap-1 px-1.5 py-1 rounded text-[10px] font-medium transition-colors',
-                                        (sketchesByLineId[line.id]?.length ?? 0) > 0
-                                          ? 'text-[var(--color-amber)] bg-[var(--color-amber)]/10 hover:bg-[var(--color-amber)]/20'
-                                          : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-elevated)]'
-                                      )}
-                                      title="Sketches for this line"
-                                    >
-                                      <ImageIcon size={12} />
-                                      {(sketchesByLineId[line.id]?.length ?? 0) > 0 && sketchesByLineId[line.id].length}
-                                    </button>
+                                    {(() => {
+                                      const evidenceCount = (sketchesByLineId[line.id]?.length ?? 0) + (attachmentsByLineId[line.id]?.length ?? 0)
+                                      return (
+                                        <button
+                                          onClick={() => onManageEvidence?.(line)}
+                                          className={cn(
+                                            'inline-flex items-center gap-1 px-1.5 py-1 rounded text-[10px] font-medium transition-colors',
+                                            evidenceCount > 0
+                                              ? 'text-[var(--color-amber)] bg-[var(--color-amber)]/10 hover:bg-[var(--color-amber)]/20'
+                                              : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-elevated)]'
+                                          )}
+                                          title="Sketches & attachments for this line"
+                                        >
+                                          <Paperclip size={12} />
+                                          {evidenceCount > 0 && evidenceCount}
+                                        </button>
+                                      )
+                                    })()}
                                   </td>
                                   {/* Actions */}
                                   <td className="px-1 py-1 text-center relative">

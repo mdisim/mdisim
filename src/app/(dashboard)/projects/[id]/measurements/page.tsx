@@ -17,8 +17,9 @@ import { generateBOQFromMeasurements, getBOQItems } from '@/app/actions/boq'
 import { getDrawings } from '@/app/actions/drawings'
 import { getDrawingRevisionsForProject } from '@/app/actions/drawing-revisions'
 import { getSketches } from '@/app/actions/sketches'
+import { getAttachments } from '@/app/actions/attachments'
 import { getRateAnalyses } from '@/app/actions/rate-analysis'
-import type { MeasurementItem, MeasurementLine, MeasurementType, BOQItem, Drawing, DrawingRevision, MeasurementSketch, RateAnalysis } from '@/lib/types'
+import type { MeasurementItem, MeasurementLine, MeasurementType, BOQItem, Drawing, DrawingRevision, MeasurementSketch, QuantityAttachment, RateAnalysis } from '@/lib/types'
 import { MEASUREMENT_UNITS, MEASUREMENT_TYPES } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -31,7 +32,7 @@ import { SectionCard } from '@/components/ui/section-card'
 import { MeasurementGrid } from '@/components/measurements/measurement-grid'
 import { MeasurementToolbar } from '@/components/measurements/measurement-toolbar'
 import { GenerateBOQDialog } from '@/components/measurements/generate-boq-dialog'
-import { LineSketchModal } from '@/components/measurements/line-sketch-modal'
+import { LineEvidenceModal } from '@/components/measurements/line-evidence-modal'
 import { Ruler, Plus, Image, ArrowRight, BarChart3, GitBranch, FileText, Layers, Paperclip } from 'lucide-react'
 import { AttachmentsPanel } from '@/components/attachments/attachments-panel'
 import { cn } from '@/lib/utils'
@@ -61,7 +62,8 @@ export default function MeasurementsPage() {
   const [drawings, setDrawings] = useState<Drawing[]>([])
   const [revisions, setRevisions] = useState<DrawingRevision[]>([])
   const [sketches, setSketches] = useState<MeasurementSketch[]>([])
-  const [sketchLine, setSketchLine] = useState<MeasurementLine | null>(null)
+  const [attachments, setAttachments] = useState<QuantityAttachment[]>([])
+  const [evidenceLine, setEvidenceLine] = useState<MeasurementLine | null>(null)
   const [rateAnalyses, setRateAnalyses] = useState<RateAnalysis[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
@@ -91,12 +93,13 @@ export default function MeasurementsPage() {
     setLoading(true)
     setError(null)
     try {
-      const [data, boq, dwgs, revs, sk, rates] = await Promise.all([
+      const [data, boq, dwgs, revs, sk, atts, rates] = await Promise.all([
         getMeasurementItems(projectId),
         getBOQItems(projectId),
         getDrawings(projectId),
         getDrawingRevisionsForProject(projectId),
         getSketches({ projectId }),
+        getAttachments({ projectId }),
         getRateAnalyses(projectId),
       ])
       setItems(data)
@@ -104,6 +107,7 @@ export default function MeasurementsPage() {
       setDrawings(dwgs)
       setRevisions(revs)
       setSketches(sk)
+      setAttachments(atts)
       setRateAnalyses(rates)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load measurements')
@@ -240,6 +244,14 @@ export default function MeasurementsPage() {
     }
     return map
   }, [sketches])
+
+  const attachmentsByLineId = useMemo(() => {
+    const map: Record<string, QuantityAttachment[]> = {}
+    for (const a of attachments) {
+      if (a.line_id) map[a.line_id] = map[a.line_id] ? [...map[a.line_id], a] : [a]
+    }
+    return map
+  }, [attachments])
 
   const filteredItems = useMemo(() => {
     let result = items
@@ -572,7 +584,8 @@ export default function MeasurementsPage() {
               drawings={drawings}
               revisions={revisions}
               sketchesByLineId={sketchesByLineId}
-              onManageSketches={(line) => setSketchLine(line)}
+              attachmentsByLineId={attachmentsByLineId}
+              onManageEvidence={(line) => setEvidenceLine(line)}
             />
           </div>
         </motion.div>
@@ -645,6 +658,7 @@ export default function MeasurementsPage() {
                 <AttachmentsPanel
                   projectId={projectId}
                   miId={mi.id}
+                  initialAttachments={attachments.filter((a) => a.mi_id === mi.id && !a.line_id)}
                 />
               </div>
             </div>
@@ -652,15 +666,16 @@ export default function MeasurementsPage() {
         ) : null
       })()}
 
-      {sketchLine && (() => {
-        const parentItem = items.find((i) => i.id === sketchLine.item_id)
+      {evidenceLine && (() => {
+        const parentItem = items.find((i) => i.id === evidenceLine.item_id)
         return parentItem ? (
-          <LineSketchModal
+          <LineEvidenceModal
             projectId={projectId}
-            line={sketchLine}
+            line={evidenceLine}
             measurementItem={parentItem}
-            sketches={sketchesByLineId[sketchLine.id] ?? []}
-            onClose={() => setSketchLine(null)}
+            sketches={sketchesByLineId[evidenceLine.id] ?? []}
+            attachments={attachmentsByLineId[evidenceLine.id] ?? []}
+            onClose={() => { setEvidenceLine(null); load() }}
             onChange={load}
           />
         ) : null

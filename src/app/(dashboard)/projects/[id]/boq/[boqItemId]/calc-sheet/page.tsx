@@ -20,7 +20,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { MeasurementSheet } from '@/components/measurements/measurement-sheet'
 import { CalcSheetSummary } from '@/components/calc-sheet/calc-sheet-summary'
 import { SketchGallery } from '@/components/sketches/sketch-gallery'
-import { LineSketchModal } from '@/components/measurements/line-sketch-modal'
+import { LineEvidenceModal } from '@/components/measurements/line-evidence-modal'
 import { AttachmentsPanel } from '@/components/attachments/attachments-panel'
 import { Calculator, ArrowLeft, FileText, Download, Image as ImageIcon, Upload, Loader2 } from 'lucide-react'
 import { generateCalcSheetReport } from '@/lib/export/calc-sheet-pdf'
@@ -44,7 +44,7 @@ export default function CalcSheetPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [initializing, setInitializing] = useState(false)
-  const [sketchLine, setSketchLine] = useState<MeasurementLine | null>(null)
+  const [evidenceLine, setEvidenceLine] = useState<MeasurementLine | null>(null)
   const [exporting, setExporting] = useState<'pdf' | 'excel' | null>(null)
 
   const load = useCallback(async () => {
@@ -164,6 +164,13 @@ export default function CalcSheetPage() {
     }
   }
 
+  const attachmentsByLineId: Record<string, QuantityAttachment[]> = {}
+  for (const a of attachments) {
+    if (a.line_id) {
+      attachmentsByLineId[a.line_id] = attachmentsByLineId[a.line_id] ? [...attachmentsByLineId[a.line_id], a] : [a]
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
@@ -274,7 +281,8 @@ export default function CalcSheetPage() {
                 drawings={drawings}
                 revisions={revisions}
                 sketchesByLineId={sketchesByLineId}
-                onManageSketches={setSketchLine}
+                attachmentsByLineId={attachmentsByLineId}
+                onManageEvidence={setEvidenceLine}
                 defaultLineFields={{ engineer_name: profileName || undefined, measured_date: new Date().toISOString().slice(0, 10) }}
               />
             </SectionCard>
@@ -301,20 +309,22 @@ export default function CalcSheetPage() {
                 projectId={projectId}
                 boqItemId={boqItem.id}
                 miId={measurementItem.id}
-                initialAttachments={attachments}
+                initialAttachments={attachments.filter((a) => !a.line_id)}
               />
             </SectionCard>
           </>
         )}
       </motion.div>
 
-      {sketchLine && measurementItem && (
-        <LineSketchModal
+      {evidenceLine && measurementItem && (
+        <LineEvidenceModal
           projectId={projectId}
-          line={sketchLine}
+          line={evidenceLine}
           measurementItem={measurementItem}
-          sketches={sketchesByLineId[sketchLine.id] ?? []}
-          onClose={() => setSketchLine(null)}
+          boqItemId={boqItem.id}
+          sketches={sketchesByLineId[evidenceLine.id] ?? []}
+          attachments={attachmentsByLineId[evidenceLine.id] ?? []}
+          onClose={() => { setEvidenceLine(null); load() }}
           onChange={load}
         />
       )}

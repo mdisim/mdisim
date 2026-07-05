@@ -1,14 +1,14 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import type { MeasurementItem, MeasurementLine, Drawing, DrawingRevision, MeasurementSketch } from '@/lib/types'
+import type { MeasurementItem, MeasurementLine, Drawing, DrawingRevision, MeasurementSketch, QuantityAttachment } from '@/lib/types'
 import {
   createMeasurementLine,
   updateMeasurementLine,
   deleteMeasurementLine,
   duplicateMeasurementLine,
 } from '@/app/actions/measurements'
-import { Plus, Trash2, Copy, Minus, Image as ImageIcon } from 'lucide-react'
+import { Plus, Trash2, Copy, Minus, Paperclip } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface MeasurementSheetProps {
@@ -18,7 +18,8 @@ interface MeasurementSheetProps {
   drawings?: Drawing[]
   revisions?: DrawingRevision[]
   sketchesByLineId?: Record<string, MeasurementSketch[]>
-  onManageSketches?: (line: MeasurementLine) => void
+  attachmentsByLineId?: Record<string, QuantityAttachment[]>
+  onManageEvidence?: (line: MeasurementLine) => void
   defaultLineFields?: { floor_level?: string; engineer_name?: string; measured_date?: string }
 }
 
@@ -51,7 +52,8 @@ export function MeasurementSheet({
   drawings = [],
   revisions = [],
   sketchesByLineId = {},
-  onManageSketches,
+  attachmentsByLineId = {},
+  onManageEvidence,
   defaultLineFields,
 }: MeasurementSheetProps) {
   const lines = item.lines ?? []
@@ -193,7 +195,7 @@ export function MeasurementSheet({
                 <th className="w-[150px] px-2 py-2 text-left text-[11px] font-semibold text-[var(--color-text-muted)] uppercase">Drawing / Rev</th>
               )}
               <th className="w-[80px] px-2 py-2 text-end text-[11px] font-semibold text-[var(--color-text-muted)] uppercase">Qty</th>
-              {extended && <th className="w-[50px]" />}
+              {extended && <th className="w-[64px] px-2 py-2 text-center text-[11px] font-semibold text-[var(--color-text-muted)] uppercase">Evidence</th>}
               <th className="w-[80px]" />
             </tr>
           </thead>
@@ -306,24 +308,27 @@ export function MeasurementSheet({
                   </span>
                 </td>
 
-                {/* Sketch indicator */}
-                {extended && (
-                  <td className="px-1 py-1 text-center">
-                    <button
-                      onClick={() => onManageSketches?.(line)}
-                      className={cn(
-                        'inline-flex items-center gap-1 px-1.5 py-1 rounded text-[10px] font-medium transition-colors',
-                        (sketchesByLineId[line.id]?.length ?? 0) > 0
-                          ? 'text-[var(--color-amber)] bg-[var(--color-amber)]/10 hover:bg-[var(--color-amber)]/20'
-                          : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-elevated)]'
-                      )}
-                      title="Sketches for this line"
-                    >
-                      <ImageIcon size={12} />
-                      {(sketchesByLineId[line.id]?.length ?? 0) > 0 && sketchesByLineId[line.id].length}
-                    </button>
-                  </td>
-                )}
+                {/* Evidence indicator: sketches + attachments for this line */}
+                {extended && (() => {
+                  const evidenceCount = (sketchesByLineId[line.id]?.length ?? 0) + (attachmentsByLineId[line.id]?.length ?? 0)
+                  return (
+                    <td className="px-1 py-1 text-center">
+                      <button
+                        onClick={() => onManageEvidence?.(line)}
+                        className={cn(
+                          'inline-flex items-center gap-1 px-1.5 py-1 rounded text-[10px] font-medium transition-colors',
+                          evidenceCount > 0
+                            ? 'text-[var(--color-amber)] bg-[var(--color-amber)]/10 hover:bg-[var(--color-amber)]/20'
+                            : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-elevated)]'
+                        )}
+                        title="Sketches & attachments for this line"
+                      >
+                        <Paperclip size={12} />
+                        {evidenceCount > 0 && evidenceCount}
+                      </button>
+                    </td>
+                  )
+                })()}
 
                 {/* Actions */}
                 <td className="px-1 py-1">
