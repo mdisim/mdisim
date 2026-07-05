@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { motion, type Variants } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { SectionCard } from '@/components/ui/section-card'
 import { PageHeader } from '@/components/ui/page-header'
+import { Modal } from '@/components/ui/modal'
+import { Select } from '@/components/ui/select'
 import {
   FileBarChart,
   FileSpreadsheet,
@@ -23,8 +25,7 @@ import { getMeasurementItems } from '@/app/actions/measurements'
 import { getPaymentCerts } from '@/app/actions/payments'
 import { getDashboardSummaries } from '@/app/actions/dashboard'
 import { getProject } from '@/app/actions/projects'
-import { getAttachments } from '@/app/actions/attachments'
-import { getSketches } from '@/app/actions/sketches'
+import type { BOQItem } from '@/lib/types'
 import { exportBOQToPDF } from '@/lib/export/boq-pdf'
 import { exportBOQToExcel } from '@/lib/export/boq-excel'
 import { exportMeasurementsToPDF } from '@/lib/export/measurements-pdf'
@@ -35,9 +36,6 @@ import { exportPaymentReportToPDF } from '@/lib/export/payment-pdf'
 import { exportPaymentReportToExcel } from '@/lib/export/payment-excel'
 import { exportEVMReportToPDF } from '@/lib/export/evm-pdf'
 import { exportEVMReportToExcel } from '@/lib/export/evm-excel'
-import { generateEvidenceReport } from '@/lib/export/evidence-report'
-import { getProfile } from '@/app/actions/profile'
-import { getRateAnalyses } from '@/app/actions/rate-analysis'
 import { useI18n } from '@/lib/i18n'
 
 const reportCards = [
@@ -78,8 +76,8 @@ const reportCards = [
   },
   {
     key: 'evidence',
-    title: 'Quantity Backup Report',
-    description: 'Engineering evidence report: sketches, drawings, measurements, QR code — per BOQ item',
+    title: 'Quantity Calculation Sheet',
+    description: 'Full calculation backup per BOQ item: formulas, source references, sketches, attachments and approval',
     icon: FileBarChart,
     amberAccent: true,
   },
@@ -92,9 +90,35 @@ const fadeUp: Variants = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y:
 
 export default function ReportsPage() {
   const { id: projectId } = useParams<{ id: string }>()
+  const router = useRouter()
   const { t } = useI18n()
   const [loading, setLoading] = useState<Record<string, 'pdf' | 'excel' | null>>({})
   const [error, setError] = useState<string | null>(null)
+  const [showItemPicker, setShowItemPicker] = useState(false)
+  const [pickerItems, setPickerItems] = useState<BOQItem[]>([])
+  const [pickerLoading, setPickerLoading] = useState(false)
+  const [selectedItemId, setSelectedItemId] = useState('')
+
+  async function openItemPicker() {
+    setShowItemPicker(true)
+    setPickerLoading(true)
+    setError(null)
+    try {
+      const items = await getBOQItems(projectId)
+      setPickerItems(items)
+      setSelectedItemId(items[0]?.id ?? '')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load BOQ items')
+    } finally {
+      setPickerLoading(false)
+    }
+  }
+
+  function handleOpenCalcSheet() {
+    if (!selectedItemId) return
+    setShowItemPicker(false)
+    router.push(`/projects/${projectId}/boq/${selectedItemId}/calc-sheet`)
+  }
 
   async function handleGenerate(reportKey: ReportKey, format: 'pdf' | 'excel') {
     setLoading((prev) => ({ ...prev, [reportKey]: format }))
@@ -172,49 +196,6 @@ export default function ReportsPage() {
           }
           break
         }
-        case 'evidence': {
-          const [project, boqItems, allMeasurements, profileData, rateAnalyses] = await Promise.all([
-            getProject(projectId),
-            getBOQItems(projectId),
-            getMeasurementItems(projectId),
-            getProfile(),
-            getRateAnalyses(projectId),
-          ])
-          if (!project) throw new Error('Project not found')
-          if (boqItems.length === 0) throw new Error('No BOQ items found. Add BOQ items first.')
-
-          const co = (profileData?.profile as Record<string, unknown> | null)?.companies as Record<string, unknown> | null
-          const company = co ? {
-            name: (co.name as string) ?? project.name,
-            logo_url: (co.logo_url as string) ?? null,
-            address: (co.address as string) ?? null,
-            phone: (co.phone as string) ?? null,
-            email: (co.email as string) ?? null,
-            registration_number: (co.registration_number as string) ?? null,
-          } : null
-
-          // Generate evidence report for the first BOQ item with measurements
-          // (In production this would be per-item; for now we generate for the highest-value item)
-          const targetItem = boqItems.sort((a, b) => (b.total_amount ?? 0) - (a.total_amount ?? 0))[0]
-          const linkedMeasurements = allMeasurements.filter(m => m.id === targetItem.mi_id)
-          const rateAnalysis = rateAnalyses.find(r => r.boq_item_id === targetItem.id) ?? null
-
-          generateEvidenceReport({
-            boqItem: targetItem,
-            projectName: project.name,
-            measurements: linkedMeasurements,
-            sourceDrawings: [],
-            quantityChanges: [],
-            rateAnalysis,
-            costEntries: [],
-            payments: { totalCertified: 0, contractAmount: targetItem.total_amount ?? 0 },
-            drawingMeasurements: [],
-            company,
-            engineerName: (profileData?.profile as Record<string, unknown> | null)?.full_name as string ?? 'Engineer',
-            currency: project.currency ?? 'USD',
-          })
-          break
-        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate report')
@@ -285,11 +266,11 @@ export default function ReportsPage() {
                       variant="primary"
                       size="sm"
                       loading={isLoadingPDF}
-                      onClick={() => handleGenerate(card.key, 'pdf')}
+                      onClick={() => card.key === 'evidence' ? openItemPicker() : handleGenerate(card.key, 'pdf')}
                       className="flex-1"
                     >
                       <FileText size={13} className="me-1.5" />
-                      {card.key === 'evidence' ? 'Generate Report' : 'PDF'}
+                      {card.key === 'evidence' ? 'Open Calculation Sheet' : 'PDF'}
                     </Button>
                     {card.key !== 'evidence' && (
                       <Button
@@ -309,6 +290,30 @@ export default function ReportsPage() {
           })}
         </div>
       </motion.div>
+
+      <Modal isOpen={showItemPicker} onClose={() => setShowItemPicker(false)} title="Open Quantity Calculation Sheet" size="sm">
+        <div className="space-y-4">
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            Choose a BOQ item to open its full calculation backup — formulas, source references, sketches, attachments and approval status.
+          </p>
+          {pickerLoading ? (
+            <div className="text-sm text-[var(--color-text-muted)] py-4 text-center">Loading BOQ items…</div>
+          ) : pickerItems.length === 0 ? (
+            <div className="text-sm text-[var(--color-text-muted)] py-4 text-center">No BOQ items found. Add BOQ items first.</div>
+          ) : (
+            <Select
+              label="BOQ Item"
+              value={selectedItemId}
+              onChange={(e) => setSelectedItemId(e.target.value)}
+              options={pickerItems.map((i) => ({ value: i.id, label: `${i.code ? i.code + ' — ' : ''}${i.description}` }))}
+            />
+          )}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="secondary" onClick={() => setShowItemPicker(false)}>Cancel</Button>
+            <Button disabled={!selectedItemId} onClick={handleOpenCalcSheet}>Open Sheet</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

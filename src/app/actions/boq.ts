@@ -16,6 +16,19 @@ export async function getBOQItems(projectId: string): Promise<BOQItem[]> {
   return (data ?? []) as BOQItem[]
 }
 
+export async function getBOQItem(id: string): Promise<BOQItem | null> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+  const { data } = await supabase
+    .from('qb_boq_items')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  return (data ?? null) as BOQItem | null
+}
+
 export async function createBOQItem(fields: {
   project_id: string
   mi_id?: string

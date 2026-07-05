@@ -152,6 +152,10 @@ export async function createMeasurementLine(fields: {
   ocr_source?: string
   ocr_confidence?: number
   ocr_text?: string
+  floor_level?: string
+  engineer_name?: string
+  measured_date?: string
+  revision_id?: string
 }): Promise<{ data?: MeasurementLine; error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

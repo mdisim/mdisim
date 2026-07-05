@@ -18,6 +18,20 @@ export async function getDrawings(projectId: string): Promise<Drawing[]> {
   return (data ?? []) as Drawing[]
 }
 
+export async function getDrawingsByIds(ids: string[]): Promise<Drawing[]> {
+  if (ids.length === 0) return []
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const { data } = await supabase
+    .from('qb_drawings')
+    .select('*')
+    .in('id', ids)
+
+  return (data ?? []) as Drawing[]
+}
+
 export async function getDrawing(id: string): Promise<Drawing | null> {
   try {
     const supabase = await createClient()

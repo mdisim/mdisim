@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef, Fragment } from 'react'
 import { motion } from 'framer-motion'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import type { BOQItem } from '@/lib/types'
 import { MEASUREMENT_UNITS } from '@/lib/types'
 import { Button } from '@/components/ui/button'
@@ -29,6 +29,7 @@ import {
   PieChart,
   Search,
   Paperclip,
+  Calculator,
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
 import { cn } from '@/lib/utils'
@@ -61,6 +62,7 @@ const EDITABLE_FIELDS: (keyof BOQItem)[] = ['code', 'description', 'unit', 'quan
 
 export default function BOQPage() {
   const { id: projectId } = useParams<{ id: string }>()
+  const router = useRouter()
   const { t } = useI18n()
   const { toast } = useToast()
   const [items, setItems] = useState<BOQItem[]>([])
@@ -683,6 +685,14 @@ export default function BOQPage() {
                           </td>
                           <td className="px-1 py-0.5">
                             <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => router.push(`/projects/${projectId}/boq/${item.id}/calc-sheet`)}
+                                className="p-1 rounded hover:bg-[var(--color-amber)]/10 text-[color:var(--color-border)] hover:text-[color:var(--color-amber)] transition-colors"
+                                title="Quantity Calculation Sheet"
+                                aria-label="Quantity Calculation Sheet"
+                              >
+                                <Calculator size={13} />
+                              </button>
                               <button
                                 onClick={() => setEvidenceItem(item)}
                                 className="p-1 rounded hover:bg-[var(--color-amber)]/10 text-[color:var(--color-border)] hover:text-[color:var(--color-amber)] transition-colors"

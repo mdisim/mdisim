@@ -9,6 +9,7 @@ export async function getSketches(params: {
   miId?: string
   drawingMeasurementId?: string
   drawingId?: string
+  lineId?: string
 }): Promise<MeasurementSketch[]> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -23,6 +24,7 @@ export async function getSketches(params: {
   if (params.miId) query = query.eq('mi_id', params.miId)
   if (params.drawingMeasurementId) query = query.eq('drawing_measurement_id', params.drawingMeasurementId)
   if (params.drawingId) query = query.eq('drawing_id', params.drawingId)
+  if (params.lineId) query = query.eq('line_id', params.lineId)
 
   const { data } = await query
   return (data ?? []) as MeasurementSketch[]
@@ -33,6 +35,7 @@ export async function createSketch(params: {
   drawingId?: string
   drawingMeasurementId?: string
   miId?: string
+  lineId?: string
   imageDataUrl: string
   quantity?: number
   unit?: string
@@ -73,6 +76,7 @@ export async function createSketch(params: {
       drawing_id: params.drawingId ?? null,
       drawing_measurement_id: params.drawingMeasurementId ?? null,
       mi_id: params.miId ?? null,
+      line_id: params.lineId ?? null,
       file_path: filePath,
       quantity: params.quantity ?? null,
       unit: params.unit ?? null,

@@ -6,13 +6,15 @@ import { cn } from '@/lib/utils'
 import type { BOQItem, MeasurementItem, QuantityAttachment, MeasurementSketch, QuantityChange, DrawingMeasurement } from '@/lib/types'
 import { getMeasurementItems } from '@/app/actions/measurements'
 import { getAttachments, getAttachmentUrl } from '@/app/actions/attachments'
-import { getSketches, getSketchImageUrl } from '@/app/actions/sketches'
+import { getSketches } from '@/app/actions/sketches'
 import { getDrawingMeasurements } from '@/app/actions/drawings'
 import { AttachmentsPanel } from '@/components/attachments/attachments-panel'
+import { SketchGallery } from '@/components/sketches/sketch-gallery'
 import {
   X, Ruler, Image, Paperclip, GitBranch, History,
   ChevronRight, ExternalLink, Loader2, FileText,
   Hash, Square, ArrowUpDown, Calculator, Layers, BarChart3,
+  ClipboardCheck,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -49,7 +51,6 @@ export function BOQEvidenceCenter({ isOpen, onClose, boqItem, projectId }: BOQEv
   const [attachments, setAttachments] = useState<QuantityAttachment[]>([])
   const [drawingMeasurements, setDrawingMeasurements] = useState<DrawingMeasurement[]>([])
   const [loading, setLoading] = useState(false)
-  const [sketchUrls, setSketchUrls] = useState<Record<string, string>>({})
   const router = useRouter()
 
   const load = useCallback(async () => {
@@ -77,21 +78,6 @@ export function BOQEvidenceCenter({ isOpen, onClose, boqItem, projectId }: BOQEv
   }, [isOpen, projectId, boqItem])
 
   useEffect(() => { load() }, [load])
-
-  useEffect(() => {
-    // Load sketch image URLs
-    const load = async () => {
-      const entries: Record<string, string> = {}
-      for (const s of sketches) {
-        if (s.file_path) {
-          const url = await getSketchImageUrl(s.file_path)
-          if (url) entries[s.id] = url
-        }
-      }
-      setSketchUrls(entries)
-    }
-    if (sketches.length > 0) load()
-  }, [sketches])
 
   const fmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 })
 
@@ -134,9 +120,19 @@ export function BOQEvidenceCenter({ isOpen, onClose, boqItem, projectId }: BOQEv
                   )}
                 </div>
               </div>
-              <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] shrink-0">
-                <X size={16} />
-              </button>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={() => router.push(`/projects/${projectId}/boq/${boqItem.id}/calc-sheet`)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[var(--color-amber)]/10 hover:bg-[var(--color-amber)]/20 text-[var(--color-amber)] text-[11px] font-medium transition-colors"
+                  title="Open Quantity Calculation Sheet"
+                >
+                  <ClipboardCheck size={13} />
+                  Calculation Sheet
+                </button>
+                <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--color-surface-hover)] text-[var(--color-text-muted)]">
+                  <X size={16} />
+                </button>
+              </div>
             </div>
 
             {/* Tabs */}
@@ -218,46 +214,10 @@ export function BOQEvidenceCenter({ isOpen, onClose, boqItem, projectId }: BOQEv
 
                   {/* Sketches tab */}
                   {tab === 'sketches' && (
-                    <div className="space-y-3">
-                      {sketches.length === 0 ? (
-                        <div className="text-center py-8 text-xs text-[var(--color-text-muted)]">
-                          <Image size={24} className="mx-auto mb-2 opacity-30" />
-                          No engineering sketches yet. Take a measurement on a drawing to auto-generate sketches.
-                        </div>
-                      ) : (
-                        sketches.map((s) => (
-                          <div key={s.id} className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden">
-                            {sketchUrls[s.id] ? (
-                              <img src={sketchUrls[s.id]} alt="Sketch" className="w-full max-h-48 object-contain bg-black/20" />
-                            ) : (
-                              <div className="h-32 flex items-center justify-center bg-black/10">
-                                <Image size={24} className="opacity-20" />
-                              </div>
-                            )}
-                            <div className="px-3 py-2 space-y-1">
-                              <div className="flex items-center gap-3 text-[11px]">
-                                {s.drawing_ref && <span className="font-mono text-[var(--color-amber)]">{s.drawing_ref}</span>}
-                                {s.page_number != null && <span className="text-[var(--color-text-muted)]">Pg {s.page_number}</span>}
-                                {s.scale_label && <span className="text-[var(--color-text-muted)]">Scale {s.scale_label}</span>}
-                              </div>
-                              {s.formula && (
-                                <div className="font-mono text-xs text-[var(--color-text-secondary)] bg-[var(--color-surface-hover)] px-2 py-1 rounded">
-                                  {s.formula}
-                                </div>
-                              )}
-                              <div className="flex items-center justify-between text-xs">
-                                <span className="text-[var(--color-text-muted)]">{s.snapshot_type === 'auto' ? 'Auto-generated' : 'Manual'}</span>
-                                {s.quantity != null && (
-                                  <span className="font-mono font-semibold text-[var(--color-amber)]">
-                                    {s.quantity.toLocaleString('en-US', { minimumFractionDigits: 3 })} {s.unit}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
+                    <SketchGallery
+                      sketches={sketches}
+                      onDeleted={(id) => setSketches((prev) => prev.filter((s) => s.id !== id))}
+                    />
                   )}
 
                   {/* Attachments tab */}

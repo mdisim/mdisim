@@ -1,24 +1,32 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import type { MeasurementItem, MeasurementLine } from '@/lib/types'
+import type { MeasurementItem, MeasurementLine, Drawing, DrawingRevision, MeasurementSketch } from '@/lib/types'
 import {
   createMeasurementLine,
   updateMeasurementLine,
   deleteMeasurementLine,
   duplicateMeasurementLine,
 } from '@/app/actions/measurements'
-import { Plus, Trash2, Copy, Minus } from 'lucide-react'
+import { Plus, Trash2, Copy, Minus, Image as ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface MeasurementSheetProps {
   item: MeasurementItem
   onUpdate: () => void
+  extended?: boolean
+  drawings?: Drawing[]
+  revisions?: DrawingRevision[]
+  sketchesByLineId?: Record<string, MeasurementSketch[]>
+  onManageSketches?: (line: MeasurementLine) => void
+  defaultLineFields?: { floor_level?: string; engineer_name?: string; measured_date?: string }
 }
 
-type CellField = 'description' | 'location' | 'nr' | 'length' | 'width' | 'height' | 'formula' | 'notes'
+type CellField =
+  | 'description' | 'location' | 'nr' | 'length' | 'width' | 'height' | 'formula' | 'notes'
+  | 'floor_level' | 'engineer_name' | 'measured_date' | 'page_number'
 
-const COLUMNS: { key: CellField; label: string; width: string; numeric?: boolean }[] = [
+const BASE_COLUMNS: { key: CellField; label: string; width: string; numeric?: boolean; dateType?: boolean }[] = [
   { key: 'description', label: 'Description', width: 'min-w-[160px] flex-1' },
   { key: 'location', label: 'Location', width: 'w-[110px]' },
   { key: 'nr', label: 'N', width: 'w-[60px]', numeric: true },
@@ -29,8 +37,25 @@ const COLUMNS: { key: CellField; label: string; width: string; numeric?: boolean
   { key: 'notes', label: 'Notes', width: 'w-[120px]' },
 ]
 
-export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
+const SOURCE_COLUMNS: { key: CellField; label: string; width: string; numeric?: boolean; dateType?: boolean }[] = [
+  { key: 'floor_level', label: 'Floor / Level', width: 'w-[100px]' },
+  { key: 'page_number', label: 'Page', width: 'w-[64px]', numeric: true },
+  { key: 'engineer_name', label: 'Engineer', width: 'w-[120px]' },
+  { key: 'measured_date', label: 'Date', width: 'w-[120px]', dateType: true },
+]
+
+export function MeasurementSheet({
+  item,
+  onUpdate,
+  extended = false,
+  drawings = [],
+  revisions = [],
+  sketchesByLineId = {},
+  onManageSketches,
+  defaultLineFields,
+}: MeasurementSheetProps) {
   const lines = item.lines ?? []
+  const COLUMNS = extended ? [...BASE_COLUMNS, ...SOURCE_COLUMNS] : BASE_COLUMNS
   const [editingCell, setEditingCell] = useState<{ lineId: string; field: CellField } | null>(null)
   const [editValue, setEditValue] = useState('')
   const [adding, setAdding] = useState(false)
@@ -56,7 +81,7 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
     const line = lines.find((l) => l.id === lineId)
     if (!line) return
 
-    const currentValue = line[field]
+    const currentValue = line[field as keyof MeasurementLine]
     const newValue = editValue.trim()
 
     if (String(currentValue ?? '') === newValue) {
@@ -75,7 +100,7 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
     setEditingCell(null)
     await updateMeasurementLine(lineId, update as Partial<MeasurementLine>)
     onUpdate()
-  }, [editingCell, editValue, lines, onUpdate])
+  }, [editingCell, editValue, lines, onUpdate, COLUMNS])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -92,10 +117,10 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
         const lineIdx = lines.findIndex((l) => l.id === editingCell.lineId)
         if (colIdx < COLUMNS.length - 1) {
           const nextCol = COLUMNS[colIdx + 1]
-          startEdit(editingCell.lineId, nextCol.key, lines[lineIdx]?.[nextCol.key] as string | number | null)
+          startEdit(editingCell.lineId, nextCol.key, lines[lineIdx]?.[nextCol.key as keyof MeasurementLine] as string | number | null)
         } else if (lineIdx < lines.length - 1) {
           const nextLine = lines[lineIdx + 1]
-          startEdit(nextLine.id, COLUMNS[0].key, nextLine[COLUMNS[0].key] as string | number | null)
+          startEdit(nextLine.id, COLUMNS[0].key, nextLine[COLUMNS[0].key as keyof MeasurementLine] as string | number | null)
         }
       }
     }
@@ -107,6 +132,7 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
       item_id: item.id,
       is_deduction: isDeduction,
       nr: 1,
+      ...defaultLineFields,
     })
     setAdding(false)
     onUpdate()
@@ -124,6 +150,16 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
 
   const handleToggleDeduction = async (line: MeasurementLine) => {
     await updateMeasurementLine(line.id, { is_deduction: !line.is_deduction })
+    onUpdate()
+  }
+
+  const handleDrawingChange = async (line: MeasurementLine, drawingId: string) => {
+    await updateMeasurementLine(line.id, { drawing_id: drawingId || null, revision_id: null })
+    onUpdate()
+  }
+
+  const handleRevisionChange = async (line: MeasurementLine, revisionId: string) => {
+    await updateMeasurementLine(line.id, { revision_id: revisionId || null })
     onUpdate()
   }
 
@@ -153,7 +189,11 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
                   {col.label}
                 </th>
               ))}
+              {extended && (
+                <th className="w-[150px] px-2 py-2 text-left text-[11px] font-semibold text-[var(--color-text-muted)] uppercase">Drawing / Rev</th>
+              )}
               <th className="w-[80px] px-2 py-2 text-end text-[11px] font-semibold text-[var(--color-text-muted)] uppercase">Qty</th>
+              {extended && <th className="w-[50px]" />}
               <th className="w-[80px]" />
             </tr>
           </thead>
@@ -190,7 +230,7 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
                 {/* Data cells */}
                 {COLUMNS.map((col) => {
                   const isEditing = editingCell?.lineId === line.id && editingCell?.field === col.key
-                  const value = line[col.key]
+                  const value = line[col.key as keyof MeasurementLine]
                   const displayValue = value != null ? String(value) : ''
 
                   return (
@@ -201,7 +241,7 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
                       {isEditing ? (
                         <input
                           ref={inputRef}
-                          type={col.numeric ? 'text' : 'text'}
+                          type={col.dateType ? 'date' : 'text'}
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
                           onBlur={saveEdit}
@@ -227,6 +267,35 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
                   )
                 })}
 
+                {/* Drawing / Revision reference */}
+                {extended && (
+                  <td className="px-1 py-0.5">
+                    <div className="flex flex-col gap-0.5">
+                      <select
+                        value={line.drawing_id ?? ''}
+                        onChange={(e) => handleDrawingChange(line, e.target.value)}
+                        className="w-full text-[11px] px-1 py-0.5 rounded border border-[var(--color-border)] bg-white focus:outline-none focus:ring-1 focus:ring-[var(--color-amber)]"
+                      >
+                        <option value="">No drawing</option>
+                        {drawings.map((d) => (
+                          <option key={d.id} value={d.id}>{d.name}{d.drawing_number ? ` (${d.drawing_number})` : ''}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={line.revision_id ?? ''}
+                        onChange={(e) => handleRevisionChange(line, e.target.value)}
+                        disabled={!line.drawing_id}
+                        className="w-full text-[11px] px-1 py-0.5 rounded border border-[var(--color-border)] bg-white focus:outline-none focus:ring-1 focus:ring-[var(--color-amber)] disabled:opacity-40"
+                      >
+                        <option value="">No revision</option>
+                        {revisions.filter((r) => r.drawing_id === line.drawing_id).map((r) => (
+                          <option key={r.id} value={r.id}>Rev {r.revision_number}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </td>
+                )}
+
                 {/* Calculated quantity */}
                 <td className="px-2 py-1.5 text-end">
                   <span className={cn(
@@ -236,6 +305,25 @@ export function MeasurementSheet({ item, onUpdate }: MeasurementSheetProps) {
                     {formatQty(line.quantity)}
                   </span>
                 </td>
+
+                {/* Sketch indicator */}
+                {extended && (
+                  <td className="px-1 py-1 text-center">
+                    <button
+                      onClick={() => onManageSketches?.(line)}
+                      className={cn(
+                        'inline-flex items-center gap-1 px-1.5 py-1 rounded text-[10px] font-medium transition-colors',
+                        (sketchesByLineId[line.id]?.length ?? 0) > 0
+                          ? 'text-[var(--color-amber)] bg-[var(--color-amber)]/10 hover:bg-[var(--color-amber)]/20'
+                          : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-elevated)]'
+                      )}
+                      title="Sketches for this line"
+                    >
+                      <ImageIcon size={12} />
+                      {(sketchesByLineId[line.id]?.length ?? 0) > 0 && sketchesByLineId[line.id].length}
+                    </button>
+                  </td>
+                )}
 
                 {/* Actions */}
                 <td className="px-1 py-1">

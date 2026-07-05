@@ -15,6 +15,18 @@ export async function getDrawingRevisionsForProject(projectId: string): Promise<
   return (data ?? []) as DrawingRevision[]
 }
 
+export async function getDrawingRevisionsByIds(ids: string[]): Promise<DrawingRevision[]> {
+  if (ids.length === 0) return []
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+  const { data } = await supabase
+    .from('qb_drawing_revisions')
+    .select('*')
+    .in('id', ids)
+  return (data ?? []) as DrawingRevision[]
+}
+
 export async function getDrawingRevisions(drawingId: string): Promise<DrawingRevision[]> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

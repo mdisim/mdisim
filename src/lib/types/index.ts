@@ -121,6 +121,10 @@ export interface MeasurementLine {
   ocr_source: string | null
   ocr_confidence: number | null
   ocr_text: string | null
+  floor_level: string | null
+  engineer_name: string | null
+  measured_date: string | null
+  revision_id: string | null
   sort_order: number
   created_at: string
   updated_at: string
@@ -491,6 +495,27 @@ export interface MeasurementSketch {
   drawing_ref: string | null
   notes: string | null
   snapshot_type: SketchSnapshotType
+  line_id: string | null
+  created_at: string
+}
+
+// ── Quantity Approvals ──────────────────────────────────────────────────
+
+export type ApprovalStatus = 'draft' | 'pending' | 'approved' | 'rejected'
+
+export interface QuantityApproval {
+  id: string
+  project_id: string
+  boq_item_id: string
+  mi_id: string | null
+  calculated_quantity: number
+  approved_quantity: number
+  unit: string
+  status: ApprovalStatus
+  approver_name: string | null
+  approver_id: string | null
+  approved_at: string
+  notes: string | null
   created_at: string
 }
 
