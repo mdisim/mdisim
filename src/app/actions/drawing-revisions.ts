@@ -79,15 +79,23 @@ export async function deleteDrawingRevision(id: string): Promise<{ error?: strin
   return {}
 }
 
-export async function getQuantityChanges(projectId: string): Promise<QuantityChange[]> {
+export async function getQuantityChanges(projectId: string, opts?: { boqItemId?: string; miId?: string }): Promise<QuantityChange[]> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
-  const { data } = await supabase
+  let query = supabase
     .from('qb_quantity_changes')
     .select('*')
     .eq('project_id', projectId)
     .order('created_at', { ascending: false })
+  if (opts?.boqItemId && opts?.miId) {
+    query = query.or(`boq_item_id.eq.${opts.boqItemId},mi_id.eq.${opts.miId}`)
+  } else if (opts?.boqItemId) {
+    query = query.eq('boq_item_id', opts.boqItemId)
+  } else if (opts?.miId) {
+    query = query.eq('mi_id', opts.miId)
+  }
+  const { data } = await query
   return (data ?? []) as QuantityChange[]
 }
 

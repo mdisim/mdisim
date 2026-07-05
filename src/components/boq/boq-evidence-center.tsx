@@ -3,12 +3,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
-import type { BOQItem, MeasurementItem, QuantityAttachment, MeasurementSketch, QuantityChange, Drawing } from '@/lib/types'
-import { getMeasurementItems } from '@/app/actions/measurements'
+import type { BOQItem, MeasurementItem, QuantityAttachment, MeasurementSketch, QuantityChange, QuantityApproval, Drawing } from '@/lib/types'
+import { getMeasurementItem } from '@/app/actions/measurements'
 import { getAttachments, getAttachmentUrl } from '@/app/actions/attachments'
 import { getSketches } from '@/app/actions/sketches'
 import { getDrawings } from '@/app/actions/drawings'
 import { getDrawingRevisionsForProject, getQuantityChanges } from '@/app/actions/drawing-revisions'
+import { getApprovals } from '@/app/actions/quantity-approvals'
 import { AttachmentsPanel } from '@/components/attachments/attachments-panel'
 import { SketchGallery } from '@/components/sketches/sketch-gallery'
 import { RevisionTimeline, type RevisionWithDrawing } from '@/components/drawings/revision-timeline'
@@ -55,6 +56,7 @@ export function BOQEvidenceCenter({ isOpen, onClose, boqItem, projectId }: BOQEv
   const [drawings, setDrawings] = useState<Drawing[]>([])
   const [revisions, setRevisions] = useState<RevisionWithDrawing[]>([])
   const [quantityChanges, setQuantityChanges] = useState<QuantityChange[]>([])
+  const [approvals, setApprovals] = useState<QuantityApproval[]>([])
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
@@ -62,23 +64,22 @@ export function BOQEvidenceCenter({ isOpen, onClose, boqItem, projectId }: BOQEv
     if (!isOpen) return
     setLoading(true)
     try {
-      const [allMeasurements, atts, sketches, allDrawings, allRevisions, allChanges] = await Promise.all([
-        getMeasurementItems(projectId),
+      const [mi, atts, sketches, allDrawings, allRevisions, changes, approvalLog] = await Promise.all([
+        boqItem.mi_id ? getMeasurementItem(boqItem.mi_id) : Promise.resolve(null),
         getAttachments({ projectId, boqItemId: boqItem.id }),
-        getSketches({ projectId }),
+        boqItem.mi_id ? getSketches({ projectId, miId: boqItem.mi_id }) : Promise.resolve([]),
         getDrawings(projectId),
         getDrawingRevisionsForProject(projectId),
-        getQuantityChanges(projectId),
+        getQuantityChanges(projectId, { boqItemId: boqItem.id, miId: boqItem.mi_id ?? undefined }),
+        getApprovals(boqItem.id),
       ])
 
-      // Filter measurements linked to this BOQ item via mi_id
-      const linked = allMeasurements.filter(
-        (m) => m.id === boqItem.mi_id
-      )
+      const linked = mi ? [mi] : []
       setMeasurements(linked)
       setAttachments(atts)
-      setSketches(sketches.filter((s) => s.mi_id === boqItem.mi_id || !s.mi_id))
+      setSketches(sketches)
       setDrawings(allDrawings)
+      setApprovals(approvalLog)
 
       // Revisions of drawings referenced by this item's calculation lines
       const drawingIds = new Set(
@@ -88,7 +89,7 @@ export function BOQEvidenceCenter({ isOpen, onClose, boqItem, projectId }: BOQEv
         .filter((r) => drawingIds.has(r.drawing_id))
         .map((r) => ({ ...r, drawingName: allDrawings.find((d) => d.id === r.drawing_id)?.name ?? 'Drawing' }))
       setRevisions(relevantRevisions)
-      setQuantityChanges(allChanges.filter((c) => c.boq_item_id === boqItem.id || c.mi_id === boqItem.mi_id))
+      setQuantityChanges(changes)
     } catch {
       // silent
     } finally {
@@ -308,6 +309,41 @@ export function BOQEvidenceCenter({ isOpen, onClose, boqItem, projectId }: BOQEv
                   {/* History tab */}
                   {tab === 'history' && (
                     <div className="space-y-2">
+                      <div className="p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
+                        <div className="flex items-center gap-2 text-xs mb-2">
+                          <ClipboardCheck size={12} className="text-[var(--color-amber)]" />
+                          <span className="font-medium text-[var(--color-text)]">Approval Trail</span>
+                        </div>
+                        {approvals.length === 0 ? (
+                          <p className="text-[11px] text-[var(--color-text-muted)]">No approvals recorded yet.</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {approvals.map((a) => (
+                              <div key={a.id} className="flex items-start gap-2 text-[11px] border-b border-[var(--color-border)]/50 last:border-0 pb-2 last:pb-0">
+                                <span className={cn(
+                                  'px-1.5 py-0.5 rounded text-[10px] font-medium uppercase shrink-0',
+                                  a.status === 'approved' && 'bg-green-500/10 text-green-600',
+                                  a.status === 'rejected' && 'bg-red-500/10 text-red-600',
+                                  (a.status === 'pending' || a.status === 'draft') && 'bg-[var(--color-amber)]/10 text-[var(--color-amber)]',
+                                )}>
+                                  {a.status}
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    {a.approver_name && <span className="text-[var(--color-text)] font-medium">{a.approver_name}</span>}
+                                    <span className="text-[var(--color-text-muted)]">{new Date(a.approved_at).toLocaleDateString('en-GB')}</span>
+                                  </div>
+                                  <div className="font-mono text-[var(--color-text-secondary)]">
+                                    {fmt(a.calculated_quantity)} → {fmt(a.approved_quantity)} {a.unit}
+                                  </div>
+                                  {a.notes && <p className="text-[var(--color-text-muted)] mt-0.5">{a.notes}</p>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
                       <div className="p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
                         <div className="flex items-center gap-2 text-xs mb-2">
                           <History size={12} className="text-[var(--color-amber)]" />
