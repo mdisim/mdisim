@@ -56,8 +56,9 @@ import { AISuggestionsPanel } from './ai-suggestions-panel'
 import { analyzeDrawingWithAI, estimateProjectCosts } from '@/app/actions/ai-takeoff'
 import type { AIFullAnalysis, AIDetectedElement, AIBOQItem } from '@/lib/ai/types'
 import { AlertTriangle, PanelRightClose, PanelRightOpen, Keyboard, Link2 } from 'lucide-react'
-import { linkDrawingMeasurementsToBOQ } from '@/app/actions/measurements'
+import { linkDrawingMeasurementsToBOQ, createManualQuantity } from '@/app/actions/measurements'
 import { createBOQItem } from '@/app/actions/boq'
+import { createSketch } from '@/app/actions/sketches'
 
 interface TakeoffViewerProps {
   drawingId: string
@@ -551,6 +552,41 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
       await loadData()
     },
     [drawingId, page, scale, activeColor, loadData, onMeasurementSaved],
+  )
+
+  // ── Volume Calculator → quantity record ─────────────────────────────
+  const handleAddVolumeMeasurement = useCallback(
+    async (item: { description: string; quantity: number; unit: string }) => {
+      const result = await createManualQuantity({
+        projectId,
+        description: item.description,
+        quantity: item.quantity,
+        unit: item.unit,
+        measurementType: 'volume',
+        drawingId,
+        pageNumber: page,
+      })
+      if (result.error || !result.lineId) return
+
+      const snap = overlayCanvasRef.current?.toDataURL('image/png') ?? null
+      if (snap) {
+        await createSketch({
+          projectId,
+          drawingId,
+          miId: result.miId || undefined,
+          lineId: result.lineId,
+          imageDataUrl: snap,
+          quantity: item.quantity,
+          unit: item.unit,
+          formula: item.description,
+          pageNumber: page,
+          drawingName,
+          snapshotType: 'auto',
+        })
+      }
+      await loadData()
+    },
+    [projectId, drawingId, page, drawingName, loadData],
   )
 
   // ── Mouse handlers ───────────────────────────────────────────────────
@@ -1745,6 +1781,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
       <VolumeCalculator
         isOpen={showVolumeCalc}
         onClose={() => setShowVolumeCalc(false)}
+        onAddMeasurement={handleAddVolumeMeasurement}
         drawingMeasurements={takeoffMs.map(m => ({ id: m.id, label: m.label ?? '', quantity: m.quantity, unit: m.unit ?? 'px' }))}
       />
 

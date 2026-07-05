@@ -3,28 +3,31 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
-import type { BOQItem, MeasurementItem, QuantityAttachment, MeasurementSketch, QuantityChange, DrawingMeasurement } from '@/lib/types'
+import type { BOQItem, MeasurementItem, QuantityAttachment, MeasurementSketch, QuantityChange, Drawing } from '@/lib/types'
 import { getMeasurementItems } from '@/app/actions/measurements'
 import { getAttachments, getAttachmentUrl } from '@/app/actions/attachments'
 import { getSketches } from '@/app/actions/sketches'
-import { getDrawingMeasurements } from '@/app/actions/drawings'
+import { getDrawings } from '@/app/actions/drawings'
+import { getDrawingRevisionsForProject, getQuantityChanges } from '@/app/actions/drawing-revisions'
 import { AttachmentsPanel } from '@/components/attachments/attachments-panel'
 import { SketchGallery } from '@/components/sketches/sketch-gallery'
+import { RevisionTimeline, type RevisionWithDrawing } from '@/components/drawings/revision-timeline'
 import {
   X, Ruler, Image, Paperclip, GitBranch, History,
   ChevronRight, ExternalLink, Loader2, FileText,
   Hash, Square, ArrowUpDown, Calculator, Layers, BarChart3,
-  ClipboardCheck,
+  ClipboardCheck, Clock,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
-type Tab = 'measurements' | 'sketches' | 'attachments' | 'drawings' | 'history'
+type Tab = 'measurements' | 'sketches' | 'attachments' | 'drawings' | 'revisions' | 'history'
 
 const TABS: { id: Tab; label: string; icon: typeof Ruler }[] = [
   { id: 'measurements', label: 'Measurements', icon: Ruler },
   { id: 'sketches', label: 'Sketches', icon: Image },
   { id: 'attachments', label: 'Attachments', icon: Paperclip },
   { id: 'drawings', label: 'Drawings', icon: GitBranch },
+  { id: 'revisions', label: 'Revisions', icon: Clock },
   { id: 'history', label: 'History', icon: History },
 ]
 
@@ -49,7 +52,9 @@ export function BOQEvidenceCenter({ isOpen, onClose, boqItem, projectId }: BOQEv
   const [measurements, setMeasurements] = useState<MeasurementItem[]>([])
   const [sketches, setSketches] = useState<MeasurementSketch[]>([])
   const [attachments, setAttachments] = useState<QuantityAttachment[]>([])
-  const [drawingMeasurements, setDrawingMeasurements] = useState<DrawingMeasurement[]>([])
+  const [drawings, setDrawings] = useState<Drawing[]>([])
+  const [revisions, setRevisions] = useState<RevisionWithDrawing[]>([])
+  const [quantityChanges, setQuantityChanges] = useState<QuantityChange[]>([])
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
@@ -57,10 +62,13 @@ export function BOQEvidenceCenter({ isOpen, onClose, boqItem, projectId }: BOQEv
     if (!isOpen) return
     setLoading(true)
     try {
-      const [allMeasurements, atts, sketches] = await Promise.all([
+      const [allMeasurements, atts, sketches, allDrawings, allRevisions, allChanges] = await Promise.all([
         getMeasurementItems(projectId),
         getAttachments({ projectId, boqItemId: boqItem.id }),
         getSketches({ projectId }),
+        getDrawings(projectId),
+        getDrawingRevisionsForProject(projectId),
+        getQuantityChanges(projectId),
       ])
 
       // Filter measurements linked to this BOQ item via mi_id
@@ -70,6 +78,17 @@ export function BOQEvidenceCenter({ isOpen, onClose, boqItem, projectId }: BOQEv
       setMeasurements(linked)
       setAttachments(atts)
       setSketches(sketches.filter((s) => s.mi_id === boqItem.mi_id || !s.mi_id))
+      setDrawings(allDrawings)
+
+      // Revisions of drawings referenced by this item's calculation lines
+      const drawingIds = new Set(
+        linked.flatMap((m) => (m.lines ?? []).map((l) => l.drawing_id).filter((id): id is string => !!id))
+      )
+      const relevantRevisions = allRevisions
+        .filter((r) => drawingIds.has(r.drawing_id))
+        .map((r) => ({ ...r, drawingName: allDrawings.find((d) => d.id === r.drawing_id)?.name ?? 'Drawing' }))
+      setRevisions(relevantRevisions)
+      setQuantityChanges(allChanges.filter((c) => c.boq_item_id === boqItem.id || c.mi_id === boqItem.mi_id))
     } catch {
       // silent
     } finally {
@@ -80,6 +99,7 @@ export function BOQEvidenceCenter({ isOpen, onClose, boqItem, projectId }: BOQEv
   useEffect(() => { load() }, [load])
 
   const fmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 })
+  const measurementLines = measurements.flatMap((m) => m.lines ?? [])
 
   return (
     <AnimatePresence>
@@ -184,16 +204,26 @@ export function BOQEvidenceCenter({ isOpen, onClose, boqItem, projectId }: BOQEv
                             {(m.lines ?? []).length > 0 && (
                               <div className="divide-y divide-[var(--color-border)]/50">
                                 {(m.lines ?? []).map((l) => (
-                                  <div key={l.id} className="flex items-center gap-2 px-3 py-1.5 text-[11px]">
-                                    <span className="text-[var(--color-text-muted)] w-4 text-center">{l.line_number}</span>
-                                    <span className="text-[var(--color-text-secondary)] flex-1 truncate">{l.description || '—'}</span>
-                                    {l.nr != null && l.nr !== 1 && <span className="text-[var(--color-text-muted)]">×{l.nr}</span>}
-                                    {l.length != null && <span className="font-mono text-[var(--color-text-muted)]">{l.length}</span>}
-                                    {l.width != null && <span className="font-mono text-[var(--color-text-muted)]">×{l.width}</span>}
-                                    {l.height != null && <span className="font-mono text-[var(--color-text-muted)]">×{l.height}</span>}
-                                    <span className={cn('font-mono ms-auto', l.is_deduction ? 'text-[var(--color-danger-light)]' : 'text-[var(--color-text)]')}>
-                                      {l.is_deduction ? '-' : ''}{fmt(l.quantity ?? 0)}
-                                    </span>
+                                  <div key={l.id} className="px-3 py-1.5">
+                                    <div className="flex items-center gap-2 text-[11px]">
+                                      <span className="text-[var(--color-text-muted)] w-4 text-center">{l.line_number}</span>
+                                      <span className="text-[var(--color-text-secondary)] flex-1 truncate">{l.description || '—'}</span>
+                                      {l.nr != null && l.nr !== 1 && <span className="text-[var(--color-text-muted)]">×{l.nr}</span>}
+                                      {l.length != null && <span className="font-mono text-[var(--color-text-muted)]">{l.length}</span>}
+                                      {l.width != null && <span className="font-mono text-[var(--color-text-muted)]">×{l.width}</span>}
+                                      {l.height != null && <span className="font-mono text-[var(--color-text-muted)]">×{l.height}</span>}
+                                      <span className={cn('font-mono ms-auto', l.is_deduction ? 'text-[var(--color-danger-light)]' : 'text-[var(--color-text)]')}>
+                                        {l.is_deduction ? '-' : ''}{fmt(l.quantity ?? 0)}
+                                      </span>
+                                    </div>
+                                    {(l.floor_level || l.engineer_name || l.measured_date || l.location) && (
+                                      <div className="flex flex-wrap gap-x-2 ps-6 mt-0.5 text-[10px] text-[var(--color-text-muted)]">
+                                        {l.location && <span>{l.location}</span>}
+                                        {l.floor_level && <span>· {l.floor_level}</span>}
+                                        {l.engineer_name && <span>· {l.engineer_name}</span>}
+                                        {l.measured_date && <span>· {new Date(l.measured_date).toLocaleDateString('en-GB')}</span>}
+                                      </div>
+                                    )}
                                   </div>
                                 ))}
                               </div>
@@ -235,27 +265,44 @@ export function BOQEvidenceCenter({ isOpen, onClose, boqItem, projectId }: BOQEv
                   {/* Drawings tab */}
                   {tab === 'drawings' && (
                     <div className="space-y-3">
-                      {drawingMeasurements.length === 0 ? (
+                      {measurementLines.length === 0 ? (
                         <div className="text-center py-8 text-xs text-[var(--color-text-muted)]">
                           <GitBranch size={24} className="mx-auto mb-2 opacity-30" />
                           No drawing references found. Measurements taken on drawings will appear here.
                         </div>
                       ) : (
-                        drawingMeasurements.map((dm) => (
-                          <div key={dm.id} className="p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
-                            <div className="flex items-center gap-2 text-xs">
-                              <GitBranch size={12} className="text-[var(--color-amber)]" />
-                              <span className="font-medium text-[var(--color-text)]">{dm.label || dm.tool_type}</span>
-                              <span className="ms-auto font-mono text-[var(--color-amber)]">{dm.quantity} {dm.unit}</span>
+                        measurementLines.map((l) => {
+                          const drawing = drawings.find((d) => d.id === l.drawing_id)
+                          const revision = revisions.find((r) => r.id === l.revision_id)
+                          return (
+                            <div key={l.id} className="p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
+                              <div className="flex items-center gap-2 text-xs">
+                                <GitBranch size={12} className="text-[var(--color-amber)]" />
+                                <span className="font-medium text-[var(--color-text)]">{drawing?.name ?? 'No drawing linked'}</span>
+                                {revision && <span className="font-mono text-[var(--color-text-muted)]">Rev {revision.revision_number}</span>}
+                                <span className="ms-auto font-mono text-[var(--color-amber)]">{fmt(Math.abs(l.quantity))}</span>
+                              </div>
+                              <div className="mt-1 text-[10px] text-[var(--color-text-muted)] flex flex-wrap gap-x-2">
+                                {l.page_number != null && <span>Pg {l.page_number}</span>}
+                                {l.floor_level && <span>· {l.floor_level}</span>}
+                                {l.location && <span>· {l.location}</span>}
+                                {l.engineer_name && <span>· {l.engineer_name}</span>}
+                                {l.measured_date && <span>· {new Date(l.measured_date).toLocaleDateString('en-GB')}</span>}
+                              </div>
                             </div>
-                            <div className="mt-1 text-[10px] text-[var(--color-text-muted)]">
-                              Page {dm.page_number} · {dm.tool_type}
-                              {dm.notes && ` · ${dm.notes}`}
-                            </div>
-                          </div>
-                        ))
+                          )
+                        })
                       )}
                     </div>
+                  )}
+
+                  {/* Revisions tab */}
+                  {tab === 'revisions' && (
+                    <RevisionTimeline
+                      revisions={revisions}
+                      changes={quantityChanges}
+                      emptyDescription="No revisions recorded yet for the drawings behind this item's measurements."
+                    />
                   )}
 
                   {/* History tab */}

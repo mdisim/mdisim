@@ -24,16 +24,12 @@ import {
   TrendingUp,
   TrendingDown,
   FileText,
-  Layers,
   AlertTriangle,
   CheckCircle2,
-  ChevronDown,
-  ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useI18n } from '@/lib/i18n'
-
-type RevisionWithDrawing = DrawingRevision & { drawingName: string }
+import { RevisionTimeline, type RevisionWithDrawing } from '@/components/drawings/revision-timeline'
 
 const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } }
 const fadeUp: Variants = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } } }
@@ -49,7 +45,6 @@ export default function RevisionsPage() {
   const [selectedDrawingId, setSelectedDrawingId] = useState<string>('')
   const [revA, setRevA] = useState<string>('')
   const [revB, setRevB] = useState<string>('')
-  const [expandedTimeline, setExpandedTimeline] = useState<Set<string>>(new Set())
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -106,13 +101,6 @@ export default function RevisionsPage() {
   const totalRemovals = useMemo(() => changes.filter(c => (c.new_qty - c.previous_qty) < 0).reduce((s, c) => s + Math.abs(c.new_qty - c.previous_qty), 0), [changes])
   const totalModifications = changes.length
   const netChange = totalAdditions - totalRemovals
-
-  const statusBadge = (status: string) => {
-    const map: Record<string, 'success' | 'info' | 'warning' | 'default'> = {
-      current: 'success', draft: 'warning', superseded: 'default',
-    }
-    return <Badge variant={map[status] ?? 'default'}>{status}</Badge>
-  }
 
   if (loading) {
     return (
@@ -300,88 +288,7 @@ export default function RevisionsPage() {
         {/* Revision Timeline */}
         <motion.div variants={fadeUp}>
           <SectionCard title="Revision History Timeline" icon={Clock} iconColor="text-[var(--color-amber)]">
-            {allRevisions.length === 0 ? (
-              <EmptyState
-                icon={Layers}
-                title="No revisions yet"
-                description="No drawing revisions recorded yet."
-                compact
-              />
-            ) : (
-              <div className="relative">
-                {/* Timeline line */}
-                <div className="absolute left-4 top-0 bottom-0 w-px bg-[var(--color-border)]" />
-                <div className="space-y-3">
-                  {allRevisions.map((rev, i) => {
-                    const isExpanded = expandedTimeline.has(rev.id)
-                    const relatedChanges = changes.filter(c => c.to_revision_id === rev.id || c.from_revision_id === rev.id)
-                    return (
-                      <motion.div
-                        key={rev.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.04 }}
-                        className="relative ps-10"
-                      >
-                        {/* Timeline dot */}
-                        <div className={cn(
-                          'absolute left-[10px] w-3 h-3 rounded-full border-2 border-[var(--color-surface)]',
-                          rev.status === 'current' ? 'bg-green-500' : rev.status === 'draft' ? 'bg-[var(--color-amber)]' : 'bg-[var(--color-text-muted)]',
-                        )} style={{ top: '10px' }} />
-
-                        <div
-                          className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-3 cursor-pointer hover:border-[var(--color-amber)]/30 transition-colors"
-                          onClick={() => setExpandedTimeline(prev => {
-                            const next = new Set(prev)
-                            next.has(rev.id) ? next.delete(rev.id) : next.add(rev.id)
-                            return next
-                          })}
-                        >
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {isExpanded
-                              ? <ChevronDown size={13} className="text-[var(--color-text-muted)] shrink-0" />
-                              : <ChevronRight size={13} className="text-[var(--color-text-muted)] shrink-0" />
-                            }
-                            <span className="font-semibold text-[var(--color-text)] text-sm">{rev.drawingName}</span>
-                            <span className="text-xs font-mono text-[var(--color-text-muted)]">Rev {rev.revision_number}</span>
-                            {statusBadge(rev.status)}
-                            <span className="ms-auto text-xs font-mono text-[var(--color-text-muted)]">{rev.revision_date}</span>
-                            {relatedChanges.length > 0 && (
-                              <Badge variant="info">{relatedChanges.length} changes</Badge>
-                            )}
-                          </div>
-                          {isExpanded && (
-                            <div className="mt-3 pt-3 border-t border-[var(--color-border)]">
-                              {rev.description && (
-                                <p className="text-sm text-[var(--color-text-secondary)] mb-2">{rev.description}</p>
-                              )}
-                              {relatedChanges.length > 0 && (
-                                <div className="space-y-1">
-                                  <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">{t.revisions.quantityChanges}</span>
-                                  {relatedChanges.map(c => {
-                                    const diff = c.new_qty - c.previous_qty
-                                    return (
-                                      <div key={c.id} className="flex items-center gap-2 text-xs py-1">
-                                        {diff > 0 ? <Plus size={11} className="text-green-500" /> : diff < 0 ? <Minus size={11} className="text-[var(--color-danger)]" /> : <RefreshCw size={11} className="text-[var(--color-amber)]" />}
-                                        <span className="text-[var(--color-text-secondary)] flex-1">{c.description}</span>
-                                        <span className="tabular-nums text-[var(--color-text-muted)]">{fmt(c.previous_qty)} → {fmt(c.new_qty)} {c.unit}</span>
-                                        <span className={cn('tabular-nums font-semibold', diff > 0 ? 'text-green-500' : diff < 0 ? 'text-[var(--color-danger)]' : 'text-[var(--color-text-muted)]')}>
-                                          ({diff > 0 ? '+' : ''}{fmt(diff)})
-                                        </span>
-                                      </div>
-                                    )
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
+            <RevisionTimeline revisions={allRevisions} changes={changes} />
           </SectionCard>
         </motion.div>
 

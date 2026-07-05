@@ -3,7 +3,9 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { getDrawing, getDrawingUrl } from '@/app/actions/drawings'
-import type { Drawing, DrawingMeasurement } from '@/lib/types'
+import { getDrawingRevisions } from '@/app/actions/drawing-revisions'
+import { getProfile } from '@/app/actions/profile'
+import type { Drawing, DrawingMeasurement, DrawingRevision } from '@/lib/types'
 import { DRAWING_TYPES } from '@/lib/types'
 import { ArrowLeft, Maximize2, Minimize2, AlertTriangle } from 'lucide-react'
 import { TakeoffViewer } from '@/components/takeoff/takeoff-viewer'
@@ -21,6 +23,8 @@ export default function TakeoffPage() {
   const [fullscreen, setFullscreen] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
   const [pendingMeasurement, setPendingMeasurement] = useState<{ dm: DrawingMeasurement; canvas: string | null } | null>(null)
+  const [currentRevision, setCurrentRevision] = useState<DrawingRevision | null>(null)
+  const [engineerName, setEngineerName] = useState<string | undefined>(undefined)
 
   const handleMeasurementSaved = useCallback((dm: DrawingMeasurement, canvasDataUrl: string | null) => {
     setPendingMeasurement({ dm, canvas: canvasDataUrl })
@@ -49,6 +53,14 @@ export default function TakeoffPage() {
         }
         setDrawingUrl(url)
         setLoading(false)
+
+        const [revisions, profileData] = await Promise.all([
+          getDrawingRevisions(drawingId),
+          getProfile(),
+        ])
+        if (cancelled) return
+        setCurrentRevision(revisions.find((r) => r.status === 'current') ?? revisions[0] ?? null)
+        setEngineerName((profileData?.profile as { full_name?: string | null } | null)?.full_name ?? undefined)
       } catch (e) {
         if (cancelled) return
         setError(e instanceof Error ? e.message : 'Failed to load drawing')
@@ -187,8 +199,10 @@ export default function TakeoffPage() {
             drawingId={drawing.id}
             drawingName={drawing.name}
             drawingNumber={drawing.drawing_number ?? undefined}
-            revisionNumber={drawing.revision_number ?? undefined}
+            revisionNumber={currentRevision?.revision_number ?? drawing.revision_number ?? undefined}
+            revisionId={currentRevision?.id}
             pageNumber={pendingMeasurement.dm.page_number}
+            engineerName={engineerName}
             onSaved={() => setPendingMeasurement(null)}
             onClose={() => setPendingMeasurement(null)}
           />

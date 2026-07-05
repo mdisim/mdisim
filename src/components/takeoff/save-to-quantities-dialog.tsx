@@ -37,8 +37,11 @@ interface SaveToQuantitiesDialogProps {
   drawingName?: string
   drawingNumber?: string
   revisionNumber?: string
+  revisionId?: string
   pageNumber?: number
   scaleLabel?: string
+  engineerName?: string
+  floorLevel?: string
   onSaved: () => void
   onClose: () => void
 }
@@ -51,14 +54,18 @@ export function SaveToQuantitiesDialog({
   drawingName,
   drawingNumber,
   revisionNumber,
+  revisionId,
   pageNumber,
   scaleLabel,
+  engineerName,
+  floorLevel,
   onSaved,
   onClose,
 }: SaveToQuantitiesDialogProps) {
   const [description, setDescription] = useState('')
   const [unit, setUnit] = useState('m')
   const [section, setSection] = useState('')
+  const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
@@ -66,6 +73,7 @@ export function SaveToQuantitiesDialog({
     if (!dm) return
     setDescription(toolLabel(dm.tool_type))
     setUnit(dm.unit ?? toolUnit(dm.tool_type))
+    setNotes('')
     setSaved(false)
   }, [dm])
 
@@ -75,18 +83,23 @@ export function SaveToQuantitiesDialog({
     if (!dm || !description.trim()) return
     setSaving(true)
     try {
-      // 1. Create measurement item + BOQ item via one-call action
+      // 1. Create measurement item + line + BOQ item via one-call action,
+      // with full source-reference metadata (drawing, revision, page, engineer, date, notes)
       const result = await createQuantityFromDrawing({
         projectId,
         drawingMeasurementId: dm.id,
         description: description.trim(),
         unit,
         section: section.trim() || undefined,
+        revisionId,
+        engineerName,
+        floorLevel,
+        notes: notes.trim() || undefined,
       })
 
       if (result.error) throw new Error(result.error)
 
-      // 2. Save sketch
+      // 2. Auto-generate the engineering sketch for this exact line
       if (canvasDataUrl) {
         const drawingRef = [
           drawingName,
@@ -99,9 +112,11 @@ export function SaveToQuantitiesDialog({
           drawingId,
           drawingMeasurementId: dm.id,
           miId: result.miId || undefined,
+          lineId: result.lineId || undefined,
           imageDataUrl: canvasDataUrl,
           quantity: dm.quantity,
           unit: dm.unit ?? unit,
+          formula: String(dm.quantity),
           pageNumber: pageNumber ?? dm.page_number,
           drawingName,
           drawingNumber,
@@ -191,6 +206,18 @@ export function SaveToQuantitiesDialog({
                   className="flex-1 h-8 px-2 text-xs rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:outline-none"
                 />
               </div>
+              <input
+                type="text"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Notes (optional)"
+                className="w-full h-8 px-2 text-xs rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:outline-none"
+              />
+              {engineerName && (
+                <p className="text-[10px] text-[var(--color-text-muted)]">
+                  Recorded by <span className="text-[var(--color-text-secondary)]">{engineerName}</span> · {new Date().toLocaleDateString('en-GB')}
+                </p>
+              )}
             </div>
 
             {/* Actions */}
