@@ -1106,7 +1106,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
 
       if (e.key === 'Delete' || e.key === 'Backspace') {
         if (activeMeasurementId) {
-          deleteDrawingMeasurement(activeMeasurementId).then(() => loadData())
+          deleteDrawingMeasurement(activeMeasurementId).then(() => loadData()).catch((err) => console.error('Failed to delete measurement:', err))
           setActiveMeasurementId(null)
         }
         return

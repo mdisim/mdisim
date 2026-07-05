@@ -377,10 +377,14 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
   useEffect(() => {
     if (renderQueued.current) return
     renderQueued.current = true
-    requestAnimationFrame(() => {
+    const frameId = requestAnimationFrame(() => {
       renderOverlay()
       renderQueued.current = false
     })
+    return () => {
+      cancelAnimationFrame(frameId)
+      renderQueued.current = false
+    }
   }, [renderOverlay])
 
   // ── Coordinate conversion ───────────────────────────────────────────
@@ -814,7 +818,7 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
       if (e.key === 'Shift') { isShiftDown.current = true; return }
       if (e.key === 'Escape') { setActivePoints([]); setIsCalibrating(false); setCalibrationPoints([]); return }
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (activeMeasurementId) { deleteDrawingMeasurement(activeMeasurementId).then(() => loadData()); setActiveMeasurementId(null) }
+        if (activeMeasurementId) { deleteDrawingMeasurement(activeMeasurementId).then(() => loadData()).catch((err) => console.error('Failed to delete measurement:', err)); setActiveMeasurementId(null) }
         return
       }
       if ((e.ctrlKey || e.metaKey) && (e.key === 'Z' || e.key === 'y') && (e.shiftKey || e.key === 'y')) { e.preventDefault(); handleRedo(); return }

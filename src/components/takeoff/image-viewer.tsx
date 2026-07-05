@@ -555,7 +555,7 @@ export function ImageViewer({ drawingId, projectId, drawingUrl, drawingName, dra
       if (e.key === ' ') { isSpaceDown.current = true; e.preventDefault(); return }
       if (e.key === 'Shift') { isShiftDown.current = true; return }
       if (e.key === 'Escape') { setActivePoints([]); setIsCalibrating(false); setCalibrationPoints([]); return }
-      if ((e.key === 'Delete' || e.key === 'Backspace') && activeMeasurementId) { deleteDrawingMeasurement(activeMeasurementId).then(() => loadData()); setActiveMeasurementId(null); return }
+      if ((e.key === 'Delete' || e.key === 'Backspace') && activeMeasurementId) { deleteDrawingMeasurement(activeMeasurementId).then(() => loadData()).catch((err) => console.error('Failed to delete measurement:', err)); setActiveMeasurementId(null); return }
       if ((e.ctrlKey || e.metaKey) && (e.key === 'Z' || e.key === 'y') && (e.shiftKey || e.key === 'y')) { e.preventDefault(); handleRedo(); return }
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); handleUndo(); return }
       const toolKey = TOOL_KEYS[e.key.toLowerCase()]

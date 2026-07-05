@@ -12,6 +12,7 @@ import { TakeoffViewer } from '@/components/takeoff/takeoff-viewer'
 import { DwgViewer } from '@/components/takeoff/dwg-viewer'
 import { ImageViewer } from '@/components/takeoff/image-viewer'
 import { SaveToQuantitiesDialog } from '@/components/takeoff/save-to-quantities-dialog'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
 
 export default function TakeoffPage() {
   const { id: projectId, drawingId } = useParams<{ id: string; drawingId: string }>()
@@ -162,37 +163,39 @@ export default function TakeoffPage() {
 
       {/* Takeoff workspace */}
       <div className="flex-1 min-h-0 relative">
-        {drawing.file_type === 'pdf' ? (
-          <TakeoffViewer
-            drawingId={drawing.id}
-            projectId={projectId}
-            drawingUrl={drawingUrl}
-            pageCount={drawing.page_count}
-            drawingName={drawing.name}
-            drawingType={drawing.drawing_type}
-            onMeasurementSaved={handleMeasurementSaved}
-          />
-        ) : drawing.file_type === 'dwg' || drawing.file_type === 'dxf' ? (
-          <DwgViewer
-            drawingId={drawing.id}
-            projectId={projectId}
-            drawingUrl={drawingUrl}
-            drawingName={drawing.name}
-            drawingType={drawing.drawing_type}
-            fileType={drawing.file_type}
-            filePath={drawing.file_path}
-            onMeasurementSaved={handleMeasurementSaved}
-          />
-        ) : (
-          <ImageViewer
-            drawingId={drawing.id}
-            projectId={projectId}
-            drawingUrl={drawingUrl}
-            drawingName={drawing.name}
-            drawingType={drawing.drawing_type}
-            onMeasurementSaved={handleMeasurementSaved}
-          />
-        )}
+        <ErrorBoundary key={drawing.id} fallbackTitle="This drawing viewer hit an error">
+          {drawing.file_type === 'pdf' ? (
+            <TakeoffViewer
+              drawingId={drawing.id}
+              projectId={projectId}
+              drawingUrl={drawingUrl}
+              pageCount={drawing.page_count}
+              drawingName={drawing.name}
+              drawingType={drawing.drawing_type}
+              onMeasurementSaved={handleMeasurementSaved}
+            />
+          ) : drawing.file_type === 'dwg' || drawing.file_type === 'dxf' ? (
+            <DwgViewer
+              drawingId={drawing.id}
+              projectId={projectId}
+              drawingUrl={drawingUrl}
+              drawingName={drawing.name}
+              drawingType={drawing.drawing_type}
+              fileType={drawing.file_type}
+              filePath={drawing.file_path}
+              onMeasurementSaved={handleMeasurementSaved}
+            />
+          ) : (
+            <ImageViewer
+              drawingId={drawing.id}
+              projectId={projectId}
+              drawingUrl={drawingUrl}
+              drawingName={drawing.name}
+              drawingType={drawing.drawing_type}
+              onMeasurementSaved={handleMeasurementSaved}
+            />
+          )}
+        </ErrorBoundary>
         {pendingMeasurement && (
           <SaveToQuantitiesDialog
             dm={pendingMeasurement.dm}

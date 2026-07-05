@@ -70,19 +70,26 @@ export async function POST(request: Request) {
     const dxfPath = filePath.replace(/\.dwg$/i, '.dxf')
     log.push(`[3] DXF target: "${dxfPath}"`)
 
-    // Check cache
+    // Check cache — a cached DXF is only valid if it's not older than the
+    // source DWG. A same-named-file check alone (the old behavior) would
+    // keep serving a stale conversion forever if the DWG is replaced at
+    // the same storage path (e.g. "replace file" on the same drawing).
     const dirPath = filePath.substring(0, filePath.lastIndexOf('/'))
+    const dwgFileName = filePath.split('/').pop() ?? ''
     const dxfFileName = dxfPath.split('/').pop() ?? ''
 
-    const { data: existingList } = await supabase.storage
+    const { data: dirList } = await supabase.storage
       .from('qb-drawings')
-      .list(dirPath, { search: dxfFileName })
+      .list(dirPath)
 
-    if (existingList?.some((f) => f.name === dxfFileName)) {
-      log.push('[4] Converted DXF already exists (cached)')
+    const dwgEntry = dirList?.find((f) => f.name === dwgFileName)
+    const dxfEntry = dirList?.find((f) => f.name === dxfFileName)
+
+    if (dxfEntry && (!dwgEntry || new Date(dxfEntry.updated_at ?? 0) >= new Date(dwgEntry.updated_at ?? 0))) {
+      log.push('[4] Converted DXF already exists and is up to date (cached)')
       return Response.json({ dxfPath, log, cached: true })
     }
-    log.push('[4] No cached DXF found')
+    log.push(dxfEntry ? '[4] Cached DXF is stale — source DWG was updated, reconverting' : '[4] No cached DXF found')
 
     // Download the DWG
     log.push(`[5] Downloading DWG: "${filePath}"`)
