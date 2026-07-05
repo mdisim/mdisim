@@ -545,14 +545,28 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
           newData: result.data,
         }))
         if (onMeasurementSaved) {
-          const snap = overlayCanvasRef.current?.toDataURL('image/png') ?? null
-          onMeasurementSaved(result.data, snap)
+          onMeasurementSaved(result.data, compositeSnapshot())
         }
       }
       await loadData()
     },
     [drawingId, page, scale, activeColor, loadData, onMeasurementSaved],
   )
+
+  // ── Composite the PDF page + overlay canvases into one PNG snapshot ───
+  const compositeSnapshot = useCallback((): string | null => {
+    const pdfCanvas = pdfCanvasRef.current
+    const overlayCanvas = overlayCanvasRef.current
+    if (!pdfCanvas) return null
+    const temp = document.createElement('canvas')
+    temp.width = pdfCanvas.width
+    temp.height = pdfCanvas.height
+    const ctx = temp.getContext('2d')
+    if (!ctx) return null
+    ctx.drawImage(pdfCanvas, 0, 0)
+    if (overlayCanvas) ctx.drawImage(overlayCanvas, 0, 0)
+    return temp.toDataURL('image/png')
+  }, [])
 
   // ── Volume Calculator → quantity record ─────────────────────────────
   const handleAddVolumeMeasurement = useCallback(
@@ -568,7 +582,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
       })
       if (result.error || !result.lineId) return
 
-      const snap = overlayCanvasRef.current?.toDataURL('image/png') ?? null
+      const snap = compositeSnapshot()
       if (snap) {
         await createSketch({
           projectId,
@@ -586,7 +600,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
       }
       await loadData()
     },
-    [projectId, drawingId, page, drawingName, loadData],
+    [projectId, drawingId, page, drawingName, loadData, compositeSnapshot],
   )
 
   // ── Mouse handlers ───────────────────────────────────────────────────
@@ -1315,39 +1329,65 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
     }
   }, [page])
 
-  const handleAIApproveElement = useCallback(async (element: AIDetectedElement, quantity: number, unit: string, boqDescription: string) => {
-    await createBOQItem({
-      project_id: projectId,
-      description: boqDescription,
-      unit,
+  // Approving an AI suggestion creates the same full chain a manual
+  // measurement does (item + line + BOQ item + sketch) instead of a bare
+  // BOQ row disconnected from the measurement book.
+  const attachAISketch = useCallback(async (miId: string | undefined, lineId: string, quantity: number, unit: string, formula: string) => {
+    const snap = compositeSnapshot()
+    if (!snap) return
+    await createSketch({
+      projectId,
+      drawingId,
+      miId: miId || undefined,
+      lineId,
+      imageDataUrl: snap,
       quantity,
-      unit_rate: 0,
+      unit,
+      formula,
+      pageNumber: page,
+      drawingName,
+      snapshotType: 'auto',
     })
-  }, [projectId])
+  }, [projectId, drawingId, page, drawingName, compositeSnapshot])
+
+  const handleAIApproveElement = useCallback(async (element: AIDetectedElement, quantity: number, unit: string, boqDescription: string) => {
+    const result = await createManualQuantity({
+      projectId,
+      description: boqDescription,
+      quantity,
+      unit,
+      drawingId,
+      pageNumber: page,
+    })
+    if (result.lineId) await attachAISketch(result.miId, result.lineId, quantity, unit, `AI: ${element.type}`)
+  }, [projectId, drawingId, page, attachAISketch])
 
   const handleAIApproveBOQItem = useCallback(async (item: AIBOQItem) => {
-    await createBOQItem({
-      project_id: projectId,
-      code: item.code,
+    const result = await createManualQuantity({
+      projectId,
       description: item.description,
-      unit: item.unit,
       quantity: item.quantity,
-      unit_rate: item.unitRate ?? 0,
+      unit: item.unit,
+      drawingId,
+      pageNumber: page,
     })
+    if (result.lineId) await attachAISketch(result.miId, result.lineId, item.quantity, item.unit, `AI BOQ: ${item.code ?? item.description}`)
     // Error is silently ignored — BOQ item creation is best-effort from AI detection
-  }, [projectId])
+  }, [projectId, drawingId, page, attachAISketch])
 
   const handleAIApproveAll = useCallback(async (elements: AIDetectedElement[]) => {
     for (const el of elements) {
-      await createBOQItem({
-        project_id: projectId,
+      const result = await createManualQuantity({
+        projectId,
         description: el.boqDescription,
-        unit: el.boqUnit,
         quantity: el.estimatedQuantity ?? 0,
-        unit_rate: 0,
+        unit: el.boqUnit,
+        drawingId,
+        pageNumber: page,
       })
+      if (result.lineId) await attachAISketch(result.miId, result.lineId, el.estimatedQuantity ?? 0, el.boqUnit, `AI: ${el.type}`)
     }
-  }, [projectId])
+  }, [projectId, drawingId, page, attachAISketch])
 
   const handleEstimateCosts = useCallback(async () => {
     if (!aiResult?.boq) return

@@ -181,6 +181,7 @@ export default function TakeoffPage() {
             drawingType={drawing.drawing_type}
             fileType={drawing.file_type}
             filePath={drawing.file_path}
+            onMeasurementSaved={handleMeasurementSaved}
           />
         ) : (
           <ImageViewer
@@ -189,6 +190,7 @@ export default function TakeoffPage() {
             drawingUrl={drawingUrl}
             drawingName={drawing.name}
             drawingType={drawing.drawing_type}
+            onMeasurementSaved={handleMeasurementSaved}
           />
         )}
         {pendingMeasurement && (

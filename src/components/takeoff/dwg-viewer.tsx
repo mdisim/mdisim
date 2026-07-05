@@ -65,6 +65,7 @@ interface DwgViewerProps {
   drawingType?: string
   fileType: string // 'dwg' | 'dxf'
   filePath?: string // storage path for DWG-to-DXF conversion
+  onMeasurementSaved?: (dm: DrawingMeasurement, canvasDataUrl: string | null) => void
 }
 
 type ToolType = DrawingToolType | 'select' | 'pan' | 'polygon' | 'wall'
@@ -104,7 +105,7 @@ function measurementsToSnapGeometry(measurements: DrawingMeasurement[]): SnapGeo
   return result
 }
 
-export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawingType, fileType, filePath }: DwgViewerProps) {
+export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawingType, fileType, filePath, onMeasurementSaved }: DwgViewerProps) {
   const [parsedDxf, setParsedDxf] = useState<ParsedDxf | null>(null)
   const [loading, setLoading] = useState(true)
   const [parseError, setParseError] = useState<string | null>(null)
@@ -470,9 +471,27 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
 
     if (result.data) {
       setUndoRedoState(prev => pushAction(prev, { type: 'create', measurementId: result.data!.id, newData: result.data }))
+      if (onMeasurementSaved) {
+        onMeasurementSaved(result.data, compositeSnapshot())
+      }
     }
     await loadData()
-  }, [drawingId, scale, activeColor, loadData])
+  }, [drawingId, scale, activeColor, loadData, onMeasurementSaved])
+
+  // ── Composite the drawing + overlay canvases into one PNG snapshot ────
+  const compositeSnapshot = useCallback((): string | null => {
+    const drawingCanvas = drawingCanvasRef.current
+    const overlayCanvas = overlayCanvasRef.current
+    if (!drawingCanvas) return null
+    const temp = document.createElement('canvas')
+    temp.width = drawingCanvas.width
+    temp.height = drawingCanvas.height
+    const ctx = temp.getContext('2d')
+    if (!ctx) return null
+    ctx.drawImage(drawingCanvas, 0, 0)
+    if (overlayCanvas) ctx.drawImage(overlayCanvas, 0, 0)
+    return temp.toDataURL('image/png')
+  }, [])
 
   // ── Mouse handlers (same pattern as TakeoffViewer) ───────────────────
   const handleMouseDown = useCallback((e: React.MouseEvent) => {

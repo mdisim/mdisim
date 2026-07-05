@@ -61,6 +61,7 @@ interface ImageViewerProps {
   drawingUrl: string
   drawingName?: string
   drawingType?: string
+  onMeasurementSaved?: (dm: DrawingMeasurement, canvasDataUrl: string | null) => void
 }
 
 type ToolType = DrawingToolType | 'select' | 'pan' | 'polygon' | 'wall'
@@ -100,7 +101,7 @@ function measurementsToSnapGeometry(measurements: DrawingMeasurement[]): SnapGeo
   return result
 }
 
-export function ImageViewer({ drawingId, projectId, drawingUrl, drawingName, drawingType }: ImageViewerProps) {
+export function ImageViewer({ drawingId, projectId, drawingUrl, drawingName, drawingType, onMeasurementSaved }: ImageViewerProps) {
   const [imgLoaded, setImgLoaded] = useState(false)
   const [loading, setLoading] = useState(true)
   const [imgError, setImgError] = useState<string | null>(null)
@@ -308,9 +309,29 @@ export function ImageViewer({ drawingId, projectId, drawingUrl, drawingName, dra
       unit: measureUnit ?? undefined, color: activeColor,
       label: tool === ('wall' as DrawingToolType) ? 'Wall Area' : undefined,
     })
-    if (result.data) setUndoRedoState(prev => pushAction(prev, { type: 'create', measurementId: result.data!.id, newData: result.data }))
+    if (result.data) {
+      setUndoRedoState(prev => pushAction(prev, { type: 'create', measurementId: result.data!.id, newData: result.data }))
+      if (onMeasurementSaved) {
+        onMeasurementSaved(result.data, compositeSnapshot())
+      }
+    }
     await loadData()
-  }, [drawingId, scale, activeColor, loadData])
+  }, [drawingId, scale, activeColor, loadData, onMeasurementSaved])
+
+  // ── Composite the image + overlay canvases into one PNG snapshot ──────
+  const compositeSnapshot = useCallback((): string | null => {
+    const imgCanvas = imgCanvasRef.current
+    const overlayCanvas = overlayCanvasRef.current
+    if (!imgCanvas) return null
+    const temp = document.createElement('canvas')
+    temp.width = imgCanvas.width
+    temp.height = imgCanvas.height
+    const ctx = temp.getContext('2d')
+    if (!ctx) return null
+    ctx.drawImage(imgCanvas, 0, 0)
+    if (overlayCanvas) ctx.drawImage(overlayCanvas, 0, 0)
+    return temp.toDataURL('image/png')
+  }, [])
 
   // Mouse handlers (same as DwgViewer pattern)
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
