@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import type { MeasurementItem, MeasurementLine, MeasurementType } from '@/lib/types'
+import type { MeasurementItem, MeasurementLine, MeasurementType, Drawing } from '@/lib/types'
 import {
   ChevronDown,
   ChevronRight,
@@ -11,6 +11,7 @@ import {
   Copy,
   MoreHorizontal,
   Paperclip,
+  GitBranch,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -89,6 +90,7 @@ interface MeasurementGridProps {
   selectedItems: Set<string>
   onToggleSelect: (id: string) => void
   onSelectAll: () => void
+  drawingsById?: Record<string, Drawing>
 }
 
 // ── Cell key for navigation ─────────────────────────────────────────────
@@ -110,6 +112,7 @@ export function MeasurementGrid({
   onToggleSelect,
   onSelectAll,
   onAttachments,
+  drawingsById = {},
 }: MeasurementGridProps) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(() => new Set(items.map((i) => i.id)))
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
@@ -292,6 +295,7 @@ export function MeasurementGrid({
               <th className="px-2 py-2.5 border-r border-[var(--color-border)] w-20 text-end">Width</th>
               <th className="px-2 py-2.5 border-r border-[var(--color-border)] w-20 text-end">Height</th>
               <th className="px-2 py-2.5 border-r border-[var(--color-border)] w-24">Formula</th>
+              <th className="px-2 py-2.5 border-r border-[var(--color-border)] w-32">Source</th>
               <th className="px-2 py-2.5 border-r border-[var(--color-border)] w-24 text-end">Quantity</th>
               <th className="px-2 py-2.5 w-10" />
             </tr>
@@ -313,7 +317,7 @@ export function MeasurementGrid({
                     <td colSpan={2} className="px-2 py-2">
                       {sectionExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                     </td>
-                    <td colSpan={10} className="px-2 py-2 text-xs font-bold uppercase tracking-wide">
+                    <td colSpan={11} className="px-2 py-2 text-xs font-bold uppercase tracking-wide">
                       {sectionName}
                     </td>
                     <td className="px-2 py-2 text-xs text-end font-medium tabular-nums">
@@ -364,7 +368,7 @@ export function MeasurementGrid({
                               {item.unit}
                             </td>
                             {/* Empty dimension cells for item row */}
-                            <td colSpan={5} className="border-r border-[var(--color-border)] dark:border-[var(--color-border)]" />
+                            <td colSpan={6} className="border-r border-[var(--color-border)] dark:border-[var(--color-border)]" />
                             <td className="px-2 py-2 border-r border-[var(--color-border)] text-xs text-end font-bold tabular-nums">
                               {formatQty(itemNet)}
                             </td>
@@ -484,6 +488,18 @@ export function MeasurementGrid({
                                     line.is_deduction,
                                     'text',
                                   )}
+                                  {/* Source: drawing / page / floor reference */}
+                                  <td className="px-2 py-1.5 border-r border-[var(--color-border)] text-[10px] text-[var(--color-text-muted)]">
+                                    {line.drawing_id && drawingsById[line.drawing_id] ? (
+                                      <div className="flex items-center gap-1 truncate" title={`${drawingsById[line.drawing_id].name}${line.page_number ? ` · Pg ${line.page_number}` : ''}`}>
+                                        <GitBranch size={10} className="text-[var(--color-amber)] shrink-0" />
+                                        <span className="truncate">{drawingsById[line.drawing_id].name}</span>
+                                        {line.page_number != null && <span className="shrink-0">·{line.page_number}</span>}
+                                      </div>
+                                    ) : (
+                                      <span>—</span>
+                                    )}
+                                  </td>
                                   {/* Quantity */}
                                   <td
                                     className={cn(
@@ -533,7 +549,7 @@ export function MeasurementGrid({
                           {itemExpanded && lines.length > 0 && (
                             <tr className="bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface)] border-b border-[var(--color-border)] dark:border-[var(--color-border)]">
                               <td colSpan={4} className="border-r border-[var(--color-border)] dark:border-[var(--color-border)]" />
-                              <td colSpan={8} className="px-2 py-1.5 text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] italic">
+                              <td colSpan={9} className="px-2 py-1.5 text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] italic">
                                 <span className="mr-4">
                                   Add: <span className="font-medium tabular-nums">{formatQty(itemAdditions)}</span>
                                 </span>
@@ -554,7 +570,7 @@ export function MeasurementGrid({
                           {/* Add line buttons */}
                           {itemExpanded && (
                             <tr className="bg-white dark:bg-[var(--color-surface-elevated)] border-b border-[var(--color-border)] dark:border-[var(--color-border)]">
-                              <td colSpan={14} className="px-6 py-1.5">
+                              <td colSpan={15} className="px-6 py-1.5">
                                 <div className="flex gap-2">
                                   <button
                                     onClick={() => onAddLine(item.id, false)}
@@ -580,7 +596,7 @@ export function MeasurementGrid({
                   {sectionExpanded && (
                     <tr className="bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated)] border-b-2 border-[var(--color-border)] dark:border-[var(--color-border)]">
                       <td colSpan={4} className="border-r border-[var(--color-border)] dark:border-[var(--color-border)]" />
-                      <td colSpan={8} className="px-2 py-2 text-xs font-semibold text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] italic">
+                      <td colSpan={9} className="px-2 py-2 text-xs font-semibold text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] italic">
                         Section Total — {sectionName}
                       </td>
                       <td className="px-2 py-2 text-xs text-end font-bold tabular-nums border-r border-[var(--color-border)] dark:border-[var(--color-border)]">
@@ -596,7 +612,7 @@ export function MeasurementGrid({
           <tfoot>
             <tr className="bg-[var(--color-surface-elevated)] text-white">
               <td colSpan={4} />
-              <td colSpan={8} className="px-2 py-3 text-xs font-bold uppercase tracking-wide">
+              <td colSpan={9} className="px-2 py-3 text-xs font-bold uppercase tracking-wide">
                 Grand Total
                 <span className="ml-4 font-normal text-[var(--color-text-secondary)]">
                   Add: {formatQty(grandTotal.additions)} | Ded: −{formatQty(grandTotal.deductions)}

@@ -223,6 +223,8 @@ export default function MeasurementsPage() {
     return Array.from(set).sort()
   }, [items])
 
+  const drawingsById = useMemo(() => Object.fromEntries(drawings.map((d) => [d.id, d])), [drawings])
+
   const filteredItems = useMemo(() => {
     let result = items
     if (sectionFilter) {
@@ -551,6 +553,7 @@ export default function MeasurementsPage() {
               onDeleteLine={handleDeleteLine}
               onDuplicateLine={handleDuplicateLine}
               onAttachments={(id) => setAttachmentsItemId(id)}
+              drawingsById={drawingsById}
             />
           </div>
         </motion.div>
