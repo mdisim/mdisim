@@ -72,16 +72,19 @@ export async function generateCalcSheetReport(data: CalcSheetReportData): Promis
     </tr>`
 
     const lineSketches = sketches.filter((s) => s.line_id === line.id && sketchUrlById[s.id])
-    if (lineSketches.length > 0) {
-      tableRows += `<tr class="sketch-row"><td></td><td colspan="9"><div class="sketch-strip">
-        ${lineSketches.map((s) => `<img src="${sketchUrlById[s.id]}" alt="Sketch for line ${line.line_number}" />`).join('')}
-      </div></td></tr>`
+    const lineAttachments = attachments.filter((a) => a.line_id === line.id)
+    if (lineSketches.length > 0 || lineAttachments.length > 0) {
+      tableRows += `<tr class="evidence-row"><td></td><td colspan="9">
+        ${lineSketches.length > 0 ? `<div class="sketch-strip">${lineSketches.map((s) => `<img src="${sketchUrlById[s.id]}" alt="Sketch for line ${line.line_number}" />`).join('')}</div>` : ''}
+        ${lineAttachments.length > 0 ? `<div class="attachment-tags">${lineAttachments.map((a) => `<span class="tag">📎 ${esc(a.title ?? a.file_name)}</span>`).join('')}</div>` : ''}
+      </td></tr>`
     }
   }
 
   const itemLevelSketches = sketches.filter((s) => !s.line_id && sketchUrlById[s.id])
+  const itemLevelAttachments = attachments.filter((a) => !a.line_id)
 
-  const attachmentRows = attachments.map((a) => `<tr>
+  const attachmentRows = itemLevelAttachments.map((a) => `<tr>
     <td>${esc(a.title ?? a.file_name)}</td>
     <td class="center">${esc(a.category)}</td>
     <td class="center">${esc(a.file_type)}</td>
@@ -114,9 +117,11 @@ export async function generateCalcSheetReport(data: CalcSheetReportData): Promis
   .num { text-align: right; font-variant-numeric: tabular-nums; }
   .num.neg { color: #dc2626; }
   .center { text-align: center; }
-  .sketch-row td { border-bottom: 1px solid #e2e8f0; padding: 4px 6px 8px; }
+  .evidence-row td { border-bottom: 1px solid #e2e8f0; padding: 4px 6px 8px; }
   .sketch-strip { display: flex; gap: 6px; flex-wrap: wrap; }
   .sketch-strip img { max-height: 90px; max-width: 160px; object-fit: contain; border: 1px solid #cbd5e1; border-radius: 4px; }
+  .attachment-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .attachment-tags .tag { font-size: 8px; background: #f1f5f9; color: #475569; padding: 3px 6px; border-radius: 4px; border: 1px solid #e2e8f0; }
   .summary { margin-top: 14px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 10px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; }
   .summary .label { font-size: 7px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.4px; }
   .summary .value { font-size: 13px; font-weight: 700; margin-top: 2px; }
@@ -159,8 +164,8 @@ ${itemLevelSketches.length > 0 ? `
 <div class="sketch-strip">${itemLevelSketches.map((s) => `<img src="${sketchUrlById[s.id]}" alt="Sketch" />`).join('')}</div>
 ` : ''}
 
-${attachments.length > 0 ? `
-<div class="section-title">Attachments</div>
+${itemLevelAttachments.length > 0 ? `
+<div class="section-title">General Attachments (item-level)</div>
 <table>
   <thead><tr><th>File</th><th class="center" style="width:90px">Category</th><th class="center" style="width:60px">Type</th><th style="width:70px">Uploaded</th></tr></thead>
   <tbody>${attachmentRows}</tbody>

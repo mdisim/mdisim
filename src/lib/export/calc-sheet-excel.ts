@@ -57,11 +57,12 @@ export async function exportCalcSheetToExcel(data: CalcSheetExcelData): Promise<
     'Deduction?': line.is_deduction ? 'Yes' : 'No',
     Quantity: line.quantity,
     Notes: line.notes ?? '',
+    Attachments: attachments.filter((a) => a.line_id === line.id).map((a) => a.title ?? a.file_name).join(', '),
   }))
   const wsCalc = XLSX.utils.json_to_sheet(calcRows)
   wsCalc['!cols'] = [
     { wch: 4 }, { wch: 30 }, { wch: 14 }, { wch: 12 }, { wch: 20 }, { wch: 14 }, { wch: 14 }, { wch: 6 },
-    { wch: 16 }, { wch: 12 }, { wch: 6 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 20 }, { wch: 10 }, { wch: 12 }, { wch: 20 },
+    { wch: 16 }, { wch: 12 }, { wch: 6 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 20 }, { wch: 10 }, { wch: 12 }, { wch: 20 }, { wch: 30 },
   ]
 
   // Sheet 2: Summary
@@ -85,14 +86,16 @@ export async function exportCalcSheetToExcel(data: CalcSheetExcelData): Promise<
   wsSummary['!cols'] = [{ wch: 22 }, { wch: 40 }]
 
   // Sheet 3: Attachments
+  const lineNumberById = Object.fromEntries(lines.map((l) => [l.id, l.line_number]))
   const attachmentRows = attachments.map((a) => ({
     File: a.title ?? a.file_name,
+    Line: a.line_id ? `Line ${lineNumberById[a.line_id] ?? '?'}` : 'Item-level',
     Category: a.category,
     Type: a.file_type,
     'Uploaded At': a.created_at,
   }))
-  const wsAttachments = XLSX.utils.json_to_sheet(attachmentRows.length > 0 ? attachmentRows : [{ File: 'No attachments', Category: '', Type: '', 'Uploaded At': '' }])
-  wsAttachments['!cols'] = [{ wch: 30 }, { wch: 16 }, { wch: 10 }, { wch: 20 }]
+  const wsAttachments = XLSX.utils.json_to_sheet(attachmentRows.length > 0 ? attachmentRows : [{ File: 'No attachments', Line: '', Category: '', Type: '', 'Uploaded At': '' }])
+  wsAttachments['!cols'] = [{ wch: 30 }, { wch: 12 }, { wch: 16 }, { wch: 10 }, { wch: 20 }]
 
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, wsCalc, 'Calculation')
