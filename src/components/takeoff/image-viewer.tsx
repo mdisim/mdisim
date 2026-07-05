@@ -52,8 +52,12 @@ import {
 } from '@/lib/takeoff/undo-redo'
 import type { UndoRedoState } from '@/lib/takeoff/undo-redo'
 import { AlertTriangle, PanelRightClose, PanelRightOpen, Keyboard, Link2 } from 'lucide-react'
-import { linkDrawingMeasurementsToBOQ } from '@/app/actions/measurements'
+import { linkDrawingMeasurementsToBOQ, createManualQuantity } from '@/app/actions/measurements'
 import { createBOQItem } from '@/app/actions/boq'
+import { createSketch } from '@/app/actions/sketches'
+import { AISuggestionsPanel } from './ai-suggestions-panel'
+import { analyzeDrawingWithAI, estimateProjectCosts } from '@/app/actions/ai-takeoff'
+import type { AIFullAnalysis, AIDetectedElement, AIBOQItem } from '@/lib/ai/types'
 
 interface ImageViewerProps {
   drawingId: string
@@ -143,6 +147,12 @@ export function ImageViewer({ drawingId, projectId, drawingUrl, drawingName, dra
   const [allScales, setAllScales] = useState<DrawingScale[]>([])
   const [highlightedMeasurementIds, setHighlightedMeasurementIds] = useState<Set<string>>(new Set())
   const [activeBOQItemId, setActiveBOQItemId] = useState<string | null>(null)
+
+  // AI analysis
+  const [showAIPanel, setShowAIPanel] = useState(false)
+  const [isAIAnalyzing, setIsAIAnalyzing] = useState(false)
+  const [aiResult, setAIResult] = useState<AIFullAnalysis | null>(null)
+  const [isEstimatingCosts, setIsEstimatingCosts] = useState(false)
 
   const isPanning = useRef(false)
   const panStart = useRef<Point>({ x: 0, y: 0 })
@@ -333,6 +343,121 @@ export function ImageViewer({ drawingId, projectId, drawingUrl, drawingName, dra
     return temp.toDataURL('image/png')
   }, [])
 
+  // ── Volume Calculator → quantity record ─────────────────────────────
+  const handleAddVolumeMeasurement = useCallback(async (item: { description: string; quantity: number; unit: string }) => {
+    const result = await createManualQuantity({
+      projectId,
+      description: item.description,
+      quantity: item.quantity,
+      unit: item.unit,
+      measurementType: 'volume',
+      drawingId,
+      pageNumber: 1,
+    })
+    if (result.error || !result.lineId) return
+    const snap = compositeSnapshot()
+    if (snap) {
+      await createSketch({
+        projectId,
+        drawingId,
+        miId: result.miId || undefined,
+        lineId: result.lineId,
+        imageDataUrl: snap,
+        quantity: item.quantity,
+        unit: item.unit,
+        formula: item.description,
+        pageNumber: 1,
+        drawingName,
+        snapshotType: 'auto',
+      })
+    }
+    await loadData()
+  }, [projectId, drawingId, drawingName, loadData, compositeSnapshot])
+
+  // ── AI analysis ───────────────────────────────────────────────────────
+  const attachAISketch = useCallback(async (miId: string | undefined, lineId: string, quantity: number, unit: string, formula: string) => {
+    const snap = compositeSnapshot()
+    if (!snap) return
+    await createSketch({
+      projectId,
+      drawingId,
+      miId: miId || undefined,
+      lineId,
+      imageDataUrl: snap,
+      quantity,
+      unit,
+      formula,
+      pageNumber: 1,
+      drawingName,
+      snapshotType: 'auto',
+    })
+  }, [projectId, drawingId, drawingName, compositeSnapshot])
+
+  const handleAIAnalyze = useCallback(async () => {
+    setIsAIAnalyzing(true)
+    setShowAIPanel(true)
+    setAIResult(null)
+    try {
+      const snap = compositeSnapshot()
+      if (!snap) throw new Error('Could not capture drawing snapshot')
+      const base64 = snap.split(',')[1]
+      const result = await analyzeDrawingWithAI(base64, drawingName ?? 'Drawing', drawingType ?? 'general', 1)
+      setAIResult(result)
+    } catch (e) {
+      setAIResult({
+        drawing: { drawingType: '', summary: '', elements: [], dimensions: [], detectedScale: null, repeatedPatterns: [] },
+        boq: [],
+        totalEstimatedCost: null,
+        currency: 'USD',
+        error: e instanceof Error ? e.message : 'Analysis failed',
+      })
+    } finally {
+      setIsAIAnalyzing(false)
+    }
+  }, [drawingName, drawingType, compositeSnapshot])
+
+  const handleAIApproveElement = useCallback(async (element: AIDetectedElement, quantity: number, unit: string, boqDescription: string) => {
+    const result = await createManualQuantity({ projectId, description: boqDescription, quantity, unit, drawingId, pageNumber: 1 })
+    if (result.lineId) await attachAISketch(result.miId, result.lineId, quantity, unit, `AI: ${element.type}`)
+  }, [projectId, drawingId, attachAISketch])
+
+  const handleAIApproveBOQItem = useCallback(async (item: AIBOQItem) => {
+    const result = await createManualQuantity({ projectId, description: item.description, quantity: item.quantity, unit: item.unit, drawingId, pageNumber: 1 })
+    if (result.lineId) await attachAISketch(result.miId, result.lineId, item.quantity, item.unit, `AI BOQ: ${item.code ?? item.description}`)
+  }, [projectId, drawingId, attachAISketch])
+
+  const handleAIApproveAll = useCallback(async (elements: AIDetectedElement[]) => {
+    for (const el of elements) {
+      const result = await createManualQuantity({ projectId, description: el.boqDescription, quantity: el.estimatedQuantity ?? 0, unit: el.boqUnit, drawingId, pageNumber: 1 })
+      if (result.lineId) await attachAISketch(result.miId, result.lineId, el.estimatedQuantity ?? 0, el.boqUnit, `AI: ${el.type}`)
+    }
+  }, [projectId, drawingId, attachAISketch])
+
+  const handleEstimateCosts = useCallback(async () => {
+    if (!aiResult?.boq) return
+    setIsEstimatingCosts(true)
+    try {
+      const items = aiResult.boq.flatMap(g => g.items.map(i => ({ code: i.code, description: i.description, unit: i.unit, quantity: i.quantity })))
+      const estimates = await estimateProjectCosts(items, 'Construction project')
+      const updated = { ...aiResult }
+      for (const est of estimates) {
+        for (const group of updated.boq) {
+          for (const item of group.items) {
+            if (item.code === est.boqItemCode) {
+              item.unitRate = est.suggestedUnitRate
+              item.amount = item.quantity * est.suggestedUnitRate
+            }
+          }
+          group.subtotal = group.items.reduce((sum, i) => sum + (i.amount ?? 0), 0)
+        }
+      }
+      updated.totalEstimatedCost = updated.boq.reduce((sum, g) => sum + (g.subtotal ?? 0), 0)
+      setAIResult(updated)
+    } finally {
+      setIsEstimatingCosts(false)
+    }
+  }, [aiResult])
+
   // Mouse handlers (same as DwgViewer pattern)
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button === 1 || (isSpaceDown.current && e.button === 0) || (activeTool === 'pan' && e.button === 0)) {
@@ -507,8 +632,8 @@ export function ImageViewer({ drawingId, projectId, drawingUrl, drawingName, dra
         showGrid={showGrid}
         onGridToggle={() => setShowGrid(v => !v)}
         onVolumeCalculator={() => setShowVolumeCalc(true)}
-        onAIAnalyze={() => {}}
-        isAIAnalyzing={false}
+        onAIAnalyze={handleAIAnalyze}
+        isAIAnalyzing={isAIAnalyzing}
       />
 
       {!scale && (
@@ -624,7 +749,26 @@ export function ImageViewer({ drawingId, projectId, drawingUrl, drawingName, dra
 
       <CalibrationDialog isOpen={showCalibDialog} onClose={() => { setShowCalibDialog(false); setIsCalibrating(false); setCalibrationPoints([]) }} onConfirm={handleCalibConfirm} pixelDistance={calibPixelDist} />
       <KeyboardShortcutsHelp isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
-      <VolumeCalculator isOpen={showVolumeCalc} onClose={() => setShowVolumeCalc(false)} drawingMeasurements={takeoffMs.map(m => ({ id: m.id, label: m.label ?? '', quantity: m.quantity, unit: m.unit ?? 'px' }))} />
+      <VolumeCalculator
+        isOpen={showVolumeCalc}
+        onClose={() => setShowVolumeCalc(false)}
+        onAddMeasurement={handleAddVolumeMeasurement}
+        drawingMeasurements={takeoffMs.map(m => ({ id: m.id, label: m.label ?? '', quantity: m.quantity, unit: m.unit ?? 'px' }))}
+      />
+
+      <AISuggestionsPanel
+        isOpen={showAIPanel}
+        onClose={() => setShowAIPanel(false)}
+        isAnalyzing={isAIAnalyzing}
+        result={aiResult}
+        onAnalyze={handleAIAnalyze}
+        onApproveElement={handleAIApproveElement}
+        onApproveBOQItem={handleAIApproveBOQItem}
+        onApproveAll={handleAIApproveAll}
+        onHighlightElement={() => {}}
+        onEstimateCosts={handleEstimateCosts}
+        isEstimatingCosts={isEstimatingCosts}
+      />
       <BOQPicker isOpen={showBOQPicker} onClose={() => { setShowBOQPicker(false); setBOQPickerIds([]) }} projectId={projectId} drawingMeasurementIds={boqPickerIds} onLinked={handleBOQPickerLinked} />
     </div>
   )
