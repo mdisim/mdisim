@@ -9,6 +9,7 @@ export async function getAttachments(params: {
   miId?: string
   boqItemId?: string
   drawingMeasurementId?: string
+  lineId?: string
 }): Promise<QuantityAttachment[]> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -23,6 +24,7 @@ export async function getAttachments(params: {
   if (params.miId) query = query.eq('mi_id', params.miId)
   if (params.boqItemId) query = query.eq('boq_item_id', params.boqItemId)
   if (params.drawingMeasurementId) query = query.eq('drawing_measurement_id', params.drawingMeasurementId)
+  if (params.lineId) query = query.eq('line_id', params.lineId)
 
   const { data } = await query
   return (data ?? []) as QuantityAttachment[]
@@ -33,6 +35,7 @@ export async function uploadAttachment(params: {
   miId?: string
   boqItemId?: string
   drawingMeasurementId?: string
+  lineId?: string
   file: File
   title?: string
   description?: string
@@ -62,6 +65,7 @@ export async function uploadAttachment(params: {
       mi_id: params.miId ?? null,
       boq_item_id: params.boqItemId ?? null,
       drawing_measurement_id: params.drawingMeasurementId ?? null,
+      line_id: params.lineId ?? null,
       file_path: filePath,
       file_name: params.file.name,
       file_type: fileType,

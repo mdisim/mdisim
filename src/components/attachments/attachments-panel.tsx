@@ -42,6 +42,7 @@ interface AttachmentsPanelProps {
   miId?: string
   boqItemId?: string
   drawingMeasurementId?: string
+  lineId?: string
   initialAttachments?: QuantityAttachment[]
   onCountChange?: (count: number) => void
   className?: string
@@ -53,6 +54,7 @@ export function AttachmentsPanel({
   miId,
   boqItemId,
   drawingMeasurementId,
+  lineId,
   initialAttachments = [],
   onCountChange,
   className,
@@ -86,6 +88,7 @@ export function AttachmentsPanel({
             miId,
             boqItemId,
             drawingMeasurementId,
+            lineId,
             file,
             category,
           })
@@ -104,7 +107,7 @@ export function AttachmentsPanel({
       setUploading(false)
       if (inputRef.current) inputRef.current.value = ''
     }
-  }, [projectId, miId, boqItemId, drawingMeasurementId, category, toast])
+  }, [projectId, miId, boqItemId, drawingMeasurementId, lineId, category, toast])
 
   const handleDelete = useCallback(async (id: string) => {
     setDeletingId(id)

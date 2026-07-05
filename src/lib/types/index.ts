@@ -461,6 +461,7 @@ export interface QuantityAttachment {
   mi_id: string | null
   boq_item_id: string | null
   drawing_measurement_id: string | null
+  line_id: string | null
   file_path: string
   file_name: string
   file_type: AttachmentFileType
