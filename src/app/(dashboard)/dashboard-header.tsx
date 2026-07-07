@@ -66,7 +66,7 @@ export function DashboardHeader() {
   }
 
   return (
-    <header className="h-14 shrink-0 border-b border-[#4f4633] bg-[#131315] flex items-center justify-between px-4 lg:px-6">
+    <header className="h-14 shrink-0 border-b border-[var(--color-border)] bg-[var(--color-surface)] flex items-center justify-between px-4 lg:px-6">
       {/* Breadcrumb area */}
       <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
         <span className="hidden lg:inline text-[var(--color-text-muted)] opacity-60 font-mono text-xs uppercase tracking-widest">ANGEL D.C.</span>

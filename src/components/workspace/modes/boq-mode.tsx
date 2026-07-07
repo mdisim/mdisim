@@ -3,6 +3,7 @@
 import { Fragment, useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from '../workspace-context'
+import { useModeSwitch } from '../mode-switch-context'
 import { useMultiSelect } from '@/lib/hooks/use-multi-select'
 import { useContextMenu, ContextMenu } from '@/components/ui/context-menu'
 import { useToast } from '@/components/ui/toast'
@@ -14,6 +15,7 @@ import type { BOQItem } from '@/lib/types'
 
 export function BoqMode() {
   const { data, selection, selectBoqItem, fmt } = useWorkspace()
+  const setMode = useModeSwitch()
   const { toast } = useToast()
   const menu = useContextMenu()
   const [contextItem, setContextItem] = useState<BOQItem | null>(null)
@@ -43,6 +45,8 @@ export function BoqMode() {
         icon={FileSpreadsheet}
         title="Bill of quantities is empty"
         description="Items roll up automatically once quantities are taken off, or add them directly from the rate library."
+        actionLabel="Go to Takeoff"
+        onAction={() => setMode('takeoff')}
       />
     )
   }

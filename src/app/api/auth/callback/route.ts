@@ -50,8 +50,7 @@ export async function GET(request: Request) {
               email: user.email,
             })
           }
-          // New user — send to onboarding to pick account type
-          next = '/onboarding'
+          next = '/projects'
         } else {
           const { data: profile } = await supabase
             .from('profiles')
@@ -59,7 +58,7 @@ export async function GET(request: Request) {
             .eq('id', user.id)
             .single()
           if (!profile?.role) {
-            next = '/onboarding'
+            next = '/projects'
           }
         }
       }

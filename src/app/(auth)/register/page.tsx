@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LayoutGrid, ShieldCheck, Loader2, CheckCircle, ArrowRight } from 'lucide-react'
+import { Mail, Lock, Loader2, CheckCircle, ArrowRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { signUp } from '@/app/actions/auth'
+import { ScaleMark } from '@/components/icons/marks'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -24,7 +25,7 @@ export default function RegisterPage() {
     try {
       const result = await signUp(email, password)
       if (result.error) { setError(result.error); setLoading(false) }
-      else if (result.confirmed) { router.push('/onboarding') }
+      else if (result.confirmed) { router.push('/projects') }
       else { setSuccess(true) }
     } catch {
       setError('Unable to connect to the server. Please check your connection and try again.')
@@ -34,31 +35,22 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[#131315] flex items-center justify-center p-6">
-        <div className="fixed inset-0 pointer-events-none">
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-[#ffd165]/4 blur-[120px]" />
-        </div>
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-6">
         <motion.div
-          className="relative glass-card rounded-2xl p-8 max-w-md w-full text-center"
+          className="rounded-[var(--radius-2xl)] bg-[var(--color-surface)] border border-[var(--color-border)] shadow-[var(--shadow-lg)] p-8 max-w-md w-full text-center"
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         >
-          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#ffd165]/30 to-transparent" />
-          <div className="w-14 h-14 bg-[#ffd165]/10 border border-[#ffd165]/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <CheckCircle size={28} className="text-[#ffd165]" />
+          <div className="w-14 h-14 bg-[var(--color-success-tint)] rounded-[var(--radius-2xl)] flex items-center justify-center mx-auto mb-4">
+            <CheckCircle size={26} className="text-[var(--color-success)]" />
           </div>
-          <h2 className="text-[#e5e1e4] text-xl font-semibold mb-2">Check your email</h2>
-          <p className="text-[#9b8f79] text-sm">
-            We sent a confirmation link to{' '}
-            <strong className="text-[#e5e1e4]">{email}</strong>.{' '}
-            Click it to activate your account.
+          <h2 className="text-lg font-semibold text-[var(--foreground)] mb-2">Check your email</h2>
+          <p className="text-[var(--color-text-muted)] text-sm">
+            We sent a confirmation link to <strong className="text-[var(--foreground)]">{email}</strong>. Click it to activate your account.
           </p>
-          <Link
-            href="/login"
-            className="mt-6 inline-flex items-center gap-1.5 text-[#ffd165] hover:opacity-80 transition-opacity text-sm font-medium"
-          >
-            Back to login
+          <Link href="/login" className="mt-6 inline-block text-[var(--color-text-link)] hover:text-[var(--color-text-link-hover)] text-sm font-medium">
+            Back to sign in
           </Link>
         </motion.div>
       </div>
@@ -66,66 +58,51 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#131315] text-[#e5e1e4] flex flex-col overflow-x-hidden">
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[400px] rounded-full bg-[#ffd165]/4 blur-[120px]" />
-      </div>
-
-      {/* Header */}
-      <header className="w-full flex justify-between items-center px-6 py-4 z-10 relative">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#eab308] rounded-lg flex items-center justify-center border border-[#ffd165]/40 shadow-[0_2px_8px_rgba(234,179,8,0.3)]">
-            <span className="text-[#604700] font-bold text-lg leading-none">A</span>
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] flex flex-col">
+      <header className="w-full flex items-center px-6 py-5">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--color-brand-tint)] flex items-center justify-center">
+            <ScaleMark size={16} className="text-[var(--color-brand)]" />
           </div>
-          <div className="flex flex-col -space-y-0.5">
-            <span className="text-[#e5e1e4] font-bold text-[28px] tracking-tight leading-none">Angel D.C.</span>
-            <span className="text-[#ffd165] text-[10px] tracking-[0.2em] uppercase opacity-80 font-mono">Construction Intelligence</span>
-          </div>
+          <span className="font-bold text-[15px] tracking-tight text-[var(--foreground)]">Angel D.C.</span>
         </div>
       </header>
 
-      {/* Main */}
-      <main className="flex-grow flex flex-col items-center justify-center px-6 relative z-10 py-8">
+      <main className="flex-grow flex flex-col items-center justify-center px-6 py-8">
         <motion.div
-          className="w-full max-w-[440px]"
-          initial={{ opacity: 0, y: 24 }}
+          className="w-full max-w-[400px]"
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className="text-center mb-8">
-            <h1 className="text-[42px] leading-[52px] font-bold tracking-[-0.02em] text-[#e5e1e4]">Request Node Access</h1>
-            <p className="text-[#d3c5ac] text-sm mt-2 opacity-80">Join the global structural intelligence network.</p>
+            <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">Create your account</h1>
+            <p className="text-[var(--color-text-muted)] text-sm mt-1.5">Set up a project workspace in under a minute.</p>
           </div>
 
-          <div className="p-8 rounded-2xl bg-[#1c1b1d]/90 border border-[#4f4633]/40 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6)] relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#ffd165]/30 to-transparent" />
-
-            <form onSubmit={handleRegister} className="space-y-5">
-              <div className="space-y-2">
-                <label htmlFor="reg-email" className="block text-[#d3c5ac] text-[11px] uppercase tracking-widest font-mono opacity-70 ms-1">
-                  Corporate Identity
-                </label>
+          <div className="p-7 rounded-[var(--radius-2xl)] bg-[var(--color-surface)] border border-[var(--color-border)] shadow-[var(--shadow-lg)]">
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div className="space-y-1.5">
+                <label htmlFor="reg-email" className="block text-[12px] font-medium text-[var(--color-text-secondary)]">Email</label>
                 <div className="relative group">
-                  <LayoutGrid size={18} className="absolute start-4 top-1/2 -translate-y-1/2 text-[#9b8f79] group-focus-within:text-[#ffd165] transition-colors" />
+                  <Mail size={16} className="absolute start-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-brand)] transition-colors" />
                   <input
                     id="reg-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Work email address"
+                    placeholder="you@company.com"
                     required
                     autoComplete="email"
-                    className="w-full bg-[#0e0e10]/40 border border-[#4f4633]/50 rounded-xl py-4 ps-12 pe-4 text-sm text-[#e5e1e4] placeholder:text-[#9b8f79]/50 focus:outline-none focus:ring-1 focus:ring-[#ffd165]/50 focus:border-[#ffd165]/50 transition-all"
+                    className="w-full bg-[var(--color-surface-sunken)] border border-[var(--color-border)] rounded-[var(--radius-lg)] py-2.5 ps-10 pe-3.5 text-sm text-[var(--foreground)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] focus:border-[var(--color-border-focus)] transition-all"
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label htmlFor="reg-password" className="block text-[#d3c5ac] text-[11px] uppercase tracking-widest font-mono opacity-70 ms-1">
-                  Security Key
-                </label>
+              <div className="space-y-1.5">
+                <label htmlFor="reg-password" className="block text-[12px] font-medium text-[var(--color-text-secondary)]">Password</label>
                 <div className="relative group">
-                  <ShieldCheck size={18} className="absolute start-4 top-1/2 -translate-y-1/2 text-[#9b8f79] group-focus-within:text-[#ffd165] transition-colors" />
+                  <Lock size={16} className="absolute start-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-brand)] transition-colors" />
                   <input
                     id="reg-password"
                     type="password"
@@ -135,32 +112,30 @@ export default function RegisterPage() {
                     minLength={8}
                     required
                     autoComplete="new-password"
-                    className="w-full bg-[#0e0e10]/40 border border-[#4f4633]/50 rounded-xl py-4 ps-12 pe-4 text-sm text-[#e5e1e4] placeholder:text-[#9b8f79]/50 focus:outline-none focus:ring-1 focus:ring-[#ffd165]/50 focus:border-[#ffd165]/50 transition-all"
+                    className="w-full bg-[var(--color-surface-sunken)] border border-[var(--color-border)] rounded-[var(--radius-lg)] py-2.5 ps-10 pe-3.5 text-sm text-[var(--foreground)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] focus:border-[var(--color-border-focus)] transition-all"
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label htmlFor="reg-confirm" className="block text-[#d3c5ac] text-[11px] uppercase tracking-widest font-mono opacity-70 ms-1">
-                  Confirm Key
-                </label>
+              <div className="space-y-1.5">
+                <label htmlFor="reg-confirm" className="block text-[12px] font-medium text-[var(--color-text-secondary)]">Confirm password</label>
                 <div className="relative group">
-                  <ShieldCheck size={18} className="absolute start-4 top-1/2 -translate-y-1/2 text-[#9b8f79] group-focus-within:text-[#ffd165] transition-colors" />
+                  <Lock size={16} className="absolute start-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-brand)] transition-colors" />
                   <input
                     id="reg-confirm"
                     type="password"
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
-                    placeholder="Repeat security key"
+                    placeholder="Repeat password"
                     required
                     autoComplete="new-password"
-                    className="w-full bg-[#0e0e10]/40 border border-[#4f4633]/50 rounded-xl py-4 ps-12 pe-4 text-sm text-[#e5e1e4] placeholder:text-[#9b8f79]/50 focus:outline-none focus:ring-1 focus:ring-[#ffd165]/50 focus:border-[#ffd165]/50 transition-all"
+                    className="w-full bg-[var(--color-surface-sunken)] border border-[var(--color-border)] rounded-[var(--radius-lg)] py-2.5 ps-10 pe-3.5 text-sm text-[var(--foreground)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] focus:border-[var(--color-border-focus)] transition-all"
                   />
                 </div>
               </div>
 
               {error && (
-                <div className="bg-[var(--color-danger-bg)] border border-[var(--color-danger)]/30 rounded-xl px-4 py-3 text-[var(--color-danger)] text-sm">
+                <div className="bg-[var(--color-danger-tint)] border border-[var(--color-danger)]/30 rounded-[var(--radius-lg)] px-3.5 py-2.5 text-[var(--color-danger)] text-[13px]">
                   {error}
                 </div>
               )}
@@ -168,38 +143,22 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#eab308] text-[#604700] font-semibold text-base py-4 rounded-xl shadow-lg premium-glow disabled:opacity-50 active:scale-[0.96] transition-all relative overflow-hidden group"
+                className="w-full bg-[var(--color-brand)] text-white font-semibold text-sm py-3 rounded-[var(--radius-lg)] hover:bg-[var(--color-brand-strong)] disabled:opacity-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
-                <span className="relative z-10 flex items-center justify-center gap-2">
-                  {loading ? <Loader2 size={18} className="animate-spin" /> : <ArrowRight size={18} />}
-                  {loading ? 'Creating access…' : 'Create Account →'}
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+                {loading ? 'Creating account…' : 'Create account'}
               </button>
             </form>
 
-            <div className="mt-8 flex justify-between items-center px-2">
-              <p className="text-[11px] text-[#d3c5ac]">
-                Already registered?{' '}
-                <Link href="/login" className="text-[#ffd165] font-semibold hover:underline">
-                  Access Dashboard
-                </Link>
-              </p>
-              <div className="flex items-center gap-2 opacity-40">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-[10px] text-[#9b8f79] font-mono">SECURE-V1.2.0</span>
-              </div>
-            </div>
+            <p className="mt-6 text-center text-[13px] text-[var(--color-text-muted)]">
+              Already have an account?{' '}
+              <Link href="/login" className="text-[var(--color-text-link)] font-medium hover:text-[var(--color-text-link-hover)]">
+                Sign in
+              </Link>
+            </p>
           </div>
         </motion.div>
       </main>
-
-      <footer className="w-full p-6 z-10 relative">
-        <p className="text-[11px] text-[#d3c5ac]/30 flex items-center justify-center gap-3 tracking-widest text-center font-mono">
-          <ShieldCheck size={16} />
-          <span>ENCRYPTED ARCHITECTURAL PORTFOLIO MANAGEMENT · 2024</span>
-        </p>
-      </footer>
     </div>
   )
 }

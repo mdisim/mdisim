@@ -11,12 +11,12 @@ import {
   LogOut,
   Menu,
   X,
-  HardHat,
 } from 'lucide-react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useI18n } from '@/lib/i18n'
 import type { Locale } from '@/lib/i18n'
+import { ScaleMark } from '@/components/icons/marks'
 
 const NAV_ITEMS = [
   { href: '/dashboard', icon: LayoutDashboard, labelKey: 'dashboard' as const },
@@ -59,11 +59,11 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
           'group relative flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-md)] text-sm font-medium transition-all duration-200',
           collapsed && 'justify-center px-2',
           isActive
-            ? 'bg-[var(--color-amber)]/10 text-[var(--color-amber)] border-s-[3px] border-[var(--color-amber)] ms-0 ps-[9px] font-semibold'
-            : 'text-[var(--color-text-muted)] hover:bg-white/[0.04] hover:text-[var(--color-text)] border-s-[3px] border-transparent ms-0 ps-[9px]'
+            ? 'bg-[var(--color-brand-tint)] text-[var(--color-brand)] border-s-[3px] border-[var(--color-brand)] ms-0 ps-[9px] font-semibold'
+            : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)] border-s-[3px] border-transparent ms-0 ps-[9px]'
         )}
       >
-        <Icon size={18} className={cn(isActive ? 'text-[var(--color-amber)]' : 'text-[var(--color-text-muted)] group-hover:text-[var(--color-text-secondary)]')} />
+        <Icon size={18} className={cn(isActive ? 'text-[var(--color-brand)]' : 'text-[var(--color-text-muted)] group-hover:text-[var(--color-text-secondary)]')} />
         {!collapsed && <span className="flex-1">{t.nav[item.labelKey]}</span>}
       </Link>
     )
@@ -72,19 +72,18 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
   const sidebar = (
     <aside
       className={cn(
-        'flex flex-col h-full bg-[#1c1b1d] transition-all duration-300 ease-in-out border-e border-[#4f4633]',
+        'flex flex-col h-full bg-[var(--color-surface)] transition-all duration-300 ease-in-out border-e border-[var(--color-border)]',
         collapsed ? 'w-[68px]' : 'w-64'
       )}
     >
       {/* Logo */}
-      <div className={cn('flex items-center gap-3 px-4 py-5 border-b border-[#4f4633]', collapsed && 'justify-center px-2')}>
-        <div className="w-8 h-8 rounded bg-[#eab308] flex items-center justify-center shrink-0 shadow-[0_2px_8px_rgba(234,179,8,0.3)]">
-          <span className="text-[#604700] font-bold text-sm leading-none">A</span>
+      <div className={cn('flex items-center gap-3 px-4 py-5 border-b border-[var(--color-border)]', collapsed && 'justify-center px-2')}>
+        <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--color-brand-tint)] flex items-center justify-center shrink-0">
+          <ScaleMark size={16} className="text-[var(--color-brand)]" />
         </div>
         {!collapsed && (
           <div className="flex-1 min-w-0">
-            <span className="text-[#ffd165] font-bold text-[11px] tracking-widest uppercase leading-none block font-mono">ANGEL D.C.</span>
-            <span className="text-[#d3c5ac] text-[10px] font-medium mt-0.5 block">Construction Intelligence</span>
+            <span className="text-[var(--foreground)] font-bold text-[13px] tracking-tight leading-none block">Angel D.C.</span>
           </div>
         )}
         <button
@@ -112,7 +111,7 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
 
       {/* Language switcher */}
       <div className={cn(
-        'px-3 py-2 border-t border-[#4f4633] flex items-center gap-1',
+        'px-3 py-2 border-t border-[var(--color-border)] flex items-center gap-1',
         collapsed ? 'px-2 flex-col' : 'justify-center'
       )}>
         {LANGUAGES.map((lang) => (
@@ -122,8 +121,8 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
             className={cn(
               'px-2 py-1 rounded text-[10px] font-bold tracking-wide transition-all',
               locale === lang.code
-                ? 'bg-[var(--color-amber)]/15 text-[var(--color-amber)] border border-[var(--color-amber)]/30'
-                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] hover:bg-white/[0.04] border border-transparent'
+                ? 'bg-[var(--color-brand-tint)] text-[var(--color-brand)] border border-[var(--color-brand)]/30'
+                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] border border-transparent'
             )}
           >
             {lang.label}
@@ -133,13 +132,13 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
 
       {/* User area */}
       <div className={cn(
-        'px-3 py-3 border-t border-[#4f4633]',
+        'px-3 py-3 border-t border-[var(--color-border)]',
         collapsed && 'px-2'
       )}>
         {!collapsed && userEmail ? (
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[var(--color-amber)]/15 border border-[var(--color-amber)]/30 flex items-center justify-center shrink-0">
-              <span className="text-[var(--color-amber)] text-xs font-bold uppercase">
+            <div className="w-8 h-8 rounded-full bg-[var(--color-brand-tint)] border border-[var(--color-brand)]/30 flex items-center justify-center shrink-0">
+              <span className="text-[var(--color-brand)] text-xs font-bold uppercase">
                 {userEmail.charAt(0)}
               </span>
             </div>
@@ -148,7 +147,7 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
             </div>
             <button
               onClick={handleLogout}
-              className="p-1.5 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-all"
+              className="p-1.5 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-tint)] transition-all"
               title={t.sidebar.logOut}
               aria-label={t.sidebar.logOut}
             >
@@ -159,7 +158,7 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
           <button
             onClick={handleLogout}
             className={cn(
-              'flex items-center justify-center w-full p-1.5 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-all',
+              'flex items-center justify-center w-full p-1.5 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-tint)] transition-all',
             )}
             title={t.sidebar.logOut}
             aria-label={t.sidebar.logOut}
@@ -170,11 +169,11 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
       </div>
 
       {/* Collapse toggle - desktop only */}
-      <div className="hidden lg:block px-2 py-2 border-t border-[#4f4633]">
+      <div className="hidden lg:block px-2 py-2 border-t border-[var(--color-border)]">
         <button
           onClick={() => setCollapsed(!collapsed)}
           className={cn(
-            'flex items-center gap-2 px-3 py-2 min-h-11 min-w-11 w-full rounded-lg text-[var(--color-text-muted)] hover:bg-white/[0.04] hover:text-[var(--color-text-secondary)] transition-all text-xs',
+            'flex items-center gap-2 px-3 py-2 min-h-11 min-w-11 w-full rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-secondary)] transition-all text-xs',
             collapsed && 'justify-center'
           )}
         >
@@ -189,7 +188,7 @@ export function AppSidebar({ userEmail }: AppSidebarProps) {
       {/* Mobile toggle */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed top-4 start-4 z-40 lg:hidden p-3 min-h-11 min-w-11 bg-[var(--color-surface-elevated)] rounded-[var(--radius-md)] text-[var(--color-text)] shadow-[var(--shadow-lg)] border border-[#4f4633]"
+        className="fixed top-4 start-4 z-40 lg:hidden p-3 min-h-11 min-w-11 bg-[var(--color-surface-elevated)] rounded-[var(--radius-md)] text-[var(--color-text)] shadow-[var(--shadow-lg)] border border-[var(--color-border)]"
         aria-label={t.sidebar.navigation}
         title={t.sidebar.navigation}
       >

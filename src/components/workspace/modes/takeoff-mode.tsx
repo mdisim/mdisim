@@ -39,6 +39,7 @@ export function TakeoffMode({ projectId }: { projectId: string }) {
     return (
       <DrawingPicker
         drawings={data.drawings}
+        projectId={projectId}
         eyebrow="Choose a sheet to measure"
         emptyTitle="No drawings uploaded yet"
         onSelect={selectDrawing}

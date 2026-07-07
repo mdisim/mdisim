@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from '../workspace-context'
+import { useModeSwitch } from '../mode-switch-context'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Chip } from '@/components/ui/chip'
 import { MasterListRow } from './master-list-row'
@@ -19,6 +20,7 @@ const STATUS_META: Record<PaymentCertStatus, { label: string; color: string }> =
 
 export function PaymentsMode() {
   const { data, fmt } = useWorkspace()
+  const setMode = useModeSwitch()
   const [activeId, setActiveId] = useState<string | null>(data.payments[0]?.id ?? null)
   const active = useMemo(
     () => data.payments.find(c => c.id === activeId) ?? data.payments[0] ?? null,
@@ -31,6 +33,8 @@ export function PaymentsMode() {
         icon={Receipt}
         title="No payment certificates yet"
         description="Issue a certificate against the contract to start tracking valuations, retention and net payable amounts here."
+        actionLabel="Go to BOQ"
+        onAction={() => setMode('boq')}
       />
     )
   }

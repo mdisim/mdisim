@@ -3,6 +3,7 @@
 import { Fragment, useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from '../workspace-context'
+import { useModeSwitch } from '../mode-switch-context'
 import { EmptyState } from '@/components/ui/empty-state'
 import { SelectionBracket, VerifiedMark } from '@/components/icons/marks'
 import { ClipboardList, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react'
@@ -17,6 +18,7 @@ interface Abstract {
 
 export function QcsMode() {
   const { data, selection, selectBoqItem, fmt } = useWorkspace()
+  const setMode = useModeSwitch()
   const [open, setOpen] = useState<Set<string>>(new Set())
 
   const abstracts: Abstract[] = useMemo(() => {
@@ -42,6 +44,8 @@ export function QcsMode() {
         icon={ClipboardList}
         title="No abstracts yet"
         description="Once BOQ items exist, this sheet groups every measurement-book line that feeds each one and checks the roll-up against the billed quantity."
+        actionLabel="Go to BOQ"
+        onAction={() => setMode('boq')}
       />
     )
   }

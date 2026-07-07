@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import type { Project } from '@/lib/types'
@@ -13,6 +14,8 @@ import { Drawer } from '@/components/ui/drawer'
 import { ScaleMark } from '@/components/icons/marks'
 import { HelpDialog } from './help-dialog'
 import { QuickSwitcher } from './quick-switcher'
+import { WorkspaceUserMenu } from './user-menu'
+import { ModeSwitchProvider } from './mode-switch-context'
 import { useKeyboardShortcuts, type ShortcutBinding } from '@/lib/hooks/use-keyboard-shortcuts'
 
 import { DrawingsMode } from './modes/drawings-mode'
@@ -26,7 +29,7 @@ import { ReportsMode } from './modes/reports-mode'
 import { AiAssistantMode } from './modes/ai-assistant-mode'
 
 import {
-  PanelLeft, Layers,
+  PanelLeft, Layers, ArrowLeft,
   FileImage, Ruler, BookOpen, ClipboardList, FileSpreadsheet,
   Calculator, Receipt, FileBarChart, Sparkles, Keyboard, Search,
 } from 'lucide-react'
@@ -100,7 +103,7 @@ export function WorkspaceShell({ projectId, project, initialMode }: { projectId:
 
   const renderMain = () => {
     switch (mode) {
-      case 'drawings': return <DrawingsMode />
+      case 'drawings': return <DrawingsMode projectId={projectId} />
       case 'takeoff': return <TakeoffMode projectId={projectId} />
       case 'measurement-book': return <MeasurementBookMode />
       case 'qcs': return <QcsMode />
@@ -120,13 +123,22 @@ export function WorkspaceShell({ projectId, project, initialMode }: { projectId:
     : null
 
   return (
-    <div className="flex flex-col h-[calc(100vh-56px)] bg-[var(--background)] overflow-hidden">
+    <div className="flex flex-col h-screen bg-[var(--background)] overflow-hidden">
       {/* Instrument titlebar — icons only, tooltips carry the labels. Height is
           minimised on purpose: this row exists to switch context, not to be looked at. */}
       <div className="flex items-center gap-0.5 h-9 px-1.5 border-b border-[var(--color-border)] bg-[var(--color-surface)] shrink-0 overflow-x-auto">
+        <Link
+          href="/projects"
+          title="Back to projects"
+          aria-label="Back to projects"
+          className="flex items-center justify-center w-7 h-7 rounded-[var(--radius-sm)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] shrink-0 transition-colors focus-ring"
+        >
+          <ArrowLeft size={14} />
+        </Link>
         <div className="flex items-center justify-center w-7 h-7 shrink-0" title="Angel D.C.">
           <ScaleMark size={15} className="text-[var(--color-brand)]" />
         </div>
+        <span className="hidden md:inline text-[12px] font-medium text-[var(--color-text)] truncate max-w-[180px] mr-1">{project.name}</span>
         <button
           onClick={() => setExplorerOpen(true)}
           title="Explorer (⌘[)"
@@ -192,10 +204,15 @@ export function WorkspaceShell({ projectId, project, initialMode }: { projectId:
             <ClipboardList size={14} />
           </button>
         )}
+
+        <div className="w-px h-4 bg-[var(--color-border)] mx-1 shrink-0" />
+        <WorkspaceUserMenu />
       </div>
 
       {/* The canvas: always 100% width, always the hero. Every panel below is an overlay on top of it, never beside it. */}
-      <div className="flex-1 overflow-hidden">{renderMain()}</div>
+      <div className="flex-1 overflow-hidden">
+        <ModeSwitchProvider setMode={setMode}>{renderMain()}</ModeSwitchProvider>
+      </div>
 
       {/* Status bar */}
       <div className="hidden sm:flex items-center gap-4 h-6 px-3 border-t border-[var(--color-border)] bg-[var(--color-surface)] shrink-0 text-[10px] font-mono text-[var(--color-text-muted)]">

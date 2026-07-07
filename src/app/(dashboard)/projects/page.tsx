@@ -92,14 +92,14 @@ export default function ProjectsPage() {
       (p.client_name ?? '').toLowerCase().includes(search.toLowerCase())
   )
 
-  // Amber accent colors for project cards (cycling)
+  // Category-tag tokens, cycled per card so a project list reads like the
+  // same tagging system used for measurements elsewhere in the product.
   const ACCENT_COLORS = [
-    'var(--color-amber)',
-    '#60a5fa',
-    '#22c55e',
-    '#a855f7',
-    '#f87171',
-    '#34d399',
+    'var(--color-tag-1)',
+    'var(--color-tag-2)',
+    'var(--color-tag-3)',
+    'var(--color-tag-4)',
+    'var(--color-tag-5)',
   ]
 
   return (
@@ -113,8 +113,8 @@ export default function ProjectsPage() {
               <FolderKanban size={20} className="text-[var(--color-amber)]" />
             </div>
             <div>
-              <h1 className="text-[28px] font-bold tracking-[-0.02em] text-[#e5e1e4] leading-tight">{t.projects.title}</h1>
-              <p className="text-[11px] text-[#9b8f79] uppercase tracking-[0.12em] font-mono mt-0.5">
+              <h1 className="text-[28px] font-bold tracking-[-0.02em] text-[var(--foreground)] leading-tight">{t.projects.title}</h1>
+              <p className="text-[11px] text-[var(--color-text-muted)] uppercase tracking-[0.12em] font-mono mt-0.5">
                 {projects.length} {projects.length === 1 ? 'project' : 'projects'}
               </p>
             </div>
@@ -127,8 +127,8 @@ export default function ProjectsPage() {
                 className={cn(
                   'p-1.5 rounded-lg transition-all',
                   view === 'grid'
-                    ? 'bg-[#eab308] text-[#604700]'
-                    : 'text-[#9b8f79] hover:text-[#e5e1e4]'
+                    ? 'bg-[var(--color-brand)] text-white'
+                    : 'text-[var(--color-text-muted)] hover:text-[var(--foreground)]'
                 )}
                 title={t.dashboard.gridView}
                 aria-label={t.dashboard.gridView}
@@ -142,8 +142,8 @@ export default function ProjectsPage() {
                 className={cn(
                   'p-1.5 rounded-lg transition-all',
                   view === 'list'
-                    ? 'bg-[#eab308] text-[#604700]'
-                    : 'text-[#9b8f79] hover:text-[#e5e1e4]'
+                    ? 'bg-[var(--color-brand)] text-white'
+                    : 'text-[var(--color-text-muted)] hover:text-[var(--foreground)]'
                 )}
                 title={t.dashboard.listView}
                 aria-label={t.dashboard.listView}
@@ -218,8 +218,8 @@ export default function ProjectsPage() {
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35, delay: idx * 0.05, ease: 'easeOut' }}
-                  onClick={() => router.push(`/projects/${project.id}/measurements`)}
-                  className="group relative bg-[#201f22] rounded-2xl border border-[#4f4633] overflow-hidden hover:border-[#ffd165]/30 transition-all duration-300 cursor-pointer hover:bg-[#2a2a2c]"
+                  onClick={() => router.push(`/projects/${project.id}/workspace`)}
+                  className="group relative bg-[var(--color-surface-elevated)] rounded-2xl border border-[var(--color-border)] overflow-hidden hover:border-[var(--color-brand)]/30 transition-all duration-300 cursor-pointer hover:bg-[var(--color-surface-hover)]"
                 >
                   {/* Top amber accent line */}
                   <div className="h-[2px] w-full" style={{ background: accentColor }} />
@@ -234,7 +234,7 @@ export default function ProjectsPage() {
                       </div>
                       <button
                         onClick={(e) => handleDelete(project.id, e)}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-[#f87171]/10 text-[var(--color-text-muted)] hover:text-[#f87171] transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-[var(--color-danger-tint)] text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-all"
                         title={t.projects.deleteProjectTitle}
                         aria-label={t.projects.deleteProjectTitle}
                       >
@@ -242,7 +242,7 @@ export default function ProjectsPage() {
                       </button>
                     </div>
 
-                    <h3 className="font-semibold text-[#e5e1e4] text-base mb-2 truncate">{project.name}</h3>
+                    <h3 className="font-semibold text-[var(--foreground)] text-base mb-2 truncate">{project.name}</h3>
 
                     <div className="space-y-1.5 mb-4">
                       {project.client_name && (
@@ -259,7 +259,7 @@ export default function ProjectsPage() {
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-[#4f4633]">
+                    <div className="flex items-center justify-between pt-3 border-t border-[var(--color-border)]">
                       <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)]">
                         <Calendar size={12} />
                         <span>{formatDate(project.updated_at)}</span>
@@ -294,7 +294,7 @@ export default function ProjectsPage() {
                   initial={{ opacity: 0, x: -12 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.3, delay: idx * 0.03 }}
-                  onClick={() => router.push(`/projects/${project.id}/measurements`)}
+                  onClick={() => router.push(`/projects/${project.id}/workspace`)}
                   className={cn(
                     'flex items-center gap-4 px-5 py-4 cursor-pointer group transition-colors hover:bg-[var(--color-amber)]/5 border-b border-[var(--color-border)] last:border-0',
                     idx % 2 !== 0 && 'bg-[var(--color-surface-elevated)]'
@@ -326,7 +326,7 @@ export default function ProjectsPage() {
                   </div>
                   <button
                     onClick={(e) => handleDelete(project.id, e)}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-[#f87171]/10 text-[var(--color-text-muted)] hover:text-[#f87171] transition-all shrink-0"
+                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-[var(--color-danger-tint)] text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-all shrink-0"
                     title={t.projects.deleteProjectTitle}
                     aria-label={t.projects.deleteProjectTitle}
                   >
@@ -388,7 +388,7 @@ export default function ProjectsPage() {
               />
             </div>
 
-            {error && <p className="text-sm text-[#f87171]">{error}</p>}
+            {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
 
             <div className="flex justify-end gap-3 pt-2">
               <Button variant="ghost" onClick={() => setShowCreate(false)}>{t.projects.cancel}</Button>

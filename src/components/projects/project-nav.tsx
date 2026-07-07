@@ -4,28 +4,25 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import type { Project } from '@/lib/types'
-import { ArrowLeft, Ruler, ImageIcon, Settings2, FileSpreadsheet, BookOpen, Calculator, Users, DollarSign, Receipt, GitCompare, BarChart3, Activity, FileBarChart, TrendingUp, LayoutPanelLeft } from 'lucide-react'
+import { ArrowLeft, Settings2, BookOpen, Users, DollarSign, GitCompare, Activity, TrendingUp, LayoutPanelLeft } from 'lucide-react'
 import { useState } from 'react'
 import { Modal } from '@/components/ui/modal'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { updateProject } from '@/app/actions/projects'
 
+// "Workspace" is the one live surface for the core estimating workflow
+// (Drawings → Takeoff → Measurement Book → QCS → BOQ → Pricing → Payments →
+// Reports all live inside it now). Everything else here is a module that
+// hasn't been folded into the instrument yet — kept reachable, not hidden.
 const TABS = [
   { href: 'workspace', label: 'Workspace', icon: LayoutPanelLeft },
   { href: '', label: 'Intelligence', icon: Activity },
-  { href: 'measurements', label: 'Measurements', icon: Ruler },
-  { href: 'drawings', label: 'Drawings', icon: ImageIcon },
-  { href: 'boq', label: 'BOQ', icon: FileSpreadsheet },
-  { href: 'rates', label: 'Rates', icon: Calculator },
-  { href: 'quantities', label: 'Quantities', icon: BarChart3 },
   { href: 'revisions', label: 'Revisions', icon: GitCompare },
   { href: 'tenders', label: 'Tenders', icon: Users },
   { href: 'cost-control', label: 'Cost Control', icon: DollarSign },
   { href: 'evm', label: 'EVM', icon: TrendingUp },
-  { href: 'payments', label: 'Payments', icon: Receipt },
   { href: 'library', label: 'Library', icon: BookOpen },
-  { href: 'reports', label: 'Reports', icon: FileBarChart },
 ]
 
 export function ProjectNav({ project }: { project: Project }) {

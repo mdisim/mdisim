@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from '../workspace-context'
+import { useModeSwitch } from '../mode-switch-context'
 import { EmptyState } from '@/components/ui/empty-state'
 import { SelectionBracket, DeductMark } from '@/components/icons/marks'
 import { Ruler, ChevronDown, ChevronRight } from 'lucide-react'
@@ -14,6 +15,7 @@ function dim(n: number | null) {
 
 export function MeasurementBookMode() {
   const { data, selection, selectMeasurement, fmt } = useWorkspace()
+  const setMode = useModeSwitch()
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
 
   const sections = useMemo(() => {
@@ -39,6 +41,8 @@ export function MeasurementBookMode() {
         icon={Ruler}
         title="Measurement book is empty"
         description="Take off a shape in Takeoff mode and it lands here as a working dimension sheet — Nr × L × B × H, deductions included."
+        actionLabel="Go to Takeoff"
+        onAction={() => setMode('takeoff')}
       />
     )
   }

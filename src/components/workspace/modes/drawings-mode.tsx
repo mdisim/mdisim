@@ -7,13 +7,14 @@ import { BimViewer } from '../bim-viewer'
 import { DrawingPicker } from './drawing-picker'
 import { Image as ImageIcon, Box, SplitSquareHorizontal, ChevronLeft } from 'lucide-react'
 
-export function DrawingsMode() {
+export function DrawingsMode({ projectId }: { projectId: string }) {
   const { data, selection, selectDrawing, viewMode, setViewMode } = useWorkspace()
 
   if (!selection.drawing) {
     return (
       <DrawingPicker
         drawings={data.drawings}
+        projectId={projectId}
         eyebrow="Sheets"
         emptyTitle="No drawings uploaded yet"
         onSelect={selectDrawing}

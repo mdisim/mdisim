@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import { useParams } from 'next/navigation'
+import { Suspense, useEffect, useState, useCallback } from 'react'
+import { useParams, useSearchParams } from 'next/navigation'
 
 import { getBOQItems } from '@/app/actions/boq'
 import { getDrawings, getDrawingMeasurements } from '@/app/actions/drawings'
@@ -19,12 +19,16 @@ import type {
 } from '@/lib/types'
 
 import { WorkspaceProvider, type WorkspaceData } from '@/components/workspace/workspace-context'
-import { WorkspaceShell } from '@/components/workspace/workspace-shell'
+import { WorkspaceShell, MODES, type Mode } from '@/components/workspace/workspace-shell'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ErrorState } from '@/components/ui/error-state'
 
-export default function WorkspacePage() {
+function WorkspacePageInner() {
   const { id: projectId } = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
+  const requestedMode = searchParams.get('mode')
+  const initialMode = MODES.find(m => m.key === requestedMode)?.key as Mode | undefined
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<WorkspaceData | null>(null)
@@ -85,8 +89,8 @@ export default function WorkspacePage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col h-[calc(100vh-56px)] overflow-hidden animate-fade-in">
-        <div className="flex items-center gap-2 h-11 px-3 border-b border-[var(--color-border)] bg-[var(--color-surface)] shrink-0">
+      <div className="flex flex-col h-full overflow-hidden animate-fade-in">
+        <div className="flex items-center gap-2 h-9 px-3 border-b border-[var(--color-border)] bg-[var(--color-surface)] shrink-0">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-4 w-16 rounded" />
           ))}
@@ -115,15 +119,23 @@ export default function WorkspacePage() {
 
   if (error || !data || !project) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-140px)]">
+      <div className="flex items-center justify-center h-full">
         <ErrorState message={error ?? 'Unknown error'} onRetry={load} />
       </div>
     )
   }
 
   return (
-    <WorkspaceProvider data={data}>
-      <WorkspaceShell projectId={projectId} project={project} />
+    <WorkspaceProvider data={data} reload={load}>
+      <WorkspaceShell projectId={projectId} project={project} initialMode={initialMode} />
     </WorkspaceProvider>
+  )
+}
+
+export default function WorkspacePage() {
+  return (
+    <Suspense fallback={null}>
+      <WorkspacePageInner />
+    </Suspense>
   )
 }

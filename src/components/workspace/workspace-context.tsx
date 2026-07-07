@@ -56,11 +56,12 @@ interface WorkspaceContextType {
   setViewMode: (mode: ViewMode) => void
   fmt: (n: number) => string
   fmtCompact: (n: number) => string
+  reload: () => void
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | null>(null)
 
-export function WorkspaceProvider({ data, children }: { data: WorkspaceData; children: ReactNode }) {
+export function WorkspaceProvider({ data, reload, children }: { data: WorkspaceData; reload: () => void; children: ReactNode }) {
   const [selection, setSelection] = useState<WorkspaceSelection>({
     type: null, boqItem: null, drawing: null, measurement: null, libraryItem: null,
   })
@@ -247,7 +248,7 @@ export function WorkspaceProvider({ data, children }: { data: WorkspaceData; chi
       linkedMeasurements, linkedBoqItems, linkedRevisions, linkedRateAnalysis, linkedDrawingMeasurements,
       linkedSourceDrawings, linkedQuantityChanges, linkedVariations, linkedPayments, linkedCostEntries,
       highlightedDrawingMeasurementIds, viewMode, setViewMode,
-      fmt, fmtCompact,
+      fmt, fmtCompact, reload,
     }}>
       {children}
     </WorkspaceContext.Provider>

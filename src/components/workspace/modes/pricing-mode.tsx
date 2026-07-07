@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useWorkspace } from '../workspace-context'
+import { useModeSwitch } from '../mode-switch-context'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Chip } from '@/components/ui/chip'
 import { MasterListRow } from './master-list-row'
@@ -17,6 +18,7 @@ const RESOURCE_META: Record<ResourceType, { label: string; color: string }> = {
 
 export function PricingMode() {
   const { data, linkedRateAnalysis, fmt } = useWorkspace()
+  const setMode = useModeSwitch()
   const [activeId, setActiveId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -34,6 +36,8 @@ export function PricingMode() {
         icon={Calculator}
         title="No rate build-ups yet"
         description="Pricing is measured separately from quantity — build a rate analysis per BOQ item from material, labour, equipment and subcontractor components."
+        actionLabel="Go to BOQ"
+        onAction={() => setMode('boq')}
       />
     )
   }

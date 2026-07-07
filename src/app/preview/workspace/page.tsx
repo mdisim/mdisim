@@ -16,7 +16,7 @@ function PreviewInner() {
 
   return (
     <I18nProvider>
-      <WorkspaceProvider data={mockWorkspaceData}>
+      <WorkspaceProvider data={mockWorkspaceData} reload={() => {}}>
         <WorkspaceShell projectId="preview-project" project={mockProject} initialMode={initialMode} />
       </WorkspaceProvider>
     </I18nProvider>
