@@ -11,7 +11,7 @@ import { EvidenceCenter } from './evidence-center'
 import { BottomDock } from './bottom-dock'
 import { Drawer } from '@/components/ui/drawer'
 import { ScaleMark } from '@/components/icons/marks'
-import { ShortcutsDialog } from './shortcuts-dialog'
+import { HelpDialog } from './help-dialog'
 import { QuickSwitcher } from './quick-switcher'
 import { useKeyboardShortcuts, type ShortcutBinding } from '@/lib/hooks/use-keyboard-shortcuts'
 
@@ -60,7 +60,7 @@ export function WorkspaceShell({ projectId, project, initialMode }: { projectId:
   const [explorerOpen, setExplorerOpen] = useState(false)
   const [inspectorSuppressed, setInspectorSuppressed] = useState(false)
   const [dockOpen, setDockOpen] = useState(false)
-  const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [aiPrompt, setAiPrompt] = useState<string | null>(null)
 
@@ -89,7 +89,7 @@ export function WorkspaceShell({ projectId, project, initialMode }: { projectId:
       { key: '[', meta: true, handler: () => setExplorerOpen(v => !v) },
       { key: ']', meta: true, handler: () => setInspectorSuppressed(v => !v) },
       { key: 'p', meta: true, handler: () => setSwitcherOpen(v => !v) },
-      { key: '?', shift: true, handler: () => setShortcutsOpen(v => !v) },
+      { key: '?', shift: true, handler: () => setHelpOpen(v => !v) },
     ],
     []
   )
@@ -204,10 +204,10 @@ export function WorkspaceShell({ projectId, project, initialMode }: { projectId:
         {selectionLabel && <span className="truncate max-w-[360px] text-[var(--color-text-secondary)]">{selectionLabel}</span>}
         <span className="flex-1" />
         <button
-          onClick={() => setShortcutsOpen(true)}
+          onClick={() => setHelpOpen(true)}
           className="flex items-center gap-1.5 hover:text-[var(--color-text-secondary)] transition-colors"
         >
-          <Keyboard size={11} /> Shortcuts
+          <Keyboard size={11} /> Help
         </button>
       </div>
 
@@ -230,7 +230,7 @@ export function WorkspaceShell({ projectId, project, initialMode }: { projectId:
       )}
 
       <QuickSwitcher isOpen={switcherOpen} onClose={() => setSwitcherOpen(false)} setMode={setMode} />
-      <ShortcutsDialog isOpen={shortcutsOpen} onClose={() => setShortcutsOpen(false)} modes={MODES} />
+      <HelpDialog isOpen={helpOpen} onClose={() => setHelpOpen(false)} modes={MODES} />
     </div>
   )
 }
