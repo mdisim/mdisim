@@ -17,8 +17,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="h-full" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} h-full`}>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full`} suppressHydrationWarning>
+      <body className="h-full">
         <script dangerouslySetInnerHTML={{__html: `
   (function(){
     try {
