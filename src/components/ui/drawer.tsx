@@ -12,20 +12,22 @@ interface DrawerProps {
   side?: 'start' | 'end' | 'bottom'
   className?: string
   widthClassName?: string
+  /** Set false for panels that live alongside continued canvas work (the Inspector) rather than ones summoned and dismissed (Explorer, Quick switcher) — skips the click-catching scrim so the canvas stays fully interactive underneath. */
+  backdrop?: boolean
 }
 
 /** Slide-in panel — used for mobile inspectors, filters, and secondary panels that don't warrant a full dialog. */
-export function Drawer({ isOpen, onClose, title, children, side = 'end', className, widthClassName = 'w-[min(420px,100vw)]' }: DrawerProps) {
+export function Drawer({ isOpen, onClose, title, children, side = 'end', className, widthClassName = 'w-[min(420px,100vw)]', backdrop = true }: DrawerProps) {
   useEffect(() => {
     if (!isOpen) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     document.addEventListener('keydown', onKey)
-    document.body.style.overflow = 'hidden'
+    if (backdrop) document.body.style.overflow = 'hidden'
     return () => {
       document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = ''
+      if (backdrop) document.body.style.overflow = ''
     }
-  }, [isOpen, onClose])
+  }, [isOpen, onClose, backdrop])
 
   if (!isOpen) return null
 
@@ -34,11 +36,11 @@ export function Drawer({ isOpen, onClose, title, children, side = 'end', classNa
   const enterAnim = side === 'start' ? 'animate-slide-in-left' : side === 'end' ? 'animate-slide-in-right' : 'animate-slide-in-down'
 
   return (
-    <div className="fixed inset-0 z-[var(--z-drawer)]" role="dialog" aria-modal="true" aria-label={title ?? 'Panel'}>
-      <div className="absolute inset-0 bg-[var(--color-surface-overlay)]" onClick={onClose} aria-hidden="true" />
+    <div className={cn('fixed inset-0 z-[var(--z-drawer)]', !backdrop && 'pointer-events-none')} role={backdrop ? 'dialog' : undefined} aria-modal={backdrop || undefined} aria-label={title ?? 'Panel'}>
+      {backdrop && <div className="absolute inset-0 bg-[var(--color-surface-overlay)]" onClick={onClose} aria-hidden="true" />}
       <div
         className={cn(
-          'absolute flex flex-col bg-[var(--color-surface-elevated)] border-[var(--color-border)] shadow-[var(--shadow-xl)]',
+          'absolute flex flex-col bg-[var(--color-surface-elevated)] border-[var(--color-border)] shadow-[var(--shadow-xl)] pointer-events-auto',
           sidePos,
           enterAnim,
           isBottom ? 'max-h-[85vh] rounded-t-[var(--radius-2xl)] border-t' : cn(widthClassName, 'border-s'),

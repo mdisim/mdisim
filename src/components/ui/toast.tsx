@@ -15,16 +15,23 @@ import { cn } from '@/lib/utils'
 
 export type ToastVariant = 'success' | 'danger' | 'warning' | 'info' | 'default'
 
+export interface ToastAction {
+  label: string
+  onClick: () => void
+}
+
 export interface ToastOptions {
   title: string
   description?: string
   variant?: ToastVariant
   duration?: number
+  action?: ToastAction
 }
 
 interface ToastItem extends Required<Pick<ToastOptions, 'title' | 'variant' | 'duration'>> {
   id: string
   description?: string
+  action?: ToastAction
 }
 
 interface ToastContextType {
@@ -135,6 +142,14 @@ function ToastCard({ toastItem, onDismiss }: { toastItem: ToastItem; onDismiss: 
             {toastItem.description}
           </p>
         )}
+        {toastItem.action && (
+          <button
+            onClick={() => { toastItem.action!.onClick(); onDismiss(toastItem.id) }}
+            className="mt-1.5 text-[13px] font-semibold text-[var(--color-text-link)] hover:text-[var(--color-text-link-hover)]"
+          >
+            {toastItem.action.label}
+          </button>
+        )}
       </div>
       <button
         onClick={() => onDismiss(toastItem.id)}
@@ -164,6 +179,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       description: options.description,
       variant: options.variant ?? 'default',
       duration: options.duration ?? DEFAULT_DURATION,
+      action: options.action,
     }
     setToasts((prev) => [...prev, item])
     return id

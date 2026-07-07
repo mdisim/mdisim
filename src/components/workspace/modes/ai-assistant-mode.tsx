@@ -14,15 +14,25 @@ const SUGGESTIONS = [
   'Check quantities against the drawings for mismatches',
 ]
 
-export function AiAssistantMode({ projectId }: { projectId: string }) {
+export function AiAssistantMode({ projectId, initialPrompt }: { projectId: string; initialPrompt?: string | null }) {
   const { selection } = useWorkspace()
   const [messages, setMessages] = useState<CopilotMessage[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const endRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, loading])
+
+  // A handoff from the Inspector ("Ask AI about this") lands here pre-filled —
+  // the user still presses send, the assistant never fires on someone's behalf.
+  useEffect(() => {
+    if (initialPrompt) {
+      setInput(initialPrompt)
+      inputRef.current?.focus()
+    }
+  }, [initialPrompt])
 
   const contextLabel =
     selection.type === 'boq' ? `BOQ · ${selection.boqItem?.description}`
@@ -114,6 +124,7 @@ export function AiAssistantMode({ projectId }: { projectId: string }) {
           className="flex items-center gap-2"
         >
           <input
+            ref={inputRef}
             value={input}
             onChange={e => setInput(e.target.value)}
             placeholder="Ask the AI engineer…"

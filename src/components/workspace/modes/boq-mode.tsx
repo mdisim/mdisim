@@ -1,15 +1,22 @@
 'use client'
 
-import { Fragment, useMemo } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from '../workspace-context'
+import { useMultiSelect } from '@/lib/hooks/use-multi-select'
+import { useContextMenu, ContextMenu } from '@/components/ui/context-menu'
+import { useToast } from '@/components/ui/toast'
 import { EmptyState } from '@/components/ui/empty-state'
 import { SelectionBracket, TraceMark } from '@/components/icons/marks'
-import { FileSpreadsheet } from 'lucide-react'
+import { SelectionBar } from './selection-bar'
+import { FileSpreadsheet, Copy } from 'lucide-react'
 import type { BOQItem } from '@/lib/types'
 
 export function BoqMode() {
   const { data, selection, selectBoqItem, fmt } = useWorkspace()
+  const { toast } = useToast()
+  const menu = useContextMenu()
+  const [contextItem, setContextItem] = useState<BOQItem | null>(null)
 
   const sections = useMemo(() => {
     const map = new Map<string, BOQItem[]>()
@@ -21,7 +28,14 @@ export function BoqMode() {
     return Array.from(map.entries())
   }, [data.boqItems])
 
+  const orderedIds = useMemo(() => sections.flatMap(([, items]) => items.map(i => i.id)), [sections])
+  const multi = useMultiSelect(orderedIds)
   const grandTotal = data.boqItems.reduce((s, i) => s + (i.total_amount ?? 0), 0)
+
+  const copyCode = (item: BOQItem) => {
+    navigator.clipboard?.writeText(item.code ?? item.description)
+    toast({ title: 'Copied', description: item.code ?? item.description, variant: 'success', duration: 2000 })
+  }
 
   if (data.boqItems.length === 0) {
     return (
@@ -34,7 +48,7 @@ export function BoqMode() {
   }
 
   return (
-    <div className="h-full overflow-auto">
+    <div className="relative h-full overflow-auto">
       <table className="w-full text-[13px] border-collapse">
         <thead className="sticky top-0 z-10 bg-[var(--color-surface)] border-b border-[var(--color-border-strong)]">
           <tr>
@@ -56,18 +70,25 @@ export function BoqMode() {
                   <td colSpan={7} className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">{section}</td>
                 </tr>
                 {items.map(item => {
-                  const selected = selection.boqItem?.id === item.id
+                  const active = selection.boqItem?.id === item.id
+                  const inBulk = multi.isSelected(item.id)
                   return (
                     <tr
                       key={item.id}
-                      onClick={() => selectBoqItem(selected ? null : item)}
+                      onClick={e => {
+                        if (e.metaKey || e.ctrlKey || e.shiftKey) { multi.click(item.id, e); return }
+                        if (multi.count > 0) multi.clear()
+                        multi.setAnchorOnly(item.id)
+                        selectBoqItem(active ? null : item)
+                      }}
+                      onContextMenu={e => { setContextItem(item); menu.onContextMenu(e) }}
                       className={cn(
                         'cursor-pointer border-b border-[var(--color-border-light)] transition-colors',
-                        selected ? 'bg-[var(--color-brand-tint)]' : 'hover:bg-[var(--color-surface-hover)]'
+                        active ? 'bg-[var(--color-brand-tint)]' : inBulk ? 'bg-[var(--color-info-tint)]' : 'hover:bg-[var(--color-surface-hover)]'
                       )}
                     >
                       <td className="ps-2.5">
-                        <SelectionBracket active={selected} className="text-[var(--color-brand)]" />
+                        <SelectionBracket active={active || inBulk} className={active ? 'text-[var(--color-brand)]' : 'text-[var(--color-info)]'} />
                       </td>
                       <td className="px-3 py-2 mono text-[11px] text-[var(--color-text-muted)]">{item.code ?? '—'}</td>
                       <td className="px-3 py-2 font-medium text-[var(--color-text)]">
@@ -98,6 +119,29 @@ export function BoqMode() {
           </tr>
         </tfoot>
       </table>
+
+      <SelectionBar count={multi.count} onClear={multi.clear}>
+        <button
+          onClick={() => {
+            const items = data.boqItems.filter(b => multi.isSelected(b.id))
+            const total = items.reduce((s, i) => s + (i.total_amount ?? 0), 0)
+            navigator.clipboard?.writeText(items.map(i => `${i.code ?? ''}\t${i.description}\t${i.quantity}\t${i.unit_rate ?? ''}\t${i.total_amount ?? ''}`).join('\n'))
+            toast({ title: `Copied ${items.length} rows`, description: `Combined amount ${fmt(total)}`, variant: 'success', duration: 2500 })
+          }}
+          className="flex items-center gap-1.5 text-[12px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text)]"
+        >
+          <Copy size={12} /> Copy rows
+        </button>
+      </SelectionBar>
+
+      <ContextMenu
+        position={menu.position}
+        onClose={menu.close}
+        items={contextItem ? [
+          { label: 'Copy code', icon: <Copy size={13} />, onSelect: () => copyCode(contextItem) },
+          { label: 'Copy description', icon: <Copy size={13} />, onSelect: () => { navigator.clipboard?.writeText(contextItem.description); toast({ title: 'Copied description', variant: 'success', duration: 2000 }) } },
+        ] : []}
+      />
     </div>
   )
 }

@@ -30,6 +30,7 @@ import {
   FileImage, Ruler, BookOpen, ClipboardList, FileSpreadsheet,
   Calculator, Receipt, FileBarChart, Sparkles, Keyboard, Search,
 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 export type Mode = 'drawings' | 'takeoff' | 'measurement-book' | 'qcs' | 'boq' | 'pricing' | 'payments' | 'reports' | 'ai-assistant'
 
@@ -61,6 +62,16 @@ export function WorkspaceShell({ projectId, project, initialMode }: { projectId:
   const [dockOpen, setDockOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [switcherOpen, setSwitcherOpen] = useState(false)
+  const [aiPrompt, setAiPrompt] = useState<string | null>(null)
+
+  // The one handoff between the Inspector and the AI: it never answers on its
+  // own initiative, it just arrives with the question already framed.
+  const askAiAboutSelection = () => {
+    if (selection.type !== 'boq' || !selection.boqItem) return
+    setAiPrompt(`Explain the rate build-up and traceability for ${selection.boqItem.code ?? ''} — ${selection.boqItem.description}.`)
+    setMode('ai-assistant')
+    setInspectorSuppressed(true)
+  }
 
   // The inspector only has real content for a BOQ selection today — it opens
   // itself the instant one exists and closes itself the instant it doesn't.
@@ -97,7 +108,7 @@ export function WorkspaceShell({ projectId, project, initialMode }: { projectId:
       case 'pricing': return <PricingMode />
       case 'payments': return <PaymentsMode />
       case 'reports': return <ReportsMode project={project} />
-      case 'ai-assistant': return <AiAssistantMode projectId={projectId} />
+      case 'ai-assistant': return <AiAssistantMode projectId={projectId} initialPrompt={aiPrompt} />
     }
   }
 
@@ -204,7 +215,12 @@ export function WorkspaceShell({ projectId, project, initialMode }: { projectId:
       <Drawer isOpen={explorerOpen} onClose={() => setExplorerOpen(false)} title="Explorer" side="start">
         <LeftPanel />
       </Drawer>
-      <Drawer isOpen={inspectorOpen} onClose={() => setInspectorSuppressed(true)} title="Inspector" side="end">
+      <Drawer isOpen={inspectorOpen} onClose={() => setInspectorSuppressed(true)} title="Inspector" side="end" backdrop={false}>
+        <div className="px-4 py-2 border-b border-[var(--color-border)]">
+          <Button variant="intel" size="sm" onClick={askAiAboutSelection} className="w-full">
+            <Sparkles size={12} /> Ask AI about this
+          </Button>
+        </div>
         <EvidenceCenter />
       </Drawer>
       {showDock && (

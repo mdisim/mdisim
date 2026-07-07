@@ -21,7 +21,7 @@ import type {
 import { WorkspaceProvider, type WorkspaceData } from '@/components/workspace/workspace-context'
 import { WorkspaceShell } from '@/components/workspace/workspace-shell'
 import { Skeleton } from '@/components/ui/skeleton'
-import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { ErrorState } from '@/components/ui/error-state'
 
 export default function WorkspacePage() {
   const { id: projectId } = useParams<{ id: string }>()
@@ -116,18 +116,7 @@ export default function WorkspacePage() {
   if (error || !data || !project) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-140px)]">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <div className="w-14 h-14 rounded-[var(--radius-xl)] bg-[var(--color-danger-tint)] flex items-center justify-center">
-            <AlertTriangle size={22} className="text-[var(--color-danger)]" />
-          </div>
-          <p className="text-sm text-[var(--color-danger)] max-w-xs">{error ?? 'Unknown error'}</p>
-          <button
-            onClick={load}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-[var(--color-brand)] text-white rounded-[var(--radius-md)] hover:bg-[var(--color-brand-strong)]"
-          >
-            <RefreshCw size={12} /> Retry
-          </button>
-        </div>
+        <ErrorState message={error ?? 'Unknown error'} onRetry={load} />
       </div>
     )
   }
