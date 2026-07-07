@@ -70,7 +70,7 @@ export function LeftPanel() {
   }, [data.drawings, data.revisions])
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-[var(--background)] overflow-hidden">
+    <div className="flex flex-col h-full bg-[var(--color-surface-elevated)] overflow-hidden">
       {/* Explorer Header */}
       <div className="px-2 py-1.5 border-b border-[var(--color-border)]/60 dark:border-white/[0.04]">
         <div className="relative">

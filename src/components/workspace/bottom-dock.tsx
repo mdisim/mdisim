@@ -1,34 +1,26 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from './workspace-context'
-import { sendCopilotMessage } from '@/app/actions/ai-copilot'
-import type { CopilotMessage } from '@/app/actions/ai-copilot'
 import {
-  Bot, Clock, Activity, DollarSign, CheckSquare, FileBarChart,
-  Minimize2, Maximize2, Send, Loader2, Sparkles, User,
-  BarChart3, TrendingUp, TrendingDown, ArrowRight,
-  Package, AlertTriangle, Copy, CheckCircle, Layers, GitCompare,
+  Bot, Activity, DollarSign,
+  Minimize2, Maximize2, Layers, GitCompare,
 } from 'lucide-react'
 
-type DockTab = 'ai' | 'evidence' | 'history' | 'cost' | 'activity' | 'reports'
+type DockTab = 'evidence' | 'history' | 'cost' | 'activity'
 
 const DOCK_TABS: { key: DockTab; label: string; icon: typeof Bot; color: string }[] = [
-  { key: 'ai', label: 'AI Engineer', icon: Bot, color: 'text-violet-500' },
-  { key: 'evidence', label: 'Evidence Center', icon: Layers, color: 'text-[var(--color-blue)]' },
+  { key: 'evidence', label: 'Evidence Summary', icon: Layers, color: 'text-[var(--color-brand)]' },
   { key: 'history', label: 'Quantity History', icon: GitCompare, color: 'text-amber-500' },
   { key: 'cost', label: 'Cost Summary', icon: DollarSign, color: 'text-emerald-500' },
   { key: 'activity', label: 'Activity', icon: Activity, color: 'text-cyan-500' },
-  { key: 'reports', label: 'Reports', icon: FileBarChart, color: 'text-rose-500' },
 ]
 
-export function BottomDock({ projectId, projectName }: { projectId: string; projectName: string }) {
-  const { data, selection, fmt } = useWorkspace()
-  const [activeTab, setActiveTab] = useState<DockTab>('ai')
-  const [expanded, setExpanded] = useState(false)
-  const [dockHeight, setDockHeight] = useState(220)
+export function BottomDock() {
+  const [activeTab, setActiveTab] = useState<DockTab>('evidence')
+  const [expanded, setExpanded] = useState(true)
+  const [dockHeight, setDockHeight] = useState(420)
 
   return (
     <div
@@ -65,167 +57,12 @@ export function BottomDock({ projectId, projectName }: { projectId: string; proj
       {/* Tab content */}
       {expanded && (
         <div className="flex-1 overflow-hidden">
-          {activeTab === 'ai' && <AIEngineerTab projectId={projectId} projectName={projectName} />}
           {activeTab === 'evidence' && <EvidenceTab />}
           {activeTab === 'history' && <QuantityHistoryTab />}
           {activeTab === 'cost' && <CostTab />}
           {activeTab === 'activity' && <ActivityTab />}
-          {activeTab === 'reports' && <ReportsTab projectId={projectId} />}
         </div>
       )}
-    </div>
-  )
-}
-
-function AIEngineerTab({ projectId, projectName }: { projectId: string; projectName: string }) {
-  const { selection } = useWorkspace()
-  const [messages, setMessages] = useState<CopilotMessage[]>([])
-  const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
-
-  const contextLabel = selection.type === 'boq' ? `BOQ: ${selection.boqItem?.description}`
-    : selection.type === 'drawing' ? `Drawing: ${selection.drawing?.name}`
-    : selection.type === 'measurement' ? `Measurement: ${selection.measurement?.description}`
-    : null
-
-  const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || loading) return
-    setError(null)
-    const userMsg: CopilotMessage = { id: `u-${Date.now()}`, role: 'user', content: text.trim(), timestamp: new Date().toISOString() }
-    const updated = [...messages, userMsg]
-    setMessages(updated)
-    setInput('')
-    setLoading(true)
-    try {
-      const { reply, error: err } = await sendCopilotMessage(projectId, 'workspace', updated, text.trim())
-      if (err) { setError(err) } else {
-        setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: reply, timestamp: new Date().toISOString() }])
-      }
-    } catch { setError('Failed to get response') }
-    finally { setLoading(false) }
-  }, [loading, messages, projectId])
-
-  return (
-    <div className="flex h-full">
-      {/* Messages */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
-          {messages.length === 0 && (
-            <div className="flex items-center gap-3 py-4 px-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white shrink-0">
-                <Sparkles size={14} />
-              </div>
-              <div>
-                <p className="text-[11px] font-medium text-[var(--color-text-secondary)]">AI Engineering Assistant</p>
-                <p className="text-[10px] text-[var(--color-text-muted)]">Ask about costs, quantities, rates, comparisons, or get recommendations.</p>
-              </div>
-            </div>
-          )}
-          {messages.map(msg => (
-            <div key={msg.id} className={cn('flex gap-2', msg.role === 'user' ? 'flex-row-reverse' : '')}>
-              <div className={cn(
-                'w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px]',
-                msg.role === 'user' ? 'bg-[var(--color-blue)]/10' : 'bg-violet-500/10'
-              )}>
-                {msg.role === 'user' ? <User size={11} className="text-[var(--color-blue)]" /> : <Bot size={11} className="text-[var(--color-indigo)]" />}
-              </div>
-              <div className={cn(
-                'max-w-[80%] rounded-xl px-3 py-1.5 text-[11px] leading-relaxed',
-                msg.role === 'user'
-                  ? 'bg-[var(--color-blue)] text-white rounded-tr-sm'
-                  : 'bg-[var(--color-surface-elevated)] text-[var(--color-text-secondary)] rounded-tl-sm'
-              )}>
-                {msg.content}
-              </div>
-            </div>
-          ))}
-          {loading && (
-            <div className="flex items-center gap-2 text-[11px] text-[var(--color-text-muted)]">
-              <Loader2 size={12} className="animate-spin text-violet-500" />
-              Analyzing...
-            </div>
-          )}
-          {error && (
-            <div className="text-[10px] text-[var(--color-danger)] flex items-center gap-1">
-              <AlertTriangle size={10} />{error}
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input */}
-        <div className="px-3 pb-2 pt-1">
-          {contextLabel && (
-            <div className="text-[9px] text-violet-500 mb-1 flex items-center gap-1">
-              <Sparkles size={8} />Context: {contextLabel}
-            </div>
-          )}
-          <div className="flex items-center gap-1.5 bg-[var(--color-surface-elevated)] rounded-lg border border-[var(--color-border)] focus-within:border-violet-400 dark:focus-within:border-violet-600 transition-colors">
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') sendMessage(input) }}
-              placeholder="Ask the AI Engineer..."
-              className="flex-1 px-3 py-2 text-[11px] bg-transparent outline-none text-[var(--color-text)] placeholder:text-[var(--color-text-muted)]"
-            />
-            <button
-              onClick={() => sendMessage(input)}
-              disabled={!input.trim() || loading}
-              className="p-1.5 mr-1 text-white bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-md transition-colors"
-            >
-              <Send size={11} />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function TimelineTab() {
-  const { data, fmt } = useWorkspace()
-  const events = useMemo(() => {
-    const items: { date: string; label: string; type: string; value?: string }[] = []
-    for (const p of data.payments) {
-      items.push({ date: p.period_to, label: `IPC #${p.cert_number} — ${p.status}`, type: 'payment', value: fmt(p.net_payable) })
-    }
-    for (const v of data.variations) {
-      items.push({ date: v.submitted_date ?? v.created_at.slice(0, 10), label: `${v.variation_no} — ${v.title}`, type: 'variation', value: fmt(v.amount) })
-    }
-    for (const d of data.drawings) {
-      items.push({ date: d.created_at.slice(0, 10), label: `Drawing: ${d.name}`, type: 'drawing' })
-    }
-    return items.sort((a, b) => b.date.localeCompare(a.date)).slice(0, 20)
-  }, [data, fmt])
-
-  return (
-    <div className="h-full overflow-y-auto px-4 py-2">
-      <div className="relative pl-6">
-        <div className="absolute start-2 top-0 bottom-0 w-px bg-[var(--color-border)]" />
-        {events.map((ev, i) => (
-          <div key={i} className="relative pb-3">
-            <div className={cn(
-              'absolute left-[-17px] w-2.5 h-2.5 rounded-full border-2 border-white dark:border-[var(--background)]',
-              ev.type === 'payment' ? 'bg-green-500' : ev.type === 'variation' ? 'bg-amber-500' : 'bg-[var(--color-blue)]'
-            )} style={{ top: 2 }} />
-            <div className="flex items-center gap-2 text-[11px]">
-              <span className="text-[var(--color-text-muted)] text-[10px] font-mono w-20 shrink-0">{ev.date}</span>
-              <span className="text-[var(--color-text-secondary)] flex-1 truncate">{ev.label}</span>
-              {ev.value && <span className="tabular-nums text-[var(--color-text-muted)] shrink-0">{ev.value}</span>}
-            </div>
-          </div>
-        ))}
-        {events.length === 0 && <div className="text-[11px] text-[var(--color-text-muted)] py-4">No timeline events</div>}
-      </div>
     </div>
   )
 }
@@ -310,58 +147,6 @@ function CostTab() {
           </div>
         </div>
       )}
-    </div>
-  )
-}
-
-function TasksTab() {
-  const { data } = useWorkspace()
-  const tasks = useMemo(() => {
-    const items: { label: string; status: 'done' | 'active' | 'pending'; category: string }[] = []
-    if (data.boqItems.length > 0) items.push({ label: 'BOQ setup', status: 'done', category: 'BOQ' })
-    else items.push({ label: 'Setup BOQ items', status: 'pending', category: 'BOQ' })
-    if (data.measurementItems.length > 0) items.push({ label: 'Measurements recorded', status: 'done', category: 'Measurements' })
-    else items.push({ label: 'Record measurements', status: 'pending', category: 'Measurements' })
-    if (data.drawings.length > 0) items.push({ label: 'Drawings uploaded', status: 'done', category: 'Drawings' })
-    else items.push({ label: 'Upload drawings', status: 'pending', category: 'Drawings' })
-    if (data.contract) items.push({ label: 'Contract configured', status: 'done', category: 'Cost' })
-    else items.push({ label: 'Setup contract', status: 'pending', category: 'Cost' })
-    if (data.rateAnalyses.length > 0) items.push({ label: 'Rate analysis done', status: 'done', category: 'Rates' })
-    else items.push({ label: 'Create rate analyses', status: 'pending', category: 'Rates' })
-    if (data.payments.length > 0) items.push({ label: 'Payments processed', status: 'done', category: 'Payments' })
-    else items.push({ label: 'Process payments', status: 'active', category: 'Payments' })
-    return items
-  }, [data])
-
-  return (
-    <div className="h-full overflow-y-auto px-4 py-2">
-      <div className="flex items-center gap-4 mb-3">
-        <div className="text-[11px] text-[var(--color-text-muted)]">
-          <span className="font-semibold text-[var(--color-text-secondary)]">{tasks.filter(t => t.status === 'done').length}</span> / {tasks.length} completed
-        </div>
-        <div className="flex-1 h-1.5 bg-[var(--color-border)] rounded-full overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full" style={{ width: `${(tasks.filter(t => t.status === 'done').length / tasks.length) * 100}%` }} />
-        </div>
-      </div>
-      {tasks.map((task, i) => (
-        <div key={i} className="flex items-center gap-2.5 py-1.5 text-[11px]">
-          <div className={cn(
-            'w-4 h-4 rounded flex items-center justify-center',
-            task.status === 'done' ? 'bg-green-100 dark:bg-green-500/10' :
-            task.status === 'active' ? 'bg-[var(--color-blue)]/10' :
-            'bg-[var(--color-surface-elevated)]'
-          )}>
-            {task.status === 'done' ? <CheckCircle size={10} className="text-green-500" /> :
-             task.status === 'active' ? <Activity size={10} className="text-[var(--color-blue)]" /> :
-             <div className="w-2 h-2 rounded-sm border border-[var(--color-border)]" />}
-          </div>
-          <span className={cn(
-            'flex-1',
-            task.status === 'done' ? 'text-[var(--color-text-muted)] line-through' : 'text-[var(--color-text-secondary)]'
-          )}>{task.label}</span>
-          <span className="text-[9px] text-[var(--color-text-muted)] bg-[var(--color-surface-elevated)] px-1.5 py-0.5 rounded">{task.category}</span>
-        </div>
-      ))}
     </div>
   )
 }
@@ -456,35 +241,6 @@ function QuantityHistoryTab() {
             </div>
           )
         })}
-      </div>
-    </div>
-  )
-}
-
-function ReportsTab({ projectId }: { projectId: string }) {
-  const reportTypes = [
-    { label: 'BOQ Report', desc: 'Bill of Quantities with rates & totals', icon: BarChart3, href: 'boq' },
-    { label: 'Measurement Report', desc: 'Measurement book export', icon: Package, href: 'measurements' },
-    { label: 'Cost Report', desc: 'Cost control summary', icon: DollarSign, href: 'cost-control' },
-    { label: 'Payment Report', desc: 'Payment certificates', icon: TrendingUp, href: 'payments' },
-  ]
-
-  return (
-    <div className="h-full overflow-y-auto px-4 py-3">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-        {reportTypes.map(r => (
-          <a
-            key={r.href}
-            href={`/projects/${projectId}/reports`}
-            className="flex items-center gap-2.5 p-3 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-brand)]/40 hover:bg-[var(--color-brand)]/5 transition-all group"
-          >
-            <r.icon size={16} className="text-[var(--color-text-muted)] group-hover:text-[var(--color-blue)] transition-colors shrink-0" />
-            <div>
-              <div className="text-[11px] font-medium text-[var(--color-text-secondary)]">{r.label}</div>
-              <div className="text-[9px] text-[var(--color-text-muted)]">{r.desc}</div>
-            </div>
-          </a>
-        ))}
       </div>
     </div>
   )

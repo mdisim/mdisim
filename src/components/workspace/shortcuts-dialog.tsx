@@ -13,9 +13,9 @@ export function ShortcutsDialog({
   isOpen, onClose, modes,
 }: { isOpen: boolean; onClose: () => void; modes: { key: string; label: string; icon: LucideIcon }[] }) {
   const generalShortcuts: ShortcutRow[] = [
-    { label: 'Toggle explorer', keys: ['⌘', '['] },
-    { label: 'Toggle inspector', keys: ['⌘', ']'] },
-    { label: 'Command palette', keys: ['⌘', 'K'] },
+    { label: 'Jump to a BOQ item, drawing or measurement', keys: ['⌘', 'P'] },
+    { label: 'Open explorer', keys: ['⌘', '['] },
+    { label: 'Dismiss inspector', keys: ['⌘', ']'] },
   ]
 
   return (
