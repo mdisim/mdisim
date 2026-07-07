@@ -214,7 +214,7 @@ function TimelineTab() {
         {events.map((ev, i) => (
           <div key={i} className="relative pb-3">
             <div className={cn(
-              'absolute left-[-17px] w-2.5 h-2.5 rounded-full border-2 border-white dark:border-[#0f1117]',
+              'absolute left-[-17px] w-2.5 h-2.5 rounded-full border-2 border-white dark:border-[var(--background)]',
               ev.type === 'payment' ? 'bg-green-500' : ev.type === 'variation' ? 'bg-amber-500' : 'bg-[var(--color-blue)]'
             )} style={{ top: 2 }} />
             <div className="flex items-center gap-2 text-[11px]">
@@ -437,7 +437,7 @@ function QuantityHistoryTab() {
           return (
             <div key={qc.id} className="relative pb-3">
               <div className={cn(
-                'absolute left-[-17px] w-2.5 h-2.5 rounded-full border-2 border-white dark:border-[#0f1117]',
+                'absolute left-[-17px] w-2.5 h-2.5 rounded-full border-2 border-white dark:border-[var(--background)]',
                 qc.difference > 0 ? 'bg-green-500' : qc.difference < 0 ? 'bg-[var(--color-danger)]' : 'bg-[var(--color-border)]'
               )} style={{ top: 2 }} />
               <div className="flex items-center gap-2 text-[11px]">
@@ -476,7 +476,7 @@ function ReportsTab({ projectId }: { projectId: string }) {
           <a
             key={r.href}
             href={`/projects/${projectId}/reports`}
-            className="flex items-center gap-2.5 p-3 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-amber)]/40 hover:bg-[var(--color-amber)]/5 transition-all group"
+            className="flex items-center gap-2.5 p-3 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-brand)]/40 hover:bg-[var(--color-brand)]/5 transition-all group"
           >
             <r.icon size={16} className="text-[var(--color-text-muted)] group-hover:text-[var(--color-blue)] transition-colors shrink-0" />
             <div>

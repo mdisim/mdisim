@@ -476,7 +476,7 @@ export function BimViewer({ modelUrl, onElementSelect, highlightedElements }: Bi
 
   if (!modelUrl) {
     return (
-      <div className="flex flex-col items-center justify-center h-full bg-[#f8f9fa] dark:bg-[#0a0b0f] text-center px-8">
+      <div className="flex flex-col items-center justify-center h-full bg-[#f8f9fa] dark:bg-[var(--background)] text-center px-8">
         <div className="w-16 h-16 rounded-2xl bg-[var(--color-surface)] dark:bg-white/[0.03] border border-[var(--color-border)]/60 dark:border-white/[0.04] flex items-center justify-center mb-5">
           <Box size={28} className="text-[var(--color-text-secondary)] dark:text-white/20" />
         </div>
@@ -491,7 +491,7 @@ export function BimViewer({ modelUrl, onElementSelect, highlightedElements }: Bi
   }
 
   return (
-    <div className="relative flex flex-col h-full bg-[#f8f9fa] dark:bg-[#0a0b0f] overflow-hidden">
+    <div className="relative flex flex-col h-full bg-[#f8f9fa] dark:bg-[var(--background)] overflow-hidden">
       {/* Toolbar */}
       <AnimatePresence>
         <motion.div
@@ -544,7 +544,7 @@ export function BimViewer({ modelUrl, onElementSelect, highlightedElements }: Bi
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#0a0b0f]/80 backdrop-blur-sm"
+            className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[var(--background)]/80 backdrop-blur-sm"
           >
             <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mb-3 animate-pulse">
               <Box size={20} className="text-indigo-400" />

@@ -122,7 +122,7 @@ export function GenerateBOQDialog({
             Cancel
           </Button>
           <Button
-            variant="accent"
+            variant="primary"
             size="sm"
             onClick={handleGenerate}
             loading={loading}

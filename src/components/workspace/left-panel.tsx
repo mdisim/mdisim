@@ -69,7 +69,7 @@ export function LeftPanel() {
   }, [data.drawings, data.revisions])
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-[#0f1117] overflow-hidden">
+    <div className="flex flex-col h-full bg-white dark:bg-[var(--background)] overflow-hidden">
       {/* Explorer Header */}
       <div className="px-3 py-2.5 border-b border-[var(--color-border)]/60 dark:border-white/[0.04]">
         <div className="flex items-center gap-2 mb-2">
@@ -83,7 +83,7 @@ export function LeftPanel() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Filter..."
-            className="w-full pl-8 pr-3 py-1.5 text-[11px] bg-[var(--color-surface)] dark:bg-white/[0.03] border border-[var(--color-border)]/60 dark:border-white/[0.06] rounded-lg text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] outline-none focus:border-[var(--color-amber)] dark:focus:border-[var(--color-amber)] transition-colors"
+            className="w-full pl-8 pr-3 py-1.5 text-[11px] bg-[var(--color-surface)] dark:bg-white/[0.03] border border-[var(--color-border)]/60 dark:border-white/[0.06] rounded-lg text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] outline-none focus:border-[var(--color-brand)] dark:focus:border-[var(--color-brand)] transition-colors"
           />
         </div>
       </div>
@@ -138,7 +138,7 @@ export function LeftPanel() {
                               className={cn(
                                 'w-full text-left pl-7 pr-3 py-1.5 flex items-center gap-2 transition-all text-[11px] group',
                                 selection.boqItem?.id === item.id
-                                  ? 'bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber-cta)]/10 text-[var(--color-amber)] dark:text-[var(--color-amber)] border-s-2 border-[var(--color-amber)] ps-[26px]'
+                                  ? 'bg-[var(--color-brand)]/10 dark:bg-[var(--color-brand)]/10 text-[var(--color-brand)] dark:text-[var(--color-brand)] border-s-2 border-[var(--color-brand)] ps-[26px]'
                                   : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]'
                               )}
                             >

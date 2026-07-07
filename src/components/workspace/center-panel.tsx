@@ -37,7 +37,7 @@ export function CenterPanel() {
   const isImage = drawing?.file_type && ['png', 'jpg', 'jpeg'].includes(drawing.file_type)
 
   return (
-    <div className="flex flex-col h-full bg-[#f8f9fa] dark:bg-[#0a0b0f] overflow-hidden">
+    <div className="flex flex-col h-full bg-[#f8f9fa] dark:bg-[var(--background)] overflow-hidden">
       {/* Toolbar */}
       <div className="flex items-center justify-between px-3 h-10 bg-[var(--color-surface)] border-b border-[var(--color-border)] shrink-0">
         <div className="flex items-center gap-2">

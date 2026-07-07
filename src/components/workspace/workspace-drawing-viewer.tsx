@@ -435,9 +435,9 @@ export function WorkspaceDrawingViewer() {
   const cursor = isPanning.current || isSpaceDown.current ? 'grab' : 'default'
 
   return (
-    <div className="flex flex-col h-full bg-[#f8f9fa] dark:bg-[#0a0b0f] overflow-hidden">
+    <div className="flex flex-col h-full bg-[#f8f9fa] dark:bg-[var(--background)] overflow-hidden">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-3 h-10 bg-white dark:bg-[#0f1117] border-b border-[var(--color-border)]/60 dark:border-white/[0.04] shrink-0">
+      <div className="flex items-center justify-between px-3 h-10 bg-white dark:bg-[var(--background)] border-b border-[var(--color-border)]/60 dark:border-white/[0.04] shrink-0">
         <div className="flex items-center gap-2">
           {/* Drawing tabs */}
           <div className="flex items-center gap-0.5 overflow-x-auto max-w-[400px] scrollbar-none">
@@ -664,8 +664,8 @@ export function WorkspaceDrawingViewer() {
                   {hoveredMeasurement.unit ?? 'px'}
                 </p>
                 {highlightedIds.has(hoveredMeasurement.id) && (
-                  <div className="mt-1 flex items-center gap-1 text-[9px] text-[var(--color-amber)]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-amber)]" />
+                  <div className="mt-1 flex items-center gap-1 text-[9px] text-[var(--color-brand)]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-brand)]" />
                     Linked to selected item
                   </div>
                 )}
@@ -677,7 +677,7 @@ export function WorkspaceDrawingViewer() {
 
       {/* Status bar */}
       {drawing && (
-        <div className="flex items-center justify-between px-3 h-6 bg-white dark:bg-[#0f1117] border-t border-[var(--color-border)] dark:border-white/[0.04] text-[10px] text-[var(--color-text-muted)] shrink-0">
+        <div className="flex items-center justify-between px-3 h-6 bg-white dark:bg-[var(--background)] border-t border-[var(--color-border)] dark:border-white/[0.04] text-[10px] text-[var(--color-text-muted)] shrink-0">
           <div className="flex items-center gap-3">
             <span>{drawing.name}</span>
             {drawing.drawing_number && <span className="font-mono">{drawing.drawing_number}</span>}
@@ -688,7 +688,7 @@ export function WorkspaceDrawingViewer() {
               <span>{currentDrawingMeasurements.length} measurement{currentDrawingMeasurements.length !== 1 ? 's' : ''}</span>
             )}
             {highlightedIds.size > 0 && (
-              <span className="text-[var(--color-amber)]">{highlightedIds.size} highlighted</span>
+              <span className="text-[var(--color-brand)]">{highlightedIds.size} highlighted</span>
             )}
             <span>{drawing.file_type?.toUpperCase()}</span>
             {drawing.file_size && <span>{(drawing.file_size / 1024 / 1024).toFixed(1)} MB</span>}

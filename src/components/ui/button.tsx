@@ -4,35 +4,36 @@ import { cn } from '@/lib/utils'
 import { ButtonHTMLAttributes, forwardRef } from 'react'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline' | 'accent'
-  size?: 'sm' | 'md' | 'lg'
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline' | 'intel'
+  size?: 'sm' | 'md' | 'lg' | 'icon'
   loading?: boolean
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', loading, disabled, children, ...props }, ref) => {
     const base =
-      'inline-flex items-center justify-center font-semibold rounded-[var(--radius-md)] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95'
+      'inline-flex items-center justify-center font-medium rounded-[var(--radius-md)] transition-all duration-[var(--transition-fast)] focus:outline-none focus-visible:shadow-[var(--shadow-focus)] disabled:opacity-45 disabled:cursor-not-allowed active:scale-[0.98] whitespace-nowrap select-none'
 
     const variants = {
       primary:
-        'bg-[var(--color-amber-cta)] text-[var(--color-on-amber)] hover:brightness-110 focus-visible:ring-[var(--color-amber-cta)] shadow-[0_4px_14px_-2px_rgba(234,179,8,0.35)]',
+        'bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-strong)] shadow-[var(--shadow-xs)]',
       secondary:
-        'bg-[var(--color-surface-elevated)] text-[var(--color-text)] border border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] focus-visible:ring-[var(--color-border-strong)]',
+        'bg-[var(--color-surface)] text-[var(--color-text)] border border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)]',
       danger:
-        'bg-[var(--color-danger)] text-white hover:brightness-110 focus-visible:ring-[var(--color-danger)]',
+        'bg-[var(--color-danger)] text-white hover:brightness-[1.08]',
       ghost:
-        'bg-[var(--color-navy-light)]/10 text-[var(--color-amber)] hover:bg-[var(--color-navy-light)]/20 focus-visible:ring-[var(--color-amber)]',
+        'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]',
       outline:
-        'border border-[var(--color-amber)]/50 bg-transparent text-[var(--color-amber)] hover:bg-[var(--color-amber)]/10 focus-visible:ring-[var(--color-amber)]',
-      accent:
-        'bg-[var(--color-amber-cta)] text-[var(--color-on-amber)] hover:brightness-110 focus-visible:ring-[var(--color-amber-cta)]',
+        'border border-[var(--color-border-strong)] bg-transparent text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]',
+      intel:
+        'bg-[var(--color-intel-tint)] text-[var(--color-intel)] hover:brightness-[0.97]',
     }
 
     const sizes = {
-      sm: 'text-sm px-3 py-1.5 gap-1.5',
-      md: 'text-sm px-4 py-2 gap-2',
-      lg: 'text-base px-6 py-3 gap-2 rounded-xl',
+      sm: 'text-[13px] px-2.5 py-1.5 gap-1.5 leading-none',
+      md: 'text-[13px] px-3.5 py-2 gap-2 leading-none',
+      lg: 'text-sm px-5 py-2.5 gap-2 leading-none',
+      icon: 'p-2 aspect-square',
     }
 
     return (
@@ -45,7 +46,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {loading && (
-          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+          <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>

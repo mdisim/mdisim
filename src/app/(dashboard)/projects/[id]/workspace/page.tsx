@@ -16,204 +16,224 @@ import { getQuantityChanges } from '@/app/actions/drawing-revisions'
 import { getProject } from '@/app/actions/projects'
 
 import type {
-  Drawing, DrawingRevision, DrawingMeasurement, LibraryItem,
+  Drawing, DrawingRevision, DrawingMeasurement, LibraryItem, Project,
 } from '@/lib/types'
 
-import { WorkspaceProvider, type WorkspaceData } from '@/components/workspace/workspace-context'
+import { WorkspaceProvider, type WorkspaceData, useWorkspace } from '@/components/workspace/workspace-context'
 import { LeftPanel } from '@/components/workspace/left-panel'
-import { WorkspaceDrawingViewer } from '@/components/workspace/workspace-drawing-viewer'
 import { EvidenceCenter } from '@/components/workspace/evidence-center'
 import { BottomDock } from '@/components/workspace/bottom-dock'
-import { BimViewer } from '@/components/workspace/bim-viewer'
 import { useResizable } from '@/components/workspace/use-resizable'
-import { useWorkspace } from '@/components/workspace/workspace-context'
+import { Drawer } from '@/components/ui/drawer'
+import { Kbd } from '@/components/ui/kbd'
+import { useKeyboardShortcuts, type ShortcutBinding } from '@/lib/hooks/use-keyboard-shortcuts'
+
+import { DrawingsMode } from '@/components/workspace/modes/drawings-mode'
+import { TakeoffMode } from '@/components/workspace/modes/takeoff-mode'
+import { MeasurementBookMode } from '@/components/workspace/modes/measurement-book-mode'
+import { QcsMode } from '@/components/workspace/modes/qcs-mode'
+import { BoqMode } from '@/components/workspace/modes/boq-mode'
+import { PricingMode } from '@/components/workspace/modes/pricing-mode'
+import { PaymentsMode } from '@/components/workspace/modes/payments-mode'
+import { ReportsMode } from '@/components/workspace/modes/reports-mode'
+import { AiAssistantMode } from '@/components/workspace/modes/ai-assistant-mode'
+
 import {
-  PanelLeftClose, PanelRightClose,
-  AlertTriangle, RefreshCw, Box,
-  SplitSquareHorizontal, Image as ImageIcon,
+  PanelLeft, PanelRight, AlertTriangle, RefreshCw,
+  FileImage, Ruler, BookOpen, ClipboardList, FileSpreadsheet,
+  Calculator, Receipt, FileBarChart, Sparkles,
 } from 'lucide-react'
 
-function ViewModeToggle() {
-  const { viewMode, setViewMode } = useWorkspace()
-  return (
-    <div className="flex items-center bg-[var(--color-surface)] rounded-lg p-0.5 border border-[var(--color-border)]">
-      {[
-        { mode: '2d' as const, icon: ImageIcon, label: '2D' },
-        { mode: '3d' as const, icon: Box, label: '3D' },
-        { mode: 'split' as const, icon: SplitSquareHorizontal, label: 'Split' },
-      ].map(({ mode, icon: Icon, label }) => (
-        <button
-          key={mode}
-          onClick={() => setViewMode(mode)}
-          className={cn(
-            'flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all',
-            viewMode === mode
-              ? 'bg-[var(--color-amber)] text-[var(--color-on-amber)]'
-              : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
-          )}
-        >
-          <Icon size={10} />
-          {label}
-        </button>
-      ))}
-    </div>
-  )
-}
+type Mode = 'drawings' | 'takeoff' | 'measurement-book' | 'qcs' | 'boq' | 'pricing' | 'payments' | 'reports' | 'ai-assistant'
 
-function WorkspaceInner({ projectId, projectName }: { projectId: string; projectName: string }) {
-  const { viewMode } = useWorkspace()
-  const [leftVisible, setLeftVisible] = useState(true)
-  const [rightVisible, setRightVisible] = useState(true)
+const MODES: { key: Mode; label: string; icon: typeof FileImage; hasSidePanels: boolean }[] = [
+  { key: 'drawings', label: 'Drawings', icon: FileImage, hasSidePanels: true },
+  { key: 'takeoff', label: 'Takeoff', icon: Ruler, hasSidePanels: true },
+  { key: 'measurement-book', label: 'Measurement Book', icon: BookOpen, hasSidePanels: true },
+  { key: 'qcs', label: 'QCS', icon: ClipboardList, hasSidePanels: true },
+  { key: 'boq', label: 'BOQ', icon: FileSpreadsheet, hasSidePanels: true },
+  { key: 'pricing', label: 'Pricing', icon: Calculator, hasSidePanels: true },
+  { key: 'payments', label: 'Payments', icon: Receipt, hasSidePanels: true },
+  { key: 'reports', label: 'Reports', icon: FileBarChart, hasSidePanels: false },
+  { key: 'ai-assistant', label: 'AI Assistant', icon: Sparkles, hasSidePanels: false },
+]
+
+function WorkspaceShell({ projectId, project }: { projectId: string; project: Project }) {
+  const { selection } = useWorkspace()
+  const [mode, setMode] = useState<Mode>('drawings')
+  const [leftOpen, setLeftOpen] = useState(true)
+  const [rightOpen, setRightOpen] = useState(true)
+  const [mobilePanel, setMobilePanel] = useState<'explorer' | 'inspector' | null>(null)
 
   const leftResize = useResizable({ direction: 'horizontal', initialSize: 260, minSize: 200, maxSize: 400, storageKey: 'ws-left' })
   const rightResize = useResizable({ direction: 'horizontal', initialSize: 340, minSize: 280, maxSize: 500, storageKey: 'ws-right' })
-  const bottomResize = useResizable({ direction: 'vertical', initialSize: 220, minSize: 36, maxSize: 400, storageKey: 'ws-bottom' })
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === '[' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setLeftVisible(v => !v) }
-      if (e.key === ']' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setRightVisible(v => !v) }
+  useKeyboardShortcuts(
+    [
+      ...MODES.map((m, i): ShortcutBinding => ({ key: String(i + 1), handler: () => setMode(m.key) })),
+      { key: '[', meta: true, handler: () => setLeftOpen(v => !v) },
+      { key: ']', meta: true, handler: () => setRightOpen(v => !v) },
+    ],
+    []
+  )
+
+  const activeMode = MODES.find(m => m.key === mode)!
+  const showSidePanels = activeMode.hasSidePanels
+
+  const renderMain = () => {
+    switch (mode) {
+      case 'drawings': return <DrawingsMode />
+      case 'takeoff': return <TakeoffMode projectId={projectId} />
+      case 'measurement-book': return <MeasurementBookMode />
+      case 'qcs': return <QcsMode />
+      case 'boq': return <BoqMode />
+      case 'pricing': return <PricingMode />
+      case 'payments': return <PaymentsMode />
+      case 'reports': return <ReportsMode project={project} />
+      case 'ai-assistant': return <AiAssistantMode projectId={projectId} />
     }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [])
+  }
+
+  const selectionLabel =
+    selection.type === 'boq' ? selection.boqItem?.description
+    : selection.type === 'drawing' ? selection.drawing?.name
+    : selection.type === 'measurement' ? selection.measurement?.description
+    : selection.type === 'library-item' ? selection.libraryItem?.description
+    : null
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] bg-[#0a0b0f] overflow-hidden">
-      {/* Workspace Header — obsidian chrome */}
-      <div className="flex items-center justify-between px-3 h-10 bg-[var(--color-surface)] border-b border-[var(--color-border)] shrink-0">
-        <div className="flex items-center gap-2.5">
-          {/* Amber accent dot */}
-          <div className="w-2 h-2 rounded-full bg-[var(--color-amber)]" />
-          <span className="text-[11px] font-bold text-[var(--color-text)] tracking-tight">Workspace</span>
-          <span className="text-[10px] font-mono text-[var(--color-text-muted)] truncate max-w-[160px]">{projectName}</span>
+    <div className="flex flex-col h-[calc(100vh-56px)] bg-[var(--background)] overflow-hidden">
+      {/* Top chrome */}
+      <div className="flex items-center gap-1 h-11 px-2 border-b border-[var(--color-border)] bg-[var(--color-surface)] shrink-0 overflow-x-auto">
+        <button
+          onClick={() => setLeftOpen(v => !v)}
+          title="Toggle explorer (⌘[)"
+          className={cn('hidden lg:flex p-1.5 rounded-[var(--radius-sm)] shrink-0', leftOpen ? 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]' : 'text-[var(--color-brand)] bg-[var(--color-brand-tint)]')}
+        >
+          <PanelLeft size={14} />
+        </button>
+        <button
+          onClick={() => setMobilePanel('explorer')}
+          title="Explorer"
+          className="lg:hidden p-1.5 rounded-[var(--radius-sm)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] shrink-0"
+        >
+          <PanelLeft size={14} />
+        </button>
+
+        <div className="w-px h-5 bg-[var(--color-border)] mx-0.5 shrink-0" />
+
+        <div className="flex items-stretch gap-0.5">
+          {MODES.map(m => (
+            <button
+              key={m.key}
+              onClick={() => setMode(m.key)}
+              title={`${m.label}`}
+              className={cn(
+                'relative flex items-center gap-1.5 px-2.5 h-11 text-[12.5px] font-medium whitespace-nowrap transition-colors',
+                mode === m.key ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
+              )}
+            >
+              <m.icon size={13} />
+              <span className="hidden xl:inline">{m.label}</span>
+              <span className={cn('absolute inset-x-1.5 bottom-0 h-[2px] rounded-full', mode === m.key ? 'bg-[var(--color-brand)]' : 'bg-transparent')} />
+            </button>
+          ))}
         </div>
 
-        <div className="flex items-center gap-2">
-          <ViewModeToggle />
-          <div className="w-px h-4 bg-[var(--color-border)]" />
-          <button
-            onClick={() => setLeftVisible(!leftVisible)}
-            className={cn(
-              'p-1.5 rounded-md transition-colors',
-              leftVisible
-                ? 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]'
-                : 'text-[var(--color-amber)] bg-[var(--color-amber)]/10'
-            )}
-            title="Toggle explorer (⌘[)"
-          >
-            <PanelLeftClose size={13} />
-          </button>
-          <button
-            onClick={() => setRightVisible(!rightVisible)}
-            className={cn(
-              'p-1.5 rounded-md transition-colors',
-              rightVisible
-                ? 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]'
-                : 'text-[var(--color-amber)] bg-[var(--color-amber)]/10'
-            )}
-            title="Toggle properties (⌘])"
-          >
-            <PanelRightClose size={13} />
-          </button>
-          <div className="hidden lg:flex items-center gap-0.5 text-[8px] text-[var(--color-text-muted)]">
-            <kbd className="px-1 py-0.5 bg-[var(--color-surface-elevated)] rounded border border-[var(--color-border)]">⌘[</kbd>
-            <kbd className="px-1 py-0.5 bg-[var(--color-surface-elevated)] rounded border border-[var(--color-border)]">⌘]</kbd>
-          </div>
-        </div>
+        <div className="flex-1 min-w-2" />
+
+        {selectionLabel && (
+          <span className="hidden md:inline text-[11px] text-[var(--color-text-muted)] truncate max-w-[220px] mx-2">
+            {selectionLabel}
+          </span>
+        )}
+
+        {showSidePanels && (
+          <>
+            <button
+              onClick={() => setRightOpen(v => !v)}
+              title="Toggle inspector (⌘])"
+              className={cn('hidden lg:flex p-1.5 rounded-[var(--radius-sm)] shrink-0', rightOpen ? 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]' : 'text-[var(--color-brand)] bg-[var(--color-brand-tint)]')}
+            >
+              <PanelRight size={14} />
+            </button>
+            <button
+              onClick={() => setMobilePanel('inspector')}
+              title="Inspector"
+              className="lg:hidden p-1.5 rounded-[var(--radius-sm)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] shrink-0"
+            >
+              <PanelRight size={14} />
+            </button>
+          </>
+        )}
       </div>
 
-      {/* Main Layout */}
+      {/* Body */}
       <div className="flex-1 flex overflow-hidden">
-        {/* LEFT: Project Explorer */}
-        {leftVisible && (
+        {showSidePanels && leftOpen && (
           <>
-            <div style={{ width: leftResize.size }} className="shrink-0 overflow-hidden">
+            <div style={{ width: leftResize.size }} className="hidden lg:block shrink-0 overflow-hidden border-e border-[var(--color-border)]">
               <LeftPanel />
             </div>
             <div
               onMouseDown={leftResize.handleMouseDown}
-              className={cn(
-                'w-1 shrink-0 cursor-col-resize group relative',
-                leftResize.isResizing ? 'bg-[var(--color-amber)]/20' : 'hover:bg-[var(--color-amber)]/10'
-              )}
-            >
-              <div className={cn(
-                'absolute inset-y-0 left-0 w-px',
-                leftResize.isResizing ? 'bg-[var(--color-amber)]' : 'bg-[var(--color-border)] group-hover:bg-[var(--color-amber)]/60'
-              )} />
-            </div>
+              className={cn('hidden lg:block w-1 shrink-0 cursor-col-resize', leftResize.isResizing ? 'bg-[var(--color-brand)]/20' : 'hover:bg-[var(--color-brand)]/10')}
+            />
           </>
         )}
 
-        {/* CENTER: Drawing Viewer / BIM / Split */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-hidden">
-            {viewMode === '2d' && <WorkspaceDrawingViewer />}
-            {viewMode === '3d' && <BimViewer />}
-            {viewMode === 'split' && (
-              <div className="flex h-full">
-                <div className="flex-1 overflow-hidden border-e border-[var(--color-border)]">
-                  <WorkspaceDrawingViewer />
-                </div>
-                <div className="flex-1 overflow-hidden">
-                  <BimViewer />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Bottom Dock resize handle */}
-          <div
-            onMouseDown={bottomResize.handleMouseDown}
-            className={cn(
-              'h-1 shrink-0 cursor-row-resize group relative',
-              bottomResize.isResizing ? 'bg-[var(--color-amber)]/20' : 'hover:bg-[var(--color-amber)]/10'
-            )}
-          >
-            <div className={cn(
-              'absolute inset-x-0 top-0 h-px',
-              bottomResize.isResizing ? 'bg-[var(--color-amber)]' : 'bg-[var(--color-border)] group-hover:bg-[var(--color-amber)]/60'
-            )} />
-          </div>
-          <div style={{ height: bottomResize.size }} className="shrink-0 overflow-hidden">
-            <BottomDock projectId={projectId} projectName={projectName} />
-          </div>
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+          <div className="flex-1 overflow-hidden">{renderMain()}</div>
+          {(mode === 'drawings' || mode === 'takeoff') && (
+            <div className="h-[220px] shrink-0 overflow-hidden hidden md:block">
+              <BottomDock projectId={projectId} projectName={project.name} />
+            </div>
+          )}
         </div>
 
-        {/* RIGHT: Dynamic Properties / Evidence Center */}
-        {rightVisible && (
+        {showSidePanels && rightOpen && (
           <>
             <div
               onMouseDown={e => {
                 e.preventDefault()
                 const startX = e.clientX
                 const startSize = rightResize.size
-                const onMove = (me: MouseEvent) => {
-                  const delta = startX - me.clientX
-                  rightResize.setSize(Math.max(280, Math.min(500, startSize + delta)))
-                }
+                const onMove = (me: MouseEvent) => rightResize.setSize(Math.max(280, Math.min(500, startSize + (startX - me.clientX))))
                 const onUp = () => {
                   document.removeEventListener('mousemove', onMove)
                   document.removeEventListener('mouseup', onUp)
                   document.body.style.cursor = ''
-                  document.body.style.userSelect = ''
                 }
                 document.addEventListener('mousemove', onMove)
                 document.addEventListener('mouseup', onUp)
                 document.body.style.cursor = 'col-resize'
-                document.body.style.userSelect = 'none'
               }}
-              className="w-1 shrink-0 cursor-col-resize group relative hover:bg-[var(--color-amber)]/10"
-            >
-              <div className="absolute inset-y-0 right-0 w-px bg-[var(--color-border)] group-hover:bg-[var(--color-amber)]/60" />
-            </div>
-            <div style={{ width: rightResize.size }} className="shrink-0 overflow-hidden">
+              className="hidden lg:block w-1 shrink-0 cursor-col-resize hover:bg-[var(--color-brand)]/10"
+            />
+            <div style={{ width: rightResize.size }} className="hidden lg:block shrink-0 overflow-hidden border-s border-[var(--color-border)]">
               <EvidenceCenter />
             </div>
           </>
         )}
       </div>
+
+      {/* Status bar */}
+      <div className="hidden sm:flex items-center gap-4 h-6 px-3 border-t border-[var(--color-border)] bg-[var(--color-surface)] shrink-0 text-[10.5px] font-mono text-[var(--color-text-muted)]">
+        <span>{project.currency}</span>
+        <span>Mode: {activeMode.label}</span>
+        <span className="flex-1" />
+        <Kbd keys={['1', '…', '9']} /> <span>modes</span>
+        <Kbd keys={['⌘', '[']} />
+        <Kbd keys={['⌘', ']']} />
+      </div>
+
+      {/* Mobile panel drawers */}
+      <Drawer isOpen={mobilePanel === 'explorer'} onClose={() => setMobilePanel(null)} title="Explorer" side="start">
+        <LeftPanel />
+      </Drawer>
+      <Drawer isOpen={mobilePanel === 'inspector'} onClose={() => setMobilePanel(null)} title="Inspector" side="end">
+        <EvidenceCenter />
+      </Drawer>
     </div>
   )
 }
@@ -223,13 +243,13 @@ export default function WorkspacePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<WorkspaceData | null>(null)
-  const [projectName, setProjectName] = useState('')
+  const [project, setProject] = useState<Project | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const [project, boqItems, drawings, measurementItems, categories, contract, costEntries, variations, rateAnalyses, payments, allRevisions, quantityChanges] = await Promise.all([
+      const [proj, boqItems, drawings, measurementItems, categories, contract, costEntries, variations, rateAnalyses, payments, allRevisions, quantityChanges] = await Promise.all([
         getProject(projectId),
         getBOQItems(projectId),
         getDrawings(projectId),
@@ -244,7 +264,7 @@ export default function WorkspacePage() {
         getQuantityChanges(projectId).catch(() => []),
       ])
 
-      setProjectName(project?.name ?? 'Project')
+      setProject(proj)
 
       const revisions: Record<string, DrawingRevision[]> = {}
       for (const rev of allRevisions) {
@@ -254,9 +274,9 @@ export default function WorkspacePage() {
 
       const drawingMeasurements: Record<string, DrawingMeasurement[]> = {}
       const dmResults = await Promise.all(
-        drawings.map(d => getDrawingMeasurements(d.id).catch(() => [] as DrawingMeasurement[]))
+        drawings.map((d: Drawing) => getDrawingMeasurements(d.id).catch(() => [] as DrawingMeasurement[]))
       )
-      drawings.forEach((d, i) => { drawingMeasurements[d.id] = dmResults[i] })
+      drawings.forEach((d: Drawing, i: number) => { drawingMeasurements[d.id] = dmResults[i] })
 
       let libraryItems: LibraryItem[] = []
       if (categories.length > 0) {
@@ -280,32 +300,29 @@ export default function WorkspacePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-140px)] bg-[#0a0b0f]">
+      <div className="flex items-center justify-center h-[calc(100vh-140px)]">
         <div className="flex flex-col items-center gap-5">
-          <div className="relative w-12 h-12">
-            <div className="absolute inset-0 rounded-full border-2 border-[var(--color-amber)]/20" />
-            <div className="absolute inset-0 rounded-full border-2 border-t-[var(--color-amber)] border-transparent animate-spin" />
+          <div className="relative w-10 h-10">
+            <div className="absolute inset-0 rounded-full border-2 border-[var(--color-brand)]/20" />
+            <div className="absolute inset-0 rounded-full border-2 border-t-[var(--color-brand)] border-transparent animate-spin" />
           </div>
-          <div className="text-center">
-            <p className="text-sm font-semibold text-[var(--color-text)]">Loading Workspace</p>
-            <p className="text-[11px] font-mono uppercase tracking-widest text-[var(--color-text-muted)] mt-1">Fetching project data…</p>
-          </div>
+          <p className="text-[11px] font-mono uppercase tracking-widest text-[var(--color-text-muted)]">Loading workspace…</p>
         </div>
       </div>
     )
   }
 
-  if (error || !data) {
+  if (error || !data || !project) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-140px)] bg-[#0a0b0f]">
+      <div className="flex items-center justify-center h-[calc(100vh-140px)]">
         <div className="flex flex-col items-center gap-4 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-[var(--color-danger-bg)] border border-[var(--color-danger)]/20 flex items-center justify-center">
-            <AlertTriangle size={24} className="text-[var(--color-danger)]" />
+          <div className="w-14 h-14 rounded-[var(--radius-xl)] bg-[var(--color-danger-tint)] flex items-center justify-center">
+            <AlertTriangle size={22} className="text-[var(--color-danger)]" />
           </div>
           <p className="text-sm text-[var(--color-danger)] max-w-xs">{error ?? 'Unknown error'}</p>
           <button
             onClick={load}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold uppercase tracking-wider bg-[var(--color-amber)] text-[var(--color-on-amber)] rounded-lg hover:opacity-90 transition-opacity"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-[var(--color-brand)] text-white rounded-[var(--radius-md)] hover:bg-[var(--color-brand-strong)]"
           >
             <RefreshCw size={12} /> Retry
           </button>
@@ -316,7 +333,7 @@ export default function WorkspacePage() {
 
   return (
     <WorkspaceProvider data={data}>
-      <WorkspaceInner projectId={projectId} projectName={projectName} />
+      <WorkspaceShell projectId={projectId} project={project} />
     </WorkspaceProvider>
   )
 }

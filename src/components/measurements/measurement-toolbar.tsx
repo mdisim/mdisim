@@ -101,7 +101,7 @@ export function MeasurementToolbar({
           </Button>
           <Button
             size="sm"
-            variant="accent"
+            variant="primary"
             disabled={selectedCount === 0}
             onClick={onGenerateBOQ}
           >

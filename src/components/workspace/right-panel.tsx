@@ -48,7 +48,7 @@ function LinkedItem({ icon: Icon, label, sublabel, onClick }: {
       onClick={onClick}
       className="w-full flex items-center gap-2.5 px-4 py-2 text-start hover:bg-[var(--color-surface-elevated)] transition-colors group"
     >
-      <Icon size={12} className="text-[var(--color-text-muted)] group-hover:text-[var(--color-amber)] transition-colors shrink-0" />
+      <Icon size={12} className="text-[var(--color-text-muted)] group-hover:text-[var(--color-brand)] transition-colors shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="text-[11px] text-[var(--color-text-secondary)] truncate">{label}</div>
         {sublabel && <div className="text-[10px] text-[var(--color-text-muted)] truncate">{sublabel}</div>}
@@ -97,8 +97,8 @@ function BOQDetail() {
       {/* Header */}
       <div className="px-4 py-3">
         <div className="flex items-center gap-2 mb-2">
-          <div className="p-1.5 rounded-lg bg-[var(--color-amber-cta)]/10">
-            <FileSpreadsheet size={14} className="text-[var(--color-amber)]" />
+          <div className="p-1.5 rounded-lg bg-[var(--color-brand)]/10">
+            <FileSpreadsheet size={14} className="text-[var(--color-brand)]" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-[10px] font-mono text-[var(--color-text-muted)]">{item.code ?? '—'}</div>
@@ -114,7 +114,7 @@ function BOQDetail() {
 
       {/* Properties */}
       <div>
-        <SectionTitle icon={Info} title="Properties" color="text-[var(--color-amber)]" />
+        <SectionTitle icon={Info} title="Properties" color="text-[var(--color-brand)]" />
         <div className="py-1">
           <PropRow label="Unit" value={item.unit} />
           <PropRow label="Quantity" value={fmt(item.quantity)} mono />
@@ -286,7 +286,7 @@ function DrawingDetail() {
       {/* Linked BOQ Items */}
       {linkedBoqItems.length > 0 && (
         <div>
-          <SectionTitle icon={FileSpreadsheet} title={`BOQ Items (${linkedBoqItems.length})`} color="text-[var(--color-amber)]" />
+          <SectionTitle icon={FileSpreadsheet} title={`BOQ Items (${linkedBoqItems.length})`} color="text-[var(--color-brand)]" />
           {linkedBoqItems.map(b => (
             <LinkedItem
               key={b.id}
@@ -391,7 +391,7 @@ function MeasurementDetail() {
 
       {linkedBoqItems.length > 0 && (
         <div>
-          <SectionTitle icon={FileSpreadsheet} title={`BOQ Items (${linkedBoqItems.length})`} color="text-[var(--color-amber)]" />
+          <SectionTitle icon={FileSpreadsheet} title={`BOQ Items (${linkedBoqItems.length})`} color="text-[var(--color-brand)]" />
           {linkedBoqItems.map(b => (
             <LinkedItem key={b.id} icon={FileSpreadsheet} label={b.description} sublabel={b.code ?? undefined} onClick={() => selectBoqItem(b)} />
           ))}
@@ -437,7 +437,7 @@ export function RightPanel() {
   const { selection } = useWorkspace()
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-[#0f1117] overflow-hidden">
+    <div className="flex flex-col h-full bg-white dark:bg-[var(--background)] overflow-hidden">
       {/* Panel header */}
       <div className="px-3 py-2.5 border-b border-[var(--color-border)]/60 dark:border-white/[0.04]">
         <div className="flex items-center gap-2">

@@ -60,7 +60,7 @@ function Badge({ children, color }: { children: React.ReactNode; color: string }
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400',
-  submitted: 'bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber-cta)]/10 text-[var(--color-amber)] dark:text-[var(--color-amber)]',
+  submitted: 'bg-[var(--color-brand)]/10 dark:bg-[var(--color-brand)]/10 text-[var(--color-brand)] dark:text-[var(--color-brand)]',
   approved: 'bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400',
   rejected: 'bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400',
   withdrawn: 'bg-[var(--color-surface-hover)] text-[var(--color-text-muted)]',
@@ -70,7 +70,7 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 const CHANGE_TYPE_COLORS: Record<string, string> = {
-  revision: 'bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber-cta)]/10 text-[var(--color-amber)]',
+  revision: 'bg-[var(--color-brand)]/10 dark:bg-[var(--color-brand)]/10 text-[var(--color-brand)]',
   correction: 'bg-amber-100 dark:bg-amber-500/10 text-amber-600',
   variation: 'bg-purple-100 dark:bg-purple-500/10 text-purple-600',
   remeasurement: 'bg-cyan-100 dark:bg-cyan-500/10 text-cyan-600',
@@ -157,7 +157,7 @@ export function EvidenceCenter() {
 
   if (!item) {
     return (
-      <div className="flex flex-col h-full bg-white dark:bg-[#0f1117] overflow-hidden">
+      <div className="flex flex-col h-full bg-white dark:bg-[var(--background)] overflow-hidden">
         <div className="px-3 py-2.5 border-b border-[var(--color-border)]/60 dark:border-white/[0.04]">
           <div className="flex items-center gap-2">
             <Layers size={13} className="text-[var(--color-text-muted)]" />
@@ -165,8 +165,8 @@ export function EvidenceCenter() {
           </div>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--color-amber)]/5 to-indigo-100 dark:from-[var(--color-amber)]/10 dark:to-indigo-900/20 flex items-center justify-center mb-3">
-            <FileSpreadsheet size={22} className="text-[var(--color-amber)] dark:text-[var(--color-amber)]" />
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--color-brand)]/5 to-indigo-100 dark:from-[var(--color-brand)]/10 dark:to-indigo-900/20 flex items-center justify-center mb-3">
+            <FileSpreadsheet size={22} className="text-[var(--color-brand)] dark:text-[var(--color-brand)]" />
           </div>
           <p className="text-[12px] font-semibold text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)] mb-1">Select a BOQ Item</p>
           <p className="text-[10px] text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] max-w-[200px] leading-relaxed">
@@ -183,15 +183,15 @@ export function EvidenceCenter() {
     : 0
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-[#0f1117] overflow-hidden">
+    <div className="flex flex-col h-full bg-white dark:bg-[var(--background)] overflow-hidden">
       <div className="px-3 py-2.5 border-b border-[var(--color-border)]/60 dark:border-white/[0.04]">
         <div className="flex items-center gap-2">
-          <Layers size={13} className="text-[var(--color-amber)]" />
-          <span className="text-[10px] font-bold text-[var(--color-amber)] dark:text-[var(--color-amber)] uppercase tracking-[0.08em]">Evidence Center</span>
+          <Layers size={13} className="text-[var(--color-brand)]" />
+          <span className="text-[10px] font-bold text-[var(--color-brand)] dark:text-[var(--color-brand)] uppercase tracking-[0.08em]">Evidence Center</span>
           <button
             onClick={handleGenerateReport}
             disabled={generating}
-            className="ml-auto flex items-center gap-1 px-2 py-1 text-[9px] font-semibold bg-gradient-to-r from-[var(--color-amber-cta)] to-indigo-600 text-white rounded-md hover:from-[var(--color-amber)] hover:to-[var(--color-amber-dark)] transition-all shadow-sm disabled:opacity-60"
+            className="ml-auto flex items-center gap-1 px-2 py-1 text-[9px] font-semibold bg-gradient-to-r from-[var(--color-brand)] to-indigo-600 text-white rounded-md hover:from-[var(--color-brand)] hover:to-[var(--color-brand-strong)] transition-all shadow-sm disabled:opacity-60"
           >
             {generating ? <Loader2 size={10} className="animate-spin" /> : <FileDown size={10} />}
             Evidence Report
@@ -210,7 +210,7 @@ export function EvidenceCenter() {
             {/* 1. Header */}
             <div className="px-4 py-4">
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-[var(--color-amber)] to-indigo-600 text-white shadow-md shrink-0">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-[var(--color-brand)] to-indigo-600 text-white shadow-md shrink-0">
                   <FileSpreadsheet size={16} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -222,7 +222,7 @@ export function EvidenceCenter() {
                         <Package size={8} className="mr-1" />{item.section}
                       </Badge>
                     )}
-                    <Badge color="bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber-cta)]/10 text-[var(--color-amber)] dark:text-[var(--color-amber)]">{item.unit}</Badge>
+                    <Badge color="bg-[var(--color-brand)]/10 dark:bg-[var(--color-brand)]/10 text-[var(--color-brand)] dark:text-[var(--color-brand)]">{item.unit}</Badge>
                   </div>
                 </div>
               </div>
@@ -230,13 +230,13 @@ export function EvidenceCenter() {
 
             {/* 2. Quantity & Formula */}
             <div>
-              <SectionTitle icon={Hash} title="Quantity & Formula" color="text-[var(--color-amber)]" />
+              <SectionTitle icon={Hash} title="Quantity & Formula" color="text-[var(--color-brand)]" />
               <div className="px-4 py-3">
                 <div className="grid grid-cols-2 gap-2 mb-3">
-                  <div className="bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber-cta)]/5 rounded-lg p-2.5 border border-[var(--color-amber)]/10 dark:border-[var(--color-amber)]/10">
-                    <div className="text-[9px] text-[var(--color-amber)] uppercase tracking-wider font-bold">Current Qty</div>
-                    <div className="text-[16px] font-bold tabular-nums text-[var(--color-amber)] dark:text-[var(--color-amber)] mt-0.5">{fmt(item.quantity)}</div>
-                    <div className="text-[9px] text-[var(--color-amber)]">{item.unit}</div>
+                  <div className="bg-[var(--color-brand)]/10 dark:bg-[var(--color-brand)]/5 rounded-lg p-2.5 border border-[var(--color-brand)]/10 dark:border-[var(--color-brand)]/10">
+                    <div className="text-[9px] text-[var(--color-brand)] uppercase tracking-wider font-bold">Current Qty</div>
+                    <div className="text-[16px] font-bold tabular-nums text-[var(--color-brand)] dark:text-[var(--color-brand)] mt-0.5">{fmt(item.quantity)}</div>
+                    <div className="text-[9px] text-[var(--color-brand)]">{item.unit}</div>
                   </div>
                   {item.total_amount != null && (
                     <div className="bg-emerald-50/80 dark:bg-emerald-500/5 rounded-lg p-2.5 border border-emerald-100 dark:border-emerald-500/10">
@@ -399,13 +399,13 @@ export function EvidenceCenter() {
                 <SectionTitle icon={DollarSign} title="Cost Breakdown" color="text-emerald-500" />
                 <div className="px-4 py-3">
                   <div className="h-3 rounded-full overflow-hidden flex mb-3">
-                    <div className="bg-[var(--color-amber-cta)] transition-all" style={{ width: `${(costBreakdown.mat / costBreakdown.total) * 100}%` }} />
+                    <div className="bg-[var(--color-brand)] transition-all" style={{ width: `${(costBreakdown.mat / costBreakdown.total) * 100}%` }} />
                     <div className="bg-amber-500 transition-all" style={{ width: `${(costBreakdown.lab / costBreakdown.total) * 100}%` }} />
                     <div className="bg-violet-500 transition-all" style={{ width: `${(costBreakdown.equip / costBreakdown.total) * 100}%` }} />
                   </div>
                   <div className="space-y-1.5">
                     {[
-                      { label: 'Material', value: costBreakdown.mat, color: 'bg-[var(--color-amber-cta)]' },
+                      { label: 'Material', value: costBreakdown.mat, color: 'bg-[var(--color-brand)]' },
                       { label: 'Labor', value: costBreakdown.lab, color: 'bg-amber-500' },
                       { label: 'Equipment', value: costBreakdown.equip, color: 'bg-violet-500' },
                     ].map(c => (

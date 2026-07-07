@@ -80,18 +80,18 @@ export function Modal({ isOpen, onClose, title, children, className, size = 'md'
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title ?? 'Dialog'}>
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title ?? 'Dialog'}>
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-[var(--color-surface-overlay)]"
         onClick={onClose}
         aria-hidden="true"
       />
       <div
         ref={modalRef}
         className={cn(
-          'glass-card relative rounded-[var(--radius-lg)] shadow-[var(--shadow-2xl)] w-full max-h-[90vh] overflow-y-auto',
-          'animate-in fade-in zoom-in-95 duration-200',
-          'bg-[var(--color-surface-elevated)]',
+          'relative rounded-[var(--radius-xl)] shadow-[var(--shadow-xl)] w-full max-h-[90vh] overflow-y-auto',
+          'animate-scale-in',
+          'bg-[var(--color-surface-elevated)] border border-[var(--color-border)]',
           sizes[size],
           className
         )}

@@ -29,7 +29,7 @@ function TableRow({ className, ...props }: HTMLAttributes<HTMLTableRowElement>) 
   return (
     <tr
       className={cn(
-        'hover:bg-[var(--color-amber)]/[0.06] transition-colors',
+        'hover:bg-[var(--color-brand)]/[0.06] transition-colors',
         className
       )}
       {...props}
