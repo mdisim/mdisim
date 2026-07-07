@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
-import { Hanken_Grotesk } from 'next/font/google'
+import { Geist, Geist_Mono } from 'next/font/google'
 import { ToastProvider } from '@/components/ui/toast'
 import './globals.css'
 
-const hankenGrotesk = Hanken_Grotesk({ subsets: ['latin'] })
+const geistSans = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
+const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' })
 
 export const metadata: Metadata = {
   title: 'ANGEL D.C. — Construction Intelligence Platform',
@@ -17,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
-      <body className={`${hankenGrotesk.className} h-full`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} h-full`}>
         <script dangerouslySetInnerHTML={{__html: `
   (function(){
     try {

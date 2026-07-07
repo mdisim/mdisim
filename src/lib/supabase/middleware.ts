@@ -40,8 +40,10 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password')
   const isApiRoute = pathname.startsWith('/api/')
+  // Design-QA harness renders fixture data with no real session — exempt like an auth page, not linked from product nav.
+  const isPreviewRoute = pathname.startsWith('/preview')
 
-  if (!user && !isAuthPage && !isApiRoute) {
+  if (!user && !isAuthPage && !isApiRoute && !isPreviewRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
