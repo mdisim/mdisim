@@ -28,8 +28,8 @@ const TABS: { id: Tab; label: string; icon: typeof Ruler }[] = [
 
 function MeasurementTypeIcon({ type }: { type: string }) {
   if (type === 'area') return <Square size={12} className="text-[var(--color-amber)]" />
-  if (type === 'length') return <ArrowUpDown size={12} className="text-[var(--color-info-light)]" />
-  if (type === 'count') return <Hash size={12} className="text-[var(--color-success-light)]" />
+  if (type === 'length') return <ArrowUpDown size={12} className="text-[var(--color-info)]" />
+  if (type === 'count') return <Hash size={12} className="text-[var(--color-success)]" />
   if (type === 'volume') return <Layers size={12} className="text-[var(--color-amber)]" />
   if (type === 'formula') return <Calculator size={12} className="text-[var(--color-text-muted)]" />
   return <BarChart3 size={12} className="text-[var(--color-text-muted)]" />
@@ -114,7 +114,7 @@ export function BOQEvidenceCenter({ isOpen, onClose, boqItem, projectId }: BOQEv
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed inset-y-0 end-0 z-50 w-full max-w-[520px] bg-[var(--color-surface-low)] border-s border-[var(--color-border)] flex flex-col shadow-2xl"
+            className="fixed inset-y-0 end-0 z-50 w-full max-w-[520px] bg-[var(--color-surface-sunken)] border-s border-[var(--color-border)] flex flex-col shadow-2xl"
           >
             {/* Header */}
             <div className="flex items-start justify-between px-5 py-4 border-b border-[var(--color-border)] shrink-0">
@@ -195,7 +195,7 @@ export function BOQEvidenceCenter({ isOpen, onClose, boqItem, projectId }: BOQEv
                                     {l.length != null && <span className="font-mono text-[var(--color-text-muted)]">{l.length}</span>}
                                     {l.width != null && <span className="font-mono text-[var(--color-text-muted)]">×{l.width}</span>}
                                     {l.height != null && <span className="font-mono text-[var(--color-text-muted)]">×{l.height}</span>}
-                                    <span className={cn('font-mono ms-auto', l.is_deduction ? 'text-[var(--color-danger-light)]' : 'text-[var(--color-text)]')}>
+                                    <span className={cn('font-mono ms-auto', l.is_deduction ? 'text-[var(--color-danger)]' : 'text-[var(--color-text)]')}>
                                       {l.is_deduction ? '-' : ''}{fmt(l.quantity ?? 0)}
                                     </span>
                                   </div>
@@ -322,7 +322,7 @@ export function BOQEvidenceCenter({ isOpen, onClose, boqItem, projectId }: BOQEv
                           {boqItem.quantity_difference != null && boqItem.quantity_difference !== 0 && (
                             <div className="flex items-center gap-2">
                               <span className="text-[var(--color-text-muted)] w-28">Difference</span>
-                              <span className={cn('font-mono', boqItem.quantity_difference > 0 ? 'text-[var(--color-success-light)]' : 'text-[var(--color-danger-light)]')}>
+                              <span className={cn('font-mono', boqItem.quantity_difference > 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]')}>
                                 {boqItem.quantity_difference > 0 ? '+' : ''}{fmt(boqItem.quantity_difference)}
                               </span>
                               <span className="text-[var(--color-text-muted)]">{boqItem.unit}</span>

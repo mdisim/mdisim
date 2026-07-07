@@ -7,12 +7,13 @@ import { getBOQItems } from '@/app/actions/boq'
 import { getDrawings, getDrawingMeasurements } from '@/app/actions/drawings'
 import { getMeasurementItems } from '@/app/actions/measurements'
 import { getLibraryCategories, getLibraryItems } from '@/app/actions/library'
-import { getContract, getCostEntries, getVariations } from '@/app/actions/cost-control'
+import { getContract, getCostEntries, getVariations, getCashflow } from '@/app/actions/cost-control'
 import { getRateAnalyses } from '@/app/actions/rate-analysis'
 import { getPaymentCerts } from '@/app/actions/payments'
 import { getDrawingRevisionsForProject } from '@/app/actions/drawing-revisions'
 import { getQuantityChanges } from '@/app/actions/drawing-revisions'
 import { getProject } from '@/app/actions/projects'
+import { getTenders } from '@/app/actions/tenders'
 
 import type {
   Drawing, DrawingRevision, DrawingMeasurement, LibraryItem, Project,
@@ -28,6 +29,7 @@ function WorkspacePageInner() {
   const searchParams = useSearchParams()
   const requestedMode = searchParams.get('mode')
   const initialMode = MODES.find(m => m.key === requestedMode)?.key as Mode | undefined
+  const initialDrawingId = searchParams.get('drawing') ?? undefined
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -38,7 +40,7 @@ function WorkspacePageInner() {
     setLoading(true)
     setError(null)
     try {
-      const [proj, boqItems, drawings, measurementItems, categories, contract, costEntries, variations, rateAnalyses, payments, allRevisions, quantityChanges] = await Promise.all([
+      const [proj, boqItems, drawings, measurementItems, categories, contract, costEntries, variations, rateAnalyses, payments, allRevisions, quantityChanges, tenders, cashflow] = await Promise.all([
         getProject(projectId),
         getBOQItems(projectId),
         getDrawings(projectId),
@@ -51,6 +53,8 @@ function WorkspacePageInner() {
         getPaymentCerts(projectId).catch(() => []),
         getDrawingRevisionsForProject(projectId).catch(() => []),
         getQuantityChanges(projectId).catch(() => []),
+        getTenders(projectId).catch(() => []),
+        getCashflow(projectId).catch(() => []),
       ])
 
       setProject(proj)
@@ -76,7 +80,7 @@ function WorkspacePageInner() {
       setData({
         boqItems, drawings, measurementItems, categories, libraryItems,
         contract, costEntries, variations, revisions, rateAnalyses,
-        payments, drawingMeasurements, quantityChanges,
+        payments, drawingMeasurements, quantityChanges, tenders, cashflow,
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load workspace data')
@@ -127,7 +131,7 @@ function WorkspacePageInner() {
 
   return (
     <WorkspaceProvider data={data} reload={load}>
-      <WorkspaceShell projectId={projectId} project={project} initialMode={initialMode} />
+      <WorkspaceShell projectId={projectId} project={project} initialMode={initialMode} initialDrawingId={initialDrawingId} />
     </WorkspaceProvider>
   )
 }

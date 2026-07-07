@@ -111,7 +111,7 @@ export function CalibrationDialog({
             className={cn(
               'px-4 py-2 text-sm rounded-lg font-medium transition-colors',
               realLength && parseFloat(realLength) > 0
-                ? 'bg-[var(--color-amber-cta)] text-white hover:bg-[var(--color-amber-cta)]'
+                ? 'bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand)]'
                 : 'bg-[var(--color-surface)] text-[var(--color-text-muted)] cursor-not-allowed',
             )}
           >

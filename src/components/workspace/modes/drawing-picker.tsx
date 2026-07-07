@@ -16,12 +16,13 @@ import { FileImage, Upload, AlertTriangle } from 'lucide-react'
 const ALLOWED_EXTENSIONS = ['pdf', 'dwg', 'dxf', 'png', 'jpg', 'jpeg']
 
 /** Shared sheet-picker grid for Drawings and Takeoff modes — keeps the "choose a sheet" moment identical everywhere it appears. Carries its own upload flow so a first-time user never has to leave the instrument to get a drawing in. */
-export function DrawingPicker({ drawings, projectId, eyebrow, emptyTitle, onSelect }: {
+export function DrawingPicker({ drawings, projectId, eyebrow, emptyTitle, onSelect, footer }: {
   drawings: Drawing[]
   projectId: string
   eyebrow: string
   emptyTitle: string
   onSelect: (d: Drawing) => void
+  footer?: React.ReactNode
 }) {
   const { reload } = useWorkspace()
   const { toast } = useToast()
@@ -177,6 +178,7 @@ export function DrawingPicker({ drawings, projectId, eyebrow, emptyTitle, onSele
           </button>
         ))}
       </div>
+      {footer && <div className="mt-5">{footer}</div>}
       {uploadModal}
     </div>
   )

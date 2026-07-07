@@ -88,7 +88,7 @@ function ToolButton({
       className={cn(
         'p-2 rounded-md transition-colors relative group',
         active
-          ? 'bg-gradient-to-b from-[var(--color-amber)] to-[var(--color-amber-cta)] text-white shadow-sm'
+          ? 'bg-gradient-to-b from-[var(--color-amber)] to-[var(--color-brand)] text-white shadow-sm'
           : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] dark:text-[var(--color-text-secondary)] dark:hover:bg-[var(--color-surface-hover)]',
         className,
       )}
@@ -293,7 +293,7 @@ export const TakeoffToolbar = React.memo(function TakeoffToolbar({
               'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors',
               isAIAnalyzing
                 ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-500 animate-pulse'
-                : 'bg-gradient-to-r from-violet-500 to-[var(--color-amber)] text-white hover:from-violet-600 hover:to-[var(--color-amber-cta)] shadow-sm',
+                : 'bg-gradient-to-r from-violet-500 to-[var(--color-amber)] text-white hover:from-violet-600 hover:to-[var(--color-brand)] shadow-sm',
             )}
           >
             <Brain size={16} className={isAIAnalyzing ? 'animate-spin' : ''} />

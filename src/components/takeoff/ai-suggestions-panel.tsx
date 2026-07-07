@@ -111,7 +111,7 @@ function ElementCard({
         'border rounded-lg transition-all',
         status === 'approved'
           ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-900/10 opacity-70'
-          : 'border-[var(--color-border)] dark:border-[var(--color-border)] hover:border-[var(--color-amber)]/30 dark:hover:border-[var(--color-amber-cta)]',
+          : 'border-[var(--color-border)] dark:border-[var(--color-border)] hover:border-[var(--color-amber)]/30 dark:hover:border-[var(--color-brand)]',
       )}
       onMouseEnter={() => onHighlight(element)}
       onMouseLeave={() => onHighlight(null)}
@@ -192,7 +192,7 @@ function ElementCard({
               </div>
               <div className="flex gap-1 justify-end">
                 <button onClick={() => setEditing(false)} className="px-2 py-1 text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text)]">Cancel</button>
-                <button onClick={() => setEditing(false)} className="px-2 py-1 text-[10px] bg-[var(--color-amber-cta)] text-white rounded hover:bg-[var(--color-amber-cta)]">Save</button>
+                <button onClick={() => setEditing(false)} className="px-2 py-1 text-[10px] bg-[var(--color-brand)] text-white rounded hover:bg-[var(--color-brand)]">Save</button>
               </div>
             </div>
           ) : null}
@@ -432,7 +432,7 @@ export function AISuggestionsPanel({
             </div>
             <button
               onClick={onAnalyze}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-[var(--color-amber-cta)] text-white rounded-lg hover:from-violet-700 hover:to-[var(--color-amber-dark)] transition-colors text-sm font-medium shadow-md"
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-[var(--color-brand)] text-white rounded-lg hover:from-violet-700 hover:to-[var(--color-amber-dark)] transition-colors text-sm font-medium shadow-md"
             >
               <Brain size={18} />
               Analyze Drawing

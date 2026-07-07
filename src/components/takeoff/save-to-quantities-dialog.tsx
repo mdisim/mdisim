@@ -133,7 +133,7 @@ export function SaveToQuantitiesDialog({
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, x: 20, scale: 0.97 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute bottom-20 end-4 z-30 w-80 rounded-2xl border border-[var(--color-amber)]/30 bg-[var(--color-surface-low)] shadow-2xl overflow-hidden"
+          className="absolute bottom-20 end-4 z-30 w-80 rounded-2xl border border-[var(--color-amber)]/30 bg-[var(--color-surface-sunken)] shadow-2xl overflow-hidden"
         >
           {/* Amber top border */}
           <div className="h-px bg-gradient-to-r from-transparent via-[var(--color-amber)]/40 to-transparent" />
@@ -207,7 +207,7 @@ export function SaveToQuantitiesDialog({
                 className={cn(
                   'flex-1 h-8 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all',
                   saved
-                    ? 'bg-[var(--color-success-light)] text-white'
+                    ? 'bg-[var(--color-success)] text-white'
                     : 'bg-[var(--color-amber)] text-[var(--color-on-amber)] hover:opacity-90 disabled:opacity-50',
                 )}
               >

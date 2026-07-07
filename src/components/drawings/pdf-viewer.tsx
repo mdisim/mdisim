@@ -147,7 +147,7 @@ export function PdfViewer({ url }: PdfViewerProps) {
       >
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="animate-spin h-8 w-8 border-4 border-[var(--color-amber-cta)] border-t-transparent rounded-full" />
+            <div className="animate-spin h-8 w-8 border-4 border-[var(--color-brand)] border-t-transparent rounded-full" />
           </div>
         ) : (
           <canvas

@@ -79,7 +79,7 @@ export function HelpDialog({
             <section>
               <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-2">Switch mode</h4>
               <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-                {modes.map((m, i) => (
+                {modes.slice(0, 9).map((m, i) => (
                   <div key={m.key} className="flex items-center justify-between gap-3 py-1">
                     <span className="flex items-center gap-2 text-[13px] text-[var(--color-text)]">
                       <m.icon size={13} className="text-[var(--color-text-muted)]" />
@@ -89,6 +89,19 @@ export function HelpDialog({
                   </div>
                 ))}
               </div>
+              {modes.length > 9 && (
+                <div className="mt-3 pt-3 border-t border-[var(--color-border)]">
+                  <p className="text-[11px] text-[var(--color-text-muted)] mb-2">Also in this workspace — no shortcut, click the icon or use ⌘P:</p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                    {modes.slice(9).map(m => (
+                      <span key={m.key} className="flex items-center gap-2 text-[13px] text-[var(--color-text-secondary)] py-1">
+                        <m.icon size={13} className="text-[var(--color-text-muted)]" />
+                        {m.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </section>
             <section>
               <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-2">Workspace</h4>

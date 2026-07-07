@@ -75,7 +75,7 @@ export function ScaleManager({
       >
         <div className="flex-shrink-0 w-1.5 h-1.5 rounded-full" >
           {isActive && (
-            <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-amber-cta)]" />
+            <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-brand)]" />
           )}
         </div>
 

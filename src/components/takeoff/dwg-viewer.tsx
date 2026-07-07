@@ -772,7 +772,7 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
     if (converting) {
       return (
         <div className="flex flex-col h-full items-center justify-center gap-6 p-8">
-          <div className="animate-spin h-10 w-10 border-4 border-[var(--color-amber-cta)] border-t-transparent rounded-full" />
+          <div className="animate-spin h-10 w-10 border-4 border-[var(--color-brand)] border-t-transparent rounded-full" />
           <div className="text-center max-w-md">
             <h3 className="text-lg font-semibold text-[var(--color-text-muted)] dark:text-[var(--color-text)] mb-2">Converting DWG to DXF...</h3>
             <p className="text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] leading-relaxed">
@@ -793,12 +793,12 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
             <p className="text-sm text-red-600 dark:text-red-400 mb-3">{convertError}</p>
             <button
               onClick={() => { setConvertError(null); setConvertLog([]); setConvertedDxfUrl(null); setConvertRetry(r => r + 1); }}
-              className="px-4 py-2 mb-3 bg-[var(--color-amber-cta)] text-white text-sm font-medium rounded-lg hover:bg-[var(--color-amber-cta)] transition-colors"
+              className="px-4 py-2 mb-3 bg-[var(--color-brand)] text-white text-sm font-medium rounded-lg hover:bg-[var(--color-brand-strong)] transition-colors"
             >
               Retry Conversion
             </button>
             {convertLog.length > 0 && (
-              <div className="text-left bg-[var(--color-surface)] dark:bg-[#0e0e10] rounded-lg p-3 max-h-64 overflow-y-auto">
+              <div className="text-left bg-[var(--color-surface-sunken)] rounded-lg p-3 max-h-64 overflow-y-auto">
                 <p className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase mb-1.5">Pipeline Log</p>
                 {convertLog.map((line, i) => (
                   <p key={i} className="text-[11px] font-mono text-[var(--color-text-secondary)] leading-relaxed">{line}</p>
@@ -876,7 +876,7 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
             {loading ? (
               <div className="flex items-center justify-center h-full">
                 <div className="flex flex-col items-center gap-3">
-                  <div className="animate-spin h-8 w-8 border-4 border-[var(--color-amber-cta)] border-t-transparent rounded-full" />
+                  <div className="animate-spin h-8 w-8 border-4 border-[var(--color-brand)] border-t-transparent rounded-full" />
                   <p className="text-xs text-[var(--color-text-muted)]">Parsing DXF file...</p>
                 </div>
               </div>
@@ -911,7 +911,7 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
         {showPanel && (
           <>
             <div
-              className="w-1 flex-shrink-0 cursor-col-resize bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] hover:bg-[var(--color-amber-cta)] dark:hover:bg-[var(--color-amber-cta)] active:bg-[var(--color-amber-cta)] transition-colors relative group"
+              className="w-1 flex-shrink-0 cursor-col-resize bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] hover:bg-[var(--color-brand)] dark:hover:bg-[var(--color-brand)] active:bg-[var(--color-brand)] transition-colors relative group"
               onMouseDown={(e) => {
                 e.preventDefault()
                 panelDragRef.current = { startX: e.clientX, startW: panelWidth }
@@ -933,7 +933,7 @@ export function DwgViewer({ drawingId, projectId, drawingUrl, drawingName, drawi
                 document.addEventListener('mouseup', onUp)
               }}
             >
-              <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] group-hover:bg-[var(--color-amber-cta)] dark:group-hover:bg-[var(--color-amber-cta)] transition-colors" />
+              <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] group-hover:bg-[var(--color-brand)] dark:group-hover:bg-[var(--color-brand)] transition-colors" />
             </div>
             <div style={{ width: panelWidth }} className="flex-shrink-0 flex flex-col bg-white dark:bg-[var(--color-surface-elevated)]">
               <div className="flex flex-col" style={{ height: '45%', minHeight: 120 }}>

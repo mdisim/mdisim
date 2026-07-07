@@ -1534,7 +1534,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
             {loading ? (
               <div className="flex items-center justify-center h-full">
                 <div className="flex flex-col items-center gap-3">
-                  <div className="animate-spin h-8 w-8 border-4 border-[var(--color-amber-cta)] border-t-transparent rounded-full" />
+                  <div className="animate-spin h-8 w-8 border-4 border-[var(--color-brand)] border-t-transparent rounded-full" />
                   <p className="text-xs text-[var(--color-text-muted)]">Loading drawing...</p>
                 </div>
               </div>
@@ -1592,7 +1592,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
         {showPanel && (
           <>
           <div
-            className="w-1 flex-shrink-0 cursor-col-resize bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] hover:bg-[var(--color-amber-cta)] dark:hover:bg-[var(--color-amber-cta)] active:bg-[var(--color-amber-cta)] transition-colors relative group"
+            className="w-1 flex-shrink-0 cursor-col-resize bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] hover:bg-[var(--color-brand)] dark:hover:bg-[var(--color-brand)] active:bg-[var(--color-brand)] transition-colors relative group"
             onMouseDown={(e) => {
               e.preventDefault()
               panelDragRef.current = { startX: e.clientX, startW: panelWidth }
@@ -1614,7 +1614,7 @@ export function TakeoffViewer({ drawingId, projectId, drawingUrl, pageCount, dra
               document.addEventListener('mouseup', onUp)
             }}
           >
-            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] group-hover:bg-[var(--color-amber-cta)] dark:group-hover:bg-[var(--color-amber-cta)] transition-colors" />
+            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] group-hover:bg-[var(--color-brand)] dark:group-hover:bg-[var(--color-brand)] transition-colors" />
           </div>
           <div style={{ width: panelWidth }} className="flex-shrink-0 flex flex-col bg-white dark:bg-[var(--color-surface-elevated)]">
             {/* Top half: Measurements + Scales */}

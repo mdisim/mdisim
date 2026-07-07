@@ -69,7 +69,7 @@ export function MeasurementToolbar({
       {/* Page Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-[var(--color-info)] to-[var(--color-info-light)] text-white shadow-lg shadow-blue-500/20">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-[var(--color-info)] to-[var(--color-info)] text-white shadow-lg shadow-blue-500/20">
             <BookOpen size={22} />
           </div>
           <div>

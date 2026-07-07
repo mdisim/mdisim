@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { useWorkspace } from '../workspace-context'
+import { useModeSwitch } from '../mode-switch-context'
+import { EmptyState } from '@/components/ui/empty-state'
 import { FileBarChart, FileSpreadsheet, Receipt, Ruler, Download, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Project } from '@/lib/types'
@@ -11,12 +13,15 @@ interface ReportDef {
   title: string
   description: string
   icon: typeof FileBarChart
+  count: number
+  emptyNote: string
   run: (fmt: 'pdf' | 'xlsx') => void | Promise<void>
   formats: ('pdf' | 'xlsx')[]
 }
 
 export function ReportsMode({ project }: { project: Project }) {
   const { data } = useWorkspace()
+  const setMode = useModeSwitch()
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -38,6 +43,8 @@ export function ReportsMode({ project }: { project: Project }) {
       title: 'BOQ Summary',
       description: `${data.boqItems.length} priced items across ${new Set(data.boqItems.map(i => i.section)).size} sections`,
       icon: FileSpreadsheet,
+      count: data.boqItems.length,
+      emptyNote: 'Price BOQ items before exporting a summary.',
       formats: ['pdf', 'xlsx'],
       run: async (fmt) => {
         const { exportBOQToPDF } = await import('@/lib/export/boq-pdf')
@@ -52,6 +59,8 @@ export function ReportsMode({ project }: { project: Project }) {
       title: 'Measurement Book',
       description: `${data.measurementItems.length} dimension-sheet items`,
       icon: Ruler,
+      count: data.measurementItems.length,
+      emptyNote: 'Take off some measurements before exporting the book.',
       formats: ['pdf', 'xlsx'],
       run: async (fmt) => {
         if (fmt === 'pdf') {
@@ -68,6 +77,8 @@ export function ReportsMode({ project }: { project: Project }) {
       title: 'Progress Payment Certificates',
       description: `${data.payments.length} certificates issued`,
       icon: Receipt,
+      count: data.payments.length,
+      emptyNote: 'Issue a payment certificate before exporting one.',
       formats: ['pdf', 'xlsx'],
       run: async (fmt) => {
         if (fmt === 'pdf') {
@@ -81,6 +92,20 @@ export function ReportsMode({ project }: { project: Project }) {
     },
   ]
 
+  const allEmpty = reports.every(r => r.count === 0)
+
+  if (allEmpty) {
+    return (
+      <EmptyState
+        icon={FileBarChart}
+        title="Nothing to report yet"
+        description="Reports export what's already in the project — price some BOQ items, take off measurements, or issue a payment certificate first."
+        actionLabel="Go to BOQ"
+        onAction={() => setMode('boq')}
+      />
+    )
+  }
+
   return (
     <div className="h-full overflow-y-auto p-6">
       {error && (
@@ -89,33 +114,40 @@ export function ReportsMode({ project }: { project: Project }) {
         </div>
       )}
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
-        {reports.map(r => (
-          <div key={r.key} className="surface-elevated rounded-[var(--radius-xl)] border border-[var(--color-border)] p-4 flex flex-col gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--color-brand-tint)] flex items-center justify-center text-[var(--color-brand)] shrink-0">
-                <r.icon size={16} />
+        {reports.map(r => {
+          const empty = r.count === 0
+          return (
+            <div key={r.key} className="surface-elevated rounded-[var(--radius-xl)] border border-[var(--color-border)] p-4 flex flex-col gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--color-brand-tint)] flex items-center justify-center text-[var(--color-brand)] shrink-0">
+                  <r.icon size={16} />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-[13px] font-semibold text-[var(--color-text)] truncate">{r.title}</h4>
+                  <p className="text-[11px] text-[var(--color-text-muted)] truncate">{r.description}</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <h4 className="text-[13px] font-semibold text-[var(--color-text)] truncate">{r.title}</h4>
-                <p className="text-[11px] text-[var(--color-text-muted)] truncate">{r.description}</p>
-              </div>
+              {empty ? (
+                <p className="text-[11.5px] text-[var(--color-text-muted)] italic mt-auto">{r.emptyNote}</p>
+              ) : (
+                <div className="flex gap-2 mt-auto">
+                  {r.formats.map(fmt => (
+                    <Button
+                      key={fmt}
+                      variant="secondary"
+                      size="sm"
+                      loading={busy === `${r.key}-${fmt}`}
+                      onClick={() => runSafely(`${r.key}-${fmt}`, () => r.run(fmt))}
+                      className="flex-1"
+                    >
+                      <Download size={12} /> {fmt.toUpperCase()}
+                    </Button>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="flex gap-2 mt-auto">
-              {r.formats.map(fmt => (
-                <Button
-                  key={fmt}
-                  variant="secondary"
-                  size="sm"
-                  loading={busy === `${r.key}-${fmt}`}
-                  onClick={() => runSafely(`${r.key}-${fmt}`, () => r.run(fmt))}
-                  className="flex-1"
-                >
-                  <Download size={12} /> {fmt.toUpperCase()}
-                </Button>
-              ))}
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

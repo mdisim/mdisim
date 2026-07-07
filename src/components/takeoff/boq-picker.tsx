@@ -159,7 +159,7 @@ export function BOQPicker({
         <div className="max-h-[340px] overflow-y-auto border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-lg">
           {loading ? (
             <div className="p-6 text-center">
-              <div className="animate-spin h-6 w-6 border-2 border-[var(--color-amber-cta)] border-t-transparent rounded-full mx-auto" />
+              <div className="animate-spin h-6 w-6 border-2 border-[var(--color-brand)] border-t-transparent rounded-full mx-auto" />
             </div>
           ) : filtered.length === 0 ? (
             <div className="p-6 text-center text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">
@@ -212,7 +212,7 @@ export function BOQPicker({
                               ? 'bg-emerald-50 dark:bg-emerald-900/20'
                               : isLinking
                                 ? 'bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber)]/10'
-                                : 'hover:bg-[var(--color-amber-cta)] dark:hover:bg-[var(--color-amber)]/10',
+                                : 'hover:bg-[var(--color-brand)] dark:hover:bg-[var(--color-amber)]/10',
                           )}
                         >
                           <div className="flex-1 min-w-0">
@@ -249,7 +249,7 @@ export function BOQPicker({
                                 <Check size={12} /> Linked
                               </span>
                             ) : isLinking ? (
-                              <span className="animate-spin h-4 w-4 border-2 border-[var(--color-amber-cta)] border-t-transparent rounded-full" />
+                              <span className="animate-spin h-4 w-4 border-2 border-[var(--color-brand)] border-t-transparent rounded-full" />
                             ) : (
                               <span className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-[var(--color-amber)] dark:text-[var(--color-amber)] bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber)]/10 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Link2 size={10} />

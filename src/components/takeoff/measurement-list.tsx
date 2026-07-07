@@ -341,7 +341,7 @@ export const MeasurementList = React.memo(function MeasurementList({
                   onLinkToBOQ([contextMenu.id])
                   setContextMenu(null)
                 }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-amber-cta)] dark:hover:bg-[var(--color-amber)]/10 transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-brand)] dark:hover:bg-[var(--color-amber)]/10 transition-colors"
               >
                 <Link2 size={14} className="text-[var(--color-amber)]" />
                 Link to BOQ

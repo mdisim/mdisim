@@ -111,7 +111,7 @@ function MessageBubble({ message }: { message: CopilotMessage }) {
     <div className={cn('flex gap-2', isUser ? 'flex-row-reverse' : 'flex-row')}>
       <div className={cn(
         'w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5',
-        isUser ? 'bg-[var(--color-info-bg)] dark:bg-[var(--color-info-bg)]/30' : 'bg-gradient-to-br from-violet-100 to-[var(--color-info-light)] dark:from-violet-900/30 dark:to-[var(--color-info-light)]/30',
+        isUser ? 'bg-[var(--color-info-bg)] dark:bg-[var(--color-info-bg)]/30' : 'bg-gradient-to-br from-violet-100 to-[var(--color-info)] dark:from-violet-900/30 dark:to-[var(--color-info)]/30',
       )}>
         {isUser ? <User size={14} className="text-[var(--color-info)]" /> : <Bot size={14} className="text-violet-600" />}
       </div>
@@ -309,7 +309,7 @@ export function CopilotChat({ projectId, projectName, currentPage }: CopilotChat
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-violet-600 to-[var(--color-info-light)] text-white rounded-full shadow-lg hover:shadow-xl hover:from-violet-700 hover:to-[var(--color-info-light)] transition-all group"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-violet-600 to-[var(--color-info)] text-white rounded-full shadow-lg hover:shadow-xl hover:from-violet-700 hover:to-[var(--color-info)] transition-all group"
         title="AI Copilot"
       >
         <div className="relative">
@@ -331,10 +331,10 @@ export function CopilotChat({ projectId, projectName, currentPage }: CopilotChat
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)] dark:border-[var(--color-border)] bg-gradient-to-r from-violet-50 to-[var(--color-info-light)] dark:from-violet-900/20 dark:to-[var(--color-info-light)]/20 rounded-t-2xl">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)] dark:border-[var(--color-border)] bg-gradient-to-r from-violet-50 to-[var(--color-info)] dark:from-violet-900/20 dark:to-[var(--color-info)]/20 rounded-t-2xl">
         <div className="flex items-center gap-2.5">
           <div className="relative">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-[var(--color-info-light)] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-[var(--color-info)] flex items-center justify-center">
               <Bot size={18} className="text-white" />
             </div>
             <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white dark:border-[var(--color-border)]" />
@@ -366,7 +366,7 @@ export function CopilotChat({ projectId, projectName, currentPage }: CopilotChat
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
         {messages.length === 0 && (
           <div className="flex flex-col items-center pt-4 pb-2">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-100 to-[var(--color-info-light)] dark:from-violet-900/20 dark:to-[var(--color-info-light)]/20 flex items-center justify-center mb-3">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-100 to-[var(--color-info)] dark:from-violet-900/20 dark:to-[var(--color-info)]/20 flex items-center justify-center mb-3">
               <Sparkles size={26} className="text-violet-500" />
             </div>
             <h4 className="text-sm font-semibold text-[var(--color-text)] dark:text-[var(--color-text)] mb-1">How can I help?</h4>
@@ -393,7 +393,7 @@ export function CopilotChat({ projectId, projectName, currentPage }: CopilotChat
 
         {isLoading && (
           <div className="flex gap-2">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-100 to-[var(--color-info-light)] dark:from-violet-900/30 dark:to-[var(--color-info-light)]/30 flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-100 to-[var(--color-info)] dark:from-violet-900/30 dark:to-[var(--color-info)]/30 flex items-center justify-center shrink-0">
               <Bot size={14} className="text-violet-600" />
             </div>
             <div className="bg-white dark:bg-[var(--color-surface-elevated)] border border-[var(--color-border)] dark:border-[var(--color-border)] rounded-xl rounded-tl-sm px-3 py-2">

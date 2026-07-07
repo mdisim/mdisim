@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useCallback, useMemo, type ReactNo
 import type {
   BOQItem, Drawing, MeasurementItem, LibraryCategory, LibraryItem,
   Contract, CostEntry, Variation, DrawingRevision, RateAnalysis,
-  PaymentCert, DrawingMeasurement, QuantityChange,
+  PaymentCert, DrawingMeasurement, QuantityChange, Tender, CashflowEntry,
 } from '@/lib/types'
 
 export type SelectionType = 'boq' | 'drawing' | 'measurement' | 'library-item' | 'revision' | null
@@ -24,6 +24,8 @@ export interface WorkspaceData {
   payments: PaymentCert[]
   drawingMeasurements: Record<string, DrawingMeasurement[]>
   quantityChanges: QuantityChange[]
+  tenders: Tender[]
+  cashflow: CashflowEntry[]
 }
 
 export interface WorkspaceSelection {

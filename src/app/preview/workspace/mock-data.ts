@@ -142,4 +142,5 @@ export const mockWorkspaceData: WorkspaceData = {
   boqItems, drawings, measurementItems, categories, libraryItems,
   contract, costEntries: [], variations: [], revisions: {}, rateAnalyses,
   payments, drawingMeasurements: {}, quantityChanges: [],
+  tenders: [], cashflow: [],
 }

@@ -301,7 +301,7 @@ export function LiveBOQPanel({
                         className={cn(
                           'px-3 py-1.5 border-b border-[var(--color-border)] dark:border-[var(--color-border)]/50 transition-colors cursor-pointer',
                           linkMode
-                            ? 'hover:bg-[var(--color-amber-cta)] dark:hover:bg-[var(--color-amber)]/10'
+                            ? 'hover:bg-[var(--color-brand)] dark:hover:bg-[var(--color-amber)]/10'
                             : 'hover:bg-[var(--color-surface-hover)]',
                           isLinking && 'bg-emerald-50 dark:bg-emerald-900/20',
                           isActive && 'bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber)]/10 ring-1 ring-inset ring-blue-400 dark:ring-blue-500',
@@ -333,7 +333,7 @@ export function LiveBOQPanel({
                                 e.stopPropagation()
                                 handleLinkClick(item.id)
                               }}
-                              className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-amber)] dark:text-[var(--color-amber)] bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber)]/10 rounded hover:bg-[var(--color-amber-cta)] dark:hover:bg-[var(--color-amber)]/10 transition-colors"
+                              className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-amber)] dark:text-[var(--color-amber)] bg-[var(--color-amber)]/10 dark:bg-[var(--color-amber)]/10 rounded hover:bg-[var(--color-brand)] dark:hover:bg-[var(--color-amber)]/10 transition-colors"
                             >
                               <Link2 size={10} />
                               Link

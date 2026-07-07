@@ -237,7 +237,7 @@ export function VolumeCalculator({ isOpen, onClose, onAddMeasurement, drawingMea
                     <select
                       value={linkedMeasurement}
                       onChange={e => setLinkedMeasurement(e.target.value)}
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-amber)]/30 dark:border-[var(--color-amber-cta)] bg-white dark:bg-[var(--color-surface-elevated)] dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]"
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-amber)]/30 dark:border-[var(--color-brand)] bg-white dark:bg-[var(--color-surface-elevated)] dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]"
                     >
                       <option value="">Select measurement...</option>
                       {drawingMeasurements!.map(dm => (

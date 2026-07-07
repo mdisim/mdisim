@@ -113,12 +113,12 @@ function CostTab() {
     <div className="h-full overflow-y-auto px-4 py-3">
       <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { label: 'Contract Value', value: fmt(contractValue), color: 'from-[var(--color-info)] to-[var(--color-info-light)]' },
+          { label: 'Contract Value', value: fmt(contractValue), color: 'from-[var(--color-info)] to-[var(--color-info)]' },
           { label: 'BOQ Total', value: fmt(totalBoq), color: 'from-indigo-500 to-indigo-600' },
           { label: 'Spent to Date', value: fmt(totalSpent), color: 'from-amber-500 to-amber-600' },
           { label: 'Variations', value: fmt(totalVariations), color: 'from-purple-500 to-purple-600' },
           { label: 'Total Paid', value: fmt(totalPaid), color: 'from-green-500 to-green-600' },
-          { label: 'Remaining', value: fmt(remaining), color: remaining >= 0 ? 'from-emerald-500 to-emerald-600' : 'from-[var(--color-danger)] to-[var(--color-danger-light)]' },
+          { label: 'Remaining', value: fmt(remaining), color: remaining >= 0 ? 'from-emerald-500 to-emerald-600' : 'from-[var(--color-danger)] to-[var(--color-danger)]' },
         ].map(card => (
           <div key={card.label} className="bg-[var(--color-surface-elevated)] rounded-lg p-2.5 border border-[var(--color-border)]">
             <div className={cn('w-1.5 h-1.5 rounded-full bg-gradient-to-r mb-1.5', card.color)} />
@@ -138,9 +138,9 @@ function CostTab() {
             <div
               className={cn(
                 'h-full rounded-full transition-all bg-gradient-to-r',
-                totalSpent / contractValue > 0.9 ? 'from-[var(--color-danger)] to-[var(--color-danger-light)]' :
+                totalSpent / contractValue > 0.9 ? 'from-[var(--color-danger)] to-[var(--color-danger)]' :
                 totalSpent / contractValue > 0.7 ? 'from-amber-500 to-amber-600' :
-                'from-[var(--color-info)] to-[var(--color-info-light)]'
+                'from-[var(--color-info)] to-[var(--color-info)]'
               )}
               style={{ width: `${Math.min(100, (totalSpent / contractValue) * 100)}%` }}
             />

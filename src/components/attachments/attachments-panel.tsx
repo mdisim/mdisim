@@ -25,8 +25,8 @@ const ACCEPT = 'image/*,.pdf,.xlsx,.xls,.csv,.doc,.docx,.dwg,.dxf'
 
 function FileIcon({ type }: { type: string }) {
   if (type === 'photo') return <Image size={16} className="text-[var(--color-amber)]" />
-  if (type === 'pdf') return <FileText size={16} className="text-[var(--color-danger-light)]" />
-  if (type === 'excel') return <FileSpreadsheet size={16} className="text-[var(--color-success-light)]" />
+  if (type === 'pdf') return <FileText size={16} className="text-[var(--color-danger)]" />
+  if (type === 'excel') return <FileSpreadsheet size={16} className="text-[var(--color-success)]" />
   return <File size={16} className="text-[var(--color-text-muted)]" />
 }
 
@@ -209,7 +209,7 @@ export function AttachmentsPanel({
               <button
                 onClick={() => handleDelete(att.id)}
                 disabled={deletingId === att.id}
-                className="p-1 rounded hover:bg-[var(--color-danger-bg)] text-[var(--color-text-muted)] hover:text-[var(--color-danger-light)] disabled:opacity-50"
+                className="p-1 rounded hover:bg-[var(--color-danger-bg)] text-[var(--color-text-muted)] hover:text-[var(--color-danger)] disabled:opacity-50"
                 title="Delete"
               >
                 {deletingId === att.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}

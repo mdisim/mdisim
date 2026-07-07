@@ -518,7 +518,7 @@ export function ImageViewer({ drawingId, projectId, drawingUrl, drawingName, dra
             {loading ? (
               <div className="flex items-center justify-center h-full">
                 <div className="flex flex-col items-center gap-3">
-                  <div className="animate-spin h-8 w-8 border-4 border-[var(--color-amber-cta)] border-t-transparent rounded-full" />
+                  <div className="animate-spin h-8 w-8 border-4 border-[var(--color-brand)] border-t-transparent rounded-full" />
                   <p className="text-xs text-[var(--color-text-muted)]">Loading image...</p>
                 </div>
               </div>
@@ -551,7 +551,7 @@ export function ImageViewer({ drawingId, projectId, drawingUrl, drawingName, dra
 
         {showPanel && (
           <>
-            <div className="w-1 flex-shrink-0 cursor-col-resize bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] hover:bg-[var(--color-amber-cta)] dark:hover:bg-[var(--color-amber-cta)] active:bg-[var(--color-amber-cta)] transition-colors relative group"
+            <div className="w-1 flex-shrink-0 cursor-col-resize bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] hover:bg-[var(--color-brand)] dark:hover:bg-[var(--color-brand)] active:bg-[var(--color-brand)] transition-colors relative group"
               onMouseDown={(e) => {
                 e.preventDefault(); panelDragRef.current = { startX: e.clientX, startW: panelWidth }
                 const onMove = (ev: MouseEvent) => { if (!panelDragRef.current) return; setPanelWidth(Math.max(240, Math.min(600, panelDragRef.current.startW + (panelDragRef.current.startX - ev.clientX)))) }
@@ -559,7 +559,7 @@ export function ImageViewer({ drawingId, projectId, drawingUrl, drawingName, dra
                 document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'
                 document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp)
               }}
-            ><div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] group-hover:bg-[var(--color-amber-cta)] transition-colors" /></div>
+            ><div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-[var(--color-surface)] dark:bg-[var(--color-surface-hover)] group-hover:bg-[var(--color-brand)] transition-colors" /></div>
             <div style={{ width: panelWidth }} className="flex-shrink-0 flex flex-col bg-white dark:bg-[var(--color-surface-elevated)]">
               <div className="flex flex-col" style={{ height: '45%', minHeight: 120 }}>
                 <div className="px-3 py-1.5 border-b border-[var(--color-border)] dark:border-[var(--color-border)] flex items-center justify-between gap-1 shrink-0">

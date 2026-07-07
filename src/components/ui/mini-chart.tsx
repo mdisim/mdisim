@@ -127,7 +127,7 @@ interface ProgressRingProps {
   className?: string
 }
 
-export function ProgressRing({ value, size = 80, strokeWidth = 8, color = '#eab308', label, className }: ProgressRingProps) {
+export function ProgressRing({ value, size = 80, strokeWidth = 8, color = 'var(--color-brand)', label, className }: ProgressRingProps) {
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   const pct = Math.min(Math.max(value, 0), 100)

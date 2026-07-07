@@ -98,7 +98,7 @@ export function PageThumbnails({ pdfDoc, currentPage, pageCount, onPageChange }:
             <div className={cn(
               'absolute bottom-0 inset-x-0 text-center py-0.5 text-[10px] font-medium',
               p === currentPage
-                ? 'bg-[var(--color-amber-cta)] text-white'
+                ? 'bg-[var(--color-brand)] text-white'
                 : 'bg-black/40 text-white'
             )}>
               {p}

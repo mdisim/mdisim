@@ -97,7 +97,7 @@ function ProjectCard({ project, summary, onClick, t }: { project: Project; summa
           value={progress}
           size={44}
           strokeWidth={5}
-          color={progress >= 80 ? '#22c55e' : progress >= 40 ? '#eab308' : '#f87171'}
+          color={progress >= 80 ? 'var(--color-success)' : progress >= 40 ? 'var(--color-brand)' : 'var(--color-danger)'}
         />
         <div className="flex-1 space-y-1.5">
           <div className="flex justify-between text-[10px]">
@@ -106,7 +106,7 @@ function ProjectCard({ project, summary, onClick, t }: { project: Project; summa
           </div>
           <div className="flex justify-between text-[10px]">
             <span className="text-[var(--color-text-muted)]">{t.dashboard.spent}</span>
-            <span className="font-semibold text-[#f87171] tabular-nums">${fmtCompact(actual)}</span>
+            <span className="font-semibold text-[var(--color-danger)] tabular-nums">${fmtCompact(actual)}</span>
           </div>
         </div>
       </div>
@@ -292,9 +292,9 @@ export default function DashboardPage() {
   }, [projects])
 
   const budgetSegments = useMemo(() => [
-    { value: totalActualCost, color: '#f87171', label: 'Actual Cost' },
-    { value: totalCommitted, color: '#eab308', label: 'Committed' },
-    { value: Math.max(0, totalContractValue - totalActualCost - totalCommitted), color: '#22c55e', label: 'Remaining' },
+    { value: totalActualCost, color: 'var(--color-danger)', label: 'Actual Cost' },
+    { value: totalCommitted, color: 'var(--color-brand)', label: 'Committed' },
+    { value: Math.max(0, totalContractValue - totalActualCost - totalCommitted), color: 'var(--color-success)', label: 'Remaining' },
   ].filter(s => s.value > 0), [totalActualCost, totalCommitted, totalContractValue])
 
   const recentActivity = useMemo(() => {
@@ -305,7 +305,7 @@ export default function DashboardPage() {
           label: `Payment ${cert.status === 'paid' ? 'completed' : 'submitted'}`,
           detail: `${s.project.name} - IPC #${cert.cert_number}`,
           time: cert.created_at ?? s.project.updated_at,
-          color: cert.status === 'paid' ? '#22c55e' : '#eab308',
+          color: cert.status === 'paid' ? 'var(--color-success)' : 'var(--color-brand)',
           icon: cert.status === 'paid' ? CheckCircle2 : Clock,
         })
       }
@@ -314,7 +314,7 @@ export default function DashboardPage() {
           label: `Variation ${v.status}`,
           detail: `${s.project.name} - ${v.title ?? v.variation_no}`,
           time: v.created_at ?? s.project.updated_at,
-          color: v.status === 'approved' ? 'var(--color-info)' : '#f87171',
+          color: v.status === 'approved' ? 'var(--color-info)' : 'var(--color-danger)',
           icon: v.status === 'approved' ? CheckCircle2 : AlertTriangle,
         })
       }
@@ -456,11 +456,11 @@ export default function DashboardPage() {
         {/* ── KPI Cards ── */}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
           {([
-            { label: t.dashboard.totalProjects, value: totalProjects, icon: FolderKanban, gradient: 'from-[#ffd165] to-[#eab308]', trend: undefined, glass: true },
-            { label: t.dashboard.totalBudget, value: totalContractValue, icon: Briefcase, gradient: 'from-[#ffd165]/60 to-[#eab308]/60', prefix: '$', decimals: 2, glass: true },
-            { label: t.dashboard.activeTenders, value: activeTenders, icon: Receipt, gradient: 'from-[#9b8f79] to-[#4f4633]', glass: true },
-            { label: t.dashboard.totalPayments, value: totalPaid, icon: DollarSign, gradient: 'from-[#22c55e] to-[#16a34a]', prefix: '$', decimals: 2, glass: true },
-            { label: t.dashboard.completion, value: completionRate, icon: Target, gradient: 'from-[#ffd165] to-[#eab308]', suffix: '%', decimals: 1, glass: true },
+            { label: t.dashboard.totalProjects, value: totalProjects, icon: FolderKanban, gradient: 'from-[var(--color-brand)] to-[var(--color-brand-strong)]', trend: undefined, glass: true },
+            { label: t.dashboard.totalBudget, value: totalContractValue, icon: Briefcase, gradient: 'from-[var(--color-brand)]/60 to-[var(--color-brand)]/60', prefix: '$', decimals: 2, glass: true },
+            { label: t.dashboard.activeTenders, value: activeTenders, icon: Receipt, gradient: 'from-[var(--color-text-muted)] to-[var(--color-border)]', glass: true },
+            { label: t.dashboard.totalPayments, value: totalPaid, icon: DollarSign, gradient: 'from-[var(--color-success)] to-[var(--color-success)]', prefix: '$', decimals: 2, glass: true },
+            { label: t.dashboard.completion, value: completionRate, icon: Target, gradient: 'from-[var(--color-brand)] to-[var(--color-brand-strong)]', suffix: '%', decimals: 1, glass: true },
           ] as const).map((kpi, index) => (
             <motion.div key={kpi.label} variants={fadeUp}>
               <StatCard
@@ -598,7 +598,7 @@ export default function DashboardPage() {
                           value={progress}
                           size={48}
                           strokeWidth={5}
-                          color={progress >= 80 ? '#22c55e' : progress >= 40 ? '#eab308' : '#f87171'}
+                          color={progress >= 80 ? 'var(--color-success)' : progress >= 40 ? 'var(--color-brand)' : 'var(--color-danger)'}
                         />
                         <div className="min-w-0 flex-1">
                           <div className="text-[12px] font-semibold text-[var(--foreground)] truncate">{s.project.name}</div>
@@ -621,13 +621,13 @@ export default function DashboardPage() {
                         <div className="grid grid-cols-2 gap-2">
                           <div>
                             <div className="text-[9px] text-[var(--color-text-muted)] uppercase tracking-wider">SPI</div>
-                            <div className={cn('text-sm font-bold tabular-nums', ev.SPI >= 1 ? 'text-[#22c55e]' : ev.SPI >= 0.9 ? 'text-[var(--color-amber)]' : 'text-[#f87171]')}>
+                            <div className={cn('text-sm font-bold tabular-nums', ev.SPI >= 1 ? 'text-[var(--color-success)]' : ev.SPI >= 0.9 ? 'text-[var(--color-amber)]' : 'text-[var(--color-danger)]')}>
                               {ev.SPI.toFixed(2)}
                             </div>
                           </div>
                           <div>
                             <div className="text-[9px] text-[var(--color-text-muted)] uppercase tracking-wider">CPI</div>
-                            <div className={cn('text-sm font-bold tabular-nums', ev.CPI >= 1 ? 'text-[#22c55e]' : ev.CPI >= 0.9 ? 'text-[var(--color-amber)]' : 'text-[#f87171]')}>
+                            <div className={cn('text-sm font-bold tabular-nums', ev.CPI >= 1 ? 'text-[var(--color-success)]' : ev.CPI >= 0.9 ? 'text-[var(--color-amber)]' : 'text-[var(--color-danger)]')}>
                               {ev.CPI.toFixed(2)}
                             </div>
                           </div>
@@ -651,7 +651,7 @@ export default function DashboardPage() {
                       title={t.dashboard.profitMargin}
                       value={`${profitMargin.toFixed(1)}%`}
                       subtitle={profitMargin > 10 ? t.dashboard.portfolioPerformingWell : profitMargin > 0 ? t.dashboard.marginsAreThin : t.dashboard.portfolioAtRisk}
-                      color={profitMargin > 10 ? '#22c55e' : profitMargin > 0 ? '#eab308' : '#f87171'}
+                      color={profitMargin > 10 ? 'var(--color-success)' : profitMargin > 0 ? 'var(--color-brand)' : 'var(--color-danger)'}
                     />
                   )}
                   {pendingPayments > 0 && (
@@ -669,7 +669,7 @@ export default function DashboardPage() {
                       title={t.dashboard.pendingVariations}
                       value={fmtCompact(pendingVariations)}
                       subtitle={t.dashboard.requiresFollowUp}
-                      color="#f87171"
+                      color="var(--color-danger)"
                     />
                   )}
                   {totalMeasurements > 0 && (
@@ -678,7 +678,7 @@ export default function DashboardPage() {
                       title={t.dashboard.measurements}
                       value={`${totalMeasurements} ${t.dashboard.items}`}
                       subtitle={`${totalMeasurementLines} ${t.dashboard.calculationLines}`}
-                      color="#a855f7"
+                      color="var(--color-intel)"
                     />
                   )}
                 </div>
@@ -729,14 +729,14 @@ export default function DashboardPage() {
                           </td>
                           <td className="py-3 pe-4 text-end text-[12px] font-medium text-[var(--color-text-secondary)] tabular-nums">{fmtCompact(contractVal)}</td>
                           <td className="py-3 pe-4 text-end text-[12px] font-medium text-[var(--color-info)] tabular-nums">{varApproved > 0 ? `+${fmtCompact(varApproved)}` : '-'}</td>
-                          <td className="py-3 pe-4 text-end text-[12px] font-medium text-[#f87171] tabular-nums">{fmtCompact(actual)}</td>
-                          <td className={cn('py-3 pe-4 text-end text-[12px] font-bold tabular-nums', profit >= 0 ? 'text-[#22c55e]' : 'text-[#f87171]')}>{fmtCompact(profit)}</td>
+                          <td className="py-3 pe-4 text-end text-[12px] font-medium text-[var(--color-danger)] tabular-nums">{fmtCompact(actual)}</td>
+                          <td className={cn('py-3 pe-4 text-end text-[12px] font-bold tabular-nums', profit >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]')}>{fmtCompact(profit)}</td>
                           <td className="py-3 text-end">
                             <span className={cn(
                               'px-2 py-0.5 rounded-full text-[10px] font-bold',
-                              margin >= 10 ? 'bg-[#22c55e]/10 text-[#22c55e]' :
+                              margin >= 10 ? 'bg-[var(--color-success)]/10 text-[var(--color-success)]' :
                               margin >= 0 ? 'bg-[var(--color-amber)]/10 text-[var(--color-amber)]' :
-                              'bg-[#f87171]/10 text-[#f87171]'
+                              'bg-[var(--color-danger)]/10 text-[var(--color-danger)]'
                             )}>
                               {margin.toFixed(1)}%
                             </span>

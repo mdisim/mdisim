@@ -27,15 +27,24 @@ import { PricingMode } from './modes/pricing-mode'
 import { PaymentsMode } from './modes/payments-mode'
 import { ReportsMode } from './modes/reports-mode'
 import { AiAssistantMode } from './modes/ai-assistant-mode'
+import { LibraryMode } from './modes/library-mode'
+import { TendersMode } from './modes/tenders-mode'
+import { CostControlMode } from './modes/cost-control-mode'
+import { EvmMode } from './modes/evm-mode'
+import { RevisionsMode } from './modes/revisions-mode'
+import { IntelligenceMode } from './modes/intelligence-mode'
 
 import {
   PanelLeft, Layers, ArrowLeft,
   FileImage, Ruler, BookOpen, ClipboardList, FileSpreadsheet,
   Calculator, Receipt, FileBarChart, Sparkles, Keyboard, Search,
+  Library, Users, DollarSign, TrendingUp, GitCompare, Activity,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-export type Mode = 'drawings' | 'takeoff' | 'measurement-book' | 'qcs' | 'boq' | 'pricing' | 'payments' | 'reports' | 'ai-assistant'
+export type Mode =
+  | 'drawings' | 'takeoff' | 'measurement-book' | 'qcs' | 'boq' | 'pricing' | 'payments' | 'reports' | 'ai-assistant'
+  | 'library' | 'tenders' | 'cost-control' | 'evm' | 'revisions' | 'intelligence'
 
 export const MODES: { key: Mode; label: string; icon: typeof FileImage; hasSidePanels: boolean }[] = [
   { key: 'drawings', label: 'Drawings', icon: FileImage, hasSidePanels: true },
@@ -47,6 +56,13 @@ export const MODES: { key: Mode; label: string; icon: typeof FileImage; hasSideP
   { key: 'payments', label: 'Payments', icon: Receipt, hasSidePanels: true },
   { key: 'reports', label: 'Reports', icon: FileBarChart, hasSidePanels: false },
   { key: 'ai-assistant', label: 'AI Assistant', icon: Sparkles, hasSidePanels: false },
+  // Modules not part of the core estimating workflow — reachable, not central.
+  { key: 'library', label: 'Library', icon: Library, hasSidePanels: false },
+  { key: 'tenders', label: 'Tenders', icon: Users, hasSidePanels: false },
+  { key: 'cost-control', label: 'Cost Control', icon: DollarSign, hasSidePanels: false },
+  { key: 'evm', label: 'EVM', icon: TrendingUp, hasSidePanels: false },
+  { key: 'revisions', label: 'Revisions', icon: GitCompare, hasSidePanels: false },
+  { key: 'intelligence', label: 'Intelligence', icon: Activity, hasSidePanels: false },
 ]
 
 /**
@@ -57,9 +73,34 @@ export const MODES: { key: Mode; label: string; icon: typeof FileImage; hasSideP
  * navigation happens through ⌘P rather than a tree you keep open just in
  * case you need it.
  */
-export function WorkspaceShell({ projectId, project, initialMode }: { projectId: string; project: Project; initialMode?: Mode }) {
-  const { selection } = useWorkspace()
-  const [mode, setMode] = useState<Mode>(initialMode ?? 'drawings')
+const lastModeKey = (projectId: string) => `angel-dc:last-mode:${projectId}`
+
+export function WorkspaceShell({ projectId, project, initialMode, initialDrawingId }: { projectId: string; project: Project; initialMode?: Mode; initialDrawingId?: string }) {
+  const { selection, data, selectDrawing } = useWorkspace()
+  // A query-string mode (from a redirect or a deep link) always wins; absent
+  // that, the workspace resumes wherever this project was last left, rather
+  // than defaulting back to Drawings every single time it's reopened.
+  const [mode, setMode] = useState<Mode>(() => {
+    if (initialMode) return initialMode
+    if (typeof window !== 'undefined') {
+      const saved = window.localStorage.getItem(lastModeKey(projectId))
+      if (saved && MODES.some(m => m.key === saved)) return saved as Mode
+    }
+    return 'drawings'
+  })
+
+  useEffect(() => {
+    window.localStorage.setItem(lastModeKey(projectId), mode)
+  }, [mode, projectId])
+
+  // A deep link to a specific sheet (e.g. an old /drawings/[id] bookmark)
+  // still opens that sheet, not just the general picker.
+  useEffect(() => {
+    if (!initialDrawingId) return
+    const drawing = data.drawings.find(d => d.id === initialDrawingId)
+    if (drawing) selectDrawing(drawing)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialDrawingId])
   const [explorerOpen, setExplorerOpen] = useState(false)
   const [inspectorSuppressed, setInspectorSuppressed] = useState(false)
   const [dockOpen, setDockOpen] = useState(false)
@@ -88,7 +129,7 @@ export function WorkspaceShell({ projectId, project, initialMode }: { projectId:
 
   useKeyboardShortcuts(
     [
-      ...MODES.map((m, i): ShortcutBinding => ({ key: String(i + 1), handler: () => setMode(m.key) })),
+      ...MODES.slice(0, 9).map((m, i): ShortcutBinding => ({ key: String(i + 1), handler: () => setMode(m.key) })),
       { key: '[', meta: true, handler: () => setExplorerOpen(v => !v) },
       { key: ']', meta: true, handler: () => setInspectorSuppressed(v => !v) },
       { key: 'p', meta: true, handler: () => setSwitcherOpen(v => !v) },
@@ -112,6 +153,12 @@ export function WorkspaceShell({ projectId, project, initialMode }: { projectId:
       case 'payments': return <PaymentsMode />
       case 'reports': return <ReportsMode project={project} />
       case 'ai-assistant': return <AiAssistantMode projectId={projectId} initialPrompt={aiPrompt} />
+      case 'library': return <LibraryMode />
+      case 'tenders': return <TendersMode projectId={projectId} />
+      case 'cost-control': return <CostControlMode projectId={projectId} />
+      case 'evm': return <EvmMode currency={project.currency} />
+      case 'revisions': return <RevisionsMode />
+      case 'intelligence': return <IntelligenceMode projectId={projectId} />
     }
   }
 
