@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from '../workspace-context'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Chip } from '@/components/ui/chip'
 import { Calculator, Wrench } from 'lucide-react'
 import type { RateAnalysis, ResourceType } from '@/lib/types'
 
@@ -14,7 +16,7 @@ const RESOURCE_META: Record<ResourceType, { label: string; color: string }> = {
 }
 
 export function PricingMode() {
-  const { data, selection, linkedRateAnalysis, fmt } = useWorkspace()
+  const { data, linkedRateAnalysis, fmt } = useWorkspace()
   const [activeId, setActiveId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -28,13 +30,11 @@ export function PricingMode() {
 
   if (data.rateAnalyses.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-6">
-        <Calculator size={28} className="text-[var(--color-text-muted)]" />
-        <div>
-          <p className="text-sm font-medium text-[var(--color-text)]">No rate build-ups yet</p>
-          <p className="text-xs text-[var(--color-text-muted)] mt-1 max-w-sm">Pricing is measured separately from quantity — build a rate analysis per BOQ item from material, labour, equipment and subcontractor components.</p>
-        </div>
-      </div>
+      <EmptyState
+        icon={Calculator}
+        title="No rate build-ups yet"
+        description="Pricing is measured separately from quantity — build a rate analysis per BOQ item from material, labour, equipment and subcontractor components."
+      />
     )
   }
 
@@ -50,7 +50,7 @@ export function PricingMode() {
               active?.id === r.id ? 'bg-[var(--color-brand-tint)]' : 'hover:bg-[var(--color-surface-hover)]'
             )}
           >
-            <div className="text-[12.5px] font-medium text-[var(--color-text)] truncate">{r.description}</div>
+            <div className="text-[13px] font-medium text-[var(--color-text)] truncate">{r.description}</div>
             <div className="flex items-center justify-between mt-1">
               <span className="text-[10px] text-[var(--color-text-muted)]">per {r.unit}</span>
               <span className="mono text-[12px] font-semibold text-[var(--color-text)]">{fmt(r.unit_rate)}</span>
@@ -92,14 +92,14 @@ function RateBuildUp({ rate, fmt }: { rate: RateAnalysis; fmt: (n: number) => st
       </div>
       <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-2.5 mb-6">
         {(Object.keys(totals) as ResourceType[]).map(k => (
-          <span key={k} className="inline-flex items-center gap-1.5 text-[11.5px] text-[var(--color-text-secondary)]">
+          <span key={k} className="inline-flex items-center gap-1.5 text-[11px] text-[var(--color-text-secondary)]">
             <i className="w-2 h-2 rounded-[2px] inline-block" style={{ background: RESOURCE_META[k].color }} />
             {RESOURCE_META[k].label} <span className="mono">{fmt(totals[k])}</span>
           </span>
         ))}
       </div>
 
-      <table className="w-full text-[12.5px] border-collapse">
+      <table className="w-full text-[13px] border-collapse">
         <thead>
           <tr className="border-b border-[var(--color-border-strong)]">
             <th className="text-start px-2 py-1.5 text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">Resource</th>
@@ -111,12 +111,10 @@ function RateBuildUp({ rate, fmt }: { rate: RateAnalysis; fmt: (n: number) => st
         </thead>
         <tbody>
           {(rate.resources ?? []).map(res => (
-            <tr key={res.id} className="border-b border-[var(--color-border-light)]">
+            <tr key={res.id} className="border-b border-[var(--color-border-light)] hover:bg-[var(--color-surface-hover)] transition-colors">
               <td className="px-2 py-1.5 text-[var(--color-text)]">{res.description}</td>
               <td className="px-2 py-1.5">
-                <span className="text-[10px] px-1.5 py-0.5 rounded-[var(--radius-xs)]" style={{ background: `${RESOURCE_META[res.resource_type].color}22`, color: RESOURCE_META[res.resource_type].color }}>
-                  {RESOURCE_META[res.resource_type].label}
-                </span>
+                <Chip color={RESOURCE_META[res.resource_type].color}>{RESOURCE_META[res.resource_type].label}</Chip>
               </td>
               <td className="px-2 py-1.5 text-end mono text-[var(--color-text-secondary)]">{res.quantity} {res.unit}</td>
               <td className="px-2 py-1.5 text-end mono text-[var(--color-text-secondary)]">{fmt(res.unit_cost)}</td>

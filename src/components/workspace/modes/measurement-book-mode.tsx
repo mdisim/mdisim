@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from '../workspace-context'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Ruler, ChevronDown, ChevronRight, Minus } from 'lucide-react'
 import type { MeasurementItem } from '@/lib/types'
 
@@ -26,25 +27,24 @@ export function MeasurementBookMode() {
 
   const toggle = (key: string) => setCollapsed(prev => {
     const next = new Set(prev)
-    next.has(key) ? next.delete(key) : next.add(key)
+    if (next.has(key)) next.delete(key)
+    else next.add(key)
     return next
   })
 
   if (data.measurementItems.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-6">
-        <Ruler size={28} className="text-[var(--color-text-muted)]" />
-        <div>
-          <p className="text-sm font-medium text-[var(--color-text)]">Measurement book is empty</p>
-          <p className="text-xs text-[var(--color-text-muted)] mt-1 max-w-sm">Take off a shape in Takeoff mode and it lands here as a working dimension sheet — Nr × L × B × H, deductions included.</p>
-        </div>
-      </div>
+      <EmptyState
+        icon={Ruler}
+        title="Measurement book is empty"
+        description="Take off a shape in Takeoff mode and it lands here as a working dimension sheet — Nr × L × B × H, deductions included."
+      />
     )
   }
 
   return (
     <div className="h-full overflow-auto grid-paper">
-      <table className="w-full text-[12.5px] border-collapse">
+      <table className="w-full text-[13px] border-collapse">
         <thead className="sticky top-0 z-10 bg-[var(--color-surface)]">
           <tr className="border-b border-[var(--color-border-strong)]">
             <th className="w-8" />

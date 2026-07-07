@@ -4,46 +4,28 @@ import { cn } from '@/lib/utils'
 import { useWorkspace } from '../workspace-context'
 import { WorkspaceDrawingViewer } from '../workspace-drawing-viewer'
 import { BimViewer } from '../bim-viewer'
-import { Image as ImageIcon, Box, SplitSquareHorizontal, FileImage } from 'lucide-react'
+import { DrawingPicker } from './drawing-picker'
+import { Image as ImageIcon, Box, SplitSquareHorizontal, ChevronLeft } from 'lucide-react'
 
 export function DrawingsMode() {
   const { data, selection, selectDrawing, viewMode, setViewMode } = useWorkspace()
 
   if (!selection.drawing) {
     return (
-      <div className="h-full overflow-y-auto p-6">
-        <p className="text-[11px] font-mono uppercase tracking-wider text-[var(--color-text-muted)] mb-3">Sheets</p>
-        {data.drawings.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 text-center py-16">
-            <FileImage size={28} className="text-[var(--color-text-muted)]" />
-            <p className="text-sm text-[var(--color-text)]">No drawings uploaded yet</p>
-          </div>
-        ) : (
-          <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
-            {data.drawings.map(d => (
-              <button
-                key={d.id}
-                onClick={() => selectDrawing(d)}
-                className="text-start surface-elevated rounded-[var(--radius-lg)] border border-[var(--color-border)] p-3 hover:border-[var(--color-border-strong)] transition-colors"
-              >
-                <div className="w-full aspect-[4/3] rounded-[var(--radius-md)] bg-[var(--color-surface-sunken)] flex items-center justify-center mb-2 text-[var(--color-text-muted)]">
-                  <FileImage size={22} />
-                </div>
-                <div className="text-[12px] font-medium text-[var(--color-text)] truncate">{d.name}</div>
-                <div className="text-[10px] text-[var(--color-text-muted)] mt-0.5 font-mono uppercase">Rev {d.revision_number ?? '—'} · {d.file_type}</div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      <DrawingPicker
+        drawings={data.drawings}
+        eyebrow="Sheets"
+        emptyTitle="No drawings uploaded yet"
+        onSelect={selectDrawing}
+      />
     )
   }
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-3 py-1.5 border-b border-[var(--color-border)] shrink-0">
-        <button onClick={() => selectDrawing(null)} className="text-[11px] text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
-          ← All sheets
+        <button onClick={() => selectDrawing(null)} className="flex items-center gap-1 text-[12px] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors focus-ring rounded-[var(--radius-sm)]">
+          <ChevronLeft size={13} /> All sheets
         </button>
         <div className="flex items-center bg-[var(--color-surface-sunken)] rounded-[var(--radius-md)] p-0.5">
           {[

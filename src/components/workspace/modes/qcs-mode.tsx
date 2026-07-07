@@ -3,6 +3,7 @@
 import { Fragment, useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from '../workspace-context'
+import { EmptyState } from '@/components/ui/empty-state'
 import { ClipboardList, ChevronDown, ChevronRight, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import type { BOQItem, MeasurementItem } from '@/lib/types'
 
@@ -29,25 +30,24 @@ export function QcsMode() {
 
   const toggle = (id: string) => setOpen(prev => {
     const next = new Set(prev)
-    next.has(id) ? next.delete(id) : next.add(id)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
     return next
   })
 
   if (abstracts.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-6">
-        <ClipboardList size={28} className="text-[var(--color-text-muted)]" />
-        <div>
-          <p className="text-sm font-medium text-[var(--color-text)]">No abstracts yet</p>
-          <p className="text-xs text-[var(--color-text-muted)] mt-1 max-w-sm">Once BOQ items exist, this sheet groups every measurement-book line that feeds each one and checks the roll-up against the billed quantity.</p>
-        </div>
-      </div>
+      <EmptyState
+        icon={ClipboardList}
+        title="No abstracts yet"
+        description="Once BOQ items exist, this sheet groups every measurement-book line that feeds each one and checks the roll-up against the billed quantity."
+      />
     )
   }
 
   return (
     <div className="h-full overflow-auto">
-      <table className="w-full text-[12.5px] border-collapse">
+      <table className="w-full text-[13px] border-collapse">
         <thead className="sticky top-0 z-10 bg-[var(--color-surface)] border-b border-[var(--color-border-strong)]">
           <tr>
             <th className="w-8" />

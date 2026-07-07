@@ -105,7 +105,7 @@ export function AiAssistantMode({ projectId }: { projectId: string }) {
 
       <div className="border-t border-[var(--color-border)] p-3 shrink-0">
         {contextLabel && (
-          <div className="mb-2 text-[10.5px] font-mono text-[var(--color-intel)] bg-[var(--color-intel-tint)] inline-flex px-2 py-0.5 rounded-full">
+          <div className="mb-2 text-[10px] font-mono text-[var(--color-intel)] bg-[var(--color-intel-tint)] inline-flex px-2 py-0.5 rounded-full">
             Context: {contextLabel}
           </div>
         )}

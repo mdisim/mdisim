@@ -1,15 +1,15 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { cn } from '@/lib/utils'
 import { useWorkspace } from '../workspace-context'
 import { getDrawingUrl } from '@/app/actions/drawings'
 import { TakeoffViewer } from '@/components/takeoff/takeoff-viewer'
 import { DwgViewer } from '@/components/takeoff/dwg-viewer'
 import { ImageViewer } from '@/components/takeoff/image-viewer'
 import { SaveToQuantitiesDialog } from '@/components/takeoff/save-to-quantities-dialog'
+import { DrawingPicker } from './drawing-picker'
 import type { DrawingMeasurement } from '@/lib/types'
-import { FileImage, Ruler, AlertTriangle, Loader2 } from 'lucide-react'
+import { AlertTriangle, Loader2, ChevronLeft } from 'lucide-react'
 
 export function TakeoffMode({ projectId }: { projectId: string }) {
   const { data, selection, selectDrawing } = useWorkspace()
@@ -37,31 +37,12 @@ export function TakeoffMode({ projectId }: { projectId: string }) {
 
   if (!drawing) {
     return (
-      <div className="h-full overflow-y-auto p-6">
-        <p className="text-[11px] font-mono uppercase tracking-wider text-[var(--color-text-muted)] mb-3">Choose a sheet to measure</p>
-        {data.drawings.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 text-center py-16">
-            <Ruler size={28} className="text-[var(--color-text-muted)]" />
-            <p className="text-sm text-[var(--color-text)]">No drawings uploaded yet</p>
-          </div>
-        ) : (
-          <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
-            {data.drawings.map(d => (
-              <button
-                key={d.id}
-                onClick={() => selectDrawing(d)}
-                className="text-start surface-elevated rounded-[var(--radius-lg)] border border-[var(--color-border)] p-3 hover:border-[var(--color-border-strong)] transition-colors"
-              >
-                <div className="w-full aspect-[4/3] rounded-[var(--radius-md)] bg-[var(--color-surface-sunken)] flex items-center justify-center mb-2 text-[var(--color-text-muted)]">
-                  <FileImage size={22} />
-                </div>
-                <div className="text-[12px] font-medium text-[var(--color-text)] truncate">{d.name}</div>
-                <div className="text-[10px] text-[var(--color-text-muted)] mt-0.5 font-mono uppercase">{d.drawing_number ?? d.file_type}</div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      <DrawingPicker
+        drawings={data.drawings}
+        eyebrow="Choose a sheet to measure"
+        emptyTitle="No drawings uploaded yet"
+        onSelect={selectDrawing}
+      />
     )
   }
 
@@ -71,7 +52,7 @@ export function TakeoffMode({ projectId }: { projectId: string }) {
         {error ? (
           <div className="flex flex-col items-center gap-3 text-center px-6">
             <AlertTriangle size={22} className="text-[var(--color-danger)]" />
-            <p className="text-[12.5px] text-[var(--color-danger)] max-w-xs">{error}</p>
+            <p className="text-[13px] text-[var(--color-danger)] max-w-xs">{error}</p>
           </div>
         ) : (
           <Loader2 size={20} className="animate-spin text-[var(--color-text-muted)]" />
@@ -81,7 +62,15 @@ export function TakeoffMode({ projectId }: { projectId: string }) {
   }
 
   return (
-    <div className="relative h-full">
+    <div className="flex flex-col h-full">
+      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-[var(--color-border)] shrink-0">
+        <button onClick={() => selectDrawing(null)} className="flex items-center gap-1 text-[12px] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors focus-ring rounded-[var(--radius-sm)]">
+          <ChevronLeft size={13} /> All sheets
+        </button>
+        <span className="text-[var(--color-border-strong)]">/</span>
+        <span className="text-[12px] font-medium text-[var(--color-text)] truncate">{drawing.name}</span>
+      </div>
+      <div className="relative flex-1 min-h-0">
       {drawing.file_type === 'pdf' ? (
         <TakeoffViewer
           drawingId={drawing.id}
@@ -125,6 +114,7 @@ export function TakeoffMode({ projectId }: { projectId: string }) {
           onClose={() => setPending(null)}
         />
       )}
+      </div>
     </div>
   )
 }

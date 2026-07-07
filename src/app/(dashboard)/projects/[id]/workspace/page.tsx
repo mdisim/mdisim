@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
+import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
 import { getBOQItems } from '@/app/actions/boq'
@@ -25,7 +26,8 @@ import { EvidenceCenter } from '@/components/workspace/evidence-center'
 import { BottomDock } from '@/components/workspace/bottom-dock'
 import { useResizable } from '@/components/workspace/use-resizable'
 import { Drawer } from '@/components/ui/drawer'
-import { Kbd } from '@/components/ui/kbd'
+import { Skeleton } from '@/components/ui/skeleton'
+import { ShortcutsDialog } from '@/components/workspace/shortcuts-dialog'
 import { useKeyboardShortcuts, type ShortcutBinding } from '@/lib/hooks/use-keyboard-shortcuts'
 
 import { DrawingsMode } from '@/components/workspace/modes/drawings-mode'
@@ -41,7 +43,7 @@ import { AiAssistantMode } from '@/components/workspace/modes/ai-assistant-mode'
 import {
   PanelLeft, PanelRight, AlertTriangle, RefreshCw,
   FileImage, Ruler, BookOpen, ClipboardList, FileSpreadsheet,
-  Calculator, Receipt, FileBarChart, Sparkles,
+  Calculator, Receipt, FileBarChart, Sparkles, Keyboard,
 } from 'lucide-react'
 
 type Mode = 'drawings' | 'takeoff' | 'measurement-book' | 'qcs' | 'boq' | 'pricing' | 'payments' | 'reports' | 'ai-assistant'
@@ -64,6 +66,7 @@ function WorkspaceShell({ projectId, project }: { projectId: string; project: Pr
   const [leftOpen, setLeftOpen] = useState(true)
   const [rightOpen, setRightOpen] = useState(true)
   const [mobilePanel, setMobilePanel] = useState<'explorer' | 'inspector' | null>(null)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
 
   const leftResize = useResizable({ direction: 'horizontal', initialSize: 260, minSize: 200, maxSize: 400, storageKey: 'ws-left' })
   const rightResize = useResizable({ direction: 'horizontal', initialSize: 340, minSize: 280, maxSize: 500, storageKey: 'ws-right' })
@@ -73,6 +76,7 @@ function WorkspaceShell({ projectId, project }: { projectId: string; project: Pr
       ...MODES.map((m, i): ShortcutBinding => ({ key: String(i + 1), handler: () => setMode(m.key) })),
       { key: '[', meta: true, handler: () => setLeftOpen(v => !v) },
       { key: ']', meta: true, handler: () => setRightOpen(v => !v) },
+      { key: '?', shift: true, handler: () => setShortcutsOpen(v => !v) },
     ],
     []
   )
@@ -108,14 +112,14 @@ function WorkspaceShell({ projectId, project }: { projectId: string; project: Pr
         <button
           onClick={() => setLeftOpen(v => !v)}
           title="Toggle explorer (⌘[)"
-          className={cn('hidden lg:flex p-1.5 rounded-[var(--radius-sm)] shrink-0', leftOpen ? 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]' : 'text-[var(--color-brand)] bg-[var(--color-brand-tint)]')}
+          className={cn('hidden lg:flex p-1.5 rounded-[var(--radius-sm)] shrink-0 transition-colors focus-ring', leftOpen ? 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]' : 'text-[var(--color-brand)] bg-[var(--color-brand-tint)]')}
         >
           <PanelLeft size={14} />
         </button>
         <button
           onClick={() => setMobilePanel('explorer')}
           title="Explorer"
-          className="lg:hidden p-1.5 rounded-[var(--radius-sm)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] shrink-0"
+          className="lg:hidden p-1.5 rounded-[var(--radius-sm)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] shrink-0 transition-colors focus-ring"
         >
           <PanelLeft size={14} />
         </button>
@@ -127,15 +131,21 @@ function WorkspaceShell({ projectId, project }: { projectId: string; project: Pr
             <button
               key={m.key}
               onClick={() => setMode(m.key)}
-              title={`${m.label}`}
+              title={m.label}
               className={cn(
-                'relative flex items-center gap-1.5 px-2.5 h-11 text-[12.5px] font-medium whitespace-nowrap transition-colors',
+                'relative flex items-center gap-1.5 px-2.5 h-11 text-[13px] font-medium whitespace-nowrap transition-colors focus-ring',
                 mode === m.key ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
               )}
             >
               <m.icon size={13} />
               <span className="hidden xl:inline">{m.label}</span>
-              <span className={cn('absolute inset-x-1.5 bottom-0 h-[2px] rounded-full', mode === m.key ? 'bg-[var(--color-brand)]' : 'bg-transparent')} />
+              {mode === m.key && (
+                <motion.span
+                  layoutId="mode-indicator"
+                  className="absolute inset-x-1.5 bottom-0 h-[2px] rounded-full bg-[var(--color-brand)]"
+                  transition={{ type: 'spring', stiffness: 500, damping: 40 }}
+                />
+              )}
             </button>
           ))}
         </div>
@@ -153,14 +163,14 @@ function WorkspaceShell({ projectId, project }: { projectId: string; project: Pr
             <button
               onClick={() => setRightOpen(v => !v)}
               title="Toggle inspector (⌘])"
-              className={cn('hidden lg:flex p-1.5 rounded-[var(--radius-sm)] shrink-0', rightOpen ? 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]' : 'text-[var(--color-brand)] bg-[var(--color-brand-tint)]')}
+              className={cn('hidden lg:flex p-1.5 rounded-[var(--radius-sm)] shrink-0 transition-colors focus-ring', rightOpen ? 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]' : 'text-[var(--color-brand)] bg-[var(--color-brand-tint)]')}
             >
               <PanelRight size={14} />
             </button>
             <button
               onClick={() => setMobilePanel('inspector')}
               title="Inspector"
-              className="lg:hidden p-1.5 rounded-[var(--radius-sm)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] shrink-0"
+              className="lg:hidden p-1.5 rounded-[var(--radius-sm)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] shrink-0 transition-colors focus-ring"
             >
               <PanelRight size={14} />
             </button>
@@ -218,13 +228,16 @@ function WorkspaceShell({ projectId, project }: { projectId: string; project: Pr
       </div>
 
       {/* Status bar */}
-      <div className="hidden sm:flex items-center gap-4 h-6 px-3 border-t border-[var(--color-border)] bg-[var(--color-surface)] shrink-0 text-[10.5px] font-mono text-[var(--color-text-muted)]">
+      <div className="hidden sm:flex items-center gap-4 h-6 px-3 border-t border-[var(--color-border)] bg-[var(--color-surface)] shrink-0 text-[10px] font-mono text-[var(--color-text-muted)]">
         <span>{project.currency}</span>
         <span>Mode: {activeMode.label}</span>
         <span className="flex-1" />
-        <Kbd keys={['1', '…', '9']} /> <span>modes</span>
-        <Kbd keys={['⌘', '[']} />
-        <Kbd keys={['⌘', ']']} />
+        <button
+          onClick={() => setShortcutsOpen(true)}
+          className="flex items-center gap-1.5 hover:text-[var(--color-text-secondary)] transition-colors"
+        >
+          <Keyboard size={11} /> Shortcuts
+        </button>
       </div>
 
       {/* Mobile panel drawers */}
@@ -234,6 +247,8 @@ function WorkspaceShell({ projectId, project }: { projectId: string; project: Pr
       <Drawer isOpen={mobilePanel === 'inspector'} onClose={() => setMobilePanel(null)} title="Inspector" side="end">
         <EvidenceCenter />
       </Drawer>
+
+      <ShortcutsDialog isOpen={shortcutsOpen} onClose={() => setShortcutsOpen(false)} modes={MODES} />
     </div>
   )
 }
@@ -300,13 +315,29 @@ export default function WorkspacePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-140px)]">
-        <div className="flex flex-col items-center gap-5">
-          <div className="relative w-10 h-10">
-            <div className="absolute inset-0 rounded-full border-2 border-[var(--color-brand)]/20" />
-            <div className="absolute inset-0 rounded-full border-2 border-t-[var(--color-brand)] border-transparent animate-spin" />
+      <div className="flex flex-col h-[calc(100vh-56px)] overflow-hidden animate-fade-in">
+        <div className="flex items-center gap-2 h-11 px-3 border-b border-[var(--color-border)] bg-[var(--color-surface)] shrink-0">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-4 w-16 rounded" />
+          ))}
+        </div>
+        <div className="flex-1 flex overflow-hidden">
+          <div className="hidden lg:block w-[260px] shrink-0 border-e border-[var(--color-border)] p-3 space-y-2">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-6 w-full rounded" />
+            ))}
           </div>
-          <p className="text-[11px] font-mono uppercase tracking-widest text-[var(--color-text-muted)]">Loading workspace…</p>
+          <div className="flex-1 p-6 space-y-3">
+            <Skeleton className="h-5 w-1/3 rounded" />
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-8 w-full rounded" />
+            ))}
+          </div>
+          <div className="hidden lg:block w-[340px] shrink-0 border-s border-[var(--color-border)] p-3 space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full rounded" />
+            ))}
+          </div>
         </div>
       </div>
     )

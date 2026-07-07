@@ -84,7 +84,7 @@ export function ReportsMode({ project }: { project: Project }) {
   return (
     <div className="h-full overflow-y-auto p-6">
       {error && (
-        <div className="mb-4 flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] bg-[var(--color-danger-tint)] text-[var(--color-danger)] text-[12.5px]">
+        <div className="mb-4 flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] bg-[var(--color-danger-tint)] text-[var(--color-danger)] text-[13px]">
           <AlertCircle size={14} /> {error}
         </div>
       )}

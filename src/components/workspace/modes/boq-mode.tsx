@@ -3,6 +3,7 @@
 import { Fragment, useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from '../workspace-context'
+import { EmptyState } from '@/components/ui/empty-state'
 import { FileSpreadsheet, Link2 } from 'lucide-react'
 import type { BOQItem } from '@/lib/types'
 
@@ -23,16 +24,17 @@ export function BoqMode() {
 
   if (data.boqItems.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-6">
-        <FileSpreadsheet size={28} className="text-[var(--color-text-muted)]" />
-        <p className="text-sm font-medium text-[var(--color-text)]">Bill of quantities is empty</p>
-      </div>
+      <EmptyState
+        icon={FileSpreadsheet}
+        title="Bill of quantities is empty"
+        description="Items roll up automatically once quantities are taken off, or add them directly from the rate library."
+      />
     )
   }
 
   return (
     <div className="h-full overflow-auto">
-      <table className="w-full text-[12.5px] border-collapse">
+      <table className="w-full text-[13px] border-collapse">
         <thead className="sticky top-0 z-10 bg-[var(--color-surface)] border-b border-[var(--color-border-strong)]">
           <tr>
             <th className="text-start px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold w-20">Item</th>
