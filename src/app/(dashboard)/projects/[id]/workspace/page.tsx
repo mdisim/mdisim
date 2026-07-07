@@ -27,6 +27,7 @@ import { BottomDock } from '@/components/workspace/bottom-dock'
 import { useResizable } from '@/components/workspace/use-resizable'
 import { Drawer } from '@/components/ui/drawer'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ScaleMark } from '@/components/icons/marks'
 import { ShortcutsDialog } from '@/components/workspace/shortcuts-dialog'
 import { useKeyboardShortcuts, type ShortcutBinding } from '@/lib/hooks/use-keyboard-shortcuts'
 
@@ -109,6 +110,11 @@ function WorkspaceShell({ projectId, project }: { projectId: string; project: Pr
     <div className="flex flex-col h-[calc(100vh-56px)] bg-[var(--background)] overflow-hidden">
       {/* Top chrome */}
       <div className="flex items-center gap-1 h-11 px-2 border-b border-[var(--color-border)] bg-[var(--color-surface)] shrink-0 overflow-x-auto">
+        <div className="flex items-center gap-1.5 pe-2 shrink-0" title="Angel D.C.">
+          <ScaleMark size={16} className="text-[var(--color-brand)]" />
+          <span className="hidden sm:inline text-[12px] font-semibold tracking-tight text-[var(--color-text)]">Angel D.C.</span>
+        </div>
+        <div className="w-px h-5 bg-[var(--color-border)] mx-0.5 shrink-0" />
         <button
           onClick={() => setLeftOpen(v => !v)}
           title="Toggle explorer (⌘[)"

@@ -4,7 +4,8 @@ import { Fragment, useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from '../workspace-context'
 import { EmptyState } from '@/components/ui/empty-state'
-import { FileSpreadsheet, Link2 } from 'lucide-react'
+import { SelectionBracket, TraceMark } from '@/components/icons/marks'
+import { FileSpreadsheet } from 'lucide-react'
 import type { BOQItem } from '@/lib/types'
 
 export function BoqMode() {
@@ -37,6 +38,7 @@ export function BoqMode() {
       <table className="w-full text-[13px] border-collapse">
         <thead className="sticky top-0 z-10 bg-[var(--color-surface)] border-b border-[var(--color-border-strong)]">
           <tr>
+            <th className="w-6" />
             <th className="text-start px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold w-20">Item</th>
             <th className="text-start px-3 py-2 text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">Description</th>
             <th className="text-start px-2 py-2 text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">Unit</th>
@@ -51,7 +53,7 @@ export function BoqMode() {
             return (
               <Fragment key={section}>
                 <tr className="bg-[var(--color-surface-sunken)]">
-                  <td colSpan={6} className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">{section}</td>
+                  <td colSpan={7} className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">{section}</td>
                 </tr>
                 {items.map(item => {
                   const selected = selection.boqItem?.id === item.id
@@ -64,10 +66,13 @@ export function BoqMode() {
                         selected ? 'bg-[var(--color-brand-tint)]' : 'hover:bg-[var(--color-surface-hover)]'
                       )}
                     >
+                      <td className="ps-2.5">
+                        <SelectionBracket active={selected} className="text-[var(--color-brand)]" />
+                      </td>
                       <td className="px-3 py-2 mono text-[11px] text-[var(--color-text-muted)]">{item.code ?? '—'}</td>
                       <td className="px-3 py-2 font-medium text-[var(--color-text)]">
                         <span className="inline-flex items-center gap-1.5">
-                          {item.mi_id && <Link2 size={11} className="text-[var(--color-brand)]" />}
+                          {item.mi_id && <TraceMark className="text-[var(--color-brand)]" />}
                           {item.description}
                         </span>
                       </td>
@@ -79,7 +84,7 @@ export function BoqMode() {
                   )
                 })}
                 <tr className="border-b-2 border-[var(--color-border-strong)]">
-                  <td colSpan={5} className="px-3 py-1.5 text-end text-[11px] font-semibold text-[var(--color-text-secondary)]">Section total</td>
+                  <td colSpan={6} className="px-3 py-1.5 text-end text-[11px] font-semibold text-[var(--color-text-secondary)]">Section total</td>
                   <td className="px-3 py-1.5 text-end mono font-semibold text-[var(--color-text)]">{fmt(sectionTotal)}</td>
                 </tr>
               </Fragment>
@@ -88,7 +93,7 @@ export function BoqMode() {
         </tbody>
         <tfoot>
           <tr className="sticky bottom-0 bg-[var(--color-surface-elevated)] border-t-2 border-[var(--color-brand)]">
-            <td colSpan={5} className="px-3 py-2.5 text-end text-[12px] font-bold text-[var(--color-text)]">Grand total</td>
+            <td colSpan={6} className="px-3 py-2.5 text-end text-[12px] font-bold text-[var(--color-text)]">Grand total</td>
             <td className="px-3 py-2.5 text-end mono font-bold text-[var(--color-brand)]">{fmt(grandTotal)}</td>
           </tr>
         </tfoot>

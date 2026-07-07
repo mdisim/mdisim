@@ -4,7 +4,8 @@ import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from '../workspace-context'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Ruler, ChevronDown, ChevronRight, Minus } from 'lucide-react'
+import { SelectionBracket, DeductMark } from '@/components/icons/marks'
+import { Ruler, ChevronDown, ChevronRight } from 'lucide-react'
 import type { MeasurementItem } from '@/lib/types'
 
 function dim(n: number | null) {
@@ -51,7 +52,7 @@ export function MeasurementBookMode() {
             <th className="text-start px-2 py-2 font-mono text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">Nr</th>
             <th className="text-end px-2 py-2 font-mono text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">L</th>
             <th className="text-end px-2 py-2 font-mono text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">B</th>
-            <th className="text-end px-2 py-2 font-mono text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">H</th>
+            <th className="text-end px-2 py-2 font-mono text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold border-e-2 border-double border-[var(--color-border-strong)]">H</th>
             <th className="text-start px-3 py-2 text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">Description</th>
             <th className="text-start px-2 py-2 text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">Unit</th>
             <th className="text-end px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">Qty</th>
@@ -124,9 +125,9 @@ function MeasurementItemBlock({ item, selected, onSelect }: { item: MeasurementI
         )}
       >
         <td className="px-2 py-1.5">
-          <span className={cn('block w-1 h-4 rounded-full', selected ? 'bg-[var(--color-brand)]' : 'bg-transparent')} />
+          <SelectionBracket active={selected} className="text-[var(--color-brand)]" />
         </td>
-        <td colSpan={4} className="px-2 py-1.5 mono text-[11px] text-[var(--color-text-muted)]">{item.item_code ?? '—'}</td>
+        <td colSpan={4} className="px-2 py-1.5 mono text-[11px] text-[var(--color-text-muted)] border-e-2 border-double border-[var(--color-border-strong)]">{item.item_code ?? '—'}</td>
         <td className="px-3 py-1.5 font-medium text-[var(--color-text)]">{item.description}</td>
         <td className="px-2 py-1.5 text-[var(--color-text-secondary)]">{item.unit}</td>
         <td className="px-3 py-1.5 text-end mono font-semibold text-[var(--color-text)]">{item.net_qty.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
@@ -137,9 +138,9 @@ function MeasurementItemBlock({ item, selected, onSelect }: { item: MeasurementI
           <td className="px-2 py-1 mono text-end text-[var(--color-text-secondary)]">{line.nr ?? 1}</td>
           <td className="px-2 py-1 mono text-end text-[var(--color-text-secondary)]">{dim(line.length)}</td>
           <td className="px-2 py-1 mono text-end text-[var(--color-text-secondary)]">{dim(line.width)}</td>
-          <td className="px-2 py-1 mono text-end text-[var(--color-text-secondary)]">{dim(line.height)}</td>
+          <td className="px-2 py-1 mono text-end text-[var(--color-text-secondary)] border-e-2 border-double border-[var(--color-border)]">{dim(line.height)}</td>
           <td className="px-3 py-1 text-[var(--color-text-muted)] italic">
-            {line.is_deduction && <Minus size={10} className="inline mr-1 text-[var(--color-danger)]" />}
+            {line.is_deduction && <DeductMark size={11} className="inline mr-1.5 -mt-0.5 text-[var(--color-danger)]" />}
             {line.description || line.location || '—'}
           </td>
           <td />

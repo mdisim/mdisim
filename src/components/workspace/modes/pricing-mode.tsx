@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { cn } from '@/lib/utils'
 import { useWorkspace } from '../workspace-context'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Chip } from '@/components/ui/chip'
+import { MasterListRow } from './master-list-row'
 import { Calculator, Wrench } from 'lucide-react'
 import type { RateAnalysis, ResourceType } from '@/lib/types'
 
@@ -42,20 +42,14 @@ export function PricingMode() {
     <div className="grid h-full" style={{ gridTemplateColumns: 'minmax(200px,260px) 1fr' }}>
       <div className="overflow-y-auto border-e border-[var(--color-border)]">
         {data.rateAnalyses.map(r => (
-          <button
+          <MasterListRow
             key={r.id}
+            selected={active?.id === r.id}
             onClick={() => setActiveId(r.id)}
-            className={cn(
-              'w-full text-start px-3 py-2.5 border-b border-[var(--color-border-light)] transition-colors',
-              active?.id === r.id ? 'bg-[var(--color-brand-tint)]' : 'hover:bg-[var(--color-surface-hover)]'
-            )}
-          >
-            <div className="text-[13px] font-medium text-[var(--color-text)] truncate">{r.description}</div>
-            <div className="flex items-center justify-between mt-1">
-              <span className="text-[10px] text-[var(--color-text-muted)]">per {r.unit}</span>
-              <span className="mono text-[12px] font-semibold text-[var(--color-text)]">{fmt(r.unit_rate)}</span>
-            </div>
-          </button>
+            title={r.description}
+            metaLeft={`per ${r.unit}`}
+            metaRight={fmt(r.unit_rate)}
+          />
         ))}
       </div>
       {active && <RateBuildUp rate={active} fmt={fmt} />}
