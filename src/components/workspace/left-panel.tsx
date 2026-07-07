@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useWorkspace } from './workspace-context'
 import {
-  FileSpreadsheet, Ruler, BookOpen, GitCompare, FolderOpen,
+  FileSpreadsheet, Ruler, BookOpen, GitCompare,
   ChevronDown, ChevronRight, Search, Hash, Layers, Package,
   ArrowRight, MoreHorizontal, Eye, ImageIcon, Filter,
 } from 'lucide-react'
@@ -72,19 +72,15 @@ export function LeftPanel() {
   return (
     <div className="flex flex-col h-full bg-white dark:bg-[var(--background)] overflow-hidden">
       {/* Explorer Header */}
-      <div className="px-3 py-2.5 border-b border-[var(--color-border)]/60 dark:border-white/[0.04]">
-        <div className="flex items-center gap-2 mb-2">
-          <FolderOpen size={13} className="text-[var(--color-text-muted)]" />
-          <span className="text-[10px] font-bold text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)] uppercase tracking-[0.08em]">Explorer</span>
-        </div>
+      <div className="px-2 py-1.5 border-b border-[var(--color-border)]/60 dark:border-white/[0.04]">
         <div className="relative">
-          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
+          <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Filter..."
-            className="w-full pl-8 pr-3 py-1.5 text-[11px] bg-[var(--color-surface)] dark:bg-white/[0.03] border border-[var(--color-border)]/60 dark:border-white/[0.06] rounded-lg text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] outline-none focus:border-[var(--color-brand)] dark:focus:border-[var(--color-brand)] transition-colors"
+            placeholder="Filter"
+            className="w-full pl-6 pr-2 py-1 text-[11px] bg-[var(--color-surface-sunken)] rounded-[var(--radius-xs)] text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] outline-none focus:ring-1 focus:ring-[var(--color-brand)] transition-shadow"
           />
         </div>
       </div>
@@ -96,15 +92,15 @@ export function LeftPanel() {
             {/* Section header */}
             <button
               onClick={() => toggle(sec.key)}
-              className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[var(--color-surface-hover)] dark:hover:bg-white/[0.02] transition-colors group"
+              className="w-full flex items-center gap-1.5 px-2 py-1.5 hover:bg-[var(--color-surface-hover)] dark:hover:bg-white/[0.02] transition-colors group"
             >
               {expanded.has(sec.key)
-                ? <ChevronDown size={12} className="text-[var(--color-text-muted)] shrink-0" />
-                : <ChevronRight size={12} className="text-[var(--color-text-muted)] shrink-0" />
+                ? <ChevronDown size={11} className="text-[var(--color-text-muted)] shrink-0" />
+                : <ChevronRight size={11} className="text-[var(--color-text-muted)] shrink-0" />
               }
-              <sec.icon size={13} className="text-[var(--color-text-muted)] group-hover:text-[var(--color-text)] dark:group-hover:text-[var(--color-text-secondary)] shrink-0" />
-              <span className="text-[11px] font-semibold text-[var(--color-text-muted)] dark:text-[var(--color-text-secondary)] flex-1 text-left">{sec.label}</span>
-              <span className="text-[10px] tabular-nums text-[var(--color-text-muted)] bg-[var(--color-surface)] dark:bg-white/[0.04] px-1.5 py-0.5 rounded-full">
+              <sec.icon size={12} className="text-[var(--color-text-muted)] group-hover:text-[var(--color-text)] dark:group-hover:text-[var(--color-text-secondary)] shrink-0" />
+              <span className="text-[11px] font-medium text-[var(--color-text-secondary)] flex-1 text-left">{sec.label}</span>
+              <span className="text-[10px] mono text-[var(--color-text-muted)]">
                 {sec.key === 'boq' ? data.boqItems.length
                   : sec.key === 'drawings' ? data.drawings.length
                   : sec.key === 'measurements' ? data.measurementItems.length

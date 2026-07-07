@@ -27,7 +27,7 @@ const DOCK_TABS: { key: DockTab; label: string; icon: typeof Bot; color: string 
 export function BottomDock({ projectId, projectName }: { projectId: string; projectName: string }) {
   const { data, selection, fmt } = useWorkspace()
   const [activeTab, setActiveTab] = useState<DockTab>('ai')
-  const [expanded, setExpanded] = useState(true)
+  const [expanded, setExpanded] = useState(false)
   const [dockHeight, setDockHeight] = useState(220)
 
   return (

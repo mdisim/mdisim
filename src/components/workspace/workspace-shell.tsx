@@ -49,18 +49,26 @@ export function WorkspaceShell({ projectId, project, initialMode }: { projectId:
   const { selection } = useWorkspace()
   const [mode, setMode] = useState<Mode>(initialMode ?? 'drawings')
   const [leftOpen, setLeftOpen] = useState(true)
-  const [rightOpen, setRightOpen] = useState(true)
+  const [rightSuppressed, setRightSuppressed] = useState(false)
   const [mobilePanel, setMobilePanel] = useState<'explorer' | 'inspector' | null>(null)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
 
-  const leftResize = useResizable({ direction: 'horizontal', initialSize: 260, minSize: 200, maxSize: 400, storageKey: 'ws-left' })
-  const rightResize = useResizable({ direction: 'horizontal', initialSize: 340, minSize: 280, maxSize: 500, storageKey: 'ws-right' })
+  const leftResize = useResizable({ direction: 'horizontal', initialSize: 232, minSize: 190, maxSize: 380, storageKey: 'ws-left' })
+  const rightResize = useResizable({ direction: 'horizontal', initialSize: 320, minSize: 280, maxSize: 480, storageKey: 'ws-right' })
+
+  // The inspector is an on-demand instrument, not a permanent pane: it surfaces
+  // only once there's something to inspect, and the canvas reclaims its width
+  // the moment selection clears. The toggle just lets someone suppress it.
+  // The Evidence Center only has real content to show for a BOQ selection today —
+  // don't surface it as an empty placeholder for the other selection types.
+  const hasSelection = selection.type === 'boq'
+  const rightOpen = hasSelection && !rightSuppressed
 
   useKeyboardShortcuts(
     [
       ...MODES.map((m, i): ShortcutBinding => ({ key: String(i + 1), handler: () => setMode(m.key) })),
       { key: '[', meta: true, handler: () => setLeftOpen(v => !v) },
-      { key: ']', meta: true, handler: () => setRightOpen(v => !v) },
+      { key: ']', meta: true, handler: () => setRightSuppressed(v => !v) },
       { key: '?', shift: true, handler: () => setShortcutsOpen(v => !v) },
     ],
     []
@@ -92,29 +100,30 @@ export function WorkspaceShell({ projectId, project, initialMode }: { projectId:
 
   return (
     <div className="flex flex-col h-[calc(100vh-56px)] bg-[var(--background)] overflow-hidden">
-      {/* Top chrome */}
-      <div className="flex items-center gap-1 h-11 px-2 border-b border-[var(--color-border)] bg-[var(--color-surface)] shrink-0 overflow-x-auto">
-        <div className="flex items-center gap-1.5 pe-2 shrink-0" title="Angel D.C.">
-          <ScaleMark size={16} className="text-[var(--color-brand)]" />
-          <span className="hidden sm:inline text-[12px] font-semibold tracking-tight text-[var(--color-text)]">Angel D.C.</span>
+      {/* Instrument titlebar — icons only, tooltips carry the labels. Height is
+          minimised on purpose: this row exists to switch context, not to be looked at. */}
+      <div className="flex items-center gap-0.5 h-9 px-1.5 border-b border-[var(--color-border)] bg-[var(--color-surface)] shrink-0 overflow-x-auto">
+        <div className="flex items-center justify-center w-7 h-7 shrink-0" title="Angel D.C.">
+          <ScaleMark size={15} className="text-[var(--color-brand)]" />
         </div>
-        <div className="w-px h-5 bg-[var(--color-border)] mx-0.5 shrink-0" />
         <button
           onClick={() => setLeftOpen(v => !v)}
           title="Toggle explorer (⌘[)"
-          className={cn('hidden lg:flex p-1.5 rounded-[var(--radius-sm)] shrink-0 transition-colors focus-ring', leftOpen ? 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]' : 'text-[var(--color-brand)] bg-[var(--color-brand-tint)]')}
+          aria-label="Toggle explorer"
+          className={cn('hidden lg:flex items-center justify-center w-7 h-7 rounded-[var(--radius-sm)] shrink-0 transition-colors focus-ring', leftOpen ? 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]' : 'text-[var(--color-brand)]')}
         >
           <PanelLeft size={14} />
         </button>
         <button
           onClick={() => setMobilePanel('explorer')}
           title="Explorer"
-          className="lg:hidden p-1.5 rounded-[var(--radius-sm)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] shrink-0 transition-colors focus-ring"
+          aria-label="Explorer"
+          className="lg:hidden flex items-center justify-center w-7 h-7 rounded-[var(--radius-sm)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] shrink-0 transition-colors focus-ring"
         >
           <PanelLeft size={14} />
         </button>
 
-        <div className="w-px h-5 bg-[var(--color-border)] mx-0.5 shrink-0" />
+        <div className="w-px h-4 bg-[var(--color-border)] mx-1 shrink-0" />
 
         <div className="flex items-stretch gap-0.5">
           {MODES.map(m => (
@@ -122,13 +131,13 @@ export function WorkspaceShell({ projectId, project, initialMode }: { projectId:
               key={m.key}
               onClick={() => setMode(m.key)}
               title={m.label}
+              aria-label={m.label}
               className={cn(
-                'relative flex items-center gap-1.5 px-2.5 h-11 text-[13px] font-medium whitespace-nowrap transition-colors focus-ring',
-                mode === m.key ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
+                'relative flex items-center justify-center w-8 h-9 transition-colors focus-ring',
+                mode === m.key ? 'text-[var(--color-brand)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
               )}
             >
-              <m.icon size={13} />
-              <span className="hidden xl:inline">{m.label}</span>
+              <m.icon size={15} />
               {mode === m.key && (
                 <motion.span
                   layoutId="mode-indicator"
@@ -142,25 +151,21 @@ export function WorkspaceShell({ projectId, project, initialMode }: { projectId:
 
         <div className="flex-1 min-w-2" />
 
-        {selectionLabel && (
-          <span className="hidden md:inline text-[11px] text-[var(--color-text-muted)] truncate max-w-[220px] mx-2">
-            {selectionLabel}
-          </span>
-        )}
-
         {showSidePanels && (
           <>
             <button
-              onClick={() => setRightOpen(v => !v)}
+              onClick={() => setRightSuppressed(v => !v)}
               title="Toggle inspector (⌘])"
-              className={cn('hidden lg:flex p-1.5 rounded-[var(--radius-sm)] shrink-0 transition-colors focus-ring', rightOpen ? 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]' : 'text-[var(--color-brand)] bg-[var(--color-brand-tint)]')}
+              aria-label="Toggle inspector"
+              className={cn('hidden lg:flex items-center justify-center w-7 h-7 rounded-[var(--radius-sm)] shrink-0 transition-colors focus-ring', !rightSuppressed ? 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]' : 'text-[var(--color-brand)]')}
             >
               <PanelRight size={14} />
             </button>
             <button
               onClick={() => setMobilePanel('inspector')}
               title="Inspector"
-              className="lg:hidden p-1.5 rounded-[var(--radius-sm)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] shrink-0 transition-colors focus-ring"
+              aria-label="Inspector"
+              className="lg:hidden flex items-center justify-center w-7 h-7 rounded-[var(--radius-sm)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] shrink-0 transition-colors focus-ring"
             >
               <PanelRight size={14} />
             </button>
@@ -185,7 +190,7 @@ export function WorkspaceShell({ projectId, project, initialMode }: { projectId:
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           <div className="flex-1 overflow-hidden">{renderMain()}</div>
           {(mode === 'drawings' || mode === 'takeoff') && (
-            <div className="h-[220px] shrink-0 overflow-hidden hidden md:block">
+            <div className="shrink-0 overflow-hidden hidden md:block">
               <BottomDock projectId={projectId} projectName={project.name} />
             </div>
           )}
@@ -220,7 +225,8 @@ export function WorkspaceShell({ projectId, project, initialMode }: { projectId:
       {/* Status bar */}
       <div className="hidden sm:flex items-center gap-4 h-6 px-3 border-t border-[var(--color-border)] bg-[var(--color-surface)] shrink-0 text-[10px] font-mono text-[var(--color-text-muted)]">
         <span>{project.currency}</span>
-        <span>Mode: {activeMode.label}</span>
+        <span>{activeMode.label}</span>
+        {selectionLabel && <span className="truncate max-w-[360px] text-[var(--color-text-secondary)]">{selectionLabel}</span>}
         <span className="flex-1" />
         <button
           onClick={() => setShortcutsOpen(true)}
