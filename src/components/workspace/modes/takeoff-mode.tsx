@@ -26,7 +26,12 @@ export function TakeoffMode({ projectId }: { projectId: string }) {
     setLoading(true)
     setError(null)
     getDrawingUrl(drawing.file_path)
-      .then(url => { if (!cancelled) { setDrawingUrl(url); setLoading(false) } })
+      .then(url => {
+        if (cancelled) return
+        if (!url) { setError('Failed to load this drawing. The file may be missing, or the connection was interrupted.'); setLoading(false); return }
+        setDrawingUrl(url)
+        setLoading(false)
+      })
       .catch(e => { if (!cancelled) { setError(e instanceof Error ? e.message : 'Failed to load drawing'); setLoading(false) } })
     return () => { cancelled = true }
   }, [drawing])

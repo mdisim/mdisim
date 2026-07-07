@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useWorkspace } from '../workspace-context'
 import { useModeSwitch } from '../mode-switch-context'
 import { EmptyState } from '@/components/ui/empty-state'
-import { FileBarChart, FileSpreadsheet, Receipt, Ruler, Download, AlertCircle } from 'lucide-react'
+import { FileBarChart, FileSpreadsheet, Receipt, Ruler, Download, Printer, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Project } from '@/lib/types'
 
@@ -139,8 +139,9 @@ export function ReportsMode({ project }: { project: Project }) {
                       loading={busy === `${r.key}-${fmt}`}
                       onClick={() => runSafely(`${r.key}-${fmt}`, () => r.run(fmt))}
                       className="flex-1"
+                      title={fmt === 'pdf' ? 'Opens a print preview — choose "Save as PDF" there' : undefined}
                     >
-                      <Download size={12} /> {fmt.toUpperCase()}
+                      {fmt === 'pdf' ? <Printer size={12} /> : <Download size={12} />} {fmt.toUpperCase()}
                     </Button>
                   ))}
                 </div>

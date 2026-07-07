@@ -10,7 +10,7 @@ import type { TakeoffMeasurement } from '@/lib/takeoff/renderer'
 import type { DrawingMeasurement } from '@/lib/types'
 import {
   ImageIcon, ChevronLeft, ChevronRight, ZoomIn, ZoomOut,
-  RotateCw, Maximize2, FileText, Compass, Info,
+  RotateCw, Maximize2, FileText, Compass, Info, AlertTriangle, RefreshCw,
 } from 'lucide-react'
 
 interface ViewTransform {
@@ -31,6 +31,8 @@ export function WorkspaceDrawingViewer() {
   // URL + loading
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [retryKey, setRetryKey] = useState(0)
   const [pdfDoc, setPdfDoc] = useState<unknown>(null)
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
 
@@ -125,16 +127,28 @@ export function WorkspaceDrawingViewer() {
 
   // Load drawing URL
   useEffect(() => {
-    if (!drawing) { setImageUrl(null); setPdfDoc(null); return }
+    if (!drawing) { setImageUrl(null); setPdfDoc(null); setLoadError(null); return }
+    let cancelled = false
     setLoading(true)
+    setLoadError(null)
+    setImageUrl(null)
+    setPdfDoc(null)
     setTransform({ x: 0, y: 0, zoom: 1, rotation: 0 })
     getDrawingUrl(drawing.file_path)
-      .then(url => setImageUrl(url))
-      .catch(() => setImageUrl(null))
-      .finally(() => {
+      .then(url => {
+        if (cancelled) return
+        if (!url) throw new Error('empty url')
+        setImageUrl(url)
         if (!isPdf) setLoading(false)
+        // For PDFs, loading stays true until the PDF-load effect below resolves.
       })
-  }, [drawing, isPdf])
+      .catch(() => {
+        if (cancelled) return
+        setLoadError('Failed to load this drawing. The file may be missing, or the connection was interrupted.')
+        setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [drawing, isPdf, retryKey])
 
   // Load PDF
   useEffect(() => {
@@ -150,7 +164,10 @@ export function WorkspaceDrawingViewer() {
           setLoading(false)
         }
       } catch {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+          setLoadError('Failed to render this PDF. It may be corrupted or in an unsupported format.')
+        }
       }
     }
     load()
@@ -528,6 +545,26 @@ export function WorkspaceDrawingViewer() {
                 </div>
                 <p className="text-sm font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">No Drawings</p>
                 <p className="text-[11px] text-[var(--color-text-muted)] mt-1">Upload drawings to view them here</p>
+              </div>
+            </motion.div>
+          ) : loadError ? (
+            <motion.div
+              key="error"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex items-center justify-center h-full"
+            >
+              <div className="flex flex-col items-center gap-3 text-center px-6 max-w-xs">
+                <div className="w-12 h-12 rounded-2xl bg-[var(--color-danger-tint)] flex items-center justify-center">
+                  <AlertTriangle size={22} className="text-[var(--color-danger)]" />
+                </div>
+                <p className="text-[13px] text-[var(--color-danger)]">{loadError}</p>
+                <button
+                  onClick={() => setRetryKey(k => k + 1)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium text-[var(--color-text-secondary)] bg-[var(--color-surface-elevated)] border border-[var(--color-border)] rounded-[var(--radius-md)] hover:border-[var(--color-brand)]/40 transition-all"
+                >
+                  <RefreshCw size={12} /> Retry
+                </button>
               </div>
             </motion.div>
           ) : loading ? (

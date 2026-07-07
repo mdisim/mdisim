@@ -441,3 +441,8 @@ html[lang="ar"] body { font-family: var(--font-arabic), var(--type-sans); }
 [dir="rtl"] .sidebar-item, [dir="rtl"] .flex-row-rtl { flex-direction: row-reverse; }
 [dir="rtl"] label, [dir="rtl"] .form-group { text-align: right; }
 
+/* Click-to-select table rows (BOQ, Measurement Book, QCS, etc.) shouldn't
+   also trigger the browser's native text selection on click or shift-click —
+   that's a spreadsheet-row gesture, not a text-editing one. */
+tbody tr.cursor-pointer { user-select: none; }
+
